@@ -20,6 +20,8 @@ internal sealed class Core : MelonMod
         ZilleCampaign.RegisterVariables();
         CityEvents.RegisterVariables();
         WarEvents.Hook();
+        AnDeclaration.Register();
+        WarFlow.Register();
         ZilleData.LoadSpec();
         Trace.Install(HarmonyInstance);
         LoggerInstance.Msg("Zille War initialized. Dev keys: F8 dump, F9 load war map, F10 Pales war, F11 direct setup, F12 next Zille operation (Shift: cycle objective, Ctrl: reset), Shift+F11 Wehlen strength.");
