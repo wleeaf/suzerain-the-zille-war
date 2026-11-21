@@ -60,6 +60,7 @@ internal static class WarFlow
                     "to their depots across Brenas, trains are being requisitioned for the northern line, and crowds have gathered " +
                     "outside the Royal Palace singing the old anthem. At Mave Nortus, the Wehzek border posts have gone dark. " +
                     "The General Staff awaits the King's orders."));
+                NewsWire.PublishDeclaration();
             }
 
             int turn = GameState.CurrentTurnNum ?? 0;

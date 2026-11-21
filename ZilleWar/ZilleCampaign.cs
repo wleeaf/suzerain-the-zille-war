@@ -28,6 +28,7 @@ internal static class ZilleCampaign
     public const string VarLiberated = "ZilleWar.War_Zille_Liberated";
     public const string VarHistory = "ZilleWar.State_History";          // "Wall:won;Harbor:lost"
     public const string VarCurrentOp = "ZilleWar.State_CurrentOperation"; // "k:Objective" while an operation is set up
+    public const string VarOwnersAtStart = "ZilleWar.State_OwnersAtStart";
 
     public const int DefaultStrength = 8;
     public const int MaxOperations = 4;
@@ -42,7 +43,7 @@ internal static class ZilleCampaign
 
     public static void RegisterVariables()
     {
-        foreach (string v in new[] { VarOwners, VarOpsDone, VarNextObjective, VarStrength, VarLiberated, VarHistory, VarCurrentOp })
+        foreach (string v in new[] { VarOwners, VarOpsDone, VarNextObjective, VarStrength, VarLiberated, VarHistory, VarCurrentOp, VarOwnersAtStart })
         {
             Variables.Register(v);
         }
@@ -128,10 +129,16 @@ internal static class ZilleCampaign
 
     // ---- tile ownership: true = Rizia (player), false = Wehlen (enemy); land tiles only ----
 
-    public static Dictionary<string, bool> CurrentOwners()
+    public static Dictionary<string, bool> CurrentOwners() => ParseOwners(Variables.GetString(VarOwners));
+
+    public static Dictionary<string, bool> OwnersAtStart() => ParseOwners(Variables.GetString(VarOwnersAtStart));
+
+    public static void MarkOperationStart() => Variables.Set(VarOwnersAtStart, Variables.GetString(VarOwners) ?? string.Empty);
+
+    private static Dictionary<string, bool> ParseOwners(string s)
     {
         var owners = ZilleData.Tiles.Where(t => t.Type == "Land").ToDictionary(t => t.Name, t => t.Region == "rizia");
-        string s = Variables.GetString(VarOwners) ?? string.Empty;
+        s ??= string.Empty;
         foreach (string part in s.Split('|', StringSplitOptions.RemoveEmptyEntries))
         {
             string[] kv = part.Split(':');
@@ -243,6 +250,11 @@ internal static class ZilleCampaign
             NextObjective = next[0];
         }
 
-        Core.Log.Msg($"Operation {k} ({info.Codename}) finished: read {read} tiles, won={won}, liberated={liberated}. {Describe()}");
+        AfterAction a = AfterAction.Compute(k, OwnersAtStart(), owners);
+        string report = a.FullReport(info, won);
+        ZilleReports.SetDescription($"Operation_Zille_{k}_Result_Won", report);
+        ZilleReports.SetDescription($"Operation_Zille_{k}_Result_Lost", report);
+        NewsWire.PublishOperationResult(k, info, won, a);
+        Core.Log.Msg($"Operation {k} ({info.Codename}) finished: read {read} tiles, won={won}, liberated={liberated}. {Describe()}\n{report}");
     }
 }

@@ -33,6 +33,17 @@ internal static class ZilleReports
         return (won, lost);
     }
 
+    private static readonly Dictionary<string, ReportData> Created = new();
+
+    /// <summary>Replace a report's body (used for the detailed after-action report at operation end).</summary>
+    public static void SetDescription(string name, string text)
+    {
+        if (Created.TryGetValue(name, out ReportData r) && r?.ReportProperties != null)
+        {
+            r.ReportProperties.Description = text;
+        }
+    }
+
     private static string Trim(string s) => s == null ? null : s.Length > 80 ? s.Substring(0, 80) + "..." : s;
 
     private static ReportData Clone(ReportData v, string name, string title, string description)
@@ -59,6 +70,7 @@ internal static class ZilleReports
 
     private static void Add(ReportData r)
     {
+        Created[r.NameInDatabase] = r;
         foreach (var list in new[] { EntityDataManager.reportsData, EntityDataManager.ReportsData })
         {
             if (list == null)

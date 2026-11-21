@@ -26,7 +26,7 @@ internal static class ZilleOperation
 
     public static void RegisterVariables()
     {
-        foreach (TownSpec t in ZilleData.Towns.Where(t => t.Role == "city"))
+        foreach (TownSpec t in (ZilleData.Towns ?? new List<TownSpec>()).Where(t => t.Role == "city"))
         {
             Variables.Register(CapturedVar(t.Name));
         }
@@ -62,6 +62,7 @@ internal static class ZilleOperation
         CurrentIndex = k;
         CurrentObjective = objective;
         Variables.Set(ZilleCampaign.VarCurrentOp, $"{k}:{objective}");
+        ZilleCampaign.MarkOperationStart();
 
         DecisionData eventTemplate = WarEvents.FindVanilla("OP1_Decision_War_Played_FortAlesCaptured");
         foreach (WarEvent ev in CityEvents.All())

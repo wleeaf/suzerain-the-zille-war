@@ -28,6 +28,8 @@ internal static class AnDeclaration
     public const string VarEntryAN = "ZilleWar.Entry_AN";
     public const string VarDeclaredTurn = "ZilleWar.War_DeclaredTurn";
     public const string VarPressStatement = "ZilleWar.AN_PressStatement";
+    public const string VarLespianNote = "ZilleWar.AN_LespianNote";          // "kept" | "burned"
+    public const string VarEstelaCall = "ZilleWar.AN_EstelaCall";
 
     private const string Smolak = "Wiktor Smolak (R)";
     private const string Esquibel = "Laurento Esquibel";
@@ -37,10 +39,13 @@ internal static class AnDeclaration
     private const string Azmal = "Jorga Azmal";
     private const string Reinhart = "Axel Reinhart";
     private const string Narrator = "Narrator";
+    private const string Estela = "Estela Toras";
+    private const string Romus = "Player_Romus";             // spoken choices
+    private const string RomusAction = "Player_Romus_Italic"; // action choices ("Say nothing.")
 
     public static void Register()
     {
-        foreach (string v in new[] { VarDeclared, VarEntryAN, VarDeclaredTurn, VarPressStatement })
+        foreach (string v in new[] { VarDeclared, VarEntryAN, VarDeclaredTurn, VarPressStatement, VarLespianNote, VarEstelaCall })
         {
             SuzerainModdingKit.Variables.Register(v);
         }
@@ -50,6 +55,7 @@ internal static class AnDeclaration
         // --- the choice, offered right after each accusation ---
         inj.AddNode(new ConversationNode(
             name: P + "Escalate",
+            speakerSelector: new CharacterNameSelector(Romus),
             menuText: "[Declare war on Wehlen.]",
             text: "\"This assembly has listened to Wehlen's excuses long enough.\"",
             luaCondition: $"Variable[\"{VarDeclared}\"] ~= true",
@@ -65,11 +71,13 @@ internal static class AnDeclaration
             Next("Declare", "BackOff")));
         inj.AddNode(new ConversationNode(
             name: P + "BackOff",
+            speakerSelector: new CharacterNameSelector(Romus),
             menuText: "Hold back.",
             text: "\"...and Rizia's patience is not without limits.\"",
             nextNodes: new ConversationNodeSelector[] { new ConversationNodeArticyIDSelector(TakeMattersIntoOwnHands) }));
         inj.AddNode(new ConversationNode(
             name: P + "Declare",
+            speakerSelector: new CharacterNameSelector(Romus),
             menuText: "[DECLARE WAR] \"I hereby declare war on Wehlen.\"",
             text: "\"Twenty-five years ago, my father signed Zille away to save his throne. I will not sign away its future. " +
                   "Let this Alliance bear witness: in the name of the Rizian Crown, I hereby declare war on Wehlen. Rizia will not " +
@@ -80,7 +88,8 @@ internal static class AnDeclaration
                 "Variable[\"RiziaDLC.Diplomacy_Wehlen_ANSpeech_Aggression\"] = true; " +
                 "Variable[\"RiziaDLC.CountryRelation_Wehlen_Neutral\"] = false; Variable[\"RiziaDLC.CountryRelation_Wehlen_Unfriendly\"] = false; " +
                 "Variable[\"RiziaDLC.CountryRelation_Wehlen_Friendly\"] = false; Variable[\"RiziaDLC.CountryRelation_Wehlen_Allied\"] = false; " +
-                "Variable[\"RiziaDLC.CountryRelation_Wehlen_Hostile\"] = true; Variable[\"RiziaDLC.CountryRelation_Wehlen_AtWar\"] = true;",
+                "Variable[\"RiziaDLC.CountryRelation_Wehlen_Hostile\"] = true; Variable[\"RiziaDLC.CountryRelation_Wehlen_AtWar\"] = true; " +
+                "UpdateCountryRelationship(\"Rizia_Country_Wehlen\", \"AtWar\"); UpdateCountryRelationship(\"Rizia_Country_Zille\", \"AtWar\");",
             sequence: new ConversationNodeSequenceBuilder().PlaySceneMusic("Critical").ToString(),
             nextNodes: Next("Silence")));
 
@@ -108,9 +117,12 @@ internal static class AnDeclaration
             "\"Wehlen did not seek this war. But Wehlen will defend every inch of Zille, and every Wehzek who calls it home.\"", Next("Smolak3")));
         inj.AddNode(Line("Smolak3", Smolak,
             "\"I hope your army is as eloquent as you are, Your Majesty. You will need it to be.\"", Next("S1", "S2", "S3")));
-        inj.AddNode(Choice("S1", "\"My army will answer you at the border, Mr. President.\"", Next("Delegations")));
-        inj.AddNode(Choice("S2", "\"Zille was never yours to defend.\"", Next("Delegations")));
-        inj.AddNode(Choice("S3", "\"Enjoy your last days in Smolak Square. Its old name is coming back.\"", Next("Delegations")));
+        inj.AddNode(Choice("S1", "\"My army will answer you at the border, Mr. President.\"", Next("Walkout")));
+        inj.AddNode(Choice("S2", "\"Zille was never yours to defend.\"", Next("Walkout")));
+        inj.AddNode(Choice("S3", "\"Enjoy your last days in Smolak Square. Its old name is coming back.\"", Next("Walkout")));
+        inj.AddNode(Line("Walkout", Narrator,
+            "Smolak said nothing more. He turned his back on the podium, and one by one the Wehzek delegation rose and followed him " +
+            "out of the hall, leaving their flag standing beside a row of empty chairs.", Next("Delegations")));
 
         // --- the delegations ---
         inj.AddNode(Line("Delegations", Narrator,
@@ -136,7 +148,17 @@ internal static class AnDeclaration
             Next("SideDoor")));
         inj.AddNode(Line("SideDoor", Narrator,
             "Guards were already moving through the aisles. Laurento took me by the arm and steered me toward a side door before anyone could reach me.",
-            Next("PressWarning"), sequence: new ConversationNodeSequenceBuilder().PlaySceneMusic("Suspense").ToString()));
+            Next("Note"), sequence: new ConversationNodeSequenceBuilder().PlaySceneMusic("Suspense").ToString()));
+        inj.AddNode(Line("Note", Narrator,
+            "In the corridor, a young Lespian aide brushed past us. When he was gone, Laurento was holding a folded slip of paper.",
+            Next("NoteRead")));
+        inj.AddNode(Line("NoteRead", Esquibel,
+            "\"From Prime Minister Alvarez.\" He read it twice before handing it to me. \"'Lespia stands ready to discuss practical " +
+            "arrangements. Discreetly.' That man never does anything for free, Your Majesty.\"", Next("N1", "N2")));
+        inj.AddNode(Choice("N1", "\"Burn it. I won't have Lespia's fingerprints on this war.\"", Next("PressWarning"),
+            script: $"Variable[\"{VarLespianNote}\"] = \"burned\";"));
+        inj.AddNode(Choice("N2", "\"Keep it. We may need friends we don't trust.\"", Next("PressWarning"),
+            script: $"Variable[\"{VarLespianNote}\"] = \"kept\";"));
         inj.AddNode(Line("PressWarning", Esquibel,
             "\"Every camera in Konstantium will be on you in thirty seconds, Your Majesty. What do I tell them?\"", Next("Press1", "Press2")));
         inj.AddNode(Choice("Press1", "\"Nothing. The King will speak for himself.\"", Next("Flashbulbs")));
@@ -157,7 +179,19 @@ internal static class AnDeclaration
             "In the car, Laurento was already on the telephone. I caught only fragments. \"Mobilization.\" \"The border.\" \"Mave Nortus.\"",
             Next("GeneralStaff")));
         inj.AddNode(Line("GeneralStaff", Esquibel,
-            "\"The General Staff will be waiting for you in Porte Drazon, Your Majesty. They're already drawing up plans.\"", Next("Rain")));
+            "\"The General Staff will be waiting for you in Porte Drazon, Your Majesty. They're already drawing up plans.\"", Next("Receiver")));
+        inj.AddNode(Line("Receiver", Narrator,
+            "The telephone rang again. Laurento listened for a moment, then held the receiver out to me. \"The Queen Mother, Your Majesty.\"",
+            Next("Estela1")));
+        inj.AddNode(Line("Estela1", Estela,
+            "\"I heard it on the radio, darling. The whole palace heard it. The maids are crying in the kitchens.\"", Next("Estela2"), conversant: true));
+        inj.AddNode(Line("Estela2", Estela,
+            "\"Your father never dared. Twenty-five years, and he never once dared.\"", Next("Estela3")));
+        inj.AddNode(Line("Estela3", Estela,
+            "\"Bring me home, Romus. Bring all of them home.\"", Next("E1", "E2", "E3")));
+        inj.AddNode(Choice("E1", "\"I will, Mother. I promise.\"", Next("Rain"), script: $"Variable[\"{VarEstelaCall}\"] = \"promise\";"));
+        inj.AddNode(Choice("E2", "\"This isn't about our old house, Mother. It's about Rizia.\"", Next("Rain"), script: $"Variable[\"{VarEstelaCall}\"] = \"rizia\";"));
+        inj.AddNode(Choice("E3", "\"Pray that it ends quickly.\"", Next("Rain"), script: $"Variable[\"{VarEstelaCall}\"] = \"pray\";"));
         inj.AddNode(new ConversationNode(
             name: P + "Rain",
             text: "Outside, the rain had started again. By the time we reached the airfield, it was pouring.",
@@ -187,6 +221,9 @@ internal static class AnDeclaration
             sequence: sequence ?? (conversant ? new ConversationNodeSequenceBuilder().AddConversant(speaker).ToString() : null),
             nextNodes: next);
 
+    // The conversation's default actor here is a technical actor, not the King, so choices must name him
+    // explicitly or the game plays them as ordinary lines. Action choices use the italic narration actor.
     private static ConversationNode Choice(string name, string text, ConversationNodeSelector[] next, string menu = null, string script = null) =>
-        new(name: P + name, text: text, menuText: menu, luaScript: script, nextNodes: next);
+        new(name: P + name, text: text, menuText: menu, luaScript: script, nextNodes: next,
+            speakerSelector: new CharacterNameSelector(menu != null && !text.StartsWith("\"") ? RomusAction : Romus));
 }

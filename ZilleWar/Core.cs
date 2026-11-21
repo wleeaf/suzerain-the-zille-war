@@ -16,15 +16,33 @@ internal sealed class Core : MelonMod
     {
         Log = LoggerInstance;
         Events.OnEvaluateStep += OnEvaluateStep;
-        ZilleOperation.RegisterVariables();
-        ZilleCampaign.RegisterVariables();
-        CityEvents.RegisterVariables();
-        WarEvents.Hook();
-        AnDeclaration.Register();
-        WarFlow.Register();
-        ZilleData.LoadSpec();
-        Trace.Install(HarmonyInstance);
+        // Order matters: the map data (towns, tiles) is needed by the variable registration below.
+        // Each step is isolated so one failure cannot silently skip the rest (e.g. the conversation
+        // injections, which must be registered during OnInitializeMelon).
+        Step("load map data", () => ZilleData.LoadSpec());
+        Step("register variables", () =>
+        {
+            ZilleOperation.RegisterVariables();
+            ZilleCampaign.RegisterVariables();
+            CityEvents.RegisterVariables();
+        });
+        Step("war events", WarEvents.Hook);
+        Step("AN declaration", AnDeclaration.Register);
+        Step("war flow", WarFlow.Register);
+        Step("trace hooks", () => Trace.Install(HarmonyInstance));
         LoggerInstance.Msg("Zille War initialized. Dev keys: F8 dump, F9 load war map, F10 Pales war, F11 direct setup, F12 next Zille operation (Shift: cycle objective, Ctrl: reset), Shift+F11 Wehlen strength.");
+    }
+
+    private void Step(string what, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception ex)
+        {
+            LoggerInstance.Error($"Init step '{what}' failed: {ex}");
+        }
     }
 
     public override void OnUpdate()
