@@ -76,7 +76,7 @@ internal static class ZilleOperation
         OperationProperties vp = vanillaOp.OperationProperties;
         var phases = new Il2CppStringList();
         phases.Add(FragmentName(k));
-        string targetVar = info.Target != null ? CapturedVar(info.Target) : ZilleCampaign.VarLiberated;
+        string targetsTaken = string.Join(" && ", info.Towns.Select(t => $"{CapturedVar(t)} == true"));
         var op = new OperationData
         {
             Id = $"0x5A111E00000001{k:X2}",
@@ -87,7 +87,7 @@ internal static class ZilleOperation
                 OperationName = info.Codename,
                 OperationStartCondition = vp.OperationStartCondition,
                 IsOperationFinishedEarly =
-                    $"{targetVar} == true || RiziaDLC.Army_Unit_GrandTotal_Deployed + RiziaDLC.Army_Unit_GrandTotal_Total <= 0",
+                    $"({targetsTaken}) || RiziaDLC.Army_Unit_GrandTotal_Deployed + RiziaDLC.Army_Unit_GrandTotal_Total <= 0",
                 ResultVariable = ZilleCampaign.ResultVar(k),
                 IsTutorial = false,
                 WinReport = won,
@@ -143,7 +143,7 @@ internal static class ZilleOperation
         bool Player(string n) => owners.TryGetValue(n, out bool p) && p;
         bool Enemy(string n) => owners.TryGetValue(n, out bool p) && !p;
         ObjectiveInfo info = ZilleCampaign.Info(objective);
-        string targetTile = info.Target != null ? ZilleCampaign.TownTile(info.Target) : null;
+        string targetTile = ZilleCampaign.FocusTile(info, owners);
 
         var data = ScriptableObject.CreateInstance<WarOperationData>();
         data.name = OperationName(k);
@@ -188,6 +188,14 @@ internal static class ZilleOperation
         foreach ((string tile, WarUnitTypeData type) in garrison)
         {
             enemy.tokens.Add(Token(tile, type, WarToken.WarAllegiance.Enemy));
+        }
+
+        foreach (string sea in Garrison.Fleet(owners, plan, ZilleCampaign.EnemyShips))
+        {
+            if (ut.Ship != null)
+            {
+                enemy.tokens.Add(Token(sea, ut.Ship, WarToken.WarAllegiance.Enemy));
+            }
         }
 
         data.enemyTokens = Wrap(enemy);
@@ -236,7 +244,7 @@ internal static class ZilleOperation
         UnityEngine.Object.DontDestroyOnLoad(go);
         WarOperation warOp = go.AddComponent<WarOperation>();
         warOp.warOperationData = data;
-        Core.Log.Msg($"  target={info.Target ?? "(clear)"} tile={targetTile}; garrison {garrison.Count} " +
+        Core.Log.Msg($"  target={info.Target} tile={targetTile}; garrison {garrison.Count} " +
                      $"({string.Join(", ", garrison.GroupBy(g => g.type.unitName).Select(g => $"{g.Count()} {g.Key}"))}), tier {ZilleCampaign.Tier}; " +
                      $"front [{string.Join(",", plan.Front)}], deploy {plan.Deployment.Count} " +
                      $"({plan.Deployment.Count(n => by[n].Type == "Sea")} sea), supply lines {plan.SupplyLines.Count}, " +
@@ -530,6 +538,33 @@ internal sealed class Plan
 internal static class Garrison
 {
     private const int FullStrength = 17;      // Default tier, all of Zille held (playtested)
+
+    /// <summary>Sea tiles for Wehlen's ships: off the Wehzek-held coast, away from our own waters, spread out.</summary>
+    public static List<string> Fleet(Dictionary<string, bool> owners, Plan plan, int count)
+    {
+        bool Enemy(string n) => owners.TryGetValue(n, out bool v) && !v;
+        var candidates = ZilleData.Tiles.Where(t => t.Type == "Sea" && !plan.Deployment.Contains(t.Name) && t.Neighbors.Any(Enemy)).ToList();
+        if (candidates.Count < count)
+        {
+            candidates.AddRange(ZilleData.Tiles.Where(t => t.Type == "Sea" && !plan.Deployment.Contains(t.Name) && !candidates.Contains(t)));
+        }
+
+        var chosen = new List<string>();
+        while (chosen.Count < count && candidates.Count > 0)
+        {
+            TileSpec best = candidates.Where(t => !chosen.Contains(t.Name))
+                .OrderByDescending(t => chosen.Count == 0 ? -t.Neighbors.Count(Enemy) : chosen.Min(c => Plan.Dist(t.Name, c)))
+                .FirstOrDefault();
+            if (best == null)
+            {
+                break;
+            }
+
+            chosen.Add(best.Name);
+        }
+
+        return chosen;
+    }
 
     public static List<(string tile, WarUnitTypeData type)> Build(Dictionary<string, bool> owners, Plan plan, string targetTile, UnitTypes ut)
     {

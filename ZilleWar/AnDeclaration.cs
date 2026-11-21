@@ -30,7 +30,7 @@ internal static class AnDeclaration
     public const string VarPressStatement = "ZilleWar.AN_PressStatement";
     public const string VarLespianNote = "ZilleWar.AN_LespianNote";          // "kept" | "burned"
     public const string VarEstelaCall = "ZilleWar.AN_EstelaCall";
-    public const string VarRumburgCable = "ZilleWar.AN_RumburgCable";      // "grateful" | "publish"
+    public const string VarRumburgCable = "ZilleWar.AN_RumburgCable";      // "grateful" | "careful"
 
     private const string Smolak = "Wiktor Smolak (R)";
     private const string Esquibel = "Laurento Esquibel";
@@ -57,7 +57,7 @@ internal static class AnDeclaration
         inj.AddNode(new ConversationNode(
             name: P + "Escalate",
             speakerSelector: new CharacterNameSelector(Romus),
-            menuText: "[Declare war on Wehlen.]",
+            menuText: "Declare war on Wehlen.",
             text: "\"This assembly has listened to Wehlen's excuses long enough.\"",
             luaCondition: $"Variable[\"{VarDeclared}\"] ~= true",
             hooks: new[]
@@ -79,7 +79,7 @@ internal static class AnDeclaration
         inj.AddNode(new ConversationNode(
             name: P + "Declare",
             speakerSelector: new CharacterNameSelector(Romus),
-            menuText: "[DECLARE WAR] \"I hereby declare war on Wehlen.\"",
+            menuText: "\"I hereby declare war on Wehlen.\"",
             text: "\"Twenty-five years ago, my father signed Zille away to save his throne. I will not sign away its future. " +
                   "Let this Alliance bear witness: in the name of the Rizian Crown, I hereby declare war on Wehlen. Rizia will not " +
                   "lay down its arms until the last Wehzek soldier has left Rizian soil.\"",
@@ -91,7 +91,7 @@ internal static class AnDeclaration
                 "Variable[\"RiziaDLC.CountryRelation_Wehlen_Friendly\"] = false; Variable[\"RiziaDLC.CountryRelation_Wehlen_Allied\"] = false; " +
                 "Variable[\"RiziaDLC.CountryRelation_Wehlen_Hostile\"] = true; Variable[\"RiziaDLC.CountryRelation_Wehlen_AtWar\"] = true; " +
                 "UpdateCountryRelationship(\"Rizia_Country_Wehlen\", \"AtWar\");",
-            sequence: new ConversationNodeSequenceBuilder().PlaySceneMusic("Critical").ToString(),
+            sequence: Wait(new ConversationNodeSequenceBuilder().PlaySceneMusic("Critical").ToString()),
             nextNodes: Next("Silence")));
 
         // --- the hall ---
@@ -136,9 +136,18 @@ internal static class AnDeclaration
         inj.AddNode(Line("Hegel1", Hegel,
             "\"Valgsland will be watching this very closely, Your Majesty. Very closely indeed.\"", Next("Azmal1"), conversant: true));
         inj.AddNode(Line("Azmal1", Azmal,
-            "\"Derdia has long said that the occupation of Zille was a wound that would not close on its own.\"", Next("Reinhart1"), conversant: true));
+            "\"Derdia has long said that the occupation of Zille was a wound that would not close on its own.\"", Next("ReinhartFriendly", "Reinhart1"), conversant: true));
+        // Reinhart's tone follows Rizia's dealings with Pales: a gas deal or good relations soften him.
+        const string palesFriendly =
+            "(Variable[\"RiziaDLC.Diplomacy_Pales_GasField_Buy\"] == true and Variable[\"RiziaDLC.Diplomacy_Pales_GasField_BuyCancelled\"] ~= true) or " +
+            "(Variable[\"RiziaDLC.Diplomacy_Pales_GasField_Cede\"] == true and Variable[\"RiziaDLC.Diplomacy_Pales_GasField_CedeCancelled\"] ~= true) or " +
+            "Variable[\"RiziaDLC.CountryRelation_Pales_Friendly\"] == true or Variable[\"RiziaDLC.CountryRelation_Pales_Allied\"] == true";
+        inj.AddNode(Line("ReinhartFriendly", Reinhart,
+            "\"Pales has made its peace with Rizia, King Romus, and I intend to keep it. I only ask that this war stays where it " +
+            "belongs. In Zille, and nowhere near my border.\"", Next("R1", "R2", "R3"), conversant: true, condition: palesFriendly));
         inj.AddNode(Line("Reinhart1", Reinhart,
-            "\"And when Rizia is finished with Zille, King Romus? Should Pales start counting its days as well?\"", Next("R1", "R2", "R3"), conversant: true));
+            "\"And when Rizia is finished with Zille, King Romus? Should Pales start counting its days as well?\"", Next("R1", "R2", "R3"),
+            conversant: true, condition: $"not ({palesFriendly})"));
         inj.AddNode(Choice("R1", "\"Pales has nothing to fear from us, Duke Reinhart.\"", Next("Suspend")));
         inj.AddNode(Choice("R2", "\"That depends entirely on you.\"", Next("Suspend")));
         inj.AddNode(Choice("R3", "I ignored him.", Next("Suspend"), menu: "Ignore him."));
@@ -195,19 +204,29 @@ internal static class AnDeclaration
         inj.AddNode(Choice("E3", "\"Pray that it ends quickly.\"", Next("Cable"), script: $"Variable[\"{VarEstelaCall}\"] = \"pray\";"));
         inj.AddNode(Line("Cable", Esquibel,
             "\"One more, Your Majesty.\" Laurento held up a telegram form. \"From Thornbourgh. It must have been sent the minute the news reached the Queen.\"",
-            Next("Cable2")));
+            Next("Cable2", "Cable2NoEmbargo")));
+        const string embargo =
+            "Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_HighEnergyExport\"] == true or Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_AverageEnergyExport\"] == true";
         inj.AddNode(Line("Cable2", Narrator,
-            "He read it aloud. \"TO HIS MAJESTY ROMUS OF RIZIA. RUMBURG STANDS WITH YOU. OIL EMBARGO ON WEHLEN TIGHTENED TONIGHT. " +
-            "ARMS SHIPMENTS TO SAIL AHEAD OF ALL OTHER CONTRACTS. OUR SHIPS WILL ESCORT YOURS IN THE SUDIS SEA. GIVE THEM NOTHING. BEATRICE.\"",
-            Next("Cable3")));
+            "He unfolded it and read it in a low voice. \"Romus. I have just heard, and I confess my hands are shaking as I write. " +
+            "You have my support, and Rumburg's, for as long as you need it. We stopped buying Smolak's oil months ago, and I will " +
+            "see to it that no one in Thornbourgh is tempted to start again. But please, be careful. Smolak has friends in Contana " +
+            "who would like nothing better than to watch you overreach. Win it quickly, and spare the people of Zille what you can. " +
+            "With all my love, Beatrice.\"", Next("Cable3"), condition: embargo));
+        inj.AddNode(Line("Cable2NoEmbargo", Narrator,
+            "He unfolded it and read it in a low voice. \"Romus. I have just heard, and I confess my hands are shaking as I write. " +
+            "You have my support, and Rumburg's, for as long as you need it. I know Rumburg still buys Wehzek oil, and I know what " +
+            "that must look like to you tonight. Ask me, and we will talk about it. But please, be careful. Smolak has friends in " +
+            "Contana who would like nothing better than to watch you overreach. Win it quickly, and spare the people of Zille what " +
+            "you can. With all my love, Beatrice.\"", Next("Cable3"), condition: $"not ({embargo})"));
         inj.AddNode(Line("Cable3", Esquibel,
-            "\"Your sister-in-law has never been one for subtlety.\" For the first time since the podium, Laurento almost smiled. " +
-            "\"With Rumburg behind us, Smolak's friends in Valgsland will think twice before they send him anything.\"",
+            "Laurento folded the telegram and handed it to me. \"She is worried, Your Majesty. So am I, if I may say so. " +
+            "But with Rumburg behind us, Smolak's friends in Valgsland will think twice before they send him anything.\"",
             Next("C1", "C2")));
         inj.AddNode(Choice("C1", "\"Cable her back. Tell her Rizia will never forget this.\"", Next("Rain"),
             script: $"Variable[\"{VarRumburgCable}\"] = \"grateful\";"));
-        inj.AddNode(Choice("C2", "\"Give it to the Royal Herald. I want Smolak to read it before his plane lands.\"", Next("Rain"),
-            script: $"Variable[\"{VarRumburgCable}\"] = \"publish\";"));
+        inj.AddNode(Choice("C2", "\"Tell her I will be careful. And that I will hold her to that conversation.\"", Next("Rain"),
+            script: $"Variable[\"{VarRumburgCable}\"] = \"careful\";"));
         inj.AddNode(new ConversationNode(
             name: P + "Rain",
             text: "Outside, the rain had started again. By the time we reached the airfield, it was pouring.",
@@ -233,13 +252,19 @@ internal static class AnDeclaration
         names.Select(n => (ConversationNodeSelector)new ConversationNodeModdedNameSelector(P + n)).ToArray();
 
     private static ConversationNode Line(string name, string speaker, string text, ConversationNodeSelector[] next,
-        bool conversant = false, string sequence = null) =>
+        bool conversant = false, string sequence = null, string condition = null) =>
         new(
             name: P + name,
             text: text,
             speakerSelector: new CharacterNameSelector(speaker),
-            sequence: sequence ?? (conversant ? new ConversationNodeSequenceBuilder().AddConversant(speaker).ToString() : null),
+            sequence: Wait(sequence ?? (conversant ? new ConversationNodeSequenceBuilder().AddConversant(speaker).ToString() : null)),
+            luaCondition: condition,
             nextNodes: next);
+
+    // A node with its own sequence replaces the default one, which is what waits for the player to click on.
+    // Vanilla ends such sequences with WaitForMessage(Continue); without it the next line shows at once.
+    private static string Wait(string sequence) =>
+        string.IsNullOrEmpty(sequence) ? sequence : sequence.TrimEnd().TrimEnd(';') + "; WaitForMessage(Continue);";
 
     // The conversation's default actor here is a technical actor, not the King, so choices must name him
     // explicitly or the game plays them as ordinary lines. Action choices use the italic narration actor.

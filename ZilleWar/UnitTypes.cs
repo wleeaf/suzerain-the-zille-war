@@ -11,6 +11,7 @@ internal sealed class UnitTypes
     public WarUnitTypeData Infantry;
     public WarUnitTypeData Tank;
     public WarUnitTypeData Militia;
+    public WarUnitTypeData Ship;
     public WarUnitTypeData EnemyCityTemplate;
     public WarUnitTypeData PlayerCityTemplate;
 
@@ -56,6 +57,7 @@ internal sealed class UnitTypes
 
         Core.Log.Msg($"  unit types available: {string.Join(", ", pool.Select(u => $"{u.name}/'{u.unitName}'/{u.unitType}/{u.unitAlignment}"))}");
         r.Militia = pool.FirstOrDefault(e => e.unitName == "Militia") ?? pool.FirstOrDefault(e => e.name.Contains("Militia"));
+        r.Ship = pool.FirstOrDefault(e => e.name == "NavalUnit_MilitaryShip") ?? pool.FirstOrDefault(e => e.unitName == "Military ship");
         r.Infantry = enemyTypes.FirstOrDefault(e => e.unitName == "Infantry") ?? enemyTypes.OrderBy(e => e.attack + e.defence).First();
         r.Tank = enemyTypes.FirstOrDefault(e => e.unitName == "Tank") ?? enemyTypes.OrderByDescending(e => e.attack + e.defence).First();
         r.EnemyBasic = enemyTypes.OrderBy(e => e.attack + e.defence).FirstOrDefault();

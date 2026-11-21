@@ -63,70 +63,87 @@ internal sealed class AfterAction
 
     private static string Men(int units, int salt) => units <= 0 ? "a handful of" : $"{units * 850 + (units * 137 + salt * 31) % 300:N0}";
 
+    /// <summary>The operation's after-action report, written as the Chief of the General Staff's letter to the King.</summary>
     public string FullReport(ObjectiveInfo info, bool won)
     {
-        var s = new System.Text.StringBuilder();
-        s.Append("GENERAL STAFF OF THE ROYAL RIZIAN ARMY, MONTAKLAR\n");
-        s.Append($"After-Action Report: {info.Codename}\n");
-        s.Append("Classification: For His Majesty's eyes only\n\n");
+        bool endWon = ZilleCampaign.Liberated, endLost = ZilleCampaign.Defeated;
+        var paragraphs = new List<string> { "Your Majesty," };
 
-        s.Append($"1. OBJECTIVE\n{info.Aim}\n\n");
+        string opening = won
+            ? $"I have the honor to report that {info.Codename} has achieved its objective. {Taken(info)} {FrontSentence()}"
+            : $"It is my duty to report that {info.Codename} has failed. {info.Target} remains in Wehzek hands. {FrontSentence()}";
+        paragraphs.Add(opening.Trim());
 
-        s.Append("2. OUTCOME\n");
-        s.Append(won
-            ? $"The objective has been achieved. {(info.Target != null ? $"{info.Target} is in Rizian hands." : "No Wehzek unit remains on the mainland.")}\n\n"
-            : $"The objective has not been achieved. {(info.Target != null ? $"{info.Target} remains in Wehzek hands." : "Wehzek units still hold ground on the mainland.")}\n\n");
-
-        s.Append($"3. THE FRONT\n{Headline}");
+        var cities = new List<string>();
         if (CitiesTaken.Count > 0)
         {
-            s.Append($" Cities taken: {Join(CitiesTaken)}.");
+            cities.Add($"Our flag now flies over {Join(CitiesTaken)}");
         }
 
         if (CitiesRetaken.Count > 0)
         {
-            s.Append($" Rizian cities liberated: {Join(CitiesRetaken)}.");
+            cities.Add($"{Join(CitiesRetaken)} {(CitiesRetaken.Count > 1 ? "are" : "is")} Rizian again");
         }
 
         if (CitiesLost.Count > 0)
         {
-            s.Append($" Cities lost: {Join(CitiesLost)}.");
+            cities.Add($"to my regret, {Join(CitiesLost)} {(CitiesLost.Count > 1 ? "have" : "has")} fallen to the enemy");
         }
 
-        s.Append("\n\n4. LOSSES\n");
-        s.Append($"Royal Army: {PlayerDead} formations destroyed in action, an estimated {PlayerDeadMen} men killed, wounded or missing.\n");
-        s.Append($"Wehzek forces: {EnemyDead} formations destroyed, an estimated {EnemyDeadMen} men killed, wounded or captured.\n\n");
-
-        s.Append("5. THE ENEMY\n");
-        s.Append($"Intelligence rates the Wehzek garrison as {ZilleCampaign.Tier.ToLowerInvariant()}. ");
-        s.Append(ZilleCampaign.Tier switch
-        {
-            "Strong" => "Convoys from the Wehzek mainland are crossing the Strait of Kreleck without interference, and every night brings fresh men and ammunition. ",
-            "Default" => "Wehlen continues to supply the garrison by sea, though no longer in growing numbers. ",
-            "Strained" => "The garrison is short of fuel and shells; convoys from the mainland arrive late, and some do not arrive at all. ",
-            _ => "Deserters report half rations, idle tanks without fuel and rifles without ammunition. ",
-        });
-        s.Append(EnemyCitiesLeft.Count > 0 ? $"Wehlen still holds {Join(EnemyCitiesLeft)}.\n" : "Wehlen no longer holds any city on the mainland.\n");
+        string losses = PlayerDead > 0
+            ? $"It was not cheap. We lost {PlayerDead} {(PlayerDead == 1 ? "formation" : "formations")} in the fighting, some {PlayerDeadMen} men killed, wounded or missing."
+            : "Our losses were light, for which I thank the men who planned this as much as those who fought it.";
+        string enemyLosses = EnemyDead > 0
+            ? $" The enemy lost {EnemyDead} {(EnemyDead == 1 ? "formation" : "formations")}, perhaps {EnemyDeadMen} men, and our cages are filling with prisoners."
+            : " The enemy gave ground without losing many men, which means we will meet them again.";
+        paragraphs.Add((cities.Count > 0 ? Capitalize(string.Join("; ", cities)) + ". " : string.Empty) + losses + enemyLosses);
 
         List<string> notes = EventNotes();
         if (notes.Count > 0)
         {
-            s.Append("\n6. FROM THE FIELD\n");
-            foreach (string n in notes)
-            {
-                s.Append($"- {n}\n");
-            }
+            paragraphs.Add(string.Join(" ", notes));
         }
 
-        s.Append($"\n{(notes.Count > 0 ? 7 : 6)}. ASSESSMENT\n");
-        s.Append(EnemyCitiesLeft.Count == 0
-            ? "The remaining Wehzek positions cannot hold for long. The Staff recommends an operation to clear them before Wehlen can evacuate its men or land new ones."
-            : won
-                ? $"The enemy is off balance. The Staff recommends pressing the advantage before Wehlen can reinforce {EnemyCitiesLeft[0]}."
-                : "The Staff requests time to regroup and resupply, and warns that every week of delay lets Wehlen bring more men across the Strait of Kreleck.");
-        s.Append("\n\nGeneral Carlos Azaro, Chief of the General Staff");
-        return s.ToString();
+        if (endWon)
+        {
+            paragraphs.Add("With this, the war is over. The last Wehzek garrisons have sent officers under a white flag, and their " +
+                           "ships are taking the survivors back across the strait. For the first time in twenty-five years, there is " +
+                           "no foreign army on Rizian soil. I am told the men are singing.");
+        }
+        else if (endLost)
+        {
+            paragraphs.Add("I must be plain with Your Majesty. The army has given everything it had, and it cannot give more. " +
+                           $"{GarrisonSentence()} I have advised the Council that we accept the Alliance's offer of a ceasefire " +
+                           "before the enemy carries the fighting onto our side of the border. I take full responsibility for this failure.");
+        }
+        else
+        {
+            string next = ZilleCampaign.Available().Count > 0 ? ZilleCampaign.Info(ZilleCampaign.NextObjective).Target : null;
+            paragraphs.Add($"{GarrisonSentence()} " + (EnemyCitiesLeft.Count > 0 ? $"Wehlen still holds {Join(EnemyCitiesLeft)}. " : string.Empty) +
+                           (next != null
+                               ? $"The Staff is ready to move on {next} as soon as Your Majesty gives the order, and I would not wait long: every week we wait, Wehlen brings more men across the Strait of Kreleck."
+                               : "The Staff awaits Your Majesty's orders."));
+        }
+
+        paragraphs.Add("Your obedient servant,\nGeneral Carlos Azaro\nChief of the General Staff, Montaklar");
+        return string.Join("\n\n", paragraphs);
     }
+
+    private string Taken(ObjectiveInfo info) => info.Towns.Length > 1 ? $"{info.Target} are in our hands." : $"{info.Target} is in our hands.";
+
+    private string FrontSentence() => TilesGained > 0
+        ? $"Our divisions advanced across {TilesGained} {(TilesGained == 1 ? "district" : "districts")} of Zille{(TilesLost > 0 ? $", though the enemy took back {TilesLost} elsewhere" : string.Empty)}."
+        : TilesLost > 0 ? $"Wehzek counterattacks pushed our lines back across {TilesLost} {(TilesLost == 1 ? "district" : "districts")}." : "The front line barely moved.";
+
+    private static string GarrisonSentence() => ZilleCampaign.Tier switch
+    {
+        "Strong" => "The Wehzek garrison is still strong. Their convoys cross the strait every night, and every night brings fresh men and shells.",
+        "Default" => "The Wehzek garrison is holding its own. Their convoys still come, though no longer in growing numbers.",
+        "Strained" => "The Wehzek garrison is running short of fuel and shells. Their convoys arrive late, and some do not arrive at all.",
+        _ => "The Wehzek garrison is starving. Deserters speak of half rations, tanks without fuel and rifles without ammunition.",
+    };
+
+    private static string Capitalize(string x) => string.IsNullOrEmpty(x) ? x : char.ToUpperInvariant(x[0]) + x[1..];
 
     private static List<string> EventNotes()
     {
@@ -139,15 +156,15 @@ internal sealed class AfterAction
             }
         }
 
-        Note("Zille_BannerRaised", "In Zille, the Golden Banner was raised over the old Duke Fedo Sazon square.");
-        Note("Zille_Restraint", "In Zille, our troops were ordered to protect the Wehzek residents. Foreign correspondents have taken note.");
-        Note("Nanta_PortSeized", "At Nanta, the Wehzek supply ships and their stores were seized for our own army.");
-        Note("Nanta_PortSabotaged", "At Nanta, the piers were scuttled. Nothing will land there until the war is over.");
+        Note("Zille_BannerRaised", "In Zille, as you ordered, the Golden Banner was raised over the square that once bore Duke Fedo Sazon's name, and the crowd sang until dark.");
+        Note("Zille_Restraint", "In Zille, our men have kept your order to protect the Wehzek residents, and the foreign correspondents have noticed.");
+        Note("Nanta_PortSeized", "At Nanta we took the Wehzek supply ships intact; their stores are already feeding our own men.");
+        Note("Nanta_PortSabotaged", "At Nanta the piers have been blown, and nothing will land there until the war is over.");
         Note("Isor_Fishermen", "The fishing families of Isor have hung the old colors from their boats.");
-        Note("Auremina_MinesSecured", "The Auremina gold mines are under guard.");
-        Note("Auremina_MinersFreed", "The miners of Auremina have been declared free men of Rizia.");
-        Note("Evacuation", "Civilians were evacuated ahead of the Wehzek advance.");
-        Note("Counterattack", "Our commanders were ordered to retake every position lost.");
+        Note("Auremina_MinesSecured", "The Auremina gold mines are under guard, as you ordered.");
+        Note("Auremina_MinersFreed", "The miners of Auremina came out of the pits to cheer when they heard they were free men of Rizia.");
+        Note("Evacuation", "Where we had to give ground, the civilians were brought out first.");
+        Note("Counterattack", "Wherever we lost a position, our commanders went straight back for it, as you ordered.");
         return notes;
     }
 

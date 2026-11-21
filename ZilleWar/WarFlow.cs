@@ -15,7 +15,7 @@ internal static class WarFlow
 {
     private const string CouncilDecision = "ZilleWar.Decision_WarCouncil";
     private const string NextStepsDecision = "ZilleWar.Decision_NextSteps";
-    private const string Delegate = "Leave it to the General Staff. They know the ground.";
+    public const string VarEndingShown = "ZilleWar.War_EndingShown";
     private const string Ceasefire = "Seek a ceasefire through the Alliance of Nations. We hold what we have taken.";
 
     public const string VarCouncilHeld = "ZilleWar.WarCouncilHeld";
@@ -28,7 +28,7 @@ internal static class WarFlow
 
     public static void Register()
     {
-        foreach (string v in new[] { VarCouncilHeld, VarMobilizationShown, VarLastOperationTurn, VarOperationReady, VarCeasefire })
+        foreach (string v in new[] { VarCouncilHeld, VarMobilizationShown, VarLastOperationTurn, VarOperationReady, VarCeasefire, VarEndingShown })
         {
             Variables.Register(v);
         }
@@ -38,8 +38,8 @@ internal static class WarFlow
         Events.OnDecisionFinished += (_, e) => OnDecisionFinished(e.SelectedOptionInfo);
     }
 
-    private static bool AtWar => Variables.GetBool(AnDeclaration.VarDeclared) && !Variables.GetBool(ZilleCampaign.VarLiberated)
-                                 && !Variables.GetBool(VarCeasefire);
+    public static bool AtWar => Variables.GetBool(AnDeclaration.VarDeclared) && !ZilleCampaign.Liberated && !ZilleCampaign.Defeated
+                                && !Variables.GetBool(VarCeasefire);
 
     private static void OnEvaluateStep()
     {
@@ -57,6 +57,14 @@ internal static class WarFlow
             Core.Log.Error($"WarState failed: {ex}");
         }
 
+        if (!AtWar && Variables.GetBool(AnDeclaration.VarDeclared) && !Variables.GetBool(VarEndingShown))
+        {
+            Variables.Set(VarEndingShown, true);
+            NewsWire.PublishWarEnd(ZilleCampaign.Liberated ? "victory" : ZilleCampaign.Defeated ? "defeat" : "ceasefire");
+            // The war is over; vanilla's relation rule takes Wehlen from here, and it will not be friendly.
+            Variables.Set("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower", Math.Min(-6, Variables.GetInt("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower")));
+        }
+
         if (!AtWar || GameState.CurrentStepNum is null or < 2 && GameState.CurrentTurnNum == 1)
         {
             return;
@@ -67,7 +75,13 @@ internal static class WarFlow
             if (!Variables.GetBool(VarMobilizationShown))
             {
                 Variables.Set(VarMobilizationShown, true);
+                SupplyWar.OnWarDeclared();
                 NewsWire.PublishDeclaration();
+            }
+
+            if (Variables.GetBool(VarCouncilHeld))
+            {
+                SupplyWar.Offer();
             }
 
             int turn = GameState.CurrentTurnNum ?? 0;
@@ -84,17 +98,20 @@ internal static class WarFlow
                 return;
             }
 
+            ObjectiveInfo next = ZilleCampaign.Info(ZilleCampaign.NextObjective);
             CustomDecisionFragment decision = firstCouncil
                 ? new CustomDecisionFragment(name, SuzerainStoryPackInfo.Rizia, SuzerainTokenName.RiziaCityPorteDrazon,
                     "The Zille War Council",
                     "The map table in the Council Chambers has been cleared of everything but Zille. Generals and admirals stand " +
-                    "around it in silence, waiting. Wehlen's border wall runs along the river line from Mave Nortus to the Gulf of " +
-                    "Moridia; behind it lie the gold hills of Auremina, the harbor of Zille, and the northern port of Nanta, where " +
-                    "Wehlen's convoys land. \"Where do we strike first, Your Majesty?\"",
+                    "around it in silence. Wehlen's border wall runs along the river line from Mave Nortus to the Gulf of Moridia. " +
+                    "General Azaro lays his hand on the coast. \"Zille first, Your Majesty. The city, the harbor, and the Wehzek " +
+                    "headquarters with them. Take Zille, and their whole southern front is cut off from the sea. Then Auremina and " +
+                    "the hills. Then the northern ports, Isor and Nanta, and the war is over.\" " +
+                    $"{next.Codename} is ready: {next.Aim}",
                     "The Zille War Council", "The General Staff awaits the King's orders.")
                 : new CustomDecisionFragment(name, SuzerainStoryPackInfo.Rizia, SuzerainTokenName.RiziaCityPorteDrazon,
                     "The War in Zille: Next Steps",
-                    $"The General Staff has updated the map. {Situation()} \"What are your orders for the next operation, Your Majesty?\"",
+                    $"The General Staff has updated the map. {Situation()} The next phase of the plan is {next.Codename}: {next.Aim}",
                     "The War in Zille", "The General Staff awaits orders for the next operation.");
             GameState.AddCustomStoryFragment(decision);
         }
@@ -132,12 +149,11 @@ internal static class WarFlow
         foreach (Objective o in ZilleCampaign.Available())
         {
             ObjectiveInfo info = ZilleCampaign.Info(o);
-            string text = $"{info.Codename}: {info.Aim}";
+            string text = $"Give the order. {info.Codename} begins at dawn.";
             OptionToObjective[text] = o;
             DecisionManager.AddOption(text);
         }
 
-        DecisionManager.AddOption(Delegate);
         if (name == NextStepsDecision)
         {
             DecisionManager.AddOption(Ceasefire);
@@ -158,9 +174,11 @@ internal static class WarFlow
             return;
         }
 
-        Objective objective = OptionToObjective.TryGetValue(selected.Text, out Objective o)
-            ? o
-            : ZilleCampaign.Available().OrderBy(x => x == Objective.Wall ? 0 : 1).First();   // the generals go for the wall
+        if (!OptionToObjective.TryGetValue(selected.Text, out Objective objective))
+        {
+            return;
+        }
+
         ZilleCampaign.NextObjective = objective;
         Variables.Set(VarCouncilHeld, true);
         Variables.Set(VarLastOperationTurn, GameState.CurrentTurnNum ?? 0);

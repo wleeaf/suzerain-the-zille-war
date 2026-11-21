@@ -72,6 +72,7 @@ internal static class ZilleMapSwap
         {
             RestoreBounds();
             RestoreVanillaBlockades();
+            SetTableProps(true);
             if (root != null && root.name.EndsWith(SwappedSuffix))
             {
                 Core.Log.Warning("A vanilla war is starting on a map that was converted to Zille. Reload the save before playing the Pales war.");
@@ -93,6 +94,7 @@ internal static class ZilleMapSwap
         SwapPanels(root.transform, out Rect mapRect);
         BuildTiles(root.transform, mapRect);
         DisableVanillaBlockades();
+        SetTableProps(false);
         root.name += SwappedSuffix;
         Core.Log.Msg("Zille war map ready.");
     }
@@ -271,6 +273,42 @@ internal static class ZilleMapSwap
         Core.Log.Msg($"Disabled {_vanillaBlockades?.Count} Pales naval blockades for the Zille war.");
     }
 
+    // The King's headphones sit on the table under the bottom-right corner of the Zille sheet and show
+    // through as a black shape behind the action points and the End Turn button.
+    private static readonly string[] HiddenTableProps =
+    {
+        "Environments/Environment_Rizia_Default/Table_Rizia_Default/Objects/Persistent Decorative Objects/Heaphones",
+    };
+
+    private static readonly List<GameObject> _hiddenProps = new();
+
+    internal static void SetTableProps(bool visible)
+    {
+        if (visible)
+        {
+            foreach (GameObject g in _hiddenProps)
+            {
+                if (g != null)
+                {
+                    g.SetActive(true);
+                }
+            }
+
+            _hiddenProps.Clear();
+            return;
+        }
+
+        foreach (string path in HiddenTableProps)
+        {
+            GameObject g = GameObject.Find(path);
+            if (g != null && g.activeSelf)
+            {
+                g.SetActive(false);
+                _hiddenProps.Add(g);
+            }
+        }
+    }
+
     private static void RestoreVanillaBlockades()
     {
         WarConfiguration cfg = Managers.Instance?.WarFlowManager?.warConfiguration;
@@ -301,8 +339,14 @@ internal static class Trace_WarOperationManager_Setup
 [HarmonyPatch(typeof(MapManager), nameof(MapManager.LoadMap), typeof(MapConfiguration.MapType))]
 internal static class Trace_MapManager_LoadMap
 {
-    private static void Prefix(MapConfiguration.MapType mapType) =>
+    private static void Prefix(MapConfiguration.MapType mapType)
+    {
         Core.Log.Msg($"MapManager.LoadMap({mapType})");
+        if (mapType != MapConfiguration.MapType.War)
+        {
+            ZilleMapSwap.SetTableProps(true);
+        }
+    }
 }
 
 /// <summary>

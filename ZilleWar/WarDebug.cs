@@ -72,24 +72,12 @@ internal static class WarDebug
         ObjectiveInfo info = ZilleCampaign.Info(objective);
         WarTileManager tm = Managers.Instance.WarTileManager;
         var targets = new List<WarTile>();
-        if (info.Target != null)
+        foreach (string town in info.Towns)
         {
-            WarTile t = tm.GetTileByName(ZilleCampaign.TownTile(info.Target));
+            WarTile t = tm.GetTileByName(ZilleCampaign.TownTile(town));
             if (t != null && t.currentAllegiance != WarToken.WarAllegiance.Player)
             {
                 targets.Add(t);
-            }
-        }
-        else
-        {
-            foreach (WarTile t in tm.allTiles)
-            {
-                string n = t?.currentWarTileData?.tileName;
-                if (n != null && ZilleData.ByName.TryGetValue(n, out TileSpec spec) && spec.Type == "Land" && spec.Region == "zille"
-                    && t.currentAllegiance == WarToken.WarAllegiance.Enemy)
-                {
-                    targets.Add(t);
-                }
             }
         }
 
@@ -147,9 +135,9 @@ internal static class WarDebug
             Core.Log.Msg($"  {n}: now {tile.currentAllegiance}, token '{tile.currentWarToken?.warUnitTypeData?.unitName}'");
         }
 
-        if (info.Target != null)
+        foreach (string town in info.Towns)
         {
-            Variables.Set(ZilleOperation.CapturedVar(info.Target), true);
+            Variables.Set(ZilleOperation.CapturedVar(town), true);
         }
 
         Core.Log.Msg("Objective taken. Press F7 to jump to the last round, or play on.");

@@ -12,7 +12,8 @@ internal enum Objective
     Clear,      // mop up whatever Wehlen still holds
 }
 
-internal sealed record ObjectiveInfo(Objective Id, string Codename, string Target, string Aim);
+/// <summary>An operation's aim. <see cref="Towns"/> must all be taken; <see cref="Target"/> is their display name.</summary>
+internal sealed record ObjectiveInfo(Objective Id, string Codename, string Target, string Aim, string[] Towns);
 
 /// <summary>
 /// Campaign state for the Zille war, persisted through Suzerain Modding Kit variables so it lives in the
@@ -29,21 +30,24 @@ internal static class ZilleCampaign
     public const string VarHistory = "ZilleWar.State_History";          // "Wall:won;Harbor:lost"
     public const string VarCurrentOp = "ZilleWar.State_CurrentOperation"; // "k:Objective" while an operation is set up
     public const string VarOwnersAtStart = "ZilleWar.State_OwnersAtStart";
+    public const string VarDefeated = "ZilleWar.War_Zille_Defeated";      // an operation failed: the war is lost
 
     public const int DefaultStrength = 8;
     public const int MaxOperations = 4;
 
     public static readonly ObjectiveInfo[] Objectives =
     {
-        new(Objective.Wall, "Operation Iron Gate", "Auremina", "Breach the Wehzek border wall and take the gold hills of Auremina."),
-        new(Objective.Harbor, "Operation Golden Harbor", "Zille", "Drive along the Gulf of Moridia and take Zille and its harbor."),
-        new(Objective.Ports, "Operation Northern Crown", "Nanta", "Push up the Sudis coast and take the port of Nanta."),
-        new(Objective.Clear, "Operation Homecoming", null, "Clear the last Wehzek positions from the mainland."),
+        new(Objective.Harbor, "Operation Golden Harbor", "Zille", "Drive down the river to the Gulf of Moridia and take the city of Zille and its harbor.", new[] { "Zille" }),
+        new(Objective.Wall, "Operation Iron Gate", "Auremina", "Break into the hills and take Auremina and its gold mines.", new[] { "Auremina" }),
+        new(Objective.Ports, "Operation Northern Crown", "Isor and Nanta", "Take the ports of Isor and Nanta and cut Wehlen's last lifelines across the strait.", new[] { "Isor", "Nanta" }),
     };
+
+    /// <summary>The campaign is fought in this order. A failed operation loses the war.</summary>
+    public static readonly Objective[] Sequence = { Objective.Harbor, Objective.Wall, Objective.Ports };
 
     public static void RegisterVariables()
     {
-        foreach (string v in new[] { VarOwners, VarOpsDone, VarNextObjective, VarStrength, VarLiberated, VarHistory, VarCurrentOp, VarOwnersAtStart })
+        foreach (string v in new[] { VarOwners, VarOpsDone, VarNextObjective, VarStrength, VarLiberated, VarHistory, VarCurrentOp, VarOwnersAtStart, VarDefeated })
         {
             Variables.Register(v);
         }
@@ -81,6 +85,11 @@ internal static class ZilleCampaign
         _ => "Starved",
     };
 
+    /// <summary>Wehlen's warships in Zille waters: fewer as the supply war bites and as the strait is contested.</summary>
+    public static int EnemyShips => Math.Max(0, Tier switch { "Strong" => 3, "Default" => 3, "Strained" => 2, _ => 1 }
+                                                - (Variables.GetBool(SupplyWar.Flag(SupplyWar.Lever.RoyalNavy)) ? 1 : 0)
+                                                - (Variables.GetBool(SupplyWar.Flag(SupplyWar.Lever.Lespia)) ? 1 : 0));
+
     public static ObjectiveInfo Info(Objective o) => Objectives.First(x => x.Id == o);
 
     /// <summary>The operation that is set up / being fought, from the saved "k:Objective".</summary>
@@ -92,40 +101,45 @@ internal static class ZilleCampaign
 
     public static Objective NextObjective
     {
-        get
-        {
-            string s = Variables.GetString(VarNextObjective);
-            Objective o = Enum.TryParse(s, out Objective parsed) ? parsed : Objective.Wall;
-            return Available().Contains(o) ? o : Available().FirstOrDefault();
-        }
+        get => Available().FirstOrDefault();
         set => Variables.Set(VarNextObjective, value.ToString());
     }
 
-    /// <summary>Objectives whose target city is still Wehlen's (Clear once all three are taken).</summary>
+    public static bool Defeated => Variables.GetBool(VarDefeated);
+    public static bool Liberated => Variables.GetBool(VarLiberated);
+
+    /// <summary>The next operation in the fixed order whose towns Wehlen still holds (empty when the war is over).</summary>
     public static List<Objective> Available()
     {
-        Dictionary<string, bool> owners = CurrentOwners();
-        var list = Objectives.Where(o => o.Target != null && IsEnemy(owners, TownTile(o.Target))).Select(o => o.Id).ToList();
-        if (list.Count == 0 && owners.Any(kv => !kv.Value && ZilleData.ByName[kv.Key].Region == "zille"))
+        var list = new List<Objective>();
+        if (Defeated || Liberated)
         {
-            list.Add(Objective.Clear);
+            return list;
+        }
+
+        Dictionary<string, bool> owners = CurrentOwners();
+        if (!owners.Any(kv => !kv.Value && ZilleData.ByName[kv.Key].Region == "zille"))
+        {
+            return list;
+        }
+
+        Objective? next = Sequence.Cast<Objective?>().FirstOrDefault(o => Info(o.Value).Towns.Any(t => IsEnemy(owners, TownTile(t))));
+        if (next != null)
+        {
+            list.Add(next.Value);
         }
 
         return list;
     }
 
-    public static Objective CycleObjective()
-    {
-        List<Objective> av = Available();
-        if (av.Count == 0)
-        {
-            return NextObjective;
-        }
+    public static bool AllTaken(ObjectiveInfo info, Dictionary<string, bool> owners) =>
+        info.Towns.All(t => !IsEnemy(owners, TownTile(t)));
 
-        int i = av.IndexOf(NextObjective);
-        NextObjective = av[(i + 1) % av.Count];
-        return NextObjective;
-    }
+    /// <summary>The first objective town Wehlen still holds (the operation's focus).</summary>
+    public static string FocusTile(ObjectiveInfo info, Dictionary<string, bool> owners) =>
+        info.Towns.Select(TownTile).FirstOrDefault(t => IsEnemy(owners, t)) ?? TownTile(info.Towns[0]);
+
+    public static Objective CycleObjective() => NextObjective;
 
     // ---- tile ownership: true = Rizia (player), false = Wehlen (enemy); land tiles only ----
 
@@ -179,6 +193,7 @@ internal static class ZilleCampaign
         Variables.Set(VarNextObjective, Objective.Wall.ToString());
         Variables.Set(VarStrength, DefaultStrength);
         Variables.Set(VarLiberated, false);
+        Variables.Set(VarDefeated, false);
         Variables.Set(VarHistory, string.Empty);
         foreach (TownSpec t in ZilleData.Towns.Where(t => t.Role == "city"))
         {
@@ -194,7 +209,7 @@ internal static class ZilleCampaign
         int zilleHeld = o.Count(kv => kv.Value && ZilleData.ByName[kv.Key].Region == "zille");
         int zilleTotal = ZilleData.Tiles.Count(t => t.Region == "zille" && t.Type == "Land");
         int riziaLost = o.Count(kv => !kv.Value && ZilleData.ByName[kv.Key].Region == "rizia");
-        return $"ops done={OperationsDone}, next={NextObjective} ({Info(NextObjective).Codename}), available=[{string.Join(",", Available())}], " +
+        return $"ops done={OperationsDone}, next={(Available().Count > 0 ? Info(NextObjective).Codename : "none")}, defeated={Defeated}, " +
                $"strength={Strength} ({Tier}), Zille tiles held {zilleHeld}/{zilleTotal}, Rizian tiles lost {riziaLost}, " +
                $"history='{Variables.GetString(VarHistory)}', liberated={Variables.GetBool(VarLiberated)}";
     }
@@ -230,26 +245,32 @@ internal static class ZilleCampaign
 
         SaveOwners(owners);
         ObjectiveInfo info = Info(objective);
-        bool won = objective == Objective.Clear
-            ? !owners.Any(kv => !kv.Value && ZilleData.ByName[kv.Key].Region == "zille")
-            : !IsEnemy(owners, TownTile(info.Target));
+        bool won = AllTaken(info, owners);
         Variables.Set(ResultVar(k), won);
         foreach (TownSpec town in ZilleData.Towns.Where(t => t.Role == "city" && t.Side == "zille" && t.Tile != null))
         {
             Variables.Set(ZilleOperation.CapturedVar(town.Name), !IsEnemy(owners, town.Tile));
         }
 
-        bool liberated = !owners.Any(kv => !kv.Value && ZilleData.ByName[kv.Key].Region == "zille");
+        // The war ends here if Zille is cleared, if the last operation succeeds (the remaining garrisons
+        // surrender), or if an operation fails.
+        bool cleared = !owners.Any(kv => !kv.Value && ZilleData.ByName[kv.Key].Region == "zille");
+        bool liberated = won && (cleared || objective == Sequence[^1]);
+        if (liberated && !cleared)
+        {
+            foreach (string t in owners.Keys.Where(t => ZilleData.ByName[t].Region == "zille").ToList())
+            {
+                owners[t] = true;
+            }
+
+            SaveOwners(owners);
+        }
+
         Variables.Set(VarLiberated, liberated);
+        Variables.Set(VarDefeated, !won);
         Variables.Set(VarOpsDone, Math.Max(OperationsDone, k));
         string hist = Variables.GetString(VarHistory);
         Variables.Set(VarHistory, $"{hist}{(string.IsNullOrEmpty(hist) ? "" : ";")}{objective}:{(won ? "won" : "lost")}");
-        List<Objective> next = Available();
-        if (next.Count > 0)
-        {
-            NextObjective = next[0];
-        }
-
         AfterAction a = AfterAction.Compute(k, OwnersAtStart(), owners);
         string report = a.FullReport(info, won);
         ZilleReports.SetDescription($"Operation_Zille_{k}_Result_Won", report);

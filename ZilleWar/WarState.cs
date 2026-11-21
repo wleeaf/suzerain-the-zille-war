@@ -1,3 +1,4 @@
+using HarmonyLib;
 using Il2Cpp;
 using SuzerainModdingKit;
 using ConditionalInstruction = Il2Cpp.ConditionalInstructionProperties.ConditionalInstruction;
@@ -16,7 +17,8 @@ namespace ZilleWar;
 internal static class WarState
 {
     public const string VarActive = "ZilleWar.War_Active";
-    private const string ActiveCondition = "ZilleWar.War_Active == true";
+    // Vanilla-namespaced, so the game's expression converter reads it like its own conditions.
+    private const string ActiveCondition = "RiziaDLC.CountryRelation_Wehlen_AtWar == true";
     private const string NeverVariable = "ZilleWar.Never";
 
     private const string AtWarInstruction =
@@ -44,12 +46,19 @@ internal static class WarState
 
     private static readonly Dictionary<string, string> OriginalNewsVariables = new(StringComparer.Ordinal);
 
-    public static void RegisterVariables() => Variables.Register(VarActive);
+    /// <summary>True while the war is fought (mirrors <see cref="VarActive"/> for the Harmony patch).</summary>
+    public static bool Active { get; private set; }
 
     /// <summary>Called on every story step. <paramref name="atWar"/> is true while the war is being fought.</summary>
     public static void Apply(bool atWar)
     {
         Variables.Set(VarActive, atWar);
+        Active = atWar;
+        if (!atWar)
+        {
+            Variables.Set("RiziaDLC.CountryRelation_Wehlen_AtWar", false);
+        }
+
         PatchRelationsInstruction();
         SuppressPeacetimeNews(atWar);
         if (atWar)
@@ -140,6 +149,24 @@ internal static class WarState
                     p.IsEnabledVariable = original;
                 }
             }
+        }
+    }
+}
+
+/// <summary>
+/// Every relationship change, from conversations, decrees or vanilla's per-fragment relation rule, goes
+/// through this Lua function. While the war lasts, Wehlen stays At War whatever the caller asks for.
+/// </summary>
+[HarmonyPatch(typeof(TokenInformationPanel), nameof(TokenInformationPanel.UpdateCountryRelationship))]
+internal static class Patch_UpdateCountryRelationship
+{
+    private static void Prefix(string countryNameInDatabase, ref string relationship)
+    {
+        if (countryNameInDatabase == "Rizia_Country_Wehlen" && relationship != "AtWar"
+            && (WarState.Active || Variables.GetBool(WarState.VarActive)))
+        {
+            Core.Log.Msg($"Wehlen relation '{relationship}' requested during the war; keeping At War.");
+            relationship = "AtWar";
         }
     }
 }

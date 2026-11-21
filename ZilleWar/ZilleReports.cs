@@ -12,24 +12,19 @@ internal static class ZilleReports
         string won = $"Operation_Zille_{k}_Result_Won", lost = $"Operation_Zille_{k}_Result_Lost";
         (string winText, string loseText) = info.Id switch
         {
-            Objective.Wall => (
-                "Our divisions have broken through the Wehzek border wall. Auremina and its gold hills are in Rizian hands, " +
-                "and the road into the heart of Zille lies open.",
-                "The Wehzek border wall held. Our assault on the Auremina hills has been thrown back with heavy losses."),
             Objective.Harbor => (
-                "Zille is ours. The Golden Banner flies over the harbor for the first time since the lease, and Wehlen has " +
-                "lost its main port on our coast. The world is watching how we hold the city.",
-                "The drive on Zille has stalled. The harbor remains in Wehzek hands, and Smolak's ships still come and go."),
-            Objective.Ports => (
-                "Nanta has fallen. Wehlen's last convoys across the Strait of Kreleck have nowhere left to land.",
-                "The push up the Sudis coast has failed. Nanta still stands, and through it Wehlen keeps Zille supplied."),
+                "Zille is ours. The Golden Banner flies over the harbor for the first time since the lease, and Wehlen has lost its " +
+                "headquarters and its main port on our coast.",
+                "The drive on Zille has failed. The city and its harbor remain in Wehzek hands."),
+            Objective.Wall => (
+                "Auremina and its gold hills are in Rizian hands, and the heart of Zille lies open.",
+                "Our assault on Auremina has been thrown back with heavy losses."),
             _ => (
-                "The last Wehzek positions have surrendered. For the first time in a quarter of a century, there is no foreign " +
-                "army on the Rizian mainland.",
-                "Wehzek holdouts still cling to the mainland. The war in Zille is not yet over."),
+                "Isor and Nanta have fallen. Wehlen has nowhere left to land its convoys, and the last garrisons are surrendering.",
+                "The northern ports still hold. Through Isor and Nanta, Wehlen keeps Zille supplied."),
         };
-        Add(Clone(vw, won, $"{info.Codename} - Victory", winText));
-        Add(Clone(vl ?? vw, lost, $"{info.Codename} - Failed", loseText));
+        Add(Clone(vw, won, $"{info.Codename}: Victory", winText));
+        Add(Clone(vl ?? vw, lost, $"{info.Codename}: Failed", loseText));
         return (won, lost);
     }
 

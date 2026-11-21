@@ -138,19 +138,17 @@ internal static class NewsWire
             "Kingdom. By dawn, reservists across Brenas were reporting to their depots. The Royal Herald stands with the King, with " +
             "the Royal Army, and with every Rizian family in Zille who has waited twenty-five years for this day."));
 
+        bool embargo = SupplyWar.RumburgEmbargo;
         Publish("Rumburg", "RH", "OUR FRIENDS IN THORNBOURGH: RUMBURG STANDS WITH RIZIA", P(
-            "Within hours of the King's declaration, Her Majesty Queen Beatrice of Rumburg sent word that the Kingdom of Rumburg " +
-            "\"stands shoulder to shoulder with its Rizian brothers.\" The oil embargo on Wehlen, in force since the Friendship Day " +
-            "bombing, is to be tightened at once, and Rumburgian officials have promised to expedite shipments of arms and equipment " +
-            "already contracted to the Royal Army.",
-            "\"Wehlen chose to break its word before the whole world,\" a spokeswoman for the Queen said in Thornbourgh. \"It cannot " +
-            "now be surprised that the world's monarchies stand with the injured party.\" Several GRACE members are expected to follow " +
-            "with statements of their own.",
-            Variables.GetString(AnDeclaration.VarRumburgCable) == "publish"
-                ? "The Royal Herald has obtained the text of the Queen's telegram to the King, released by the palace this morning: " +
-                  "\"RUMBURG STANDS WITH YOU. GIVE THEM NOTHING. BEATRICE.\" The bonds between our two crowns are bonds of family. " +
-                  "Today they are also bonds of steel."
-                : "The bonds between our two crowns are bonds of family. Today they are also bonds of steel."));
+            "Within hours of the King's declaration, Her Majesty Queen Beatrice of Rumburg let it be known that the Kingdom of " +
+            "Rumburg \"stands with its Rizian family, today and for as long as this takes.\" Rumburgian officials have promised to " +
+            "speed up shipments of arms and equipment already contracted to the Royal Army.",
+            embargo
+                ? "Rumburg stopped buying Wehzek oil after the King's visit to Thornbourgh, and a palace source says the Queen has no " +
+                  "intention of letting that change. \"Smolak will pay for his convoys with money he no longer has,\" the source said."
+                : "Rumburg still imports Wehzek oil, a fact that Wehzek state radio was quick to point out last night. Palace sources " +
+                  "say the question is now \"under discussion\" between the two crowns.",
+            "The bonds between our two crowns are bonds of family. Today they are also bonds of steel."));
 
         Publish("Frontline", "RH", "Mark Farus' From The Frontlines: The Night Trains North", P(
             "The northern line out of Porte Drazon has not slept since the news arrived from Konstantium. Every hour another train " +
@@ -174,8 +172,10 @@ internal static class NewsWire
 
         Publish("Grace", "G", "GRACE Monarchies Close Ranks Behind Rizia", P(
             "The Kingdom of Rumburg has announced its full support for Rizia's war to recover Zille, calling Wehlen's refusal to " +
-            "honor the 1927 lease \"an act of bad faith that no sovereign nation could be expected to tolerate.\" Rumburg will extend " +
-            "its existing oil embargo on Wehlen and has promised to accelerate arms deliveries to Porte Drazon.",
+            "honor the 1927 lease \"an act of bad faith that no sovereign nation could be expected to tolerate.\" " +
+            (embargo
+                ? "Rumburg's partial embargo on Wehzek oil, agreed with Rizia earlier this year, now looks less like trade policy and more like preparation."
+                : "Rumburg has not, however, stopped buying Wehzek oil, and analysts in Konstantium are asking how long that can last."),
             "Diplomats in Konstantium expect other GRACE monarchies to follow. United Contana, Wehlen's principal backer, has so far " +
             "issued no statement, though its ambassador was seen leaving the Wehzek embassy late into the night.",
             "The split hardens a fault line that has run through South Merkopa for a generation, and observers fear that a local war " +
@@ -280,12 +280,18 @@ internal static class NewsWire
             "sandbags and machine-gun posts."));
 
         // --- reports from abroad ---
-        Report("Declaration_Rumburg", SuzerainTokenName.RiziaCountryRumburg, "Rumburg Stands With Rizia", P(
+        Report("Declaration_Rumburg", SuzerainTokenName.RiziaCountryRumburg, "A Letter from Queen Beatrice", P(
             "\"Dear Romus,",
-            "Rumburg has watched Wehlen trample its word for long enough. Know that you do not stand alone. I have ordered the oil " +
-            "embargo on Wehlen tightened, and our shipments of arms to your army will be sent ahead of every other contract we hold. " +
-            "Our ships in the Sudis Sea will escort Rizian merchantmen wherever they sail.",
-            "Finish this quickly, and finish it well. The world will judge us both by what happens in Zille.",
+            "I am writing this a second time because the first letter was all worry and no help. Forgive me. You have done what " +
+            "your father could not bring himself to do, and I am proud of you, and I am frightened for you, both at once.",
+            embargo
+                ? "Our oil merchants will not touch a Wehzek barrel while this lasts. The arms you ordered will sail before anyone " +
+                  "else's, and our ships in the Sudis Sea will look after yours."
+                : "I know we still buy Smolak's oil. If you want that ended, say so, and I will find a way to explain it to my " +
+                  "ministers. The arms you ordered will sail before anyone else's.",
+            "There are also people inside Wehlen, the Bludish Freedom Front, whom Rumburg has known for some time. They are not " +
+            "pleasant people. But they hate Smolak, and they could be useful to you. Think about it carefully before you ask.",
+            "Come home safely from this, Romus. All of you.",
             "Your sister, Beatrice\""));
 
         Report("Declaration_Wehlen", SuzerainTokenName.RiziaCountryWehlen, "Wehlen Mobilizes", P(
@@ -310,9 +316,16 @@ internal static class NewsWire
             "Lespia has never forgiven Smolak for his speeches against it, nor Rizia for much else. It will help whichever side it " +
             "profits most from helping."));
 
-        Report("Declaration_Pales", SuzerainTokenName.RiziaCountryPales, "Pales Mans Its Border", P(
-            "Duke Reinhart has ordered Palesian forces to the border with the Pales Administrative District \"as a precaution.\" " +
-            "Palesian newspapers are asking the question their Duke asked in Konstantium: whether Pales will be next."));
+        bool palesFriendly =
+            (Variables.GetBool("RiziaDLC.Diplomacy_Pales_GasField_Buy") && !Variables.GetBool("RiziaDLC.Diplomacy_Pales_GasField_BuyCancelled")) ||
+            (Variables.GetBool("RiziaDLC.Diplomacy_Pales_GasField_Cede") && !Variables.GetBool("RiziaDLC.Diplomacy_Pales_GasField_CedeCancelled")) ||
+            Variables.GetBool("RiziaDLC.CountryRelation_Pales_Friendly") || Variables.GetBool("RiziaDLC.CountryRelation_Pales_Allied");
+        Report("Declaration_Pales", SuzerainTokenName.RiziaCountryPales, palesFriendly ? "Pales Stays Calm" : "Pales Mans Its Border", palesFriendly
+            ? P("Duke Reinhart has told the Palesian parliament that the gas agreement with Rizia \"stands, war or no war,\" and that " +
+                "Pales has no quarrel with either side. A few extra companies have been sent to the border, but Palesian officials " +
+                "have taken care to call it routine.")
+            : P("Duke Reinhart has ordered Palesian forces to the border with the Pales Administrative District \"as a precaution.\" " +
+                "Palesian newspapers are asking the question their Duke asked in Konstantium: whether Pales will be next."));
 
         Report("Declaration_Derdia", SuzerainTokenName.RiziaCountryDerdia, "Derdia's Quiet Approval", P(
             "Supreme Wiseman Azmal's government has not condemned the declaration. Derdian clerics have spoken of Zille as \"a wound " +
@@ -449,6 +462,130 @@ internal static class NewsWire
             Report(key + "_Lespia", SuzerainTokenName.RiziaCountryLespia, "Lespia's Offer Stands", P(
                 "A Lespian diplomat has let our embassy know, very quietly, that Prime Minister Alvarez's offer of \"practical " +
                 "arrangements\" remains open. Lespian warships have been seen shadowing Wehzek convoys in the Sudis Sea."));
+        }
+    }
+
+    // ------------------------------------------------------------------ the supply war
+
+    public static void LeverNews(SupplyWar.Lever l)
+    {
+        switch (l)
+        {
+            case SupplyWar.Lever.Embargo:
+                Publish("Embargo", "G", "Rumburg Cuts Off Wehzek Oil", P(
+                    "The Kingdom of Rumburg will no longer buy oil from Wehlen, Queen Beatrice's government announced, in a move " +
+                    "agreed with Rizia. Rizian gas and electricity will make up the shortfall.",
+                    "For Wehlen, which sold a large share of its oil to Rumburg, the loss comes at the worst possible moment. " +
+                    "Economists in Konstantium estimate that the war in Zille already costs Smolak's treasury more than it earns."));
+                Report("Lever_Embargo", SuzerainTokenName.RiziaCountryRumburg, "Rumburg Closes the Tap", P(
+                    "\"Dear Romus, it is done. Not a single barrel of Wehzek oil will be bought in Rumburg until you tell me otherwise. " +
+                    "My ministers grumbled about the price of your gas, and then they remembered who is paying for Smolak's convoys. " +
+                    "Your sister, Beatrice\""));
+                break;
+            case SupplyWar.Lever.BffRaids:
+                Publish("BffRaids", "G", "Explosions Rock Wehzek Ports; Bludish Freedom Front Claims Attacks", P(
+                    "A series of explosions has damaged piers and fuel depots in two Wehzek ports facing the Strait of Kreleck. The " +
+                    "Bludish Freedom Front, a militant group outlawed in both Wehlen and Sordland, has claimed responsibility.",
+                    "Wehlen accuses Rumburg of arming the group and Rizia of directing it. Sordland has condemned \"any government that " +
+                    "makes common cause with terrorists.\" Several convoys bound for Zille are reported to have been delayed."));
+                Publish("BffRaids", "V", "Is the King Paying Terrorists?", P(
+                    "The Bludish Freedom Front blows up ports and kills dockworkers. It is outlawed in two countries. And now, according " +
+                    "to Wehzek radio and several foreign newspapers, it is fighting Rizia's war for it.",
+                    "The palace has not denied it. The Voice of Rizia asks what kind of victory is bought with bombs in civilian harbors."));
+                Report("Lever_BffRaids", SuzerainTokenName.RiziaCountryWehlen, "Fires in the Wehzek Ports", P(
+                    "Our agents confirm that the Bludish Freedom Front struck the Wehzek ports facing the strait. Two supply ships " +
+                    "burned at the quay, and the next convoys for Zille have been held back. Wehlen is now accusing us openly, and " +
+                    "Sordland and Valgsland have joined in."));
+                break;
+            case SupplyWar.Lever.BffFighters:
+                Report("Lever_BffFighters", SuzerainTokenName.RiziaCityMontaklar, "Bludish Fighters Arrive in Montaklar", P(
+                    "Two companies of Bludish Freedom Front fighters, brought in through Rumburg's contacts, arrived in Montaklar at " +
+                    "night in covered trucks. They are hard men who know Wehzek tactics well, and they will fight under Rizian officers " +
+                    "for Rizian pay.",
+                    "Some of our officers are uneasy. One of them asked the General Staff, in writing, who will answer for what these men " +
+                    "do once they are in Zille."));
+                Publish("BffFighters", "V", "Strange Allies in Montaklar", P(
+                    "Residents of Montaklar report foreign fighters in unmarked uniforms at the army barracks, speaking Bludish. If these " +
+                    "are what they appear to be, the King has invited a terrorist organization into the Royal Army."));
+                break;
+            case SupplyWar.Lever.RoyalNavy:
+                Publish("RoyalNavy", "RH", "Royal Navy Strikes in the Strait of Kreleck", P(
+                    "In a night action in the Strait of Kreleck, ships of the Royal Navy intercepted a Wehzek convoy bound for Zille. " +
+                    "Three transports were sunk and their escort driven off. One of our own ships was lost with many of her crew.",
+                    "The Royal Herald salutes the sailors who gave their lives. Their sacrifice means fewer Wehzek guns at the front."));
+                Report("Lever_RoyalNavy", SuzerainTokenName.RiziaCitySallabes, "The Fleet Returns to Sallabes", P(
+                    "The squadron that went into the strait has come back to Sallabes one ship short. The town turned out to meet it in " +
+                    "silence. The admiralty reports that Wehzek convoys now cross only at night, and fewer of them reach Zille."));
+                break;
+            case SupplyWar.Lever.Lespia:
+                Publish("Lespia", "G", "Lespian Navy Closes the Strait of Kreleck", P(
+                    "Lespian warships have begun stopping and searching Wehzek ships in the Strait of Kreleck, citing \"security of " +
+                    "navigation.\" In practice, the strait is closed to Wehlen.",
+                    "Diplomats say Lespia has been granted naval rights at the Rizian island of Caleqabiz in return. Prime Minister " +
+                    "Alvarez, asked about the arrangement, smiled and declined to comment."));
+                Publish("Lespia", "V", "Caleqabiz: The Price of Lespian Friendship", P(
+                    "To win back Zille, the King has opened a Rizian island to a foreign navy. History has a word for leases like " +
+                    "these. Twenty-five years ago, it was Zille."));
+                Report("Lever_Lespia", SuzerainTokenName.RiziaCountryLespia, "Alvarez Delivers", P(
+                    "The Lespian fleet is in the strait. Wehzek convoys are being turned back or escorted into Lespian ports, where " +
+                    "their cargoes are \"inspected\" for weeks. Lespian officers have already arrived at Caleqabiz to survey the harbor."));
+                break;
+        }
+    }
+
+    // ------------------------------------------------------------------ the end of the war
+
+    public static void PublishWarEnd(string kind)
+    {
+        switch (kind)
+        {
+            case "victory":
+                Publish("End", "RH", "ZILLE IS FREE", P(
+                    "After twenty-five years under a foreign flag, the region of Zille has been returned to the Kingdom of Rizia by the " +
+                    "Royal Army. The last Wehzek garrisons laid down their arms this morning, and Wehzek ships have been seen leaving " +
+                    "Nanta for the mainland.",
+                    "Church bells are ringing in every town in Brenas. The King is expected in Zille within days."));
+                Publish("End", "G", "Wehlen Concedes Zille as Garrison Surrenders", P(
+                    "Wehlen's forces in Zille have surrendered to the Rizian army. President Smolak called the defeat \"a temporary " +
+                    "injustice,\" but his government has asked the Alliance of Nations to supervise the evacuation of Wehzek civilians.",
+                    "The war has redrawn the map of South Merkopa, and it has done so by force. That precedent will worry more than one capital."));
+                Publish("End", "V", "Victory, and the Bill", P(
+                    "Zille is Rizian again. The Voice of Rizia will not pretend otherwise, nor that it is not glad. But the war has " +
+                    "cost thousands of lives and a fortune the kingdom did not have, and the Wehzeks of Zille are now our citizens too. " +
+                    "How we treat them will decide whether this was a liberation or a conquest."));
+                Report("End_Victory", SuzerainTokenName.RiziaCityPorteDrazon, "The War Is Won", P(
+                    "The General Staff reports that no Wehzek soldier remains under arms on the Rizian mainland. Military government " +
+                    "has been established across Zille until the Crown decides how the region is to be governed.",
+                    "In Porte Drazon, the crowds have not left the palace square since the news broke."));
+                break;
+            case "defeat":
+                Publish("End", "RH", "THE ARMY REGROUPS", P(
+                    "After hard fighting in Zille, the General Staff has ordered our forces back to defensive positions along the border. " +
+                    "The Royal Herald reminds its readers that Rizia's claim to Zille is as just today as it was yesterday."));
+                Publish("End", "G", "Rizia's War in Zille Ends in Failure", P(
+                    "Rizia's offensive in Zille has collapsed, and the Alliance of Nations has brokered a ceasefire along the old " +
+                    "border. Wehlen keeps Zille. President Smolak has declared victory, and the Security Committee is expected to discuss " +
+                    "sanctions against Rizia."));
+                Publish("End", "V", "Who Answers for This?", P(
+                    "The King declared this war alone, in a foreign capital. It has failed. Thousands of our soldiers are dead, Zille is " +
+                    "further away than ever, and the world now sees Rizia as an aggressor that could not even win. Someone in the palace " +
+                    "must answer for this."));
+                Report("End_Defeat", SuzerainTokenName.RiziaCityPorteDrazon, "Ceasefire in Zille", P(
+                    "With the failure of our last operation, the General Staff has advised that the war cannot be continued. A ceasefire " +
+                    "has been agreed under Alliance supervision. Our troops are pulling back to the border, and Wehlen keeps Zille.",
+                    "There are angry crowds outside the Ministry of War."));
+                Report("End_Wehlen", SuzerainTokenName.RiziaCountryWehlen, "Smolak Triumphant", P(
+                    "President Smolak has toured Zille, been photographed in Smolak Square with the garrison, and promised that \"no Rizian " +
+                    "soldier will ever set foot here again.\" Wehzek reinforcements continue to cross the strait."));
+                break;
+            default:
+                Publish("End", "G", "Ceasefire in Zille", P(
+                    "Rizia and Wehlen have agreed to a ceasefire under the supervision of the Alliance of Nations. The front lines are " +
+                    "frozen where they stand, leaving Zille divided between the two armies."));
+                Report("End_Ceasefire", SuzerainTokenName.RiziaCityPorteDrazon, "A Divided Zille", P(
+                    "The guns in Zille have fallen silent. The ceasefire line runs through the region, and families on either side of it " +
+                    "cannot cross. Neither government calls this peace."));
+                break;
         }
     }
 
