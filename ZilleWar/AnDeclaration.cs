@@ -208,24 +208,22 @@ internal static class AnDeclaration
         const string embargo =
             "Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_HighEnergyExport\"] == true or Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_AverageEnergyExport\"] == true";
         inj.AddNode(Line("Cable2", Narrator,
-            "He unfolded it and read it in a low voice. \"Romus. I have just heard, and I confess my hands are shaking as I write. " +
-            "You have my support, and Rumburg's, for as long as you need it. We stopped buying Smolak's oil months ago, and I will " +
-            "see to it that no one in Thornbourgh is tempted to start again. But please, be careful. Smolak has friends in Contana " +
-            "who would like nothing better than to watch you overreach. Win it quickly, and spare the people of Zille what you can. " +
-            "With all my love, Beatrice.\"", Next("Cable3"), condition: embargo));
+            "He read it aloud, and by the second sentence he was trying not to smile. \"Romus. I gather from the wireless that " +
+            "you have declared war. One does like to hear these things before the newspapers do. Rumburg stands with you, naturally, " +
+            "and we stopped buying Smolak's oil months ago, so you needn't ask. Do try to win it quickly. Long wars are ruinous for " +
+            "treasuries, and worse for thrones. Beatrice.\"", Next("Cable3"), condition: embargo));
         inj.AddNode(Line("Cable2NoEmbargo", Narrator,
-            "He unfolded it and read it in a low voice. \"Romus. I have just heard, and I confess my hands are shaking as I write. " +
-            "You have my support, and Rumburg's, for as long as you need it. I know Rumburg still buys Wehzek oil, and I know what " +
-            "that must look like to you tonight. Ask me, and we will talk about it. But please, be careful. Smolak has friends in " +
-            "Contana who would like nothing better than to watch you overreach. Win it quickly, and spare the people of Zille what " +
-            "you can. With all my love, Beatrice.\"", Next("Cable3"), condition: $"not ({embargo})"));
+            "He read it aloud, and by the second sentence he was trying not to smile. \"Romus. I gather from the wireless that " +
+            "you have declared war. One does like to hear these things before the newspapers do. Rumburg stands with you, naturally. " +
+            "We are still buying Smolak's oil, which I suspect you'll want to discuss. Ring me when you've finished making speeches. " +
+            "Beatrice.\"", Next("Cable3"), condition: $"not ({embargo})"));
         inj.AddNode(Line("Cable3", Esquibel,
-            "Laurento folded the telegram and handed it to me. \"She is worried, Your Majesty. So am I, if I may say so. " +
-            "But with Rumburg behind us, Smolak's friends in Valgsland will think twice before they send him anything.\"",
+            "\"Her Majesty's sense of humor survives even a war, it seems.\" Laurento folded the telegram and handed it to me. " +
+            "\"But she's with us, and Valgsland will know it by morning. That matters more than anything Smolak said today.\"",
             Next("C1", "C2")));
         inj.AddNode(Choice("C1", "\"Cable her back. Tell her Rizia will never forget this.\"", Next("Rain"),
             script: $"Variable[\"{VarRumburgCable}\"] = \"grateful\";"));
-        inj.AddNode(Choice("C2", "\"Tell her I will be careful. And that I will hold her to that conversation.\"", Next("Rain"),
+        inj.AddNode(Choice("C2", "\"Tell her I'll ring her from Porte Drazon. We have a great deal to discuss.\"", Next("Rain"),
             script: $"Variable[\"{VarRumburgCable}\"] = \"careful\";"));
         inj.AddNode(new ConversationNode(
             name: P + "Rain",
@@ -257,7 +255,8 @@ internal static class AnDeclaration
             name: P + name,
             text: text,
             speakerSelector: new CharacterNameSelector(speaker),
-            sequence: Wait(sequence ?? (conversant ? new ConversationNodeSequenceBuilder().AddConversant(speaker).ToString() : null)),
+            sequence: Wait(sequence),
+            luaScript: conversant ? $"AddConversant(\"{speaker}\");" : null,   // vanilla Rizia adds conversants in Lua, quoted
             luaCondition: condition,
             nextNodes: next);
 

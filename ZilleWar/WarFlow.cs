@@ -79,6 +79,7 @@ internal static class WarFlow
                 NewsWire.PublishDeclaration();
             }
 
+            SupplyWar.ReportNewLevers();
             if (Variables.GetBool(VarCouncilHeld))
             {
                 SupplyWar.Offer();

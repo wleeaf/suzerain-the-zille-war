@@ -87,8 +87,8 @@ internal static class ZilleCampaign
 
     /// <summary>Wehlen's warships in Zille waters: fewer as the supply war bites and as the strait is contested.</summary>
     public static int EnemyShips => Math.Max(0, Tier switch { "Strong" => 3, "Default" => 3, "Strained" => 2, _ => 1 }
-                                                - (Variables.GetBool(SupplyWar.Flag(SupplyWar.Lever.RoyalNavy)) ? 1 : 0)
-                                                - (Variables.GetBool(SupplyWar.Flag(SupplyWar.Lever.Lespia)) ? 1 : 0));
+                                                - Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.RoyalNavy))
+                                                - Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.Lespia)));
 
     public static ObjectiveInfo Info(Objective o) => Objectives.First(x => x.Id == o);
 

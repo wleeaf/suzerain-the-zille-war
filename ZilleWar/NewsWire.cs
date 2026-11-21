@@ -279,70 +279,149 @@ internal static class NewsWire
             "were seen unloading at Nanta through the night. Smolak Square, once the square of Duke Fedo Sazon, is ringed with " +
             "sandbags and machine-gun posts."));
 
-        // --- reports from abroad ---
+        // --- reports from abroad: official statements, each followed by our embassy's reading of it ---
         Report("Declaration_Rumburg", SuzerainTokenName.RiziaCountryRumburg, "A Letter from Queen Beatrice", P(
             "\"Dear Romus,",
-            "I am writing this a second time because the first letter was all worry and no help. Forgive me. You have done what " +
-            "your father could not bring himself to do, and I am proud of you, and I am frightened for you, both at once.",
+            "You might have warned me. I learned that my brother-in-law had gone to war from a wireless operator who could barely " +
+            "keep his voice steady, and I had to pretend to my own ministers that I had known all along. I did it rather well.",
             embargo
-                ? "Our oil merchants will not touch a Wehzek barrel while this lasts. The arms you ordered will sail before anyone " +
-                  "else's, and our ships in the Sudis Sea will look after yours."
-                : "I know we still buy Smolak's oil. If you want that ended, say so, and I will find a way to explain it to my " +
-                  "ministers. The arms you ordered will sail before anyone else's.",
-            "There are also people inside Wehlen, the Bludish Freedom Front, whom Rumburg has known for some time. They are not " +
-            "pleasant people. But they hate Smolak, and they could be useful to you. Think about it carefully before you ask.",
-            "Come home safely from this, Romus. All of you.",
-            "Your sister, Beatrice\""));
+                ? "Rumburg is not buying a drop of Wehzek oil, and I see no reason to start again. Smolak can sell it to Contana, " +
+                  "if Contana can be bothered to come and fetch it."
+                : "We are, as you know perfectly well, still buying Smolak's oil. I am prepared to discuss that. I am not prepared " +
+                  "to discuss it by letter. Ring me.",
+            "The arms your generals ordered will sail ahead of everyone else's. And there are certain people inside Wehlen, the " +
+            "Bludish Freedom Front, who would be delighted to make Smolak's life miserable. They are dreadful people. Ring me about " +
+            "them too, if you must.",
+            "Win it quickly. GRACE has a long memory for kings who lose wars, and a very short one for those who win them.",
+            "Beatrice\""));
+
+        Report("Declaration_Grace", "Rizia_Faction_Event_GRACE", "The Guild of Royal Allies Speaks", P(
+            "Statement of the Council of the Guild of Royal Allies, Thornbourgh:",
+            "\"The Guild of Royal Allies notes with grave concern the refusal of the Republic of Wehlen to honor the lease of 1927 " +
+            "and to return the region of Zille to the Kingdom of Rizia on the date agreed. A treaty that binds only one of its " +
+            "signatories is no treaty at all.",
+            "The Guild affirms the right of the Kingdom of Rizia, a founding member, to recover territory that is lawfully its own, " +
+            "and calls on all members to refrain from any trade or assistance that would prolong the Wehzek occupation.\"",
+            "Our delegation in Thornbourgh reports that the statement was drafted in Queen Beatrice's own office and adopted without " +
+            "debate. Two smaller members asked for the word \"recover\" to be softened. They were overruled within the hour."));
 
         Report("Declaration_Wehlen", SuzerainTokenName.RiziaCountryWehlen, "Wehlen Mobilizes", P(
-            "President Smolak addressed the Wehzek nation by radio within hours of his return from Konstantium. \"Zille will never " +
-            "kneel,\" he declared, announcing a general mobilization, martial law in the Zille region and an emergency war budget.",
-            "Wehzek state radio is calling the declaration \"Rumburgian aggression by proxy.\" Our intelligence reports troopships " +
-            "and supply convoys gathering in the Wehzek ports facing the Strait of Kreleck. If they cross unhindered, the Zille " +
-            "garrison will be stronger every week."));
+            "Address of President Wiktor Smolak to the Wehzek nation, broadcast from Wraclawitz:",
+            "\"Citizens of Wehlen. Today, in the hall of the Alliance of Nations, a king declared war on a free republic. He did not " +
+            "consult his people, because his people are not consulted on anything. He did not consult the Alliance, because he " +
+            "despises it. He consulted only his pride, and the bankers of Thornbourgh who pay for it.",
+            "Zille has been Wehzek for a quarter of a century. Our sons were born there. Our dead are buried there. Zille will never " +
+            "kneel. From this hour, I declare a general mobilization and martial law in the Zille region.\"",
+            "Our intelligence reports troopships and supply convoys gathering in the Wehzek ports facing the Strait of Kreleck. If " +
+            "they cross unhindered, the Zille garrison will grow stronger every week."));
 
         Report("Declaration_Valgsland", SuzerainTokenName.RiziaCountryValgsland, "Valgsland Condemns Rizia", P(
-            "Chancellor Hegel's government has formally condemned the declaration as \"a reckless assault on the order the Alliance " +
-            "exists to protect\" and has called on the Security Committee to act.",
-            "Diplomatic sources suggest that United Contana is weighing emergency aid to Wehlen, and that Valgsland may offer its " +
-            "ports to ships carrying it. Our embassy in Valgsland reports demonstrations outside its gates."));
+            "Statement of the Federal Chancellery, signed by Chancellor Emmerich Hegel:",
+            "\"The Democratic Republic of Valgsland condemns, in the strongest possible terms, the declaration of war made by the " +
+            "King of Rizia before the Alliance of Nations. Disputes between states are settled by negotiation and arbitration, not " +
+            "by the whims of crowned heads. Valgsland calls on the Security Committee to act without delay to restore peace in Zille, " +
+            "and stands ready to assist the people of Wehlen in defending themselves.\"",
+            "Our embassy reports demonstrations at its gates, but nothing worse. Diplomatic sources suggest United Contana is weighing " +
+            "emergency aid to Wehlen, and that Valgslandian ports may be offered to the ships carrying it."));
 
         string lespiaNote = Variables.GetString(AnDeclaration.VarLespianNote) == "kept"
-            ? " Prime Minister Alvarez's private note offering \"practical arrangements\" remains in the King's possession."
+            ? " Prime Minister Alvarez's private note offering \"practical arrangements\" remains in the King's possession, and the " +
+              "Lespian ambassador asked twice this week whether it had been read."
             : string.Empty;
         Report("Declaration_Lespia", SuzerainTokenName.RiziaCountryLespia, "Lespia Urges Restraint", P(
-            "Prime Minister Alvarez has publicly called on both Rizia and Wehlen to show restraint. Privately, the Lespian navy has " +
-            "been placed on alert in the Sudis Sea, and Lespian traders have been buying up grain contracts across the region." + lespiaNote,
-            "Lespia has never forgiven Smolak for his speeches against it, nor Rizia for much else. It will help whichever side it " +
-            "profits most from helping."));
+            "Statement of the Office of the Prime Minister, Republic of Lespia:",
+            "\"Lespia has followed the events in Konstantium with deep concern. We call on both the Kingdom of Rizia and the Republic " +
+            "of Wehlen to show restraint, to protect civilian life, and to keep the sea lanes of the Sudis Sea and the Strait of " +
+            "Kreleck open to the shipping of neutral nations.\"",
+            "Behind the statement, the Lespian navy has been placed on alert, and Lespian traders are buying up grain contracts across " +
+            "the region. Lespia has never forgiven President Smolak for his speeches against it. It will help whichever side it " +
+            "profits most from helping." + lespiaNote));
 
         bool palesFriendly =
             (Variables.GetBool("RiziaDLC.Diplomacy_Pales_GasField_Buy") && !Variables.GetBool("RiziaDLC.Diplomacy_Pales_GasField_BuyCancelled")) ||
             (Variables.GetBool("RiziaDLC.Diplomacy_Pales_GasField_Cede") && !Variables.GetBool("RiziaDLC.Diplomacy_Pales_GasField_CedeCancelled")) ||
             Variables.GetBool("RiziaDLC.CountryRelation_Pales_Friendly") || Variables.GetBool("RiziaDLC.CountryRelation_Pales_Allied");
         Report("Declaration_Pales", SuzerainTokenName.RiziaCountryPales, palesFriendly ? "Pales Stays Calm" : "Pales Mans Its Border", palesFriendly
-            ? P("Duke Reinhart has told the Palesian parliament that the gas agreement with Rizia \"stands, war or no war,\" and that " +
-                "Pales has no quarrel with either side. A few extra companies have been sent to the border, but Palesian officials " +
-                "have taken care to call it routine.")
-            : P("Duke Reinhart has ordered Palesian forces to the border with the Pales Administrative District \"as a precaution.\" " +
-                "Palesian newspapers are asking the question their Duke asked in Konstantium: whether Pales will be next."));
+            ? P("Statement of His Grace Duke Axel Reinhart to the Palesian parliament:",
+                "\"Pales has an agreement with the Kingdom of Rizia, and Pales honors its agreements. The war in Zille is not our war. " +
+                "We will not take sides in it, and we will not allow it to be fought on Palesian soil or in Palesian waters. I have every " +
+                "confidence that King Romus understands this as well as I do.\"",
+                "A few extra companies have been sent to the border, and Palesian officials have taken care to call it routine. Our " +
+                "consul in Pales describes the mood as nervous, but not hostile.")
+            : P("Statement of His Grace Duke Axel Reinhart to the Palesian parliament:",
+                "\"Pales has watched a neighbor declare war on a neighbor from the podium of the Alliance of Nations. We would be fools " +
+                "not to ask whether we are next. I have ordered our forces to the border with the Pales Administrative District, as a " +
+                "precaution, and I will keep them there for as long as Rizian armies are on the march.\"",
+                "Palesian newspapers are openly asking whether the King will turn south once Zille is taken. Our consul advises that " +
+                "every movement of Rizian troops near the border will be read in Pales as a threat."));
 
         Report("Declaration_Derdia", SuzerainTokenName.RiziaCountryDerdia, "Derdia's Quiet Approval", P(
-            "Supreme Wiseman Azmal's government has not condemned the declaration. Derdian clerics have spoken of Zille as \"a wound " +
-            "that would not close on its own.\"",
-            "Our consulate reports that the Derdian mercenaries contracted by Wehlen in Zille are now demanding their pay in advance."));
+            "Statement of the Office of the Supreme Wiseman, Nurist Republic of Derdia:",
+            "\"The Nurist Republic of Derdia has long held that the occupation of Zille was a wound that would not close on its own. " +
+            "We pray for the swift return of peace, and for the protection of the faithful of every creed who live in that region.\"",
+            "No condemnation, and no word for Wehlen. Our consulate reads this as quiet approval. It also reports that the Derdian " +
+            "mercenaries contracted by Wehlen in Zille are now demanding their pay in advance, which suggests they too have read the statement."));
 
         Report("Declaration_Morella", SuzerainTokenName.RiziaCountryMorella, "Morella Hesitates", P(
-            "The Morellan government is divided. Morella abstained from the Security Committee's first statement and has suspended " +
-            "its shipping in the Gulf of Moridia until further notice."));
+            "Statement of Prime Minister Alma Saltana, Republic of Morella:",
+            "\"Morella is a friend of the peoples of both Rizia and Wehlen, and a neighbor of both on the Gulf of Moridia. We will not " +
+            "lend our ports, our ships or our voice to this war. The Morellan Unified Front government calls for an immediate " +
+            "ceasefire and for the question of Zille to be returned to the Alliance of Nations, where it belongs.",
+            "Until further notice, all Morellan merchant shipping in the Gulf of Moridia is suspended for the safety of its crews.\"",
+            "Our embassy in Cavette reports that the cabinet is divided. The Prime Minister's Malenyevist allies want Wehlen supported; " +
+            "the trading houses of the coast want Rizian business kept. For now, Morella has chosen to do nothing loudly."));
 
         Report("Declaration_Sordland", SuzerainTokenName.RiziaCountrySordland, "Sordland Calls for Calm", P(
-            "The Sordish government has called for calm and offered its good offices to both sides. Sordish trade with Wehlen " +
-            "continues for now."));
+            "Statement of the Office of President Anton Rayne, Republic of Sordland:",
+            "\"The Republic of Sordland calls on the Kingdom of Rizia and the Republic of Wehlen to cease hostilities and resolve " +
+            "their dispute through peaceful means. Sordland offers its good offices to both parties and will host talks in Holsord " +
+            "at their earliest convenience. Sordland also reminds all parties that it will not tolerate the use of terrorist " +
+            "organizations active on its own soil, whatever their target.\"",
+            "That last sentence is aimed at Rumburg's friends in the Bludish Freedom Front, and at anyone who might call on them. " +
+            "Sordish trade with Wehlen continues, and Sordish newspapers are divided on whether the King is bold or reckless."));
 
         Report("Declaration_Kyrute", SuzerainTokenName.RiziaCountryKyrute, "Kyrute Watches", P(
-            "Kyrute, host of the Alliance of Nations, has made no official statement. Its embassy in Porte Drazon has requested an " +
-            "urgent briefing on the safety of Kyrutean nationals in Zille."));
+            "Statement of the Government of the Republic of Kyrute, host nation of the Alliance of Nations:",
+            "\"The Republic of Kyrute deeply regrets that the Alliance's assembly hall has been used to declare war. We call on all " +
+            "delegations to respect the dignity of the Alliance and its procedures. Kyrute will guarantee the safety of every " +
+            "delegation in Konstantium, including those whose countries are now at war.\"",
+            "Kyrute's embassy in Porte Drazon has separately requested an urgent briefing on the safety of Kyrutean nationals in Zille. " +
+            "Our ambassador believes Kyrute will vote for any ceasefire resolution put before the Security Committee."));
+
+        Report("Declaration_Agnolia", "Rizia_Country_Agnolia", "Agnolia Reserves Judgment", P(
+            "Statement of Prime Minister Maartin Van Hoorten, Republic of Agnolia:",
+            "\"Agnolia believes in treaties, because a small country has nothing else to rely on. We note that the lease of 1927 has " +
+            "expired. We also note that wars, once begun, rarely end where they were meant to. Agnolia calls for restraint, and " +
+            "reserves judgment.\"",
+            "Our embassy reads the statement as cautiously sympathetic. Agnolian shipyards have, quietly, asked whether Rizia will " +
+            "be in the market for new ships."));
+
+        Report("Declaration_Galmland", "Rizia_Country_Galmland", "Galmland Takes Wehlen's Side", P(
+            "Statement of the Government of Galmland:",
+            "\"The Kingdom of Rizia, a feudal remnant propped up by the crowned houses of the north, has attacked a sovereign people. " +
+            "Galmland stands with the workers of Wehlen and of Zille, and calls on progressive nations everywhere to deny the King " +
+            "the means to wage his war.\"",
+            "The statement changes little in practice. Galmland has no ships in the region and little trade with us. It does, however, " +
+            "tell us where the Contanan bloc is likely to stand."));
+
+        Report("Declaration_Arcasia", "Rizia_Faction_Event_ATO", "Arcasia Speaks: \"Grave Concern\"", P(
+            "Statement of the Office of the President of the Republic of Arcasia, Ventrie City:",
+            "\"The Republic of Arcasia is gravely concerned by the outbreak of hostilities between the Kingdom of Rizia and the " +
+            "Republic of Wehlen. Arcasia calls for an immediate cessation of hostilities and for the dispute over Zille to be resolved " +
+            "under the auspices of the Alliance of Nations. Arcasia further warns all outside powers against using this conflict to " +
+            "extend their influence in South Merkopa.\"",
+            "Our embassy in Ventrie City reads the last sentence as a warning to United Contana, not to us. President Walker, whose " +
+            "family is Rumburgian, is said to have told his cabinet that \"a Contanan client losing a seaport is not the worst news " +
+            "of the week.\" The Arcasian Treaty Organization will not intervene, but it will not stand in our way either."));
+
+        Report("Declaration_Contana", "Rizia_Faction_Event_CSP", "United Contana Condemns \"Royal Aggression\"", P(
+            "Statement of the Central Committee, Federal Socialist Republic of United Contana, Kyow:",
+            "\"The working people of United Contana condemn the unprovoked aggression of the Rizian monarchy against the Republic of " +
+            "Wehlen. This war is not a dispute over a lease. It is an attempt by the crowned houses of Merkopa, financed from " +
+            "Thornbourgh, to roll back the gains of free peoples. United Contana and its partners in the Contanan Security Pact will " +
+            "not stand idly by while a fraternal republic is attacked.\"",
+            "Our intelligence takes \"will not stand idly by\" to mean money, arms and advisers rather than troops. United Contana has " +
+            "financed Wehlen for years. If its aid reaches Zille, it will reach it by sea, through the Strait of Kreleck."));
         _logged = true;
     }
 
@@ -439,23 +518,61 @@ internal static class NewsWire
         }
 
         Report(key + "_Wehlen", SuzerainTokenName.RiziaCountryWehlen, won ? "Smolak Vows Revenge" : "Smolak Claims Victory", won
-            ? P($"President Smolak has admitted the loss of {target} in a defiant radio address, promising that \"every inch will be " +
-                "taken back.\" Wehlen has called up two more classes of reservists, and its ports facing the Strait of Kreleck are working " +
-                "around the clock.")
-            : P($"Wehzek state radio celebrated the failure of {info.Codename} as \"proof that Zille belongs to Wehlen.\" President Smolak " +
-                "has visited the garrison in Zille and decorated the officers who held the line."));
+            ? P("Radio address of President Wiktor Smolak, Wraclawitz:",
+                $"\"Citizens of Wehlen. Our soldiers in {target} fought with a courage the King's army will remember for a long time. They " +
+                "were outnumbered, and they were betrayed by the crowned bankers of Thornbourgh who arm Rizia. But Wehlen does not " +
+                "forget, and Wehlen does not forgive. Every inch will be taken back.\"",
+                "Wehlen has called up two more classes of reservists. Our agents report the Wehzek ports facing the Strait of Kreleck " +
+                "working around the clock.")
+            : P("Radio address of President Wiktor Smolak, broadcast from Smolak Square in Zille:",
+                $"\"The King promised his people {target}. He has given them coffins instead. Let every Rizian mother ask her king what " +
+                "her son died for. Zille is Wehzek, and Zille will stay Wehzek.\"",
+                "Smolak has toured the garrison and decorated the officers who held the line. Wehzek state radio is playing the speech every hour."));
 
-        Report(key + "_Rumburg", SuzerainTokenName.RiziaCountryRumburg, won ? "A Letter from Queen Beatrice" : "Rumburg Sends More Arms", won
-            ? P("\"Dear Romus,", $"All of Thornbourgh is talking of {target}. You have made your father's generation look timid. " +
-                "Do not stop now. The next shipment is already at sea.", "Beatrice\"")
-            : P("Queen Beatrice has ordered additional shipments of artillery and ammunition to Rizia following the setback in Zille. " +
-                "\"One battle is not a war,\" she wrote in a private note to the King. \"Rumburg has not forgotten its friends.\""));
+        Report(key + "_Rumburg", SuzerainTokenName.RiziaCountryRumburg, "A Letter from Queen Beatrice", won
+            ? P("\"Romus,",
+                $"Thornbourgh is insufferable today. Everyone at court has suddenly become an expert on {target}, including people who " +
+                "couldn't find it on a map last week. Well done. Truly.",
+                "Don't let it go to your head. Smolak will be twice as dangerous now that he's frightened, and Contana will want to " +
+                "prove it hasn't backed a loser. The next shipment is already at sea.",
+                "B.\"")
+            : P("\"Romus,",
+                "I've read the reports. It happens, even to better generals than yours. More shells are on their way, and I have told my " +
+                "ministers that anyone who says 'I told you so' within my hearing will be appointed ambassador to Galmland.",
+                "Regroup. Then go back. GRACE is watching, and it does not admire kings who stop halfway.",
+                "B.\""));
 
-        Report(key + "_Valgsland", SuzerainTokenName.RiziaCountryValgsland, won ? "Valgsland Demands Ceasefire" : "Valgsland Steps Up Aid", won
-            ? P("Chancellor Hegel has demanded an immediate ceasefire and threatened \"consequences\" at the Alliance of Nations. " +
-                "Valgslandian newspapers call the King \"the butcher of Zille.\"")
-            : P("Encouraged by Wehlen's success, Valgsland is reported to be allowing Contanan arms shipments for Wehlen to pass through " +
-                "its ports."));
+        Report(key + "_Valgsland", SuzerainTokenName.RiziaCountryValgsland, won ? "Valgsland Demands a Ceasefire" : "Valgsland Steps Up Aid", won
+            ? P("Statement of Chancellor Emmerich Hegel:",
+                "\"The Kingdom of Rizia has chosen conquest over law. Valgsland demands an immediate ceasefire, and will propose to the " +
+                "Security Committee that the Alliance impose sanctions on Rizia for as long as its troops remain in Zille.\"",
+                "Valgslandian newspapers have begun calling the King \"the butcher of Zille.\" Our embassy expects the sanctions motion to " +
+                "fail, but narrowly.")
+            : P("Statement of Chancellor Emmerich Hegel:",
+                "\"The Rizian offensive has failed, as acts of aggression deserve to fail. Valgsland will continue to support the people " +
+                "of Wehlen in their right to self-defense.\"",
+                "In practice, Valgslandian ports are now openly handling Contanan arms shipments bound for Wehlen."));
+
+        Report(key + "_Arcasia", "Rizia_Faction_Event_ATO", won ? "Arcasia Urges Restraint" : "Arcasia Calls for Talks", P(
+            "Statement of the Arcasian Department of State, Ventrie City:",
+            won
+                ? "\"The Republic of Arcasia notes the change in the military situation in Zille and urges all parties to exercise " +
+                  "restraint, to protect civilians, and to return to negotiations under the Alliance of Nations.\""
+                : "\"The Republic of Arcasia believes that the events in Zille show the futility of a military solution, and calls on " +
+                  "both parties to begin negotiations under the Alliance of Nations without delay.\"",
+            won
+                ? "Privately, our embassy hears that President Walker was pleased. A Contanan client has lost ground, and no Arcasian " +
+                  "soldier had to fire a shot."
+                : "Our embassy hears that Arcasia is in no hurry to help either side, and is content to watch Contana spend money in Zille."));
+
+        Report(key + "_Contana", "Rizia_Faction_Event_CSP", won ? "Contana Promises More Aid to Wehlen" : "Contana Celebrates", P(
+            "Statement of the Central Committee of United Contana, Kyow:",
+            won
+                ? "\"The temporary successes of the Rizian monarchy will not decide this war. The Contanan Security Pact will increase its " +
+                  "fraternal assistance to the Republic of Wehlen until the aggressor is driven from Wehzek soil.\""
+                : "\"The heroic defenders of Zille have shown the world that the age of kings is over. The Contanan Security Pact salutes " +
+                  "the Wehzek people and their armed forces.\"",
+            "Our intelligence expects Contanan aid to Wehlen to grow. All of it must cross the Strait of Kreleck."));
 
         if (Variables.GetString(AnDeclaration.VarLespianNote) == "kept")
         {
@@ -467,76 +584,145 @@ internal static class NewsWire
 
     // ------------------------------------------------------------------ the supply war
 
-    public static void LeverNews(SupplyWar.Lever l)
+    /// <summary>News for the <paramref name="n"/>th time a supply lever was pulled.</summary>
+    public static void LeverNews(SupplyWar.Lever l, int n)
     {
+        string k = $"{l}{n}";
         switch (l)
         {
             case SupplyWar.Lever.Embargo:
-                Publish("Embargo", "G", "Rumburg Cuts Off Wehzek Oil", P(
-                    "The Kingdom of Rumburg will no longer buy oil from Wehlen, Queen Beatrice's government announced, in a move " +
-                    "agreed with Rizia. Rizian gas and electricity will make up the shortfall.",
-                    "For Wehlen, which sold a large share of its oil to Rumburg, the loss comes at the worst possible moment. " +
-                    "Economists in Konstantium estimate that the war in Zille already costs Smolak's treasury more than it earns."));
-                Report("Lever_Embargo", SuzerainTokenName.RiziaCountryRumburg, "Rumburg Closes the Tap", P(
-                    "\"Dear Romus, it is done. Not a single barrel of Wehzek oil will be bought in Rumburg until you tell me otherwise. " +
-                    "My ministers grumbled about the price of your gas, and then they remembered who is paying for Smolak's convoys. " +
-                    "Your sister, Beatrice\""));
+                Publish(k, "G", "Rumburg Cuts Off Wehzek Oil", P(
+                    "The Kingdom of Rumburg will no longer buy oil from Wehlen, Queen Beatrice's government announced, in a move agreed " +
+                    "with Rizia. Rizian gas and electricity will make up the shortfall, reportedly at a price Rizia's treasury will feel.",
+                    "For Wehlen, which sold a large share of its oil to Rumburg, the loss comes at the worst possible moment. Economists " +
+                    "in Konstantium estimate that the war in Zille already costs Smolak's treasury more than it earns."));
+                Report(k, SuzerainTokenName.RiziaCountryRumburg, "Rumburg Closes the Tap", P(
+                    "Statement of the Royal Rumburgian Ministry of Trade, Thornbourgh:",
+                    "\"With immediate effect, and until further notice, no oil or petroleum product of Wehzek origin may be purchased, " +
+                    "landed or refined in the Kingdom of Rumburg. Contracts in force are suspended. Rumburg's energy needs will be met by " +
+                    "our partners in the Guild of Royal Allies.\"",
+                    "Our embassy adds that the Queen's ministers grumbled about the price of Rizian gas for a full afternoon, until someone " +
+                    "pointed out who would otherwise be paying for Smolak's convoys."));
                 break;
             case SupplyWar.Lever.BffRaids:
-                Publish("BffRaids", "G", "Explosions Rock Wehzek Ports; Bludish Freedom Front Claims Attacks", P(
-                    "A series of explosions has damaged piers and fuel depots in two Wehzek ports facing the Strait of Kreleck. The " +
-                    "Bludish Freedom Front, a militant group outlawed in both Wehlen and Sordland, has claimed responsibility.",
-                    "Wehlen accuses Rumburg of arming the group and Rizia of directing it. Sordland has condemned \"any government that " +
-                    "makes common cause with terrorists.\" Several convoys bound for Zille are reported to have been delayed."));
-                Publish("BffRaids", "V", "Is the King Paying Terrorists?", P(
-                    "The Bludish Freedom Front blows up ports and kills dockworkers. It is outlawed in two countries. And now, according " +
-                    "to Wehzek radio and several foreign newspapers, it is fighting Rizia's war for it.",
+                Publish(k, "G", n == 1 ? "Explosions Rock Wehzek Ports; Bludish Freedom Front Claims Attacks" : "Bludish Freedom Front Strikes Again",
+                    P(n == 1
+                        ? "A series of explosions has damaged piers and fuel depots in two Wehzek ports facing the Strait of Kreleck. The " +
+                          "Bludish Freedom Front, a militant group outlawed in both Wehlen and Sordland, has claimed responsibility."
+                        : "For the second time since the war began, Bludish Freedom Front fighters have struck a Wehzek port on the Strait " +
+                          "of Kreleck, setting fire to a fuel depot and sinking a transport at its moorings.",
+                      "Wehlen accuses Rumburg of arming the group and Rizia of directing it. Sordland has condemned \"any government that " +
+                      "makes common cause with terrorists.\" Convoys bound for Zille are reported to have been delayed."));
+                Publish(k, "V", n == 1 ? "Is the King Paying Terrorists?" : "Bombs in the Harbors, Again", P(
+                    "The Bludish Freedom Front blows up ports and kills dockworkers. It is outlawed in two countries. And now, according to " +
+                    "Wehzek radio and several foreign newspapers, it is fighting Rizia's war for it.",
                     "The palace has not denied it. The Voice of Rizia asks what kind of victory is bought with bombs in civilian harbors."));
-                Report("Lever_BffRaids", SuzerainTokenName.RiziaCountryWehlen, "Fires in the Wehzek Ports", P(
-                    "Our agents confirm that the Bludish Freedom Front struck the Wehzek ports facing the strait. Two supply ships " +
-                    "burned at the quay, and the next convoys for Zille have been held back. Wehlen is now accusing us openly, and " +
-                    "Sordland and Valgsland have joined in."));
+                Report(k, SuzerainTokenName.RiziaCountryWehlen, "Fires in the Wehzek Ports", P(
+                    $"Our agents confirm that the Bludish Freedom Front struck the Wehzek ports facing the strait{(n > 1 ? " once more" : string.Empty)}. " +
+                    "Supply ships burned at the quay, and the next convoys for Zille have been held back while the harbors are searched.",
+                    "Wehlen now accuses us openly. Sordland and Valgsland have joined in, and the Wehzek ambassador in Konstantium has " +
+                    "asked the Security Committee to designate Rizia \"a sponsor of terror.\""));
                 break;
             case SupplyWar.Lever.BffFighters:
-                Report("Lever_BffFighters", SuzerainTokenName.RiziaCityMontaklar, "Bludish Fighters Arrive in Montaklar", P(
-                    "Two companies of Bludish Freedom Front fighters, brought in through Rumburg's contacts, arrived in Montaklar at " +
-                    "night in covered trucks. They are hard men who know Wehzek tactics well, and they will fight under Rizian officers " +
-                    "for Rizian pay.",
-                    "Some of our officers are uneasy. One of them asked the General Staff, in writing, who will answer for what these men " +
-                    "do once they are in Zille."));
-                Publish("BffFighters", "V", "Strange Allies in Montaklar", P(
-                    "Residents of Montaklar report foreign fighters in unmarked uniforms at the army barracks, speaking Bludish. If these " +
-                    "are what they appear to be, the King has invited a terrorist organization into the Royal Army."));
+                Report(k, SuzerainTokenName.RiziaCityMontaklar, n == 1 ? "Bludish Fighters Arrive in Montaklar" : "More Bludish Fighters in Montaklar", P(
+                    "Two companies of Bludish Freedom Front fighters, brought in through Rumburg's contacts, arrived in Montaklar at night " +
+                    "in covered trucks. They are hard men who know Wehzek tactics well, and they will fight under Rizian officers for Rizian pay.",
+                    "Some of our officers are uneasy. One of them has asked the General Staff, in writing, who will answer for what these " +
+                    "men do once they are in Zille."));
+                Publish(k, "V", n == 1 ? "Strange Allies in Montaklar" : "The King's Foreign Legion Grows", P(
+                    "Residents of Montaklar report foreign fighters in unmarked uniforms at the army barracks, speaking Bludish. If these are " +
+                    "what they appear to be, the King has invited a terrorist organization into the Royal Army."));
                 break;
             case SupplyWar.Lever.RoyalNavy:
-                Publish("RoyalNavy", "RH", "Royal Navy Strikes in the Strait of Kreleck", P(
+                Publish(k, "RH", n == 1 ? "Royal Navy Strikes in the Strait of Kreleck" : "The Navy Returns to the Strait", P(
                     "In a night action in the Strait of Kreleck, ships of the Royal Navy intercepted a Wehzek convoy bound for Zille. " +
-                    "Three transports were sunk and their escort driven off. One of our own ships was lost with many of her crew.",
+                    "Transports were sunk, and a Wehzek warship was left burning. One of our own ships was lost with many of her crew.",
                     "The Royal Herald salutes the sailors who gave their lives. Their sacrifice means fewer Wehzek guns at the front."));
-                Report("Lever_RoyalNavy", SuzerainTokenName.RiziaCitySallabes, "The Fleet Returns to Sallabes", P(
+                Report(k, SuzerainTokenName.RiziaCitySallabes, "The Fleet Returns to Sallabes", P(
                     "The squadron that went into the strait has come back to Sallabes one ship short. The town turned out to meet it in " +
-                    "silence. The admiralty reports that Wehzek convoys now cross only at night, and fewer of them reach Zille."));
+                    "silence, and the harbor church rang its bell once for every man lost.",
+                    "The Admiralty reports that Wehzek convoys now cross only on moonless nights, and fewer of them reach Zille."));
+                break;
+            case SupplyWar.Lever.Submarines:
+                Report(k, SuzerainTokenName.RiziaCitySallabes, "Submarines on Patrol", P(
+                    "Our submarines have returned from a patrol in the Strait of Kreleck. Two Wehzek transports were torpedoed, and the rest " +
+                    "of the convoy scattered and turned back. The Admiralty believes Wehzek captains are now refusing to sail without " +
+                    "destroyer escort, which Wehlen does not have enough of."));
+                if (n % 2 == 0)
+                {
+                    Publish(k, "RH", "A Submarine Fails to Return", P(
+                        "The Admiralty regrets to announce that one of His Majesty's submarines has not returned from patrol in the " +
+                        "Strait of Kreleck and must be presumed lost with all hands. The names of her crew will be read in every church in Sallabes."));
+                }
+
                 break;
             case SupplyWar.Lever.Lespia:
-                Publish("Lespia", "G", "Lespian Navy Closes the Strait of Kreleck", P(
+                Publish(k, "G", "Lespian Navy Closes the Strait of Kreleck", P(
                     "Lespian warships have begun stopping and searching Wehzek ships in the Strait of Kreleck, citing \"security of " +
                     "navigation.\" In practice, the strait is closed to Wehlen.",
-                    "Diplomats say Lespia has been granted naval rights at the Rizian island of Caleqabiz in return. Prime Minister " +
-                    "Alvarez, asked about the arrangement, smiled and declined to comment."));
-                Publish("Lespia", "V", "Caleqabiz: The Price of Lespian Friendship", P(
-                    "To win back Zille, the King has opened a Rizian island to a foreign navy. History has a word for leases like " +
-                    "these. Twenty-five years ago, it was Zille."));
-                Report("Lever_Lespia", SuzerainTokenName.RiziaCountryLespia, "Alvarez Delivers", P(
-                    "The Lespian fleet is in the strait. Wehzek convoys are being turned back or escorted into Lespian ports, where " +
-                    "their cargoes are \"inspected\" for weeks. Lespian officers have already arrived at Caleqabiz to survey the harbor."));
+                    Variables.GetBool("ZilleWar.Lespia_Caleqabiz")
+                        ? "Diplomats say Lespia has been granted naval rights at the Rizian island of Caleqabiz in return. Prime Minister " +
+                          "Alvarez, asked about the arrangement, smiled and declined to comment."
+                        : "Diplomats say Rizia is paying handsomely for the service. Prime Minister Alvarez, asked about the arrangement, " +
+                          "said only that \"Lespia believes in free navigation, and in being paid for it.\""));
+                if (Variables.GetBool("ZilleWar.Lespia_Caleqabiz"))
+                {
+                    Publish(k, "V", "Caleqabiz: The Price of Lespian Friendship", P(
+                        "To win back Zille, the King has opened a Rizian island to a foreign navy. History has a word for arrangements " +
+                        "like these. Twenty-five years ago, it was Zille."));
+                }
+
+                Report(k, SuzerainTokenName.RiziaCountryLespia, "Alvarez Delivers", P(
+                    "The Lespian fleet is in the strait. Wehzek convoys are being turned back, or escorted into Lespian ports where their " +
+                    "cargoes are \"inspected\" for weeks on end. Smolak has called it piracy on the radio. Alvarez has called it paperwork."));
                 break;
         }
     }
 
     // ------------------------------------------------------------------ the end of the war
 
+    private static void EndStatements(string kind)
+    {
+        bool won = kind == "victory";
+        Report("End_Rumburg", SuzerainTokenName.RiziaCountryRumburg, "A Letter from Queen Beatrice", won
+            ? P("\"Romus,",
+                "You've done it. I'm told the crowds in Porte Drazon have been singing for two days, which seems excessive, but I " +
+                "suppose you've earned it. GRACE will be sending its congratulations through the proper channels. These are mine.",
+                "Now comes the difficult part. Winning Zille was a war. Keeping it will be politics, and you have never been as good " +
+                "at politics as you think. Come to Thornbourgh when it's over and I'll teach you.",
+                "Beatrice\"")
+            : P("\"Romus,",
+                "I'm sorry. I mean that, which you'll know is rare. Rumburg will say all the proper things at the Alliance, and I will " +
+                "say some improper things in private about the generals who lost it for you.",
+                "Don't do anything rash for a while. Thrones survive lost wars. They rarely survive the second one.",
+                "Beatrice\""));
+
+        Report("End_Arcasia", "Rizia_Faction_Event_ATO", won ? "Arcasia Accepts the New Map" : "Arcasia Welcomes the Ceasefire", P(
+            "Statement of the Office of the President of the Republic of Arcasia:",
+            won
+                ? "\"The Republic of Arcasia takes note of the end of hostilities in Zille. Arcasia expects the Kingdom of Rizia to " +
+                  "guarantee the rights and safety of the Wehzek population of the region, and stands ready to help rebuild its economy.\""
+                : "\"The Republic of Arcasia welcomes the ceasefire in Zille and commends the Alliance of Nations for its role in " +
+                  "bringing the fighting to an end.\"",
+            won
+                ? "\"Ready to help rebuild\" means Arcasian banks and Arcasian contracts. Our embassy expects the first offers within the month."
+                : "Our embassy notes that Arcasia has not said a single word about Zille's future. It does not intend to."));
+
+        Report("End_Contana", "Rizia_Faction_Event_CSP", won ? "Contana Refuses to Recognize the Annexation" : "Contana Hails a Victory", P(
+            "Statement of the Central Committee of United Contana, Kyow:",
+            won
+                ? "\"United Contana will never recognize the annexation of Zille by the Rizian monarchy. The Contanan Security Pact " +
+                  "will raise the question at every session of the Alliance of Nations until justice is done.\""
+                : "\"The defeat of the Rizian monarchy in Zille is a victory for every free people. The Contanan Security Pact will " +
+                  "continue to stand with the Republic of Wehlen.\"",
+            won
+                ? "Words, for now. Contana has lost its investment in Zille and is unlikely to send good money after it."
+                : "Contanan advisers are now openly visible in Zille. Wehlen's patron has been paid back in prestige."));
+    }
+
     public static void PublishWarEnd(string kind)
     {
+        EndStatements(kind);
         switch (kind)
         {
             case "victory":
