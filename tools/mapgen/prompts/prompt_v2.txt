@@ -1,0 +1,15 @@
+Revise the game map art. Use your image generation tool to create ONE new image (landscape 1536x1024) and save it in the current directory as zille_terrain_v2.png. After saving, reply with only the file path.
+
+Attached:
+- zille_terrain_v1.png: your previous attempt. Its coastline and islands are excellent — keep the land/sea shapes EXACTLY as they are in v1 and in geography_guide.png.
+- feedback_v1_style_comparison.png: LEFT = the real game map (target style), RIGHT = your v1 at the same scale.
+- style_reference_closeup.png: the real game map up close (ignore its text, roads, railways, rivers and city blobs).
+- geography_guide.png: authoritative land/sea layout.
+
+Problems with v1 to fix:
+1. Far too many contour bands and contour lines. The target has only 3-4 tones: most land is pure white (#FFFFFF); hills are a pale grey (#EBEBEB); higher ground a light grey (#D9D9D9); only small summit patches are mid grey (#C4C4C4). Nothing darker than #C4C4C4 on land.
+2. The target's grey areas are broad, soft, blobby patches with lots of white between them, outlined by a single thin grey contour line (#8A8A8A, about 1 px). v1 looks like a dense topographic survey map; the target looks like a simple, airy illustrated war map. Roughly 55-65% of the land should be white.
+3. Coastline: thinner. One black line about 2-3 px, plus a thin parallel inner line about 4 px inland, exactly like the closeup reference. v1's outer line is too heavy.
+4. The small lake in the lower middle of the map must sit exactly where geography_guide.png puts it (v1 drew it slightly too far left).
+Keep: flat grey-blue sea #B9C6C8, no text, no labels, no city dots, no roads, no rivers, no railways, no borders, no frame, no paper texture, flat top-down 2D.
+Terrain placement: rugged hills in the interior of the central peninsula and along its northern coast; gentle, mostly white lowlands in the south and east; the land masses at the top-left and top-right edges are foreign countries — give them the same light treatment.

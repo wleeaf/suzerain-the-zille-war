@@ -1,0 +1,93 @@
+[
+ {
+  "name": "Zille",
+  "x": 674,
+  "y": 1286,
+  "side": "zille",
+  "role": "city",
+  "capital": true
+ },
+ {
+  "name": "Nanta",
+  "x": 934,
+  "y": 642,
+  "side": "zille",
+  "role": "city"
+ },
+ {
+  "name": "Isor",
+  "x": 476,
+  "y": 746,
+  "side": "zille",
+  "role": "city"
+ },
+ {
+  "name": "Auremina",
+  "x": 739,
+  "y": 1013,
+  "side": "zille",
+  "role": "city",
+  "invented": true,
+  "note": "gold-mining town"
+ },
+ {
+  "name": "Lusande",
+  "x": 688,
+  "y": 494,
+  "side": "zille",
+  "role": "town",
+  "invented": true,
+  "note": "beach resort"
+ },
+ {
+  "name": "Mave Nortus",
+  "x": 1230,
+  "y": 880,
+  "side": "rizia",
+  "role": "city"
+ },
+ {
+  "name": "Dapalle",
+  "x": 1036,
+  "y": 1186,
+  "side": "rizia",
+  "role": "city"
+ },
+ {
+  "name": "Balle",
+  "x": 1402,
+  "y": 1400,
+  "side": "rizia",
+  "role": "city"
+ },
+ {
+  "name": "Jales",
+  "x": 2010,
+  "y": 1470,
+  "side": "rizia",
+  "role": "city"
+ },
+ {
+  "name": "Sudiseri Maraton",
+  "x": 1676,
+  "y": 1070,
+  "side": "rizia",
+  "role": "town"
+ },
+ {
+  "name": "Jardim",
+  "x": 1246,
+  "y": 1427,
+  "side": "rizia",
+  "role": "town",
+  "note": "named after Lake Jardim"
+ },
+ {
+  "name": "Fort Moridia",
+  "x": null,
+  "y": null,
+  "side": "rizia",
+  "role": "fort",
+  "invented": true
+ }
+]

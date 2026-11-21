@@ -1,0 +1,9 @@
+bin/
+obj/
+backups/
+*.user
+.vs/
+.idea/
+.vscode/
+art/work/
+art/build/

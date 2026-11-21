@@ -1,0 +1,13 @@
+You are making game map art. Use your image generation tool to create ONE new image (landscape 1536x1024), then save it in the current directory as zille_terrain_v1.png.
+
+Attached images:
+1. style_reference_full.png and style_reference_detail.png / style_reference_closeup.png: an existing war map from a video game. This is the exact art style to match.
+2. geography_guide.png: the coastline and land/sea layout of the NEW map. White = land, grey-blue = sea, black line = coastline.
+
+Task: paint the geography of geography_guide.png in the exact style of the reference map.
+- Coastlines, islands, bays and the small lake must follow geography_guide.png as closely as possible. Do not add, remove or move landmasses or islands.
+- Sea: flat grey-blue (#B9C6C8), same as reference. Coastline: the reference's double line (thick black outer line, thin white gap, thin inner line).
+- Land: the reference's terrain treatment: flat stepped grey elevation bands (white lowlands, light grey hills, mid grey mountains) with thin dark-grey contour lines around each band. Put rugged hills and mountains in the interior of the central peninsula and along the rocky northern coast; gentler lowlands along the southern and eastern parts.
+- DO NOT draw any text, labels, letters, city dots, roads, railways, rivers, borders, compass, legend or frame. Terrain and coastline only.
+- Flat 2D top-down cartographic style, no perspective, no 3D shading, no paper texture, no colour other than the reference greys and the sea blue.
+After saving, reply with only the file path.
