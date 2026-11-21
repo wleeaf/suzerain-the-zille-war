@@ -255,6 +255,7 @@ internal static class ZilleCampaign
         ZilleReports.SetDescription($"Operation_Zille_{k}_Result_Won", report);
         ZilleReports.SetDescription($"Operation_Zille_{k}_Result_Lost", report);
         NewsWire.PublishOperationResult(k, info, won, a);
+        NewsWire.OperationReports(k, info, won, a);
         Core.Log.Msg($"Operation {k} ({info.Codename}) finished: read {read} tiles, won={won}, liberated={liberated}. {Describe()}\n{report}");
     }
 }

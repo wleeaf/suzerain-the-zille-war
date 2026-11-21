@@ -15,7 +15,6 @@ internal static class WarFlow
 {
     private const string CouncilDecision = "ZilleWar.Decision_WarCouncil";
     private const string NextStepsDecision = "ZilleWar.Decision_NextSteps";
-    private const string MobilizationReport = "ZilleWar.Report_Mobilization";
     private const string Delegate = "Leave it to the General Staff. They know the ground.";
     private const string Ceasefire = "Seek a ceasefire through the Alliance of Nations. We hold what we have taken.";
 
@@ -44,7 +43,21 @@ internal static class WarFlow
 
     private static void OnEvaluateStep()
     {
-        if (!AtWar || !GameState.IsCurrentStoryPack(SuzerainStoryPackInfo.Rizia) || GameState.CurrentStepNum is null or < 2 && GameState.CurrentTurnNum == 1)
+        if (!GameState.IsCurrentStoryPack(SuzerainStoryPackInfo.Rizia))
+        {
+            return;
+        }
+
+        try
+        {
+            WarState.Apply(AtWar);
+        }
+        catch (Exception ex)
+        {
+            Core.Log.Error($"WarState failed: {ex}");
+        }
+
+        if (!AtWar || GameState.CurrentStepNum is null or < 2 && GameState.CurrentTurnNum == 1)
         {
             return;
         }
@@ -54,12 +67,6 @@ internal static class WarFlow
             if (!Variables.GetBool(VarMobilizationShown))
             {
                 Variables.Set(VarMobilizationShown, true);
-                GameState.AddCustomReport(new CustomReportData(MobilizationReport, SuzerainStoryPackInfo.Rizia,
-                    SuzerainTokenName.RiziaCityPorteDrazon, "The Nation Mobilizes",
-                    "News of the King's declaration in Konstantium reached Porte Drazon before his plane did. Reservists are reporting " +
-                    "to their depots across Brenas, trains are being requisitioned for the northern line, and crowds have gathered " +
-                    "outside the Royal Palace singing the old anthem. At Mave Nortus, the Wehzek border posts have gone dark. " +
-                    "The General Staff awaits the King's orders."));
                 NewsWire.PublishDeclaration();
             }
 

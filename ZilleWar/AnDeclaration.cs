@@ -30,6 +30,7 @@ internal static class AnDeclaration
     public const string VarPressStatement = "ZilleWar.AN_PressStatement";
     public const string VarLespianNote = "ZilleWar.AN_LespianNote";          // "kept" | "burned"
     public const string VarEstelaCall = "ZilleWar.AN_EstelaCall";
+    public const string VarRumburgCable = "ZilleWar.AN_RumburgCable";      // "grateful" | "publish"
 
     private const string Smolak = "Wiktor Smolak (R)";
     private const string Esquibel = "Laurento Esquibel";
@@ -45,7 +46,7 @@ internal static class AnDeclaration
 
     public static void Register()
     {
-        foreach (string v in new[] { VarDeclared, VarEntryAN, VarDeclaredTurn, VarPressStatement, VarLespianNote, VarEstelaCall })
+        foreach (string v in new[] { VarDeclared, VarEntryAN, VarDeclaredTurn, VarPressStatement, VarLespianNote, VarEstelaCall, VarRumburgCable, WarState.VarActive })
         {
             SuzerainModdingKit.Variables.Register(v);
         }
@@ -84,12 +85,12 @@ internal static class AnDeclaration
                   "lay down its arms until the last Wehzek soldier has left Rizian soil.\"",
             luaScript:
                 $"Variable[\"{VarDeclared}\"] = true; Variable[\"{VarEntryAN}\"] = true; " +
-                $"Variable[\"{VarDeclaredTurn}\"] = 4; " +
+                $"Variable[\"{VarDeclaredTurn}\"] = 4; Variable[\"{WarState.VarActive}\"] = true; " +
                 "Variable[\"RiziaDLC.Diplomacy_Wehlen_ANSpeech_Aggression\"] = true; " +
                 "Variable[\"RiziaDLC.CountryRelation_Wehlen_Neutral\"] = false; Variable[\"RiziaDLC.CountryRelation_Wehlen_Unfriendly\"] = false; " +
                 "Variable[\"RiziaDLC.CountryRelation_Wehlen_Friendly\"] = false; Variable[\"RiziaDLC.CountryRelation_Wehlen_Allied\"] = false; " +
                 "Variable[\"RiziaDLC.CountryRelation_Wehlen_Hostile\"] = true; Variable[\"RiziaDLC.CountryRelation_Wehlen_AtWar\"] = true; " +
-                "UpdateCountryRelationship(\"Rizia_Country_Wehlen\", \"AtWar\"); UpdateCountryRelationship(\"Rizia_Country_Zille\", \"AtWar\");",
+                "UpdateCountryRelationship(\"Rizia_Country_Wehlen\", \"AtWar\");",
             sequence: new ConversationNodeSequenceBuilder().PlaySceneMusic("Critical").ToString(),
             nextNodes: Next("Silence")));
 
@@ -189,22 +190,41 @@ internal static class AnDeclaration
             "\"Your father never dared. Twenty-five years, and he never once dared.\"", Next("Estela3")));
         inj.AddNode(Line("Estela3", Estela,
             "\"Bring me home, Romus. Bring all of them home.\"", Next("E1", "E2", "E3")));
-        inj.AddNode(Choice("E1", "\"I will, Mother. I promise.\"", Next("Rain"), script: $"Variable[\"{VarEstelaCall}\"] = \"promise\";"));
-        inj.AddNode(Choice("E2", "\"This isn't about our old house, Mother. It's about Rizia.\"", Next("Rain"), script: $"Variable[\"{VarEstelaCall}\"] = \"rizia\";"));
-        inj.AddNode(Choice("E3", "\"Pray that it ends quickly.\"", Next("Rain"), script: $"Variable[\"{VarEstelaCall}\"] = \"pray\";"));
+        inj.AddNode(Choice("E1", "\"I will, Mother. I promise.\"", Next("Cable"), script: $"Variable[\"{VarEstelaCall}\"] = \"promise\";"));
+        inj.AddNode(Choice("E2", "\"This isn't about our old house, Mother. It's about Rizia.\"", Next("Cable"), script: $"Variable[\"{VarEstelaCall}\"] = \"rizia\";"));
+        inj.AddNode(Choice("E3", "\"Pray that it ends quickly.\"", Next("Cable"), script: $"Variable[\"{VarEstelaCall}\"] = \"pray\";"));
+        inj.AddNode(Line("Cable", Esquibel,
+            "\"One more, Your Majesty.\" Laurento held up a telegram form. \"From Thornbourgh. It must have been sent the minute the news reached the Queen.\"",
+            Next("Cable2")));
+        inj.AddNode(Line("Cable2", Narrator,
+            "He read it aloud. \"TO HIS MAJESTY ROMUS OF RIZIA. RUMBURG STANDS WITH YOU. OIL EMBARGO ON WEHLEN TIGHTENED TONIGHT. " +
+            "ARMS SHIPMENTS TO SAIL AHEAD OF ALL OTHER CONTRACTS. OUR SHIPS WILL ESCORT YOURS IN THE SUDIS SEA. GIVE THEM NOTHING. BEATRICE.\"",
+            Next("Cable3")));
+        inj.AddNode(Line("Cable3", Esquibel,
+            "\"Your sister-in-law has never been one for subtlety.\" For the first time since the podium, Laurento almost smiled. " +
+            "\"With Rumburg behind us, Smolak's friends in Valgsland will think twice before they send him anything.\"",
+            Next("C1", "C2")));
+        inj.AddNode(Choice("C1", "\"Cable her back. Tell her Rizia will never forget this.\"", Next("Rain"),
+            script: $"Variable[\"{VarRumburgCable}\"] = \"grateful\";"));
+        inj.AddNode(Choice("C2", "\"Give it to the Royal Herald. I want Smolak to read it before his plane lands.\"", Next("Rain"),
+            script: $"Variable[\"{VarRumburgCable}\"] = \"publish\";"));
         inj.AddNode(new ConversationNode(
             name: P + "Rain",
             text: "Outside, the rain had started again. By the time we reached the airfield, it was pouring.",
             speakerSelector: new CharacterNameSelector(Narrator),
-            luaScript: "PlayCustomMapMusic(\"Rizia_Map_Music_Tense\");",
-            nextNodes: new ConversationNodeSelector[] { new ConversationNodeArticyIDSelector(VanillaClosingNews) }));
+            // Skip vanilla [755]: it switches on the peacetime AN news ("Wehlen Refuses to Relinquish Zille"...).
+            // Keep the rest of the vanilla ending: the Zille protest reports ([805]-[812]) and the protocol flag ([815]).
+            luaScript: "PlayCustomMapMusic(\"Rizia_Map_Music_Tense\"); " +
+                       "if Variable[\"RiziaDLC.Situation_Diplomacy_Zille_ATAActive\"] == true then Variable[\"RiziaDLCSupport.Reports_Turn04_Zille_ATAProtest\"] = true end; " +
+                       "if Variable[\"RiziaDLC.Situation_Diplomacy_Zille_SuOminaActive\"] == true then Variable[\"RiziaDLCSupport.Reports_Turn04_Zille_SOProtest\"] = true end;",
+            nextNodes: new ConversationNodeSelector[] { new ConversationNodeArticyIDSelector(VanillaProtocolAndEnd) }));
 
         inj.Register();
         Core.Log.Msg("Registered the AN declaration-of-war branch (Turn 4, Konstantium).");
     }
 
-    // [755] sets the Turn 4 news flags and leads to End().
-    private const string VanillaClosingNews = "0x01000052000184BC";
+    // [815] sets RiziaDLC.Situation_Diplomacy_AN_ThreatMitigationProtocol and leads to End().
+    private const string VanillaProtocolAndEnd = "0x0100006500009E70";
 
     private static ConversationNodeHook Gate(string articyId) =>
         new(new ConversationNodeArticyIDSelector(articyId), HookMode.ConditionGated);

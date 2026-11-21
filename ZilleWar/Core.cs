@@ -30,7 +30,7 @@ internal sealed class Core : MelonMod
         Step("AN declaration", AnDeclaration.Register);
         Step("war flow", WarFlow.Register);
         Step("trace hooks", () => Trace.Install(HarmonyInstance));
-        LoggerInstance.Msg("Zille War initialized. Dev keys: F8 dump, F9 load war map, F10 Pales war, F11 direct setup, F12 next Zille operation (Shift: cycle objective, Ctrl: reset), Shift+F11 Wehlen strength.");
+        LoggerInstance.Msg("Zille War initialized. Dev keys: F6 take the objective, F7 last round, F8 dump, F9 load war map, F10 Pales war, F11 direct setup, F12 next Zille operation (Shift: cycle objective, Ctrl: reset), Shift+F11 Wehlen strength.");
     }
 
     private void Step(string what, Action action)
@@ -55,9 +55,19 @@ internal sealed class Core : MelonMod
 
         try
         {
-            if (kb.f8Key.wasPressedThisFrame)
+            WarDebug.Track();
+            if (kb.f6Key.wasPressedThisFrame)
+            {
+                WarDebug.ReachGoal();
+            }
+            else if (kb.f7Key.wasPressedThisFrame)
+            {
+                WarDebug.LastRound();
+            }
+            else if (kb.f8Key.wasPressedThisFrame)
             {
                 WarProbe.DumpState();
+                WarDebug.ProbeHud();
             }
             else if (kb.f9Key.wasPressedThisFrame)
             {

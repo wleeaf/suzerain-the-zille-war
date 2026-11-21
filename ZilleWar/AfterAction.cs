@@ -57,47 +57,74 @@ internal sealed class AfterAction
         return a;
     }
 
+    /// <summary>Estimated men lost: a destroyed formation is roughly a battalion with its support.</summary>
+    public string PlayerDeadMen => Men(PlayerDead, 7);
+    public string EnemyDeadMen => Men(EnemyDead, 13);
+
+    private static string Men(int units, int salt) => units <= 0 ? "a handful of" : $"{units * 850 + (units * 137 + salt * 31) % 300:N0}";
+
     public string FullReport(ObjectiveInfo info, bool won)
     {
         var s = new System.Text.StringBuilder();
-        s.Append($"OBJECTIVE: {info.Aim}\n");
-        s.Append(won ? "RESULT: Objective achieved.\n\n" : "RESULT: Objective not achieved.\n\n");
-        s.Append($"GROUND: {Headline}\n");
+        s.Append("GENERAL STAFF OF THE ROYAL RIZIAN ARMY, MONTAKLAR\n");
+        s.Append($"After-Action Report: {info.Codename}\n");
+        s.Append("Classification: For His Majesty's eyes only\n\n");
+
+        s.Append($"1. OBJECTIVE\n{info.Aim}\n\n");
+
+        s.Append("2. OUTCOME\n");
+        s.Append(won
+            ? $"The objective has been achieved. {(info.Target != null ? $"{info.Target} is in Rizian hands." : "No Wehzek unit remains on the mainland.")}\n\n"
+            : $"The objective has not been achieved. {(info.Target != null ? $"{info.Target} remains in Wehzek hands." : "Wehzek units still hold ground on the mainland.")}\n\n");
+
+        s.Append($"3. THE FRONT\n{Headline}");
         if (CitiesTaken.Count > 0)
         {
-            s.Append($"CITIES TAKEN: {Join(CitiesTaken)}.\n");
+            s.Append($" Cities taken: {Join(CitiesTaken)}.");
         }
 
         if (CitiesRetaken.Count > 0)
         {
-            s.Append($"CITIES LIBERATED: {Join(CitiesRetaken)}.\n");
+            s.Append($" Rizian cities liberated: {Join(CitiesRetaken)}.");
         }
 
         if (CitiesLost.Count > 0)
         {
-            s.Append($"CITIES LOST: {Join(CitiesLost)}.\n");
+            s.Append($" Cities lost: {Join(CitiesLost)}.");
         }
 
-        s.Append($"\nCASUALTIES: Royal Army, {PlayerDead} units destroyed. Wehzek forces, {EnemyDead} units destroyed.\n");
-        s.Append($"ENEMY: Intelligence now rates the Wehzek garrison as {ZilleCampaign.Tier.ToLowerInvariant()}. ");
+        s.Append("\n\n4. LOSSES\n");
+        s.Append($"Royal Army: {PlayerDead} formations destroyed in action, an estimated {PlayerDeadMen} men killed, wounded or missing.\n");
+        s.Append($"Wehzek forces: {EnemyDead} formations destroyed, an estimated {EnemyDeadMen} men killed, wounded or captured.\n\n");
+
+        s.Append("5. THE ENEMY\n");
+        s.Append($"Intelligence rates the Wehzek garrison as {ZilleCampaign.Tier.ToLowerInvariant()}. ");
+        s.Append(ZilleCampaign.Tier switch
+        {
+            "Strong" => "Convoys from the Wehzek mainland are crossing the Strait of Kreleck without interference, and every night brings fresh men and ammunition. ",
+            "Default" => "Wehlen continues to supply the garrison by sea, though no longer in growing numbers. ",
+            "Strained" => "The garrison is short of fuel and shells; convoys from the mainland arrive late, and some do not arrive at all. ",
+            _ => "Deserters report half rations, idle tanks without fuel and rifles without ammunition. ",
+        });
         s.Append(EnemyCitiesLeft.Count > 0 ? $"Wehlen still holds {Join(EnemyCitiesLeft)}.\n" : "Wehlen no longer holds any city on the mainland.\n");
 
         List<string> notes = EventNotes();
         if (notes.Count > 0)
         {
-            s.Append("\nFROM THE FIELD:\n");
+            s.Append("\n6. FROM THE FIELD\n");
             foreach (string n in notes)
             {
                 s.Append($"- {n}\n");
             }
         }
 
-        s.Append("\nASSESSMENT: ");
+        s.Append($"\n{(notes.Count > 0 ? 7 : 6)}. ASSESSMENT\n");
         s.Append(EnemyCitiesLeft.Count == 0
-            ? "The General Staff believes the remaining Wehzek positions cannot hold for long."
+            ? "The remaining Wehzek positions cannot hold for long. The Staff recommends an operation to clear them before Wehlen can evacuate its men or land new ones."
             : won
-                ? $"The General Staff recommends pressing the advantage before Wehlen can reinforce {EnemyCitiesLeft[0]}."
-                : "The General Staff requests time to regroup, and warns that every week of delay lets Wehlen bring more men across the Strait of Kreleck.");
+                ? $"The enemy is off balance. The Staff recommends pressing the advantage before Wehlen can reinforce {EnemyCitiesLeft[0]}."
+                : "The Staff requests time to regroup and resupply, and warns that every week of delay lets Wehlen bring more men across the Strait of Kreleck.");
+        s.Append("\n\nGeneral Carlos Azaro, Chief of the General Staff");
         return s.ToString();
     }
 
