@@ -664,6 +664,10 @@ internal static class NewsWire
                     "pointed out who would otherwise be paying for Smolak's convoys."));
                 break;
             case SupplyWar.Lever.BffRaids:
+                Publish(k, "RH", n == 1 ? "Wehzek Ports Ablaze: Smolak's Supply Lines Falter" : "Fresh Blows to Wehlen's Supply Ports", P(
+                    "Fires have broken out in Wehzek harbors on the Strait of Kreleck, and the convoys that feed Smolak's garrison in Zille " +
+                    "have been held back. Wehzek radio blames everyone but itself.",
+                    "The Royal Herald notes only that the troubles of a country that occupies its neighbors tend to come home to it."));
                 Publish(k, "G", n == 1 ? "Explosions Rock Wehzek Ports; Bludish Freedom Front Claims Attacks" : "Bludish Freedom Front Strikes Again",
                     P(n == 1
                         ? "A series of explosions has damaged piers and fuel depots in two Wehzek ports facing the Strait of Kreleck. The " +
@@ -688,6 +692,12 @@ internal static class NewsWire
                     "in covered trucks. They are hard men who know Wehzek tactics well, and they will fight under Rizian officers for Rizian pay.",
                     "Some of our officers are uneasy. One of them has asked the General Staff, in writing, who will answer for what these " +
                     "men do once they are in Zille."));
+                Publish(k, "RH", n == 1 ? "Volunteers From the North Join the Fight for Zille" : "More Volunteers Answer Zille's Call", P(
+                    n == 1
+                        ? "Two companies of foreign volunteers, hardened fighters with long experience of Wehzek methods, have reached " +
+                          "Montaklar to serve under Rizian officers. They come, the General Staff says, because they share our cause."
+                        : "A second contingent of foreign volunteers has arrived in Montaklar. Their officers report them eager to reach the front.",
+                    "The Royal Herald will not repeat the names Wraclawitz radio calls them. In Zille they will be called by another: allies."));
                 Publish(k, "V", n == 1 ? "Strange Allies in Montaklar" : "The King's Foreign Legion Grows", P(
                     "Residents of Montaklar report foreign fighters in unmarked uniforms at the army barracks, speaking Bludish. If these are " +
                     "what they appear to be, the King has invited a terrorist organization into the Royal Army."));
@@ -729,12 +739,8 @@ internal static class NewsWire
                             : Variables.GetBool(SupplyWar.VarLespiaPaid)
                                 ? "Diplomats say Rizia is paying handsomely for the service. Prime Minister Alvarez, asked about the " +
                                   "arrangement, said only that \"Lespia believes in free navigation, and in being paid for it.\""
-                                : Variables.GetBool(SupplyWar.VarLespiaMitz)
-                                    ? "Diplomats say the price was paid in votes, not money: Rizia has promised to stand with Lespia on the " +
-                                      "future of the Meftiem International Trade Zone. Prime Minister Alvarez, asked about the arrangement, " +
-                                      "said only that \"friends vote together.\""
-                                    : "Diplomats are at a loss to say what Rizia gave in return. Prime Minister Alvarez, asked about the " +
-                                      "arrangement, called it \"a gesture of friendship\" and changed the subject."));
+                                : "Diplomats are at a loss to say what Rizia gave in return. Prime Minister Alvarez, asked about the " +
+                                  "arrangement, called it \"a gesture of friendship\" and changed the subject."));
                 if (Variables.GetBool("ZilleWar.Lespia_Caleqabiz"))
                 {
                     Publish(k, "V", "Caleqabiz: The Price of Lespian Friendship", P(

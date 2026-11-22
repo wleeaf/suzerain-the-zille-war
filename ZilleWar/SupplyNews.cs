@@ -97,6 +97,27 @@ internal static class SupplyNews
                       "court-martial will not bring eleven people back, but it may yet save the name of every Rizian soldier in Zille."
                     : "Eleven villagers are dead in the hills above Zille, killed by men the Crown paid to fight for it. The Voice of Rizia " +
                       "asks the palace a question it will not answer: who will stand trial for this, and in whose name were they fighting?");
+            Paper("Bluds", "RH", bluds switch
+                {
+                    "trial" => "The Crown Orders a Public Court-Martial",
+                    "home" => "Bludish Companies Released from Royal Service",
+                    _ => "General Staff Examines Wehzek Claims",
+                },
+                bluds switch
+                {
+                    "trial" => "His Majesty has ordered that the foreign fighters accused of the killings in the hills above Zille be tried " +
+                               "by court-martial, in public, before the foreign press. \"The Royal Army has nothing to hide,\" a palace " +
+                               "spokesman said.",
+                    "home" => "The Bludish companies hired for the campaign in Zille have been released from royal service. The Royal " +
+                              "Army will hold its lines with Rizian soldiers, as it always preferred to.",
+                    _ => "The General Staff is examining Wehzek reports of a night raid on a village above Zille. The Bludish companies " +
+                         "who have fought alongside our soldiers in the hills remain at their posts.",
+                },
+                bluds == "trial"
+                    ? "No Rizian soldier stands accused. The Royal Herald trusts that justice will be swift, and notes that Wraclawitz has " +
+                      "never once tried its own soldiers in front of anybody."
+                    : "Wehzek radio has made much of the affair. The Royal Herald reminds its readers that Wehzek radio also told them " +
+                      "the Royal Army would never reach Zille.");
             if (bluds == "trial")
             {
                 Rep("BludsRumburg", SuzerainTokenName.RiziaCountryRumburg, "Thornbourgh Is Not Amused",
@@ -191,6 +212,12 @@ internal static class SupplyNews
                 "If Wehlen's dossier is even half true, the Bluds blowing up Wehzek harbors in our name are armed by Rumburg and paid, " +
                 "at least in part, by us. The palace has not said a word.",
                 "The Voice of Rizia asks a simple question. Who decided this, and when were the people of Rizia going to be told?");
+            Paper("Dossier", "RH", "Wraclawitz Turns to Forgery",
+                "Losing on the battlefield, the Smolak government has turned to paper. Its so-called Thornbourgh Dossier, two hundred " +
+                "pages of photographs of crates, has been dismissed by Rumburg as a forgery, and the Royal Herald sees no reason to " +
+                "doubt the word of Her Majesty Queen Beatrice.",
+                "A crate proves only that Wehzek propagandists own crates. The soldiers of the Royal Army need no help from anyone to " +
+                "beat Mr. Smolak's, and they are proving it every day.");
             Rep("Dossier", SuzerainTokenName.RiziaCountryRumburg, "Thornbourgh Embarrassed",
                 "The dossier has landed badly in Thornbourgh. Opposition members are demanding to know how much of the Exchequer's money " +
                 "has gone to the Bludish Freedom Front, and the Sordish ambassador has been seen leaving the Foreign Office twice in a day.",
@@ -234,6 +261,11 @@ internal static class SupplyNews
                 "The Aureus field was supposed to keep the lights on in Rizia. Instead, most of its gas will sail to Lespia at a price no " +
                 "Rizian family will ever be offered, every turn, for as long as anyone can see. The palace calls it the cost of the war. " +
                 "The Voice of Rizia calls it what it is: a tribute.");
+            Paper("LespiaGas", "RH", "A Shrewd Bargain at Sea",
+                "Lespian warships now stand between Wehlen and its garrison in Zille, and every Wehzek convoy they turn back is a " +
+                "battle our soldiers will not have to fight. The price is paid in Aureus gas, gas Rizia has to sell only because His " +
+                "Majesty had the foresight to buy the field.",
+                "The critics count units of gas. The Royal Herald counts the Rizian sons who will come home because of it.");
         });
 
         // Valgsland and Lespia are rivals (the Meftiem, the Antacean): any Lespian help in the strait draws a reaction.
@@ -255,11 +287,26 @@ internal static class SupplyNews
         });
 
         Once("LespiaMitz", B(SupplyWar.VarLespiaMitz), () =>
+        {
+            bool destroyer = Str(SupplyWar.VarLespiaMitzReward) == "destroyer";
             Paper("LespiaMitz", "G", "Rizia to Side with Lespia on the Meftiem",
                 "The Kingdom of Rizia will vote with Lespia against any change to the ownership of the Meftiem International Trade " +
-                "Zone, diplomats in Konstantium say, in what is widely seen as the price of Lespian help in the Strait of Kreleck.",
+                "Zone, diplomats in Konstantium say. In return, Lespia is said to have promised to vote down any motion to sanction " +
+                "Rizia at the Alliance of Nations" +
+                (destroyer
+                    ? ", and a destroyer has left the yards of Perla under the Rizian flag."
+                    : ", and to share what its navy knows about Wehzek shipping."),
                 "In Cavette, Prime Minister Saltana's office called the reported agreement \"gold traded for gunboats.\" Chancellor " +
-                "Hegel of Valgsland has not yet commented, which observers consider a comment in itself."));
+                "Hegel of Valgsland has not yet commented, which observers consider a comment in itself.");
+            if (destroyer)
+            {
+                Rep("LespiaMitzShip", SuzerainTokenName.RiziaCitySallabes, "A Lespian Destroyer at Sallabes",
+                    "The destroyer promised by Prime Minister Alvarez has reached Sallabes. Her Lespian crew handed her over at the " +
+                    "quayside and took the evening train home.",
+                    "The Admiralty reports that she is fast, well armed and a little short of spare parts, which can only be bought " +
+                    "in Perla.");
+            }
+        });
 
         string pales = Str("ZilleWar.Alvarez_PalesTopic");
         Once("PalesArms", pales == "ignored", () =>
@@ -459,6 +506,11 @@ internal static class SupplyNews
             Paper("SmolakAccepted", "V", "What Did the King Give Away?",
                 $"The guns are silent, and the Voice of Rizia is glad of it. But a peace made over the telephone deserves to be read " +
                 $"aloud, so here it is: {terms}. The people of Rizia were not asked about any of it.");
+            Paper("SmolakAccepted", "RH", "The Guns Fall Silent in Zille",
+                "At His Majesty's word, the Royal Army has ceased fire in Zille. It holds every inch of the ground it won, and Rizian " +
+                "flags fly over towns that had not seen one in a generation.",
+                $"Wraclawitz asked a price for the quiet: {terms}. The Royal Herald will not pretend the price was nothing. It was " +
+                "less than the lives it spares.");
         });
 
         Once("Saltana", B(SupplyWar.VarMorellaAircraft), () =>

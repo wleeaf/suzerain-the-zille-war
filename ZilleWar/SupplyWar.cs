@@ -437,8 +437,7 @@ internal static partial class SupplyWar
             AddCall(AlvarezConv, "Alvarez", SuzerainTokenName.RiziaCityMonqiz, "Call With Prime Minister Alvarez", "Palas Toras, Monqiz");
         }
 
-        AddCall(WarRoomConv, "WarRoom", SuzerainTokenName.RiziaCityPorteDrazon, "The Strait of Kreleck", "War Room, Palas Rezna",
-            ConversationData.ConversationType.SecurityAndOrder);
+        // The fleet and the strait are settled at the War Council itself (SupplyWarRoom.cs builds that part of it).
 
         // At most two other voices per turn, most urgent first.
         int events = 0;
@@ -513,6 +512,15 @@ internal static partial class SupplyWar
         if (Variables.GetInt(Count(Lever.Lespia)) == 0)
         {
             return w >= 1 || Variables.GetString(AnDeclaration.VarLespianNote) == "kept";
+        }
+
+        // The strait is bought; the Meftiem is a separate bargain he still wants to make (until the board's last vote).
+        bool voted = Variables.GetBool(VoteNationalization) || Variables.GetBool(VoteRenegotiation) || Variables.GetBool(VoteStatusQuo);
+        bool mitzOpen = !Variables.GetBool(VarLespiaMitz) && !Variables.GetBool(MitzPromiseLate) && !(Variables.GetBool(MitzPromise) && !voted) &&
+                        !Variables.GetBool(ValgslandMitz) && Turn <= 8;
+        if (mitzOpen)
+        {
+            return true;
         }
 
         bool palesTopic = Variables.GetBool(PalesWar) && Variables.GetInt(LespianPalesSupport) > 0 &&

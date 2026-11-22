@@ -330,6 +330,9 @@ internal static class WorldModifiers
 
     private static bool _added;
 
+    /// <summary>The game rebuilt its entity lists (a save was loaded): add ours again on the next step.</summary>
+    internal static void ResetAdded() => _added = false;
+
     private static void EnsureEntities()
     {
         if (EntityDataManager.HUDStatData == null)
@@ -340,6 +343,10 @@ internal static class WorldModifiers
         if (!_added)
         {
             _added = AddLines() && AddCards();
+            if (_added)
+            {
+                LogCard("ZilleWar_Diplomacy_Wehlen_War");
+            }
         }
 
         PatchWehlenLines();
@@ -411,6 +418,29 @@ internal static class WorldModifiers
 
         Core.Log.Msg($"World: {Lines.Length} HUD lines registered.");
         return true;
+    }
+
+    /// <summary>Diagnostic: is the card in both situation lists, and what does its variable read?</summary>
+    private static void LogCard(string name)
+    {
+        bool raw = false, filtered = false;
+        string variable = null;
+        foreach (SituationData d in EntityDataManager.situationsData)
+        {
+            if (d?.NameInDatabase == name)
+            {
+                raw = true;
+                variable = d.SituationProperties?.IsEnabledVariable;
+            }
+        }
+
+        foreach (SituationData d in EntityDataManager.SituationsData)
+        {
+            filtered |= d?.NameInDatabase == name;
+        }
+
+        string value = variable == null ? "?" : Il2CppPixelCrushers.DialogueSystem.DialogueLua.GetVariable(variable).asString;
+        Core.Log.Msg($"World: card '{name}' in situationsData={raw}, SituationsData={filtered}, {variable}={value}.");
     }
 
     private static bool AddCards()

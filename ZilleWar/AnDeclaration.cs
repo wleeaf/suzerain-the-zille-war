@@ -82,9 +82,7 @@ internal static class AnDeclaration
             name: P + "Declare",
             speakerSelector: new CharacterNameSelector(Romus),
             menuText: "\"I hereby declare war on Wehlen.\"",
-            text: "\"Twenty-five years ago, in a dark hour, my father lent Zille to a friend who had stood by him. The lease has ended. " +
-                  "The friend has decided to keep what was only ever borrowed, and to call it security. Let this Alliance bear witness: " +
-                  "in the name of the Rizian Crown, I hereby declare war on Wehlen. Rizia will not lay down its arms until Zille is home.\"",
+            text: "\"Twenty-five years ago, in a dark hour, my father lent Zille to a friend who had stood by him. The lease has ended.\"",
             luaScript:
                 $"Variable[\"{VarDeclared}\"] = true; Variable[\"{VarEntryAN}\"] = true; " +
                 $"Variable[\"{VarDeclaredTurn}\"] = 4; Variable[\"{WarState.VarActive}\"] = true; " +
@@ -94,7 +92,11 @@ internal static class AnDeclaration
                 "Variable[\"RiziaDLC.CountryRelation_Wehlen_Hostile\"] = true; Variable[\"RiziaDLC.CountryRelation_Wehlen_AtWar\"] = true; " +
                 "UpdateCountryRelationship(\"Rizia_Country_Wehlen\", \"AtWar\"); " + EarlyBookkeeping.DeclarationLua,
             sequence: Wait(new ConversationNodeSequenceBuilder().PlaySceneMusic("Critical").ToString()),
-            nextNodes: Next("Silence")));
+            nextNodes: Next("Declare_p2")));
+
+        inj.AddNode(Choice("Declare_p2", "\"The friend has decided to keep what was only ever borrowed, and to call it security.\"", Next("Declare_p3")));
+        inj.AddNode(Choice("Declare_p3", "\"Let this Alliance bear witness: in the name of the Rizian Crown, I hereby declare war on Wehlen.\"", Next("Declare_p4")));
+        inj.AddNode(Choice("Declare_p4", "\"Rizia will not lay down its arms until Zille is home.\"", Next("Silence")));
 
         // --- the hall ---
         inj.AddNode(Line("Silence", Narrator,
@@ -324,6 +326,11 @@ internal static class AnDeclaration
             luaScript: "PlayCustomMapMusic(\"Rizia_Map_Music_Tense\");",
             nextNodes: new ConversationNodeSelector[] { new ConversationNodeArticyIDSelector(VanillaProtocolAndEnd) }));
 
+        foreach (ConversationNode n in Extra)
+        {
+            inj.AddNode(n);
+        }
+
         foreach (ConversationNode n in inj.Nodes)
         {
             LuaLint.Record(n.Name, n.LuaCondition, n.LuaScript);
@@ -342,16 +349,31 @@ internal static class AnDeclaration
     private static ConversationNodeSelector[] Next(params string[] names) =>
         names.Select(n => (ConversationNodeSelector)new ConversationNodeModdedNameSelector(P + n)).ToArray();
 
+    /// <summary>Continuation nodes of long lines (split like Talk.Line does), added to the injection in Register.</summary>
+    private static readonly List<ConversationNode> Extra = new();
+
     private static ConversationNode Line(string name, string speaker, string text, ConversationNodeSelector[] next,
-        bool conversant = false, string sequence = null, string condition = null, string script = null) =>
-        new(
+        bool conversant = false, string sequence = null, string condition = null, string script = null)
+    {
+        List<string> parts = Talk.SplitSpeech(text);
+        for (int i = 1; i < parts.Count; i++)
+        {
+            Extra.Add(new ConversationNode(
+                name: $"{P}{name}_p{i + 1}",
+                text: parts[i],
+                speakerSelector: new CharacterNameSelector(speaker),
+                nextNodes: i == parts.Count - 1 ? next : Next($"{name}_p{i + 2}")));
+        }
+
+        return new(
             name: P + name,
-            text: text,
+            text: parts[0],
             speakerSelector: new CharacterNameSelector(speaker),
             sequence: Wait(sequence),
             luaScript: LuaFix.Rewrite((conversant ? $"AddConversant(\"{speaker}\"); " : string.Empty) + script),   // vanilla Rizia adds conversants in Lua, quoted
             luaCondition: LuaFix.Rewrite(condition),
-            nextNodes: next);
+            nextNodes: parts.Count > 1 ? Next($"{name}_p2") : next);
+    }
 
     // A node with its own sequence replaces the default one, which is what waits for the player to click on.
     // Vanilla ends such sequences with WaitForMessage(Continue); without it the next line shows at once.

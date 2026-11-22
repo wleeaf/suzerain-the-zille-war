@@ -12,8 +12,11 @@ namespace ZilleWar;
 /// "Briefing on the Invasion of Pales" (c357) and "Operation 2 Next Steps" (c412).
 /// The first council (Turn 4, right after Konstantium) is the briefing; later ones open with the last
 /// operation's result. The objective is announced in the fixed campaign order; the King decides how it is
-/// fought (approach, the Aureus squadron, a preparatory barrage, his own plan or the Staff's), and whether
-/// to push on, hold for a turn or seek a ceasefire. Those orders are read by <see cref="ZilleOperation"/>.
+/// fought, as in c357: the officers weigh the plans against the army the player actually has (Army_Unit_*_Total), and
+/// the King picks a tactic (direct, feint, armored thrust, landing, airborne drop, mountaineers over the ridges), the
+/// Aureus squadron, the fleet and submarines (the old war-room meeting, now part of this one, see SupplyWarRoom.cs) and a
+/// preparatory barrage; and whether to push on, hold for a turn or seek a ceasefire. Those orders are read by
+/// <see cref="ZilleOperation"/>.
 /// The war table only opens once the council has given its order and no other "ZilleWar.Pre_" fragment
 /// (or supply-war call) is pending in the current step, so everything that belongs before the war comes first.
 /// </summary>
@@ -24,10 +27,12 @@ internal static class WarCouncil
     private static readonly string[] PrePrefixes = { "ZilleWar.Pre_", "ZilleWar.Call_" };
 
     // ---- the King's orders (read by ZilleOperation.BuildWarOperation)
-    public const string VarApproach = "ZilleWar.Plan_Approach";            // "Direct" | "Feint" | "Landing"
+    public const string VarApproach = "ZilleWar.Plan_Approach";            // an Approach name
     public const string VarBombard = "ZilleWar.Plan_Bombard";              // preparatory barrage ordered
     public const string VarDelegated = "ZilleWar.Plan_Delegated";          // the General Staff drew up the plan
     public const string VarFleetRecalled = "ZilleWar.Plan_FleetRecalled";  // Aureus squadron brought north (stays true)
+    public const string VarNavy = "ZilleWar.Plan_Navy";                    // "Strait" | "Coast" | "Home"
+    public const string VarSubsOut = "ZilleWar.Plan_SubsOut";              // submarines sent on patrol at this council
 
     // ---- council bookkeeping
     public const string VarDoneTurn = "ZilleWar.Council_DoneTurn";         // last turn a council was completed
@@ -54,6 +59,7 @@ internal static class WarCouncil
     private const string AskedGarrison = "ZilleWar.Council_Asked_Garrison";
     private const string AskedFronts = "ZilleWar.Council_Asked_Fronts";
     private const string HubVisited = "ZilleWar.Council_HubVisited";
+    private const string AskedNavyWhy = "ZilleWar.Council_Asked_NavyWhy";
 
     // ---- speakers
     private const string Lucita = "Lucita Azaro";
@@ -64,17 +70,25 @@ internal static class WarCouncil
     private const string Hugo = "Hugo Toras";
     private const string Vina = "Vina Toras";
 
-    public enum Approach { Direct, Feint, Landing }
+    /// <summary>Armor: massed tanks through the wall; Airborne: paratroopers behind the line; Mountain: mountaineers over the ridges.</summary>
+    public enum Approach { Direct, Feint, Landing, Armor, Airborne, Mountain }
 
-    /// <summary>The orders of the latest council.</summary>
-    public sealed record Orders(Approach Approach, bool Bombard, bool Delegated, bool FleetRecalled, bool FleetSplit);
+    /// <summary>
+    /// The orders of the latest council. Navy: "Strait" (hunting convoys or their escorts), "Coast" (shelling the coastal
+    /// batteries), "Home". Reinforcements: Wehzek units brought across the strait before the operation.
+    /// </summary>
+    public sealed record Orders(Approach Approach, bool Bombard, bool Delegated, bool FleetRecalled, bool FleetSplit,
+        string Navy = "Home", bool SubsOut = false, int Reinforcements = 0);
 
     public static Orders CurrentOrders()
     {
         Approach a = Enum.TryParse(ZilleCampaign.Str(VarApproach), out Approach x) ? x : Approach.Direct;
         bool recalled = Variables.GetBool(VarFleetRecalled);
         bool split = !recalled && Variables.GetBool("RiziaDLC.Diplomacy_Pales_Military_BlockDrillship");
-        return new Orders(a, Variables.GetBool(VarBombard), Variables.GetBool(VarDelegated), recalled, split);
+        string navy = ZilleCampaign.Str(VarNavy) is "Strait" or "Coast" ? ZilleCampaign.Str(VarNavy) : "Home";
+        bool subs = Variables.GetBool(VarSubsOut);
+        return new Orders(a, Variables.GetBool(VarBombard), Variables.GetBool(VarDelegated), recalled, split,
+            navy, subs, SupplyWar.StraitReinforcements(navy, subs));
     }
 
     private static readonly HashSet<string> Reinjected = new();     // "operation:turn", one re-injection per turn and session
@@ -84,7 +98,7 @@ internal static class WarCouncil
     {
         foreach (string v in new[]
                  {
-                     VarApproach, VarBombard, VarDelegated, VarFleetRecalled, VarDoneTurn, VarOrderTurn, VarHeldTurn,
+                     VarApproach, VarBombard, VarDelegated, VarFleetRecalled, VarNavy, VarSubsOut, AskedNavyWhy, VarDoneTurn, VarOrderTurn, VarHeldTurn,
                      VarTurn, VarKind, VarObjective, VarCoastal, VarLastObjective, VarLossTier, VarSetback, VarWaited,
                      VarExtraTaken, VarVinaAsked, VarFought, AskedForces, AskedGarrison, AskedFronts, HubVisited,
                  }.Concat(RizianCities.Select(LostVar)))
@@ -116,6 +130,35 @@ internal static class WarCouncil
         Reinject(turn);
         OfferCouncil(turn);
         OpenWarTable(turn);
+    }
+
+    /// <summary>
+    /// Open (or re-open) this turn's war table if the council has given its order and nothing that belongs before the war
+    /// is pending. Safe to call at any time and idempotent; called before the game evaluates whether the step is complete,
+    /// so the war fragment exists before "continue to the next chapter" can be offered.
+    /// </summary>
+    public static void TryOpenWarTable()
+    {
+        try
+        {
+            if (!GameState.IsCurrentStoryPack(SuzerainStoryPackInfo.Rizia) || !WarFlow.AtWar)
+            {
+                return;
+            }
+
+            int turn = GameState.CurrentTurnNum ?? 0;
+            if (turn <= 0)
+            {
+                return;
+            }
+
+            Reinject(turn);
+            OpenWarTable(turn);
+        }
+        catch (Exception ex)
+        {
+            Core.Log.Error($"TryOpenWarTable failed: {ex}");
+        }
     }
 
     /// <summary>True while one of our pre-war fragments (council, calls, other modules' "ZilleWar.Pre_*") is still to be played.</summary>
@@ -279,7 +322,7 @@ internal static class WarCouncil
     private static string Not(string c) => $"not ({c})";
 
     private const string LucitaHere = "Variable[\"RiziaDLC.Lucita_Arrested\"] ~= true and Variable[\"RiziaDLC.Lucita_Executed\"] ~= true " +
-                                      "and Variable[\"RiziaDLC.Council_Security_Lucita\"] ~= false";
+                                      "and Variable[\"RiziaDLC.Council_Security_Lucita\"] ~= false and Variable[\"" + EarlyT6.VarLucitaArrestedMidWar + "\"] ~= true";
     private const string HugoHere = "Variable[\"RiziaDLC.Hugo_Resigned\"] ~= true and Variable[\"RiziaDLC.Hugo_Arrested\"] ~= true " +
                                     "and Variable[\"RiziaDLC.Hugo_Executed\"] ~= true";
     private const string LaurentoHere = "Variable[\"RiziaDLC.Council_Foreign_Vina\"] ~= true and Variable[\"RiziaDLC.Council_Foreign_Empty\"] ~= true";
@@ -350,7 +393,8 @@ internal static class WarCouncil
     {
         t = new Talk(Conv, "ZilleWar.Council.");
         string reset = Set(AskedForces, "false") + Set(AskedGarrison, "false") + Set(AskedFronts, "false") + Set(HubVisited, "false") +
-                       Set(VarApproach, "\"Direct\"") + Set(VarBombard, "false") + Set(VarDelegated, "false");
+                       Set(VarApproach, "\"Direct\"") + Set(VarBombard, "false") + Set(VarDelegated, "false") +
+                       Set(VarNavy, "\"Home\"") + Set(VarSubsOut, "false") + Set(AskedNavyWhy, "false");
         string conversants =
             $"AddConversant(\"{Carlos}\"); " +
             $"if {LucitaHere} then AddConversant(\"{Lucita}\") end; " +
@@ -612,7 +656,7 @@ internal static class WarCouncil
     /// <summary>What we know: the garrison's strength and the supply war so far.</summary>
     private static void IntelReadout()
     {
-        t.Logic("Intel", new[] { "IntelOpenL", "IntelOpenC" });
+        t.Logic("Intel", new[] { "IntelOpenL", "IntelOpenC" }, script: SupplyWar.CouncilMeetingScript);
         t.Line("IntelOpenL", Narrator, "Lucita stepped up to the map and tapped the Strait of Kreleck with her pointer.", new[] { "Garr" }, condition: LucitaHere);
         t.Line("IntelOpenC", Narrator, "Carlos picked up a pointer and tapped the Strait of Kreleck.", new[] { "Garr" }, condition: Not(LucitaHere));
         t.Logic("Garr", new[] { "Garr1", "Garr2", "Garr3", "Garr4" });
@@ -629,21 +673,10 @@ internal static class WarCouncil
             Embargo, "SupRaids");
         IntelOpt("SupRaids",
             "\"The Bludish Freedom Front has been busy in the north of Wehlen. Every battalion Smolak keeps at home to guard his ports is one he " +
-            "can't send to Zille.\"", Lever(SupplyWar.Lever.BffRaids), "SupLespia");
-        IntelOpt("SupLespia",
-            "\"And the Lespian navy is stopping and searching every Wehzek ship in the Strait of Kreleck. Prime Minister Alvarez is keeping his " +
-            "word. For now.\"", Lever(SupplyWar.Lever.Lespia), "SupNavy");
-        IntelOpt("SupNavy",
-            "\"Our own ships have been sinking transports in the strait. Their captains cross at night now and hug the coast.\"",
-            $"({Lever(SupplyWar.Lever.RoyalNavy)}) or ({Lever(SupplyWar.Lever.Submarines)})", "SupSplit");
-        IntelOpt("SupSplit",
-            "\"One more thing. Part of our fleet is still tied down off the Aureus field, watching the Palesian drillship. That gives the " +
-            "Wehzek navy more room in the gulf than I would like.\"", FleetSplit, "SupNone");
-        IntelOpt("SupNone",
-            "\"Nobody is stopping their convoys yet, Your Majesty. Not Rumburg, not Lespia, not us. Until somebody does, every man we kill in " +
-            "Zille will be replaced within the week.\"",
-            And(Not(Embargo), Not(Lever(SupplyWar.Lever.BffRaids)), Not(Lever(SupplyWar.Lever.Lespia)),
-                Not(Lever(SupplyWar.Lever.RoyalNavy)), Not(Lever(SupplyWar.Lever.Submarines)), $"{Strength} >= 6"), "Brief");
+            "can't send to Zille.\"", Lever(SupplyWar.Lever.BffRaids), "Surprise");
+
+        // At most one disruption (the Bludish companies, the Lespian cameras, a defector); the strait itself comes with the orders.
+        SupplyWar.CouncilSurprise(t, "Surprise", "Brief", LucitaHere);
     }
 
     /// <summary>"Would you like to hear it?" and the questions hub.</summary>
@@ -693,7 +726,10 @@ internal static class WarCouncil
             And($"{subs} >= 1", Not(Lever(SupplyWar.Lever.Submarines))));
         Opt("ForcesBff", Carlos,
             "\"And the Bludish volunteers Rumburg sent us have arrived at Dapalle. My officers can't stand them. They fight well, I'll give them that.\"",
-            Lever(SupplyWar.Lever.BffFighters), "Hub");
+            Lever(SupplyWar.Lever.BffFighters), "ForcesPara");
+        IntelOpt("ForcesPara", "\"The paratroopers are ready at the airfield outside Sallabes, with the planes to carry them.\"", $"{Num(Para)} >= 1",
+            "ForcesMount");
+        Opt("ForcesMount", Carlos, "\"And the mountaineers are at full strength, if anyone needs to climb.\"", $"{Num(Mount)} >= 1", "Hub");
 
         // The garrison: composition by tier (matches what Garrison.Build puts on the map).
         Pick("Garrison", Carlos, "GarrisonWall",
@@ -743,76 +779,137 @@ internal static class WarCouncil
             "garrison has nowhere left to go but home. Operation Northern Crown.\"", new[] { "Command" }, condition: Obj(Objective.Ports));
     }
 
-    /// <summary>How the operation is fought. Every choice is read by ZilleOperation when the map is built.</summary>
+    private const string Para = "RiziaDLC.Army_Unit_Paratrooper_Total";
+    private const string Mount = "RiziaDLC.Army_Unit_Mountaineer_Total";
+    private const int FeintLand = 12;      // land divisions needed to spare two for a feint
+
+    /// <summary>All land divisions the King can put on the Zille front (marines go by sea).</summary>
+    private static string LandUnits => "(" + string.Join(" + ", new[]
+    {
+        "Infantry", "Support", "Tank", "Mountaineer", "Paratrooper", "Mercenary", "Azaro", "GoldenGuard", "Sazon", "Toras",
+    }.Select(u => Num($"RiziaDLC.Army_Unit_{u}_Total"))) + ")";
+
+    /// <summary>
+    /// How the operation is fought, as in c357: the officers weigh each plan against the army we actually have, then the
+    /// King gives the order; then the fleet, then the barrage. Every choice is read by ZilleOperation when the map is built.
+    /// </summary>
     private static void HowToFight()
     {
-        t.Line("Command", Carlos,
-            "\"The General Staff has drawn up a plan, Your Majesty. Or, if you prefer, you can lay out the operation yourself.\"",
-            new[] { "CmdSelf", "CmdStaffCost", "CmdStaff" });
-        t.Choice("CmdSelf", "\"I'll plan this one myself, General. Walk me through the options.\"", new[] { "Appr" });
-        t.Choice("CmdStaffCost", "\"The General Staff knows this ground better than I do. Carry out your plan.\"", new[] { "Staff" },
-            condition: Equip(BarrageCost), cost: $"-{BarrageCost} Military Equipment",
-            script: Set(VarDelegated, "true") + Set(VarApproach, "\"Feint\"") + Set(VarBombard, "true") +
-                    $"{V("RiziaDLC.Resources_Military_Equipment")} = {Num("RiziaDLC.Resources_Military_Equipment")} - {BarrageCost}; ");
-        t.Choice("CmdStaff", "\"The General Staff knows this ground better than I do. Carry out your plan.\"", new[] { "Staff" },
-            condition: Not(Equip(BarrageCost)), script: Set(VarDelegated, "true") + Set(VarApproach, "\"Feint\""));
-        t.Line("Staff", Carlos,
-            "\"Thank you, Your Majesty. Then we feint first, to draw their reserves away from the objective, and go in where they've thinned out.\"",
-            new[] { "Staff2" });
-        t.Logic("Staff2", new[] { "Staff2a", "Staff2b" });
-        t.Line("Staff2a", Carlos, "\"The artillery opens up the night before. By morning there won't be much left of their forward positions.\"",
-            new[] { "Fleet" }, condition: Is(VarBombard));
-        t.Line("Staff2b", Carlos, "\"We haven't the shells for a proper barrage, so the infantry will have to do it the hard way.\"", new[] { "Fleet" });
+        string tank = Num("RiziaDLC.Army_Unit_Tank_Total"), marine = Num("RiziaDLC.Army_Unit_Marine_Total");
+        string ships = Num("RiziaDLC.Army_Unit_Ship_Total"), para = Num(Para), mount = Num(Mount), land = LandUnits;
+        string hills = Obj(Objective.Wall);
+        string canFeint = $"{land} >= {FeintLand}";
+        string canArmor = And($"{tank} >= 3", Not(hills));
+        string canLanding = And(Is(VarCoastal), $"{marine} >= 1", $"{ships} >= 2");
+        string canDrop = $"{para} >= 1";
+        string canMount = And(hills, $"{mount} >= 1");
 
-        // The approach.
-        string coastal = And(Is(VarCoastal), $"{Num("RiziaDLC.Army_Unit_Ship_Total")} >= 1");
-        t.Line("Appr", Carlos, "\"There are three ways to go about it, Your Majesty. Straight at them, around them, or from the sea.\"",
-            new[] { "ApprDirect", "ApprFeint", "ApprLanding" });
-        t.Choice("ApprDirect", "\"We go straight at them. Everything on the main road, as fast as it will go.\"", new[] { "ApprDirect2" },
+        t.Line("Command", Carlos,
+            "\"Now, the plan itself. The Staff has gone through the order of battle, Your Majesty. Not every plan on paper is one this army can carry out.\"",
+            new[] { "RFeint" });
+
+        // The officers' reasoning, from the numbers.
+        Pick("RFeint", Carlos, "RArmor",
+            ($"{land} >= 16", "\"We have well over a dozen divisions to call on. We can spare two of them for a feint and still hit hard where it counts.\""),
+            (canFeint, "\"We have a dozen divisions, give or take. Enough to spare two for a feint, though not many more.\""),
+            (null, "\"A feint is out of the question, I'm afraid. With fewer than a dozen divisions, every one of them is needed on the real line.\""));
+        Pick("RArmor", Carlos, "RSea",
+            (hills, "\"As for the tanks, they're no use in those hills. The roads up to Auremina were cut for mule carts.\""),
+            ($"{tank} >= 6", "\"And we have six tank divisions or more. Massed on the main road, they can be through the wall before their reserves wake up.\""),
+            (canArmor, "\"We have enough tanks for one armored thrust. Massed on the main road, they can break the wall in a morning.\""),
+            (null, "\"An armored breakthrough is not on the table. Two tank divisions in a column would be a gift to their gunners.\""));
+        t.Logic("RSea", new[] { "RSeaYes", "RSeaNoMarines", "RSeaNoShips", "RDrop" });
+        Intel("RSeaYes", "\"The marines are ready at Sallabes, and we have the ships to carry them and cover them. We can put them ashore behind their line.\"",
+            new[] { "RDrop" }, canLanding);
+        Intel("RSeaNoMarines", "\"We have the ships for a landing, but no marines. Ordinary infantry in boats against a defended shore would be a slaughter.\"",
+            new[] { "RDrop" }, And(Is(VarCoastal), $"{ships} >= 2", $"{marine} < 1"));
+        Intel("RSeaNoShips", "\"The marines are ready, but the fleet is too thin to carry them and cover them at the same time.\"",
+            new[] { "RDrop" }, And(Is(VarCoastal), $"{marine} >= 1", $"{ships} < 2"));
+        t.Logic("RDrop", new[] { "RDropHarbor", "RDropWall", "RDropPorts", "RMount" });
+        Intel("RDropHarbor", "\"The paratroopers can go in the night before, behind the city. Not on it. The anti-aircraft guns in Zille would tear them apart.\"",
+            new[] { "RMount" }, And(canDrop, Obj(Objective.Harbor)));
+        Intel("RDropWall", "\"The paratroopers can drop on the ridges behind Auremina and hold the road until the army comes up.\"",
+            new[] { "RMount" }, And(canDrop, hills));
+        Intel("RDropPorts", "\"The paratroopers can drop between Isor and Nanta and cut the coast road.\"",
+            new[] { "RMount" }, And(canDrop, Obj(Objective.Ports)));
+        t.Logic("RMount", new[] { "RMountTad", "RMountCarlos", "RMountNo", "Tactic" });
+        t.Line("RMountTad", Taddeus,
+            "\"Our mountaineers were trained for exactly this ground, Lieutenant. Send them over the ridges while the Wehzeks watch the roads.\"",
+            new[] { "Tactic" }, condition: And(canMount, TaddeusHere));
+        t.Line("RMountCarlos", Carlos,
+            "\"Our mountaineers were trained for this ground, Your Majesty. They can go over the ridges while the Wehzeks watch the roads.\"",
+            new[] { "Tactic" }, condition: canMount);
+        t.Line("RMountNo", Carlos, "\"We have no mountaineer units, so the ridges will be ordinary infantry work.\"", new[] { "Tactic" },
+            condition: hills);
+
+        // The King's order.
+        t.Line("Tactic", Carlos, "\"What are your orders, Your Majesty?\"",
+            new[] { "TDirect", "TFeint", "TArmor", "TLanding", "TDrop", "TMount" });
+        t.Choice("TDirect", "\"We go straight at them. Everything down the main road, as fast as it will go.\"", new[] { "TDirect2" },
             script: Set(VarApproach, "\"Direct\""));
-        t.Line("ApprDirect2", Carlos,
+        t.Line("TDirect2", Carlos,
             "\"A direct assault, then. They'll see us coming, but if we're quick, their armor won't be up in time to meet us.\"", new[] { "Fleet" });
-        t.Choice("ApprFeint", "\"We feint first. Make them think we're coming somewhere else.\"", new[] { "ApprFeint2" },
+
+        t.Choice("TFeint", "\"We feint first. Make them think we're coming somewhere else.\"", new[] { "TFeint2" }, condition: canFeint,
             script: Set(VarApproach, "\"Feint\""));
-        t.Logic("ApprFeint2", new[] { "FeintHarbor", "FeintWall", "FeintPorts" });
+        t.Logic("TFeint2", new[] { "FeintHarbor", "FeintWall", "FeintPorts" });
         t.Line("FeintHarbor", Carlos,
             "\"We'll make a show toward Auremina and the hills. If they take the bait, their armor goes north, and Zille is left with its garrison.\"",
             new[] { "FeintCost" }, condition: Obj(Objective.Harbor));
         t.Line("FeintWall", Carlos, "\"We'll threaten the coast road toward Isor. They'll have to pull men out of the hills to cover it.\"",
-            new[] { "FeintCost" }, condition: Obj(Objective.Wall));
+            new[] { "FeintCost" }, condition: hills);
         t.Line("FeintPorts", Carlos, "\"We'll make a great deal of noise in front of Nanta, and see how much they leave behind in Isor.\"",
             new[] { "FeintCost" }, condition: Obj(Objective.Ports));
         t.Line("FeintCost", Carlos, "\"It will cost us a day or two. They'll use it to bring a few more men across the strait.\"", new[] { "Fleet" });
-        t.Choice("ApprLanding", "\"We come from the sea. Put men ashore behind their lines.\"", new[] { "ApprLanding2" }, condition: coastal,
-            script: Set(VarApproach, "\"Landing\""));
-        Intel("ApprLanding2", "\"The landing ships go in while the army comes down the road. If their coastal guns are still firing when the boats " +
-                              "go in, we will lose ships.\"", new[] { "ApprLanding3" });
-        IntelOpt("ApprLanding3", "\"And we have no marines to speak of. It will be ordinary infantry in landing boats. Brave men, and not many of them.\"",
-            $"{Num("RiziaDLC.Army_Unit_Marine_Total")} < 1", "Fleet");
 
-        // The Aureus squadron.
-        t.Logic("Fleet", new[] { "FleetAsk", "Barrage" });
+        t.Choice("TArmor", "\"Mass the tanks on the main road. We break through and keep going.\"", new[] { "TArmor2" }, condition: canArmor,
+            script: Set(VarApproach, "\"Armor\""));
+        t.Line("TArmor2", Carlos,
+            "\"An armored thrust, then. Their wall will hold us for a morning. After that, it's a race to the objective.\"", new[] { "Fleet" });
+
+        t.Choice("TLanding", "\"We come from the sea. Put the marines ashore behind their lines.\"", new[] { "TLanding2" }, condition: canLanding,
+            script: Set(VarApproach, "\"Landing\""));
+        Intel("TLanding2", "\"The landing ships go in while the army comes down the road. If their coastal guns are still firing when the boats go in, " +
+                           "we will lose ships.\"", new[] { "Fleet" });
+
+        t.Choice("TDrop", "\"Drop the paratroopers behind their line the night before.\"", new[] { "TDrop2" }, condition: canDrop,
+            script: Set(VarApproach, "\"Airborne\""));
+        Intel("TDrop2", "\"They'll be holding a patch of ground behind the Wehzeks by dawn. The army has to reach them before the Wehzeks do.\"",
+            new[] { "Fleet" });
+
+        t.Choice("TMount", "\"Send the mountaineers over the ridges.\"", new[] { "TMount2" }, condition: canMount,
+            script: Set(VarApproach, "\"Mountain\""));
+        t.Line("TMount2", Carlos,
+            "\"They'll be on the high ground before the Wehzeks know they've left our lines. The infantry follows them up the road.\"",
+            new[] { "Fleet" });
+
+        // The Aureus squadron, then the strait and the fleet (SupplyWarRoom.cs).
+        t.Logic("Fleet", new[] { "FleetAsk", "Navy" });
         Intel("FleetAsk",
-            "\"Then there is the fleet. Half our destroyers are still sitting on the Aureus field, babysitting a Palesian drillship. Bring them north, " +
-            "and the Wehzek navy loses the gulf. Leave them where they are, and the Duke's drillship stays idle.\"",
-            new[] { "FleetNorth", "FleetStay" }, And(FleetSplit, $"{Num("RiziaDLC.Army_Unit_Ship_Total")} >= 1"));
-        // Same order as the war room's (SupplyWarRoom "AureusPull"): same cost, same consequences, same news.
+            "\"Then there is the fleet. Half our destroyers are still sitting on the Aureus field, babysitting a Palesian drillship.\"",
+            new[] { "FleetAsk2" }, And(FleetSplit, $"{ships} >= 1"));
+        Intel("FleetAsk2", "\"Bring them north, and the Wehzek navy loses the gulf. Leave them, and the Duke's drillship stays idle.\"",
+            new[] { "FleetNorth", "FleetStay" });
         t.Choice("FleetNorth", "\"Bring the squadron north. Zille comes first.\"", new[] { "FleetNorth2" }, cost: "-1 Authority",
             script: Set(VarFleetRecalled, "true") + Set("RiziaDLC.Diplomacy_Pales_Military_BlockDrillship", "false") +
                     Set("RiziaDLCSupport.Journal_Turn04_Pales_NavalWithdrawal", "true") + Set(SupplyWar.VarAureusRecalled, "true") +
                     $"{V("RiziaDLC.Resources_Authority")} = {Num("RiziaDLC.Resources_Authority")} - 1; " +
                     $"{V(SupplyWar.NpPales)} = {Num(SupplyWar.NpPales)} + 1; {V(SupplyWar.NpLespia)} = {Num(SupplyWar.NpLespia)} + 1; ");
         Intel("FleetNorth2", "\"I'll send the signal tonight. Reinhart will have his drillship working by the end of the week, and he'll thank no one for it.\"",
-            new[] { "Barrage" });
+            new[] { "Navy" });
         t.Choice("FleetStay", "\"The blockade stays. We fight Wehlen with what we have.\"", new[] { "FleetStay2" });
-        Intel("FleetStay2", "\"As you wish. Their ships will have a little more room in the gulf.\"", new[] { "Barrage" });
+        Intel("FleetStay2", "\"As you wish. Their ships will have a little more room in the gulf.\"", new[] { "Navy" });
 
-        // The barrage (the Staff's plan already decided it).
+        SupplyWar.CouncilNavy(t, "Navy", "Barrage", LucitaHere, Is(VarCoastal), Obj(Objective.Harbor), Obj(Objective.Ports),
+            $"{V(VarApproach)} == \"Landing\"", AskedNavyWhy);
+
+        // The barrage: the King's own call.
         t.Logic("Barrage", new[] { "BarrageAsk", "Close" });
         t.Line("BarrageAsk", Carlos,
-            "\"Last of all, the artillery. We can give their forward positions a full night's barrage before the infantry goes in. It will cost " +
-            "us shells we may want later, and it won't be kind to the villages along the line.\"",
-            new[] { "BarrageYes", "BarrageNo" }, condition: And(IsNot(VarDelegated), Equip(BarrageCost)));
+            "\"Last of all, the artillery. We can give their forward positions a full night's barrage before the infantry goes in.\"",
+            new[] { "BarrageAsk2" }, condition: Equip(BarrageCost));
+        t.Line("BarrageAsk2", Carlos, "\"It will cost us shells we may want later, and it won't be kind to the villages along the line.\"",
+            new[] { "BarrageYes", "BarrageNo" });
         t.Choice("BarrageYes", "\"Open fire the night before. Spare nothing.\"", new[] { "BarrageYes2" }, cost: $"-{BarrageCost} Military Equipment",
             script: Set(VarBombard, "true") +
                     $"{V("RiziaDLC.Resources_Military_Equipment")} = {Num("RiziaDLC.Resources_Military_Equipment")} - {BarrageCost}; ");

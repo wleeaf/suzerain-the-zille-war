@@ -196,11 +196,45 @@ internal sealed class AfterAction
                     ? "The landing went in behind the Wehzek lines and caught the garrison facing the wrong way."
                     : "The landing proved costly, and the men who reached the beach could not break out of it.");
                 break;
+            case WarCouncil.Approach.Armor:
+                s.Add(won
+                    ? "The armored columns went straight up the main road and were through the wall before its garrison knew where to turn."
+                    : "The tanks broke through the wall, but the infantry could not keep pace, and the Wehzeks closed the gap behind them.");
+                break;
+            case WarCouncil.Approach.Airborne:
+                s.Add(won
+                    ? $"Paratroopers dropped behind the Wehzek lines and held their ground until the columns reached them outside {info.Target}."
+                    : "The paratroopers came down where they were meant to, and were left there too long. Few of them came back.");
+                break;
+            case WarCouncil.Approach.Mountain:
+                s.Add(won
+                    ? "The mountain troops took the hill forts from above, where nobody had thought to dig in."
+                    : "The mountain troops reached the ridges, but the hill forts held, and the valleys below became a killing ground.");
+                break;
             default:
                 s.Add(won
                     ? "The direct assault moved fast enough that the Wehzek armor never came up in time."
                     : "The direct assault ran straight into prepared Wehzek positions.");
                 break;
+        }
+
+        switch (o.Navy)
+        {
+            case "Strait":
+                s.Add(won
+                    ? "At sea, the fleet kept Wehzek reinforcements from crossing the strait while the battle was fought."
+                    : "The fleet held the strait, but what the garrison already had in Zille was enough.");
+                break;
+            case "Coast":
+                s.Add(won
+                    ? "Offshore, the fleet's guns silenced the Wehzek coastal batteries before the first wave went in."
+                    : "The fleet shelled the coast for two days; the batteries it could not see did the rest.");
+                break;
+        }
+
+        if (o.Reinforcements > 0)
+        {
+            s.Add("With nothing stopping their convoys, the Wehzeks had brought fresh troops across the strait the week before the attack.");
         }
 
         if (o.FleetRecalled)

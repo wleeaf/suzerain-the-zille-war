@@ -422,6 +422,10 @@ internal static class EarlyT7
         if (!PalesWar && active && Variables.GetBool("RiziaDLC.Policy_RD_Economy_WarProfitsTax") && !Variables.GetBool(VarNewsWarTax))
         {
             Variables.Set(VarNewsWarTax, true);
+            NewsWire.Publish("E7_WarTax", "RH", "Every Rizian Shares the Burden", string.Join("\n\n",
+                "By royal decree, the extraordinary profits made on war contracts will be taxed for the duration of the campaign in Zille. " +
+                "The soldier gives his blood; it is only right, the Palace says, that the factory give its share.",
+                "The Royal Herald is confident the great houses of industry will answer the call with the same patriotism as the men of Brenas."));
             NewsWire.Publish("E7_WarTax", "V", "War Profiteers Taxed", string.Join("\n\n",
                 "If the war in Zille must go on, then at the very least our corporations should not grow fat on it. His Majesty has " +
                 "decreed a heavy tax on war profits, and for once the Palace and this newspaper agree on something.",

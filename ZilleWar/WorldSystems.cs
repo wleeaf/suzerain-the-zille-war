@@ -129,9 +129,9 @@ internal static class WorldSystems
     /// <summary>What Rizia gave Lespia for the strait, as the end of a sentence ("..., in exchange for ...").</summary>
     public static string LespiaPrice =>
         LespiaCaleqabiz ? "in exchange for naval rights at the Rizian island of Caleqabiz"
-        : Variables.GetBool("ZilleWar.Lespia_MitzBound") ? "in exchange for Rizia's vote on the board of the Meftiem International Trade Zone"
         : Variables.GetBool("ZilleWar.Lespia_GasDeal") ? "in exchange for Aureus gas sold to LesPower at a discount"
         : Variables.GetBool("ZilleWar.Lespia_PaidBudget") ? "for a fee paid by the Rizian treasury"
+        : Variables.GetString("ZilleWar.Ramiro_ConfrontOutcome") == "free" ? "for nothing at all, which in Lespia's case is its own kind of price"
         : "at a price neither government has made public";
 
     /// <summary>Rizia has made Lespia's part in the Friendship Day bombing public.</summary>

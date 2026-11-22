@@ -189,7 +189,7 @@ internal static class LateT8
         string angry = $"(Variable[\"RiziaDLC.Zille_Publicized_LespianInvolvement\"] == true or Variable[\"RiziaDLC.Zille_Publicized_LespianInvolvement_Rusty\"] == true " +
                        $"or {V(VarLespiaAccused)} == true or {V(VarRamiro)} == \"seized\" or Variable[\"ZilleWar.Ramiro_Choice\"] == \"publish\" " +
                        $"or Variable[\"ZilleWar.Lespia_Withdrawn\"] == true or {Rel("Lespia", "Hostile", "Unfriendly")})";
-        string helped = $"((Variable[\"ZilleWar.Lever_Lespia\"] or 0) > 0 or {Rel("Lespia", "Friendly", "Allied")})";
+        string helped = $"((Variable[\"ZilleWar.Lever_Lespia\"] or 0) > 0 or Variable[\"ZilleWar.Lespia_AllianceVote\"] == true or {Rel("Lespia", "Friendly", "Allied")})";
         string lespia = $"if {angry} then {V(Vote("Alvarez"))} = 1; {V(Vote("Walker"))} = 0 elseif {helped} then {V(Vote("Alvarez"))} = -1; {V(Vote("Walker"))} = -1 " +
                         $"else {V(Vote("Alvarez"))} = 0; {V(Vote("Walker"))} = 0 end; ";
         string rumburg = $"if {Rel("Rumburg", "Hostile", "Unfriendly")} or (Variable[\"ZilleWar.Call_Beatrice_Count\"] or 0) >= 3 then {V(Vote("Beatrice"))} = 0 else {V(Vote("Beatrice"))} = -1 end; ";

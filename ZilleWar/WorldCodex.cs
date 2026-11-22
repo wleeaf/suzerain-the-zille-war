@@ -105,6 +105,9 @@ internal static class WorldCodex
 
     private static bool _added;
 
+    /// <summary>The game rebuilt its entity lists (a save was loaded): add ours again on the next step.</summary>
+    internal static void ResetAdded() => _added = false;
+
     private static void EnsureEntries()
     {
         if (_added || EntityDataManager.CodexEntriesData == null)

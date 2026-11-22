@@ -88,7 +88,7 @@ internal static class WarFlow
         // Last, so every module's pre-war fragments for this step already exist when the council decides
         // whether the war table may open.
         Run("council", WarCouncil.OnStep);
-        Run("scheduler", Scheduler.Flush);
+        Run("scheduler", () => Scheduler.Flush());
     }
 
     private static void Run(string what, Action step)

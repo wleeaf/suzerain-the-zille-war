@@ -65,16 +65,102 @@ internal sealed class Talk
         script = LuaFix.Rewrite(script);
         LuaLint.Record(_prefix + name, condition, script);
 
-        _inj.AddNode(new ConversationNode(
-            name: _prefix + name,
-            text: text,
-            speakerSelector: new CharacterNameSelector(speaker),
-            hooks: hooks,
-            nextNodes: Next(next),
-            luaScript: script,
-            luaCondition: condition,
-            sequence: Wait(sequence)));
+        // Long replies read better as a few short lines, the way vanilla writes them: the first part keeps the node's
+        // name, condition, script, hooks and sequence; the rest follow as plain lines by the same speaker.
+        List<string> parts = SplitSpeech(text);
+        for (int i = 0; i < parts.Count; i++)
+        {
+            bool first = i == 0, last = i == parts.Count - 1;
+            string partName = first ? name : $"{name}_p{i + 1}";
+            _inj.AddNode(new ConversationNode(
+                name: _prefix + partName,
+                text: parts[i],
+                speakerSelector: new CharacterNameSelector(speaker),
+                hooks: first ? hooks : null,
+                nextNodes: last ? Next(next) : Next($"{name}_p{i + 2}"),
+                luaScript: first ? script : null,
+                luaCondition: first ? condition : null,
+                sequence: first ? Wait(sequence) : null));
+        }
+
         return this;
+    }
+
+    private static readonly string[] Abbreviations = { "Mr.", "Mrs.", "Dr.", "St.", "Gen.", "Lt.", "Col.", "No.", "Sgt.", "Capt." };
+
+    /// <summary>
+    /// Splits a long reply into parts of about two sentences. Only pure speech ("...", quotes at both ends only) or pure
+    /// narration (no quotes) is split; mixed lines are kept whole. Speech parts are each re-wrapped in quotes.
+    /// </summary>
+    public static List<string> SplitSpeech(string text, int maxChars = 230)
+    {
+        var whole = new List<string> { text };
+        if (string.IsNullOrEmpty(text) || text.Length <= maxChars)
+        {
+            return whole;
+        }
+
+        string body = text;
+        bool speech = text.Length > 2 && text[0] == '"' && text[^1] == '"' && text.IndexOf('"', 1) == text.Length - 1;
+        if (speech)
+        {
+            body = text.Substring(1, text.Length - 2);
+        }
+        else if (text.Contains('"'))
+        {
+            return whole;
+        }
+
+        // sentence ends: . ! ? (optionally followed by a closing quote) then a space and an upper-case letter
+        var sentences = new List<string>();
+        int start = 0;
+        for (int i = 0; i < body.Length - 2; i++)
+        {
+            char c = body[i];
+            if ((c == '.' || c == '!' || c == '?') && body[i + 1] == ' ' && char.IsUpper(body[i + 2]))
+            {
+                string candidate = body.Substring(start, i + 1 - start);
+                if (Abbreviations.Any(a => candidate.EndsWith(" " + a, StringComparison.Ordinal) || candidate == a))
+                {
+                    continue;
+                }
+
+                sentences.Add(candidate.Trim());
+                start = i + 2;
+            }
+        }
+
+        sentences.Add(body.Substring(start).Trim());
+        if (sentences.Count < 3)
+        {
+            return whole;
+        }
+
+        var parts = new List<string>();
+        string cur = string.Empty;
+        int n = 0;
+        foreach (string sentence in sentences)
+        {
+            if (n >= 2 || (n >= 1 && cur.Length + sentence.Length > maxChars))
+            {
+                parts.Add(cur);
+                cur = string.Empty;
+                n = 0;
+            }
+
+            cur = n == 0 ? sentence : cur + " " + sentence;
+            n++;
+        }
+
+        parts.Add(cur);
+        // never leave a lonely short tail: fold it into the previous part
+        if (parts.Count > 1 && parts[^1].Length < 40)
+        {
+            parts[^2] += " " + parts[^1];
+            parts.RemoveAt(parts.Count - 1);
+        }
+
+        return speech ? parts.Select(p => "\"" + p + "\"").ToList() : parts;
     }
 
     /// <summary>

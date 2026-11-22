@@ -66,8 +66,19 @@ internal static class Scheduler
 
     private static bool IsOurs(string n) => n.StartsWith("ZilleWar", StringComparison.Ordinal) || n.StartsWith("ZW_", StringComparison.Ordinal);
 
-    private static bool Blocked(Item item)
+    /// <summary>
+    /// True while something this item follows is still pending. With <paramref name="lastMayBeActive"/>, a single remaining
+    /// blocker does not count when a story fragment is being played: it is that fragment, so the item can be added now
+    /// and the step never looks finished between the two (which would offer "continue to the next chapter" too early).
+    /// </summary>
+    private static bool Blocked(Item item, bool lastMayBeActive = false)
     {
+        if (Queue.Any(q => q != item && q.Tier < item.Tier))
+        {
+            return true;
+        }
+
+        int blockers = 0;
         foreach (string p in Pending())
         {
             if (p == item.Name)
@@ -78,17 +89,22 @@ internal static class Scheduler
             int? t = TierOf(p);
             if (t.HasValue && t.Value < item.Tier)
             {
-                return true;
+                blockers++;
             }
-
             // Our scenes react to what the player just did: let the vanilla scenes of this step go first (war tables aside).
-            if (item.Tier >= 1 && !IsOurs(p) && !p.StartsWith("WarFragment", StringComparison.Ordinal))
+            else if (item.Tier >= 1 && !IsOurs(p) && !p.StartsWith("WarFragment", StringComparison.Ordinal))
             {
-                return true;
+                blockers++;
             }
         }
 
-        return Queue.Any(q => q != item && q.Tier < item.Tier);
+        if (blockers == 0)
+        {
+            return false;
+        }
+
+        bool active = Managers.Instance?.GameFlowManager?.isStoryFragmentActive ?? false;
+        return !(lastMayBeActive && active && blockers == 1);
     }
 
     /// <summary>True while a queued fragment's name starts with one of the prefixes (it will appear later in this step).</summary>
@@ -127,8 +143,8 @@ internal static class Scheduler
         return false;
     }
 
-    /// <summary>Add every queued fragment whose predecessors are done.</summary>
-    public static void Flush()
+    /// <summary>Add every queued fragment whose predecessors are done (or, when one is being played, whose last one is).</summary>
+    public static void Flush(bool lastMayBeActive = false)
     {
         if (Queue.Count == 0)
         {
@@ -141,7 +157,7 @@ internal static class Scheduler
             progress = false;
             foreach (Item item in Queue.OrderBy(q => q.Tier).ToList())
             {
-                if (Blocked(item))
+                if (Blocked(item, lastMayBeActive))
                 {
                     continue;
                 }
@@ -188,10 +204,28 @@ internal static class Patch_FlushBeforeStepEvaluation
         try
         {
             Scheduler.Flush();
+            WarCouncil.TryOpenWarTable();   // the council may just have given its order: open the table before the step can end
         }
         catch (Exception ex)
         {
             Core.Log.Warning($"Scheduler flush failed: {ex.Message}");
+        }
+    }
+}
+
+/// <summary>A story fragment has just started: if it is the last thing a queued scene waits for, add the scene now.</summary>
+[HarmonyPatch(typeof(GameFlowManager), nameof(GameFlowManager.OnStoryFragmentStart))]
+internal static class Patch_FlushOnFragmentStart
+{
+    private static void Postfix()
+    {
+        try
+        {
+            Scheduler.Flush(lastMayBeActive: true);
+        }
+        catch (Exception ex)
+        {
+            Core.Log.Warning($"Scheduler flush on start failed: {ex.Message}");
         }
     }
 }

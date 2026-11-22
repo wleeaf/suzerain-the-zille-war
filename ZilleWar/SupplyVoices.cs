@@ -108,16 +108,25 @@ internal static partial class SupplyWar
         d.SayIf("WhySubs", $"{N(Count(Lever.Submarines))} >= 2", Hegel,
             "\"Your submarines have been sighted twice near our patrol lines in the Markian approaches. Twice is not an accident.\"", "Demand");
         d.Say("WhyCable", Hegel, "\"My ambassador's cable received an answer in no language I recognize.\"", "Demand");
+        // Rizia sold its Meftiem vote to Lespia for Lespia's vote at the Alliance (SupplyAlvarez): Hegel knows.
+        const string veto = "\"And do not think Mr. Alvarez's vote in Konstantium protects you. He can kill a motion. He cannot open " +
+                            "a Valgslandian port.\"";
         d.Branch("Demand", "DemandE", "DemandPlain");
         d.SayIf("DemandE", EmbargoOn, Hegel,
             "\"Valgslandian destroyers are in the Markian Sea, and they will stay there. Here is how this ends quietly: your submarines " +
             "stay south of the strait. Otherwise Valgsland will move for sanctions at the Alliance. And our embargo, which has so far " +
             "let your cargo reach you through Agnolian and Sordish holds, will close that door as well. Any ship that has called at a " +
-            "Rizian port will be turned away from ours.\"", "Yield", "RefuseE");
+            "Rizian port will be turned away from ours.\"", "VetoE");
+        d.Branch("VetoE", "VetoESay", "MenuE");
+        d.SayIf("VetoESay", Is(VarLespiaAllianceVote), Hegel, veto, "MenuE");
+        d.Do("MenuE", null, "Yield", "RefuseE");
         d.Say("DemandPlain", Hegel,
             "\"Valgslandian destroyers are in the Markian Sea, and they will stay there. Here is how this ends quietly: your submarines " +
             "stay south of the strait. Otherwise Valgsland will move for sanctions at the Alliance, and in the meantime our ports will " +
-            "be closed to Rizian cargo.\"", "Yield", "Refuse");
+            "be closed to Rizian cargo.\"", "Veto");
+        d.Branch("Veto", "VetoSay", "Menu");
+        d.SayIf("VetoSay", Is(VarLespiaAllianceVote), Hegel, veto, "Menu");
+        d.Do("Menu", null, "Yield", "Refuse");
         d.Opt("Yield", null, "\"Very well. The submarines stay south.\"",
             "No More Submarine Patrols", T(VarSubsGrounded) + Inc(NpValgsland, 1) + S(VarValgslandCall, "yielded") +
             $"{V(VarValgslandStage)} = 2; " + stageDone, "Yield2");

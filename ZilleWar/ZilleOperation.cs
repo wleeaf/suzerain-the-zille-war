@@ -149,6 +149,16 @@ internal static class ZilleOperation
         ObjectiveInfo info = ZilleCampaign.Info(objective);
         string targetTile = ZilleCampaign.FocusTile(info, owners);
 
+        // The War Council's orders shape the map.
+        WarCouncil.Orders orders = WarCouncil.CurrentOrders();
+
+        // Airborne: the paratroopers hold a patch of ground behind the Wehzek line when the operation opens.
+        string dropZone = orders.Approach == WarCouncil.Approach.Airborne ? Plan.DropZone(owners, targetTile) : null;
+        if (dropZone != null)
+        {
+            owners[dropZone] = true;
+        }
+
         var data = ScriptableObject.CreateInstance<WarOperationData>();
         data.name = OperationName(k);
         data.operationNameInDatabase = OperationName(k);
@@ -160,9 +170,6 @@ internal static class ZilleOperation
 
         UnitTypes ut = UnitTypes.FromVanilla(vanilla);
         Plan plan = Plan.Compute(owners, targetTile);
-
-        // The War Council's orders shape the map.
-        WarCouncil.Orders orders = WarCouncil.CurrentOrders();
         if (orders.Approach == WarCouncil.Approach.Landing)
         {
             foreach (string sea in Plan.LandingWaters(targetTile, owners))
@@ -172,6 +179,22 @@ internal static class ZilleOperation
         }
 
         bool Barraged(string n) => orders.Bombard && (plan.Wall.Contains(n) || n == targetTile);
+
+        // Armor: the wall is broken where the main road crosses it. Mountain: the mountaineers have the ridges, so the
+        // wall's hill bunkers are taken before the battle. Coast: the fleet has silenced the coastal batteries.
+        var breached = new HashSet<string>();
+        if (orders.Approach == WarCouncil.Approach.Armor && plan.SupplyLines.Count > 0)
+        {
+            breached.UnionWith(plan.SupplyLines[0].Where(plan.Wall.Contains));
+        }
+
+        if (orders.Approach == WarCouncil.Approach.Mountain)
+        {
+            breached.UnionWith(plan.Wall.Where(n => by[n].Mountain));
+        }
+
+        bool batteriesSilenced = orders.Navy == "Coast";
+        int enemyShips = Math.Max(0, ZilleCampaign.EnemyShips - (batteriesSilenced ? 1 : 0));
 
         var tileGroup = new ConditionalWarTileData { condition = string.Empty, tiles = new Il2CppSystem.Collections.Generic.List<WarTileData>() };
         foreach (TileSpec t in ZilleData.Tiles)
@@ -183,11 +206,11 @@ internal static class ZilleOperation
                 tileType = land ? WarTile.TileType.Land : WarTile.TileType.Sea,
                 groundType = t.Mountain ? WarTile.GroundType.Mountain : WarTile.GroundType.Default,
                 startingAllegiance = !land ? WarToken.WarAllegiance.EmptySea : Player(t.Name) ? WarToken.WarAllegiance.Player : WarToken.WarAllegiance.Enemy,
-                fortLevel = t.Fort && Player(t.Name) ? 2 : plan.Wall.Contains(t.Name) && !Barraged(t.Name) ? 1 : 0,
+                fortLevel = t.Fort && Player(t.Name) ? 2 : plan.Wall.Contains(t.Name) && !Barraged(t.Name) && !breached.Contains(t.Name) ? 1 : 0,
                 isEnemyAirfield = false,
                 tileDefenceType = DefenceType(t),
                 isAntiAirTile = t.Town == "Zille" && Enemy(t.Name) && !Barraged(t.Name),
-                isCoastalArtilleryTile = (t.Town is "Zille" or "Nanta") && Enemy(t.Name) && !Barraged(t.Name),
+                isCoastalArtilleryTile = (t.Town is "Zille" or "Nanta") && Enemy(t.Name) && !Barraged(t.Name) && !batteriesSilenced,
                 isInitialDeploymentTile = plan.Deployment.Contains(t.Name),
                 isBorderTile = plan.Front.Contains(t.Name),
                 isShoreTile = t.Shore,
@@ -206,7 +229,7 @@ internal static class ZilleOperation
             enemy.tokens.Add(Token(tile, type, WarToken.WarAllegiance.Enemy));
         }
 
-        foreach (string sea in Garrison.Fleet(owners, plan, ZilleCampaign.EnemyShips))
+        foreach (string sea in Garrison.Fleet(owners, plan, enemyShips))
         {
             if (ut.Ship != null)
             {
@@ -260,7 +283,7 @@ internal static class ZilleOperation
         UnityEngine.Object.DontDestroyOnLoad(go);
         WarOperation warOp = go.AddComponent<WarOperation>();
         warOp.warOperationData = data;
-        Core.Log.Msg($"  orders: {orders}; enemy ships {ZilleCampaign.EnemyShips}");
+        Core.Log.Msg($"  orders: {orders}; enemy ships {enemyShips}; drop zone {dropZone ?? "-"}; breached [{string.Join(",", breached)}]");
         Core.Log.Msg($"  target={info.Target} tile={targetTile}; garrison {garrison.Count} " +
                      $"({string.Join(", ", garrison.GroupBy(g => g.type.unitName).Select(g => $"{g.Count()} {g.Key}"))}), tier {ZilleCampaign.Tier}; " +
                      $"front [{string.Join(",", plan.Front)}], deploy {plan.Deployment.Count} " +
@@ -498,6 +521,28 @@ internal sealed class Plan
         return p;
     }
 
+    /// <summary>
+    /// Where the paratroopers come down: a Wehzek-held land tile in Zille, not a town with a garrison or the objective itself
+    /// (its anti-aircraft guns), out of contact with our lines, as close to the objective as possible; inland if it can be.
+    /// </summary>
+    public static string DropZone(Dictionary<string, bool> owners, string targetTile)
+    {
+        if (targetTile == null || !ZilleData.ByName.ContainsKey(targetTile))
+        {
+            return null;
+        }
+
+        bool Player(string n) => owners.TryGetValue(n, out bool v) && v;
+        bool Enemy(string n) => owners.TryGetValue(n, out bool v) && !v;
+        var cityTiles = ZilleData.Towns.Where(t => t.Role == "city" && t.Tile != null).Select(t => t.Tile).ToHashSet();
+        return ZilleData.Tiles
+            .Where(t => t.Type == "Land" && t.Region == "zille" && Enemy(t.Name) && t.Name != targetTile && !cityTiles.Contains(t.Name) &&
+                        !t.Neighbors.Any(Player))
+            .OrderBy(t => t.Shore ? 1 : 0)
+            .ThenBy(t => Dist(t.Name, targetTile))
+            .FirstOrDefault()?.Name;
+    }
+
     /// <summary>Sea tiles from which a landing can reach the objective: next to it, or next to the shore tiles around it.</summary>
     public static List<string> LandingWaters(string targetTile, Dictionary<string, bool> owners)
     {
@@ -605,7 +650,9 @@ internal static class Garrison
     /// <summary>
     /// The council's orders: a barrage kills part of the forward garrison; a direct assault catches one tank battalion
     /// before it is up; a feint costs time (one more unit across the strait) but pulls the reserves and the armor away
-    /// from the objective; a landing makes Wehlen man the border and leaves the coast behind the objective thinner.
+    /// from the objective; a landing makes Wehlen man the border and leaves the coast behind the objective thinner; an
+    /// airborne drop pulls men off the objective to ring the drop zone; mountaineers leave the hill positions unmanned.
+    /// Whatever nobody stops in the strait arrives before the battle (<see cref="WarCouncil.Orders.Reinforcements"/>).
     /// </summary>
     public static List<(string tile, WarUnitTypeData type)> Build(Dictionary<string, bool> owners, Plan plan, string targetTile, UnitTypes ut,
         WarCouncil.Orders orders = null)
@@ -628,6 +675,7 @@ internal static class Garrison
         var free = ZilleData.Tiles.Where(t => t.Type == "Land" && Enemy(t.Name) && !cityTiles.Contains(t.Name)).ToList();
         int total = (int)Math.Round(FullStrength * size * Math.Min(1f, enemyLand / (float)zilleTotal));
         total += approach == WarCouncil.Approach.Feint ? 1 : 0;
+        total += orders?.Reinforcements ?? 0;
         total -= orders?.Bombard == true ? 2 : 0;
         total = Math.Clamp(total, 0, free.Count);
         tanks -= approach == WarCouncil.Approach.Direct ? 1 : 0;
@@ -646,8 +694,10 @@ internal static class Garrison
 
         // 1. Contact line: Wehlen tiles touching Rizian-held land, infantry first (the wall, then any front).
         bool feint = approach == WarCouncil.Approach.Feint;
+        bool mountaineers = approach == WarCouncil.Approach.Mountain;
         var contact = free.Where(t => t.Neighbors.Any(Player))
-            .OrderByDescending(t => plan.Wall.Contains(t.Name))
+            .OrderBy(t => mountaineers && t.Mountain ? 1 : 0)
+            .ThenByDescending(t => plan.Wall.Contains(t.Name))
             .ThenBy(t => targetTile == null ? 0 : (feint ? -1 : 1) * Plan.Dist(t.Name, targetTile)).ToList();
         int contactCap = (int)Math.Ceiling(total * (approach == WarCouncil.Approach.Landing ? 0.55 : 0.45));
         foreach (TileSpec t in contact.Take(contactCap))
@@ -685,7 +735,7 @@ internal static class Garrison
         int nearTarget = targetTile == null ? 0 : approach switch
         {
             WarCouncil.Approach.Feint => remaining / 5,
-            WarCouncil.Approach.Landing => remaining / 3,
+            WarCouncil.Approach.Landing or WarCouncil.Approach.Airborne => remaining / 3,
             _ => remaining / 2,
         };
         int militia = (int)Math.Round(remaining * militiaShare);
