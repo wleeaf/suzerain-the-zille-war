@@ -21,6 +21,7 @@ internal static class Patch_WarFlowManager_SetupWarFragment
         Core.Log.Msg($"SetupWarFragment('{warFragmentData?.NameInDatabase}', op='{warFragmentData?.WarFragmentProperties?.Operation}')");
         if (ZilleOperation.IsOurFragment(warFragmentData))
         {
+            OwnershipCheck.Reset();
             WarSaveSlot.ClearForZille(warFragmentData);
         }
     }

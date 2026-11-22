@@ -12,6 +12,11 @@ namespace ZilleWar;
 [HarmonyPatch(typeof(WarTileManager), nameof(WarTileManager.SetupReinforcementTiles))]
 internal static class OwnershipCheck
 {
+    private static IntPtr _checkedFragment = IntPtr.Zero;
+
+    /// <summary>Called when a war fragment is set up, so the next map build is checked again.</summary>
+    public static void Reset() => _checkedFragment = IntPtr.Zero;
+
     private static void Postfix(WarTileManager __instance)
     {
         try
@@ -21,6 +26,16 @@ internal static class OwnershipCheck
             {
                 return;
             }
+
+            // The game also calls SetupReinforcementTiles whenever a tile changes hands during play. Only the first call of
+            // each operation (the map being built) may be checked; later ones are real captures and must stand.
+            IntPtr fragment = flow.currentWarFragmentData.Pointer;
+            if (flow.isInOperationPhase || fragment == _checkedFragment)
+            {
+                return;
+            }
+
+            _checkedFragment = fragment;
 
             Dictionary<string, bool> owners = ZilleCampaign.CurrentOwners();
             int held = 0, fixedTiles = 0;
