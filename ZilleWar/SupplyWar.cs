@@ -43,6 +43,7 @@ internal static class SupplyWar
     private const string AskedFleet = "ZilleWar.Call_Asked_Fleet";
     private const string AskedSubs = "ZilleWar.Call_Asked_Subs";
     private const string AskedWhy = "ZilleWar.Call_Asked_Why";
+    private const string AskedState = "ZilleWar.Call_Asked_State";
 
     /// <summary>Times each lever was pulled (Embargo and Lespia: 0 or 1).</summary>
     public static string Count(Lever l) => $"ZilleWar.Lever_{l}";
@@ -68,7 +69,7 @@ internal static class SupplyWar
         foreach (string v in new[]
                  {
                      VarEmbargoCounted, VarBeatriceCalls, VarAlvarezCalls, VarWarRoomMeetings, VarLespiaCaleqabiz, VarLastOfferTurn, VarSubPatrols,
-                     AskedEmbargo, AskedRaids, AskedFighters, AskedFleet, AskedSubs, AskedWhy,
+                     AskedEmbargo, AskedRaids, AskedFighters, AskedFleet, AskedSubs, AskedWhy, AskedState,
                  })
         {
             Variables.Register(v);
@@ -180,7 +181,8 @@ internal static class SupplyWar
 
     private const string ResetAsked = "Variable[\"ZilleWar.Call_Asked_Embargo\"] = false; Variable[\"ZilleWar.Call_Asked_Raids\"] = false; " +
                                       "Variable[\"ZilleWar.Call_Asked_Fighters\"] = false; Variable[\"ZilleWar.Call_Asked_Fleet\"] = false; " +
-                                      "Variable[\"ZilleWar.Call_Asked_Subs\"] = false; Variable[\"ZilleWar.Call_Asked_Why\"] = false; ";
+                                      "Variable[\"ZilleWar.Call_Asked_Subs\"] = false; Variable[\"ZilleWar.Call_Asked_Why\"] = false; " +
+                                      "Variable[\"ZilleWar.Call_Asked_State\"] = false; ";
 
     private static string Not(string v) => $"{V(v)} ~= true";
 
@@ -379,7 +381,8 @@ internal static class SupplyWar
         t.Line("Subs2", Lucita, "\"They'll sail on the evening tide.\"", new[] { "Hub" });
         t.Choice("SubsNo", "\"Keep them in port for now.\"", new[] { "Hub" });
 
-        t.Choice("AskState", "\"How are they holding up over there?\"", new[] { "State1", "State2", "State3", "State4" });
+        t.Choice("AskState", "\"How are they holding up over there?\"", new[] { "State1", "State2", "State3", "State4" },
+            condition: Not(AskedState), script: Set(AskedState, "true"));
         t.Line("State1", Lucita, "\"Well, I'm afraid. The convoys come every night, and the Zille garrison is still growing.\"", new[] { "Hub" },
             condition: $"{s} >= 8");
         t.Line("State2", Lucita, "\"They're holding. The convoys still come, but the garrison has stopped growing.\"", new[] { "Hub" },

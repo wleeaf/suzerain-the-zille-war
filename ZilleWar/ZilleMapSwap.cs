@@ -19,6 +19,10 @@ internal static class Patch_WarFlowManager_SetupWarFragment
     {
         Current = warFragmentData;
         Core.Log.Msg($"SetupWarFragment('{warFragmentData?.NameInDatabase}', op='{warFragmentData?.WarFragmentProperties?.Operation}')");
+        if (ZilleOperation.IsOurFragment(warFragmentData))
+        {
+            WarSaveSlot.ClearForZille(warFragmentData);
+        }
     }
 }
 
@@ -345,6 +349,7 @@ internal static class Trace_MapManager_LoadMap
         if (mapType != MapConfiguration.MapType.War)
         {
             ZilleMapSwap.SetTableProps(true);
+            WarSaveSlot.RestoreAfterZille();
         }
     }
 }

@@ -48,6 +48,22 @@ internal static class WarFlow
             return;
         }
 
+        foreach ((string what, Action step) in new (string, Action)[]
+                 {
+                     ("war flags", WarFlags.Sync), ("vanilla edits", Vanilla.Apply), ("turns 4-7", VanillaEarly.OnStep),
+                     ("turns 8-10", VanillaLate.OnStep), ("world", WorldSystems.OnStep), ("council", WarCouncil.OnStep),
+                 })
+        {
+            try
+            {
+                step();
+            }
+            catch (Exception ex)
+            {
+                Core.Log.Error($"{what} step failed: {ex}");
+            }
+        }
+
         try
         {
             WarState.Apply(AtWar);

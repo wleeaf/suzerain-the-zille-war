@@ -32,6 +32,8 @@ internal static class ZilleOperation
         }
     }
 
+    public static bool IsOurFragmentName(string name) => name != null && name.StartsWith("WarFragment_Zille_");
+
     public static bool IsOurFragment(WarFragmentData f) =>
         f?.WarFragmentProperties?.Operation != null && f.WarFragmentProperties.Operation.StartsWith(Prefix);
 

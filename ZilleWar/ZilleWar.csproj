@@ -18,6 +18,7 @@
     </Reference>
     <Reference Include="Assembly-CSharp"><HintPath>$(GamePath)/MelonLoader/Il2CppAssemblies/Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Assembly-CSharp-firstpass"><HintPath>$(GamePath)/MelonLoader/Il2CppAssemblies/Assembly-CSharp-firstpass.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Il2CppSystem.Core"><HintPath>$(GamePath)/MelonLoader/Il2CppAssemblies/Il2CppSystem.Core.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Il2Cppmscorlib"><HintPath>$(GamePath)/MelonLoader/Il2CppAssemblies/Il2Cppmscorlib.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(GamePath)/MelonLoader/Il2CppAssemblies/UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.ImageConversionModule"><HintPath>$(GamePath)/MelonLoader/Il2CppAssemblies/UnityEngine.ImageConversionModule.dll</HintPath><Private>false</Private></Reference>
