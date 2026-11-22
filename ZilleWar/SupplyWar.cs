@@ -457,7 +457,7 @@ internal static partial class SupplyWar
         }
 
         // Beatrice's "Zille or Pales?" in Thornbourgh (EarlyT7Diplomacy): her help tapers, or stops for Zille.
-        string priority = Variables.GetString(VarRumburgPriority) ?? string.Empty;
+        string priority = Str(VarRumburgPriority);   // unset reads "nil", which must not count as an answer
         if (priority.Length > 0 && !Variables.GetBool(VarPriorityApplied))
         {
             Variables.Set(VarPriorityApplied, true);
@@ -497,8 +497,8 @@ internal static partial class SupplyWar
         }
 
         bool palesTopic = Variables.GetBool(PalesWar) && Variables.GetInt(LespianPalesSupport) > 0 &&
-                          string.IsNullOrEmpty(Variables.GetString(VarAlvarezPalesDone));
-        bool gasTopic = Variables.GetBool(VarLespiaGasDeal) && string.IsNullOrEmpty(Variables.GetString(VarAlvarezGasDone)) &&
+                          Str(VarAlvarezPalesDone).Length == 0;
+        bool gasTopic = Variables.GetBool(VarLespiaGasDeal) && Str(VarAlvarezGasDone).Length == 0 &&
                         Variables.GetString(VarAlvarezGasPriceT6) != "paid";
         return palesTopic || gasTopic || !Variables.GetBool(VarAlvarezGiftDone);
     }
@@ -589,6 +589,13 @@ internal static partial class SupplyWar
 
     private static string Q(int i) => Asked[i - 1];
 
+    /// <summary>A string variable, "" when unset (Dialogue System reads nil as "nil").</summary>
+    internal static string Str(string v)
+    {
+        string s = Variables.GetString(v);
+        return string.IsNullOrEmpty(s) || s == "nil" ? string.Empty : s;
+    }
+
     internal static string V(string v) => $"Variable[\"{v}\"]";
     internal static string N(string v) => $"(Variable[\"{v}\"] or 0)";
     internal static string Is(string v) => $"(Variable[\"{v}\"] == true)";
@@ -604,7 +611,7 @@ internal static partial class SupplyWar
     internal static string Strengthen(int n)
     {
         string v = V(ZilleCampaign.VarStrength);
-        return string.Concat(Enumerable.Repeat($"if {v} < 10 then {v} = {v} + 1 end; ", n));
+        return string.Concat(Enumerable.Repeat($"if ({v} or 8) < 10 then {v} = ({v} or 8) + 1 end; ", n));
     }
 
     internal const string Music = "PlayLoopedMusic(\"R_Negotiations\",\"R_Negotiations_Loop\"); ";
@@ -613,9 +620,8 @@ internal static partial class SupplyWar
     private static readonly string LucitaGone = $"({Is(LucitaArrested)} or {Is(LucitaArrestedMidWar)})";
 
     /// <summary>
-    /// A small wrapper over <see cref="Talk"/> for the calls. Player options with a condition are put behind a
-    /// "gate" logic node that is turned into a Dialogue System group node at runtime (<see cref="MarkGates"/>), the
-    /// way vanilla hides hub questions: a condition on the player node itself only greys the option out.
+    /// A small wrapper over <see cref="Talk"/> for the calls. Conditions sit directly on player options (a choice whose
+    /// condition fails is not shown), so every menu needs at least one unconditional option.
     /// </summary>
     private sealed class Dlg
     {
@@ -696,8 +702,7 @@ internal static partial class SupplyWar
             return this;
         }
 
-        /// <summary>A player option. With a condition it sits behind a gate (G_name) and is hidden while the condition is false:
-        /// list "G_name" (not "name") among the parent's next nodes.</summary>
+        /// <summary>A player option, hidden while its condition is false.</summary>
         public Dlg Opt(string name, string condition, string text, string cost, string script, params string[] next)
         {
             _t.Choice(name, text, next, condition: string.IsNullOrEmpty(condition) ? null : condition, script: script, cost: cost);
@@ -737,59 +742,6 @@ internal static partial class SupplyWar
     }
 
     // Conditions sit directly on the choices (proven in play: a choice whose condition fails is not shown).
+    // Kept as a marker for conditional options in the menus.
     internal static string Gate(string name) => name;
-
-    /// <summary>Turns our gate nodes into group nodes once SMK has injected the conversation.</summary>
-    internal static void MarkGates(string title)
-    {
-        if (title == null || !title.StartsWith(ConvPrefix, StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        DialogueDatabase db = DialogueManager.MasterDatabase;
-        Il2CppPixelCrushers.DialogueSystem.Conversation conv = db?.GetConversation(title);
-        if (conv == null)
-        {
-            return;
-        }
-
-        int marked = 0;
-        foreach (DialogueEntry e in conv.dialogueEntries)
-        {
-            string name = e?.Title;
-            if (name != null && name.Contains(".G_", StringComparison.Ordinal) && !e.isGroup)
-            {
-                e.isGroup = true;
-                marked++;
-            }
-        }
-
-        if (marked > 0)
-        {
-            Core.Log.Msg($"Supply war: {marked} option gates in '{title}'.");
-        }
-    }
-}
-
-/// <summary>Runs after SMK has injected the conversation (its prefix has normal priority), and again after Setup.</summary>
-[HarmonyPatch(typeof(ConversationPanel), nameof(ConversationPanel.Setup))]
-internal static class Patch_SupplyGates
-{
-    [HarmonyPriority(Priority.Last)]
-    private static void Prefix(ConversationData conversationData) => Mark(conversationData);
-
-    private static void Postfix(ConversationData conversationData) => Mark(conversationData);
-
-    private static void Mark(ConversationData conversationData)
-    {
-        try
-        {
-            SupplyWar.MarkGates(conversationData?.ConversationProperties?.Dialogue);
-        }
-        catch (Exception ex)
-        {
-            Core.Log.Warning($"Supply war gates failed: {ex.Message}");
-        }
-    }
 }

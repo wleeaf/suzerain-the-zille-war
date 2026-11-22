@@ -26,7 +26,7 @@ internal static partial class SupplyWar
         d.SceneIf("ChartL", LucitaHere,
             "Lucita Azaro had spread a naval chart of the Strait of Kreleck across the war room table. Red pencil marks traced the " +
             "convoy routes from the Wehzek ports to Nanta and Isor.", "PlaySceneMusic(Security);", $"AddConversant(\"{Lucita}\");", "Brief");
-        d.SceneIf("ChartC", LucitaGone,
+        d.Scene("ChartC",
             "General Carlos Robles Azaro had the chart of the Strait of Kreleck pinned flat on the war room table. Since his cousin's " +
             "arrest he had been doing her work as well as his own, and it showed in the shadows under his eyes.",
             "PlaySceneMusic(Security);", $"AddConversant(\"{Carlos}\");", "Brief");
@@ -82,7 +82,7 @@ internal static partial class SupplyWar
             "strait gets what's left.\"", "AureusPull", "AureusKeep");
         d.Opt("AureusPull", null, "\"Bring the squadron north. Zille matters more than a drillship.\"", "-1 Authority",
             F(BlockDrillship) + T("RiziaDLCSupport.Journal_Turn04_Pales_NavalWithdrawal") + T(VarAureusRecalled) + Inc(Authority, -1) +
-            Inc(NpPales, 1) + Inc(NpLespia, 1) + Inc(Ships, 1), "AureusPull2");
+            Inc(NpPales, 1) + Inc(NpLespia, 1), "AureusPull2");
         d.Staff("AureusPull2",
             "\"Reinhart will call it a victory. Let him. The squadron will be off Zille by Thursday.\"",
             "\"The Duke will call it a victory, Your Majesty. Let him. The ships will be off Zille by Thursday.\"", "Hub");
@@ -152,7 +152,7 @@ internal static partial class SupplyWar
         d.Opt("Bye", null, "\"That will be all.\"", null, null, "Bye2");
         d.Branch("Bye2", "ByeL", "ByeC");
         d.SceneIf("ByeL", LucitaHere, "\"Your Majesty.\" Lucita rolled up the chart and was gone before I had sat down.", null, null, "End");
-        d.SceneIf("ByeC", LucitaGone, "\"Your Majesty.\" Carlos saluted, gathered his papers and went out to the waiting staff car.", null, null, "End");
+        d.Scene("ByeC", "\"Your Majesty.\" Carlos saluted, gathered his papers and went out to the waiting staff car.", null, null, "End");
         d.Finish();
     }
 }

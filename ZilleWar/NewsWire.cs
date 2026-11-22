@@ -96,10 +96,18 @@ internal static class NewsWire
             return t;
         }
 
+        string expected = paper switch
+        {
+            "RH" => "Newspaper_RoyalHerald",
+            "G" => "SharedNewspaper_Geopolitico",
+            "V" => "Newspaper_VoiceOfRizia",
+            _ => null,
+        };
         foreach (NewsData n in EntityDataManager.NewsData)
         {
             string nm = n?.NameInDatabase ?? string.Empty;
-            if (nm.Contains($"_{paper}_") && !nm.StartsWith("ZilleWar"))
+            if (nm.Contains($"_{paper}_") && !nm.StartsWith("ZilleWar") &&
+                (expected == null || string.Equals(n.NewsProperties?.Newspaper?.ToString(), expected, StringComparison.Ordinal)))
             {
                 Templates[paper] = n;
                 if (!_logged)
@@ -115,6 +123,8 @@ internal static class NewsWire
     }
 
     public static string P(params string[] paragraphs) => string.Join("\n\n", paragraphs);
+
+    private static string Cap(string s) => string.IsNullOrEmpty(s) ? s : char.ToUpperInvariant(s[0]) + s.Substring(1);
 
     private static string Join(List<string> l) =>
         l.Count <= 1 ? string.Join("", l) : string.Join(", ", l.Take(l.Count - 1)) + " and " + l[^1];
@@ -474,7 +484,7 @@ internal static class NewsWire
                 "Wehzek state radio is calling it \"the beginning of the end of the King's adventure.\" In Konstantium, diplomats " +
                 "speak of a ceasefire that would leave the front where it stands."));
             Publish(key, "V", $"{info.Codename} Fails", P(
-                $"{a.PlayerDeadMen} soldiers killed, wounded or missing, and {target} still not taken. {a.LossesSentence}",
+                $"{Cap(a.PlayerDeadMen)} soldiers killed, wounded or missing, and {target} still not taken. {a.LossesSentence}",
                 "How many more operations will the nation pay for before someone in the palace says enough?"));
         }
     }
@@ -487,7 +497,7 @@ internal static class NewsWire
 
         Report(key + "_HomeFront", SuzerainTokenName.RiziaCityPorteDrazon, "Casualty Lists Posted in Porte Drazon", P(
             $"The Ministry of War has posted the first casualty lists from {info.Codename} on the railings of the Royal Palace. " +
-            $"An estimated {a.PlayerDeadMen} men of the Royal Army were killed, wounded or are missing.",
+            $"The lists name {a.PlayerDeadMen} men of the Royal Army killed, wounded or missing.",
             won
                 ? "Crowds read the lists in silence, then cheered when news of the victory was read aloud from the palace steps."
                 : "The crowd that gathered to read them was quiet and angry. Police were called when a mother threw a stone at the palace gates.",
@@ -670,15 +680,18 @@ internal static class NewsWire
                         ? "Diplomats say Lespia has been granted naval rights at the Rizian island of Caleqabiz in return. Prime Minister " +
                           "Alvarez, asked about the arrangement, smiled and declined to comment."
                         : Variables.GetBool(SupplyWar.VarLespiaGasDeal)
-                            ? "Diplomats say the price was Palesian gas: Rizian-owned shares of the Aureus field, sold to LesPower well below " +
+                            ? "Diplomats say the price was gas: Aureus gas from the Rizian-owned field, sold to LesPower well below " +
                               "the market. Prime Minister Alvarez, asked about the arrangement, said only that \"Lespia believes in free " +
                               "navigation, and in cheap energy.\""
-                            : Variables.GetBool(SupplyWar.VarLespiaMitz)
-                                ? "Diplomats say the price was paid in votes, not money: Rizia has promised to stand with Lespia on the " +
-                                  "future of the Morellan trade zone. Prime Minister Alvarez, asked about the arrangement, said only that " +
-                                  "\"friends vote together.\""
-                                : "Diplomats say Rizia is paying handsomely for the service. Prime Minister Alvarez, asked about the " +
-                                  "arrangement, said only that \"Lespia believes in free navigation, and in being paid for it.\""));
+                            : Variables.GetBool(SupplyWar.VarLespiaPaid)
+                                ? "Diplomats say Rizia is paying handsomely for the service. Prime Minister Alvarez, asked about the " +
+                                  "arrangement, said only that \"Lespia believes in free navigation, and in being paid for it.\""
+                                : Variables.GetBool(SupplyWar.VarLespiaMitz)
+                                    ? "Diplomats say the price was paid in votes, not money: Rizia has promised to stand with Lespia on the " +
+                                      "future of the Meftiem International Trade Zone. Prime Minister Alvarez, asked about the arrangement, " +
+                                      "said only that \"friends vote together.\""
+                                    : "Diplomats are at a loss to say what Rizia gave in return. Prime Minister Alvarez, asked about the " +
+                                      "arrangement, called it \"a gesture of friendship\" and changed the subject."));
                 if (Variables.GetBool("ZilleWar.Lespia_Caleqabiz"))
                 {
                     Publish(k, "V", "Caleqabiz: The Price of Lespian Friendship", P(

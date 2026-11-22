@@ -160,7 +160,7 @@ internal sealed class Talk
 
     public static string V(string name) => $"Variable[\"{name}\"]";
 
-    public static string Add(string name, int delta) => $"{V(name)} = {V(name)} + ({delta}); ";
+    public static string Add(string name, int delta) => $"{V(name)} = ({V(name)} or 0) + ({delta}); ";
 
     public static string Set(string name, string luaValue) => $"{V(name)} = {luaValue}; ";
 
@@ -171,7 +171,7 @@ internal sealed class Talk
         string v = V(ZilleCampaign.VarStrength);
         for (int i = 0; i < n; i++)
         {
-            s += $"if {v} > 3 then {v} = {v} - 1 end; ";
+            s += $"if ({v} or 8) > 3 then {v} = ({v} or 8) - 1 end; ";
         }
 
         return s;

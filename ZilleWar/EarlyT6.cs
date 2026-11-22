@@ -54,10 +54,13 @@ internal static class EarlyT6
     // ---- Lua conditions
     private static readonly string Active = WarFlags.LActive;
     private static readonly string Declared = WarFlags.LDeclared;
-    private static readonly string Liberated = WarFlags.L(WarFlags.Liberated);
+    // Active is recomputed at step start, while Liberated/Defeated/Ceasefire can flip mid-step (an operation or a ceasefire
+    // during the step). The outcome conditions exclude Active so a variant group never shows two versions at once.
+    private static readonly string Liberated = $"{WarFlags.L(WarFlags.Liberated)} and {WarFlags.LNot(WarFlags.Active)}";
     private static readonly string Defeated = WarFlags.L(WarFlags.Defeated);
     private static readonly string Ceasefire = WarFlags.L(WarFlags.Ceasefire);
-    private static readonly string LostOrStopped = $"({Defeated} or {Ceasefire})";
+    private static readonly string LostOrStopped =
+        $"({Defeated} or {Ceasefire}) and {WarFlags.LNot(WarFlags.Active)} and {WarFlags.LNot(WarFlags.Liberated)}";
     private const string LespiaDeal = "(Variable[\"ZilleWar.Lever_Lespia\"] or 0) > 0";
     private const string PalesWarComing =
         "(Variable[\"RiziaDLC.Pales_War\"] == true or Variable[\"RiziaDLC.Diplomacy_Pales_PrepareForWar\"] == true or Variable[\"RiziaDLC.Diplomacy_Pales_DeclareWar\"] == true)";
@@ -275,7 +278,7 @@ internal static class EarlyT6
             "After the ceremony, as the guests drifted towards the buffet, Alvarez caught my elbow and steered me to a window, " +
             "away from the photographers.", new[] { "Aside1" },
             condition: $"{Declared} and {LespiaDeal} and {alvarezHere} and {NotSet(AlvarezAsideDone)}",
-            script: Set(AlvarezAsideDone, "true"), hooks: From(374));
+            script: Set(AlvarezAsideDone, "true") + $"AddConversant(\"{Alvarez}\"); AddConversant(\"{Laurento}\");", hooks: From(374));
         t.Line("Aside1", Alvarez,
             "\"My admirals have been holding the Strait of Kreleck shut for you, Your Majesty. Wehzek tankers are rusting at anchor in " +
             "Wraclawitz because of it. And today, the Aureus gas starts flowing.\"", new[] { "Aside2" });
@@ -449,6 +452,12 @@ internal static class EarlyT6
             "\"Zille is ours again. That is how I honor his memory.\"", new[] { "#271" });
         t.Variant("Won262", 262, new[] { 265 }, Liberated, Romus,
             "\"Zille is ours again, God be thanked. That is how I honor his memory.\"", new[] { "#273" });
+        t.Variant("Won263", 263, new[] { 269 }, Liberated, Romus,
+            "\"Surrendering Zille was one of Rizia's greatest tragedies. That is why I went to war to take it back, and why it is ours again.\"",
+            new[] { "#272" });
+        t.Variant("Won270", 270, new[] { 268 }, Liberated, Romus,
+            "\"Surrendering Zille was one of Rizia's greatest tragedies. I took it back by force, because there was no other way.\"",
+            new[] { "#274" });
 
         // Estela's grandmother and the Dastnurist sanctuary in Zille.
         t.Line("Sanct1", Estela,
@@ -534,7 +543,7 @@ internal static class EarlyT6
         const string conv = "Rizia/Turn 6/A_ReligionBriefing";
         var t = new Talk(conv, "ZilleWar.E6.Sal.");
 
-        t.Variant("Context", 741, new[] { 740 }, Declared, Romus,
+        t.Variant("Context", 741, new[] { 740 }, Active, Romus,
             "\"Our soldiers are already fighting Wehlen in Zille. Tell me the religious context of what I have begun, Sal.\"", new[] { "#461" });
         t.Variant("Troubles", 745, new[] { 744 }, Declared, Romus,
             "\"The war for Zille troubles me more than I let my generals see. Does Wruhecism justify it?\"", new[] { "#86" });

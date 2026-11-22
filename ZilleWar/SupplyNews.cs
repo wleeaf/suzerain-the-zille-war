@@ -24,7 +24,7 @@ internal static class SupplyNews
         NewsWire.Report("Sup" + key, token, title, P(paragraphs));
 
     private static bool B(string v) => Variables.GetBool(v);
-    private static string Str(string v) => Variables.GetString(v) ?? string.Empty;
+    private static string Str(string v) => SupplyWar.Str(v);
 
     public static void Register()
     {
@@ -166,6 +166,7 @@ internal static class SupplyNews
                 "embassy in Perla notes that the backlog appeared the same week the King spoke to Prime Minister Alvarez.",
                 "The Duke's admirals will have to look elsewhere for their ships. Arcasia is the obvious place, and Arcasia is in no hurry."));
 
+        bool lespiaPatrolled = Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.Lespia)) > 0;
         Once("RamiroPublish", Str(SupplyWar.VarRamiro) == "publish", () =>
         {
             Paper("RamiroPublish", "RH", "The Truth About Smolak Square",
@@ -178,15 +179,23 @@ internal static class SupplyNews
                 "The Rizian government has published files, reportedly seized from the Wehzek police headquarters in Zille, naming " +
                 "Héctor Ramiro of the Lespian consulate as the organizer of the bombing in Smolak Square. Mr. Ramiro holds diplomatic " +
                 "immunity and could not be reached for comment.",
-                "Prime Minister Alvarez called the accusation \"an interesting conspiracy theory\" and announced that Lespian warships " +
-                "would no longer patrol the Strait of Kreleck. In Wraclawitz, President Smolak said only that he had \"told the " +
+                (lespiaPatrolled
+                    ? "Prime Minister Alvarez called the accusation \"an interesting conspiracy theory\" and announced that Lespian warships " +
+                      "would no longer patrol the Strait of Kreleck. "
+                    : "Prime Minister Alvarez called the accusation \"an interesting conspiracy theory\" and recalled his ambassador for " +
+                      "consultations. ") +
+                "In Wraclawitz, President Smolak said only that he had \"told the " +
                 "Alliance it was not Rizian peasants who did this.\" It remains to be seen why he never said so before.");
             Paper("RamiroPublish", "V", "A War Over a Lie?",
                 "So the bomb that gave Smolak his excuse was Lespian. The Wehzeks knew. Perla knew. Was the King the last to find out? " +
                 "And if the bombing was never Rizian, what exactly are our sons dying for in Zille?");
-            Rep("RamiroPublishLespia", SuzerainTokenName.RiziaCountryLespia, "Alvarez Recalls His Ships",
-                "The Lespian navy has left the Strait of Kreleck. The order came within hours of the publication, and the first Wehzek " +
-                "convoy crossed unchallenged the same night.",
+            Rep("RamiroPublishLespia", SuzerainTokenName.RiziaCountryLespia,
+                lespiaPatrolled ? "Alvarez Recalls His Ships" : "Perla Recalls Its Ambassador",
+                lespiaPatrolled
+                    ? "The Lespian navy has left the Strait of Kreleck. The order came within hours of the publication, and the first " +
+                      "Wehzek convoy crossed unchallenged the same night."
+                    : "Prime Minister Alvarez has recalled his ambassador from Porte Drazon for consultations. Whatever Lespia was " +
+                      "prepared to offer for the strait is no longer on the table.",
                 "Our embassy in Perla is being watched. The Lespian press calls the files a Wehzek forgery, but Lespian ministers have " +
                 "stopped repeating that line, which our ambassador considers telling.");
             Rep("RamiroPublishWehlen", SuzerainTokenName.RiziaCountryWehlen, "Smolak: \"I Told the Alliance\"",
@@ -208,7 +217,7 @@ internal static class SupplyNews
                 "A sum has arrived at the Royal Treasury from an account in Perla, described in the transfer papers as a contribution " +
                 "to \"the victims of terrorism in Zille.\"",
                 "Nobody in Perla will say who authorized it. Nobody in Porte Drazon has asked."));
-        Once("LespiaGone", B(SupplyWar.VarLespiaWithdrawn) && Str(SupplyWar.VarRamiro) != "publish", () =>
+        Once("LespiaGone", B(SupplyWar.VarLespiaWithdrawn) && lespiaPatrolled && Str(SupplyWar.VarRamiro) != "publish", () =>
             Paper("LespiaGone", "G", "Lespia Ends Its Patrols in the Strait of Kreleck",
                 "The Lespian navy has withdrawn its ships from the Strait of Kreleck, ending the patrols that had kept Wehzek shipping " +
                 "out of Zille's harbors. Neither Perla nor Porte Drazon has explained the decision.",
@@ -235,7 +244,7 @@ internal static class SupplyNews
             Paper("Aureus", "G", "Rizian Navy Leaves the Aureus Field",
                 "Rizian warships have lifted their blockade of the Aureus gas field and sailed north, Palesian officials confirmed. " +
                 "The ships are believed to have joined the Rizian fleet in the Strait of Kreleck.",
-                "In Fort Ales, the Grand Duchy called the withdrawal \"a victory for international law.\" In Perla, Prime Minister Alvarez " +
+                "In Pales, the Grand Duchy called the withdrawal \"a victory for international law.\" In Perla, Prime Minister Alvarez " +
                 "welcomed \"a sign of good sense.\" Neither mentioned that Rizia has simply found a war it wants more.");
             Rep("Aureus", SuzerainTokenName.RiziaCountryPales, "Reinhart Claims a Victory",
                 "The Duke's ministers are celebrating the departure of our squadron as a triumph of Palesian diplomacy. Palesian " +

@@ -74,7 +74,8 @@ internal static class WarDebug
         var targets = new List<WarTile>();
         foreach (string town in info.Towns)
         {
-            WarTile t = tm.GetTileByName(ZilleCampaign.TownTile(town));
+            string tileName = ZilleCampaign.TownTile(town);
+            WarTile t = tileName == null ? null : tm?.GetTileByName(tileName);
             if (t != null && t.currentAllegiance != WarToken.WarAllegiance.Player)
             {
                 targets.Add(t);

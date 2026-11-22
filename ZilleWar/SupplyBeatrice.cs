@@ -42,7 +42,7 @@ internal static partial class SupplyWar
             "\"Romus. My ministers stopped buying Wehzek oil months ago because you asked nicely, and now Mr. Smolak is paying for " +
             "his war out of his own pocket. You're welcome, by the way. What else do you need?\"", "First");
         d.SayIf("Hello1", first, Beatrice,
-            "\"Romus, darling. You've gone and done it, then. Half of Thornbourgh is delighted, and the other half is checking the " +
+            "\"Romus. You've gone and done it, then. Half of Thornbourgh is delighted, and the other half is checking the " +
             "price of oil. Tell me what you need, and I'll tell you what it costs.\"", "First");
         d.SayIf("HelloTwoWars", $"{later} and {twoWars}", Beatrice,
             "\"Two wars, Romus. Two. My ministers have started calling you the Lion of the Antacean, and they don't mean it kindly. " +
@@ -50,7 +50,7 @@ internal static partial class SupplyWar
         d.SayIf("HelloDossier", $"{later} and {dossier}", Beatrice,
             "\"I assume you've read Wraclawitz's little pamphlet. Photographs of crates, invoices with my Exchequer's stamp on them. " +
             "Very thorough. Every newspaper in GRACE has read it twice. So. What do you want?\"", "Hub");
-        d.SayIf("HelloLater", later, Beatrice,
+        d.Say("HelloLater", Beatrice,
             "\"Romus. Still at war, I see. Thornbourgh talks of nothing else, which is a mercy, because it means they've stopped " +
             "talking about my hats. What can I do for you this time?\"", "Hub");
 
@@ -58,7 +58,7 @@ internal static partial class SupplyWar
         d.Say("First1a", Beatrice, "\"Of course you will. Nobody rings Thornbourgh for good wishes. Go on.\"", "Hub");
         d.Opt("First2", null, "\"You told me once that Rizia would need Rumburg if it came to this.\"", null, null, "First2a");
         d.Say("First2a", Beatrice,
-            "\"I did. I also told you it wouldn't come cheap. I'm a sentimental woman, Romus, but my Exchequer isn't.\"", "Hub");
+            "\"I did. I also told you it wouldn't come cheap. I may be family, Romus, but my Exchequer isn't.\"", "Hub");
         d.Branch("First", "First1", "First2");
 
         // ---- the hub: every question once per call, and only while she still has patience for favours
@@ -97,7 +97,7 @@ internal static partial class SupplyWar
         d.SayIf("Credit2Gas", $"{credits} == 1 and ({high} or {avg}) and not {failed}", Beatrice,
             "\"Again? The ink on the first one isn't dry. I can find you a second credit, but my ministers will want something they " +
             "can hold in their hands. More of your gas through Monqiz, for a start.\"", "CreditGasYes", "CreditNo");
-        d.SayIf("Credit2", $"{credits} == 1", Beatrice,
+        d.Say("Credit2", Beatrice,
             "\"Again? The ink on the first one isn't dry. I can find you a second credit, but not at the family rate. My bankers " +
             "have stopped taking to their beds.\"", "Credit2Yes", "CreditNo");
         d.Opt("CreditYes", null, "\"Draw it up.\"", "+4 Budget, -1 Budget Per Turn",
@@ -110,7 +110,7 @@ internal static partial class SupplyWar
             Inc(Budget, 3) + Inc(VarRumburgCredits, 1) + Inc(VarRumburgDebt, 7) + $"{V(ModRumburgCredit)} = -2; " + SetTurn(VarDebtTurn) +
             Inc(VarRumburgPatience, -1), "CreditDone");
         d.Say("CreditDone", Beatrice,
-            "\"The papers will be in Porte Drazon by Friday. Do read the small print, darling. Rumburg always collects.\"", "Hub");
+            "\"The papers will be in Porte Drazon by Friday. Do read the small print. Rumburg always collects.\"", "Hub");
         d.Opt("CreditNo", null, "\"Rizia doesn't borrow to fight.\"", null, null, "CreditNo2");
         d.Say("CreditNo2", Beatrice, "\"Then Rizia must be considerably richer than its treasury looks. Good for Rizia.\"", "Hub");
 
@@ -123,7 +123,7 @@ internal static partial class SupplyWar
         d.Say("Raid2", Beatrice,
             "\"I can have a quiet word. They'll want paying, of course. And understand this: if it ever comes out that Rizia asked, " +
             "Sordland will scream the house down, and Valgsland will hand them the megaphone.\"", "RaidYes", "RaidNo");
-        d.SayIf("RaidAgain", $"{raids} >= 1", Beatrice,
+        d.Say("RaidAgain", Beatrice,
             "\"Again? They do enjoy the work, I'll give them that. Wehzek radio already blames you for the last time, so I doubt " +
             "your reputation can get much worse. Same arrangement?\"", "RaidYes", "RaidNo");
         d.Opt("RaidYes", null, "\"Have them strike the ports.\"", "-1 Budget",
@@ -171,7 +171,7 @@ internal static partial class SupplyWar
         d.SayIf("ByeLast", $"{pat} <= 0", Beatrice,
             "\"A word of advice, Romus, from one sovereign to another. Don't ring me again unless it's to tell me it's over.\"", "Hangup");
         d.SayIf("Bye1", $"{calls} <= 1", Beatrice,
-            "\"Then go and win your war. And do try not to get yourself shot. Your mother would never let me hear the end of it.\"", "Hangup");
+            "\"Then go and win your war. And do try not to get yourself shot. Rumburg has far too much invested in you.\"", "Hangup");
         d.Say("Bye2", Beatrice,
             "\"Ring me when you've taken something worth bragging about. I've a dinner on Thursday and I'd love to ruin the " +
             "Valgslandian ambassador's evening.\"", "Hangup");

@@ -285,7 +285,7 @@ internal static class WorldVoices
                     "from the Lespian captains, who have little of it."));
                 News("ValgslandQabiz", "V", "Caleqabiz: A Repeat Of Zille?", P(
                     "Foreign warships berth in a Rizian harbor by royal arrangement, and now a second foreign navy has come to watch them. " +
-                    "Twenty-five years ago a king signed away Zille to save his throne. The Voice of Rizia hopes his grandson has read the " +
+                    "Twenty-five years ago Zille was signed away to save a throne. The Voice of Rizia hopes the present King has read the " +
                     "history books more carefully than his advisers have."));
             }
             else if (!yielded)
@@ -379,9 +379,11 @@ internal static class WorldVoices
             "Few states in Merkopa have tried to fight two neighbors at once, and military analysts doubt that Rizia has the " +
             "divisions, the fuel or the ships to do it for long.",
             "In Konstantium, diplomats who had grown used to calling the Zille war \"a local dispute\" have stopped doing so. " +
-            (lespia
+            (lespia && Variables.GetInt("RiziaDLC.War_Pales_LespianSupport") > 0
                 ? "Lespia, which patrols the Strait of Kreleck on Rizia's behalf while arming Pales, has declined to say which of the two wars it supports."
-                : "The Alliance's Security Committee is expected to meet in emergency session.")));
+                : lespia
+                    ? "Lespia, whose navy patrols the Strait of Kreleck on Rizia's behalf, has said nothing at all about the second war."
+                    : "The Alliance's Security Committee is expected to meet in emergency session.")));
         News("TwoFronts", "RH", "Axa Victoria, North and South", P(
             "Twice in one year, the enemies of Rizia have refused to give back what is ours, and twice His Majesty has answered them. " +
             "Our soldiers march south to Pales and north to Zille under the same golden banner.",
@@ -391,7 +393,7 @@ internal static class WorldVoices
             "The King went to war with Wehlen in a foreign capital. Now he has gone to war with Pales as well. The same farm boys " +
             "who took the night trains north are now being sent south, and the treasury that could not pay for one war is being asked " +
             "to pay for two.",
-            "\"Butcher Romus,\" the crowds in Iza have started to call him. We wish we could tell them they were wrong."));
+            "\"Butcher Romus,\" the crowds in Bronaz have started to call him. We wish we could tell them they were wrong."));
 
         Dispatch("TwoFronts_Staff", SuzerainTokenName.RiziaCityMontaklar, "Two Fronts, One Army", P(
             "The General Staff in Montaklar has divided its maps between two tables, one for Pales and one for Zille. Every division, " +

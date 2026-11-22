@@ -121,7 +121,7 @@ internal static class EarlyT7
         t.Variant("Doubt53Over", 53, new[] { 51, 52 }, Over, "Manus Sazon",
             "\"It is difficult for the RPP to support an all-out attack on the Grand Duchy. We have barely finished counting the dead from Zille.\"",
             new[] { "#54" });
-        t.Variant("Tax41", 41, new[] { 40 }, Act, "Manus Sazon",
+        t.Variant("Tax41", 41, new[] { 33 }, Act, "Manus Sazon",
             "\"In the name of equity, the RPP is proposing an excess profits tax on the businesses and industries that stand to generate the most revenue from the campaigns in Pales and Zille.\"",
             new[] { "#34" });
         t.Register();
@@ -215,7 +215,7 @@ internal static class EarlyT7
         t.Choice("AdmI", "\"Zille will be governed from Porte Drazon until it is secure.\"", new[] { "AdmIR" },
             script: Str(VarZilleAdmin, "imperii") + Inc("RiziaDLC.Country_HouseSazon", -1));
         t.Line("AdmIR", Narrator, "Daria smiled. Manus gripped the edges of his podium until his knuckles went white.", new[] { "#191" });
-        t.Choice("AdmW", "\"That can wait until the last Wehzek soldier has left.\"", new[] { "AdmWR" }, script: Str(VarZilleAdmin, "undecided"));
+        t.Choice("AdmW", "\"That can wait until the war is truly behind us.\"", new[] { "AdmWR" }, script: Str(VarZilleAdmin, "undecided"));
         t.Line("AdmWR", hugo, "\"Sooner rather than later, one hopes.\"", new[] { "#191" });
 
         // --- liberated
@@ -405,8 +405,9 @@ internal static class EarlyT7
         }
 
         // Two wars: Lespia closes the strait for Rizia in the north and sells Pales its warships in the south.
+        // EarlyT6 files the same story ("E6_LespiaBothSides") as soon as both wars run; publish this one only if it did not.
         if (Variables.GetBool(WarFlags.TwoWars) && Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.Lespia)) > 0 &&
-            !Variables.GetBool(VarNewsLespiaBothSides))
+            !Variables.GetBool(VarNewsLespiaBothSides) && !Variables.GetBool("ZilleWar.E6_News_LespiaBothSides"))
         {
             Variables.Set(VarNewsLespiaBothSides, true);
             NewsWire.Publish("E7_LespiaBothSides", "G", "Lespian Destroyers Sail for Pales as Lespia Guards Kreleck for Rizia", string.Join("\n\n",
@@ -418,7 +419,7 @@ internal static class EarlyT7
                 "one of them told Geopolitico. \"It has customers.\""));
         }
 
-        if (!PalesWar && Variables.GetBool("RiziaDLC.Policy_RD_Economy_WarProfitsTax") && !Variables.GetBool(VarNewsWarTax))
+        if (!PalesWar && active && Variables.GetBool("RiziaDLC.Policy_RD_Economy_WarProfitsTax") && !Variables.GetBool(VarNewsWarTax))
         {
             Variables.Set(VarNewsWarTax, true);
             NewsWire.Publish("E7_WarTax", "V", "War Profiteers Taxed", string.Join("\n\n",

@@ -310,7 +310,7 @@ internal static class LateT8
         // the Smolak3 line is optional; when it does not apply, go straight on
         t.Logic("Smolak3Skip", new[] { "Smolak4" }, condition: "not ((Variable[\"ZilleWar.Lever_BffRaids\"] or 0) > 0 or Variable[\"RiziaDLC.Resources_Military_RumburgianBFFMercenaries\"] == true)");
 
-        t.Line("HegelWar", Hegel, "\"Rizia did not merely arm Su Omina in Zille. It sent its army, in the name of a lease that expired on paper while the people who live there were never asked.\"",
+        t.Line("HegelWar", Hegel, "\"Rizia did not wait for a vote, or a treaty, or this Alliance. It sent its army into Zille, in the name of a lease that expired on paper while the people who live there were never asked.\"",
             new[] { "#12", "#13" }, condition: War, hooks: Talk.From(11));
         t.Line("HegelFleet", Hegel, "\"The Democratic Republic of Valgsland will not watch a monarchy redraw borders by force. Our fleet in the Antacean has been placed on alert.\"",
             new[] { "#26" }, condition: And(War, $"not ({Lost})"), hooks: Talk.From(132));
@@ -322,9 +322,10 @@ internal static class LateT8
     private static void RegisterHeljiland()
     {
         var t = new Talk(Heljiland, "ZilleWar.Late.Heljiland.");
-        t.Line("Mirror", Narr, "He did not need to say the name of Zille. Half the hall turned to look at me anyway.", new[] { "#22" }, condition: War, hooks: Talk.From(21));
-        t.Line("Laurento", Laurento, "\"He has a point. And so do we. That is exactly why nobody here will say it aloud.\"", new[] { "#33", "#32", "#34", "#83" },
+        // after Van Hoorten's "Would you not defend it?" ([26]); Laurento's line replaces vanilla [31] "He has a point."
+        t.Line("Mirror", Narr, "He did not need to say the name of Zille. Half the hall turned to look at me anyway.", new[] { "Laurento" },
             condition: War, hooks: Talk.From(26));
+        t.Line("Laurento", Laurento, "\"He has a point. And so do we. That is exactly why nobody here will say it aloud.\"", new[] { "#33", "#32", "#34", "#83" });
         Vanilla.Require(Heljiland, 31, Peace);
         Vanilla.AppendScript(Heljiland, 56, $"if {War} then {V(VarAgnolia)} = true end");
         t.Register();
@@ -710,7 +711,7 @@ internal static class LateT8
         t.Choice("LostPay", "\"Rizia will pay. Not because Wehlen won, but so that my soldiers' families don't see this war dragged through the courts for years.\"", new[] { "LostPay2" },
             cost: "-3 Budget", script: Set(VarTerms, "\"paid\"") + Add("RiziaDLC.Resources_Budget", -3));
         t.Line("LostPay2", Smolak, "\"Spoken like a man who has learned something. Wehlen accepts.\"", new[] { "Lost6" });
-        t.Choice("LostRefuse", "\"Not one lira. Take it to the Alliance, if you like.\"", new[] { "LostRefuse2" }, script: Set(VarTerms, "\"refused\""));
+        t.Choice("LostRefuse", "\"Not one guilder. Take it to the Alliance, if you like.\"", new[] { "LostRefuse2" }, script: Set(VarTerms, "\"refused\""));
         t.Line("LostRefuse2", Smolak, "\"Oh, I will. Konstantium is lovely this time of year.\"", new[] { "Lost6" });
         t.Line("Lost6", Smolak, "\"And the house?\"", new[] { "LostHouse", "LostNoHouse" });
         t.Choice("LostHouse", "\"Take the house. And leave my mother out of your speeches.\"", new[] { "LostHouse2" }, script: Set(VarEstelaHome, "true"));

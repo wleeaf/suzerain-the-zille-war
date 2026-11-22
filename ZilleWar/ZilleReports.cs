@@ -4,7 +4,7 @@ namespace ZilleWar;
 
 /// <summary>
 /// The result report of each Zille operation, cloned from vanilla's Golden Shield ones. The text here is what the
-/// report says until the operation ends; then <see cref="SetDescription"/> replaces it with General Robles Azaro's letter.
+/// report says until the operation ends; then <see cref="SetDescription"/> replaces it with the General Staff's after-action dispatch.
 /// </summary>
 internal static class ZilleReports
 {
@@ -33,9 +33,35 @@ internal static class ZilleReports
                 $"{name}, the final offensive against the ports of Isor and Nanta, has not met its objectives. Through the two harbors, " +
                 "Wehlen continues to supply its garrison across the Strait of Kreleck."),
         };
-        Add(Clone(vw, won, $"{name} Successful", winText));
-        Add(Clone(vl ?? vw, lost, $"{name} Failed", loseText));
+        Add(Clone(vw, won, $"0x5A111E00000003{k:X2}", $"{name} Successful", winText));
+        Add(Clone(vl ?? vw, lost, $"0x5A111E00000004{k:X2}", $"{name} Failed", loseText));
         return (won, lost);
+    }
+
+    /// <summary>
+    /// After a reload the reports of finished operations are no longer registered (they live in memory only), but the
+    /// save still refers to them: register them again, with the after-action text kept in the save.
+    /// </summary>
+    public static void Restore()
+    {
+        string[] hist = ZilleCampaign.Str(ZilleCampaign.VarHistory).Split(';', StringSplitOptions.RemoveEmptyEntries);
+        for (int k = 1; k <= hist.Length && k <= ZilleCampaign.MaxOperations; k++)
+        {
+            string won = $"Operation_Zille_{k}_Result_Won";
+            if (Created.ContainsKey(won) || !Enum.TryParse(hist[k - 1].Split(':')[0], out Objective o) ||
+                !ZilleCampaign.Objectives.Any(x => x.Id == o))
+            {
+                continue;
+            }
+
+            Register(k, ZilleCampaign.Info(o), "Operation_1_Result_Won", "Operation_1_Result_Lost");
+            string text = ZilleCampaign.Str(ZilleCampaign.ReportTextVar(k));
+            if (text.Length > 0)
+            {
+                SetDescription(won, text);
+                SetDescription($"Operation_Zille_{k}_Result_Lost", text);
+            }
+        }
     }
 
     private static readonly Dictionary<string, ReportData> Created = new();
@@ -51,15 +77,16 @@ internal static class ZilleReports
 
     private static string Trim(string s) => s == null ? null : s.Length > 80 ? s.Substring(0, 80) + "..." : s;
 
-    private static ReportData Clone(ReportData v, string name, string title, string description)
+    private static ReportData Clone(ReportData v, string name, string id, string title, string description)
     {
         ReportProperties vp = v?.ReportProperties;
         return new ReportData
         {
-            Id = name.GetHashCode().ToString("X"),
+            Id = id,       // stable across sessions (string.GetHashCode is randomized per process)
             NameInDatabase = name,
             AppBundleProperties = v?.AppBundleProperties,
-            AssignedTokenProperties = v?.AssignedTokenProperties ?? new AssignedTokenProperties { AssignedToken = ZilleOperation.TokenName },
+            // Our own war token: vanilla's is the Pales invasion token, which is not enabled during the Zille war.
+            AssignedTokenProperties = new AssignedTokenProperties { AssignedToken = ZilleOperation.TokenName },
             TagsProperties = v?.TagsProperties,
             ReportProperties = new ReportProperties
             {

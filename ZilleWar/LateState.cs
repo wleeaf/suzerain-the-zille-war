@@ -87,8 +87,8 @@ internal static class LateState
         }
 
         PatchRelationsInstruction();
-        Lua("Variable[\"RiziaDLC.War_WehlenJoined\"] = false; " +
-            "Variable[\"RiziaDLC.Trait_PacifistKing\"] = false; " +
+        // War_WehlenJoined is never touched (house rule): only the gated Turn 9 Smolak call sets it.
+        Lua("Variable[\"RiziaDLC.Trait_PacifistKing\"] = false; " +
             "Variable[\"RiziaDLC.Turn08_Wehlen_SmolakInvitedToWedding\"] = false; " +
             "Variable[\"RiziaDLC.Diplomacy_Wehlen_IntermerkopumPotential\"] = false; " +
             "Variable[\"RiziaDLC.Diplomacy_Wehlen_IntermerkopumApproved\"] = false; " +

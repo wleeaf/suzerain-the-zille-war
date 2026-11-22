@@ -32,6 +32,16 @@ internal static class ZilleCampaign
     public const string VarOwnersAtStart = "ZilleWar.State_OwnersAtStart";
     public const string VarDefeated = "ZilleWar.War_Zille_Defeated";      // an operation failed: the war is lost
 
+    /// <summary>The after-action report of operation k, kept so the report can be rebuilt after a reload.</summary>
+    public static string ReportTextVar(int k) => $"ZilleWar.State_Report{k}";
+
+    /// <summary>A string variable, empty when unset (the Lua bridge returns "nil" for unset variables).</summary>
+    public static string Str(string v)
+    {
+        string s = Variables.GetString(v);
+        return string.IsNullOrEmpty(s) || s == "nil" ? string.Empty : s;
+    }
+
     public const int DefaultStrength = 8;
     public const int MaxOperations = 4;
 
@@ -47,7 +57,11 @@ internal static class ZilleCampaign
 
     public static void RegisterVariables()
     {
-        foreach (string v in new[] { VarOwners, VarOpsDone, VarNextObjective, VarStrength, VarLiberated, VarHistory, VarCurrentOp, VarOwnersAtStart, VarDefeated })
+        foreach (string v in new[]
+                 {
+                     VarOwners, VarOpsDone, VarNextObjective, VarStrength, VarLiberated, VarHistory, VarCurrentOp, VarOwnersAtStart, VarDefeated,
+                     AfterAction.VarNotesTold,
+                 })
         {
             Variables.Register(v);
         }
@@ -57,6 +71,7 @@ internal static class ZilleCampaign
             Variables.Register(ResultVar(k));
             Variables.Register(EnemyDeadVar(k));
             Variables.Register(PlayerDeadVar(k));
+            Variables.Register(ReportTextVar(k));
         }
     }
 
@@ -111,7 +126,7 @@ internal static class ZilleCampaign
     /// <summary>The operation that is set up / being fought, from the saved "k:Objective".</summary>
     public static (int k, Objective objective) CurrentOperation()
     {
-        string[] s = (Variables.GetString(VarCurrentOp) ?? string.Empty).Split(':');
+        string[] s = Str(VarCurrentOp).Split(':');
         return s.Length == 2 && int.TryParse(s[0], out int k) && Enum.TryParse(s[1], out Objective o) ? (k, o) : (0, Objective.Wall);
     }
 
@@ -159,11 +174,11 @@ internal static class ZilleCampaign
 
     // ---- tile ownership: true = Rizia (player), false = Wehlen (enemy); land tiles only ----
 
-    public static Dictionary<string, bool> CurrentOwners() => ParseOwners(Variables.GetString(VarOwners));
+    public static Dictionary<string, bool> CurrentOwners() => ParseOwners(Str(VarOwners));
 
-    public static Dictionary<string, bool> OwnersAtStart() => ParseOwners(Variables.GetString(VarOwnersAtStart));
+    public static Dictionary<string, bool> OwnersAtStart() => ParseOwners(Str(VarOwnersAtStart));
 
-    public static void MarkOperationStart() => Variables.Set(VarOwnersAtStart, Variables.GetString(VarOwners) ?? string.Empty);
+    public static void MarkOperationStart() => Variables.Set(VarOwnersAtStart, Str(VarOwners));
 
     private static Dictionary<string, bool> ParseOwners(string s)
     {
@@ -211,6 +226,7 @@ internal static class ZilleCampaign
         Variables.Set(VarLiberated, false);
         Variables.Set(VarDefeated, false);
         Variables.Set(VarHistory, string.Empty);
+        Variables.Set(AfterAction.VarNotesTold, string.Empty);
         foreach (TownSpec t in ZilleData.Towns.Where(t => t.Role == "city"))
         {
             Variables.Set(ZilleOperation.CapturedVar(t.Name), false);
@@ -227,7 +243,7 @@ internal static class ZilleCampaign
         int riziaLost = o.Count(kv => !kv.Value && ZilleData.ByName[kv.Key].Region == "rizia");
         return $"ops done={OperationsDone}, next={(Available().Count > 0 ? Info(NextObjective).Codename : "none")}, defeated={Defeated}, " +
                $"strength={Strength} ({Tier}), Zille tiles held {zilleHeld}/{zilleTotal}, Rizian tiles lost {riziaLost}, " +
-               $"history='{Variables.GetString(VarHistory)}', liberated={Variables.GetBool(VarLiberated)}";
+               $"history='{Str(VarHistory)}', liberated={Variables.GetBool(VarLiberated)}";
     }
 
     /// <summary>Called right before the game finishes one of our operations: snapshot the map, decide the result.</summary>
@@ -268,10 +284,12 @@ internal static class ZilleCampaign
             Variables.Set(ZilleOperation.CapturedVar(town.Name), !IsEnemy(owners, town.Tile));
         }
 
-        // The war ends here if Zille is cleared, if the last operation succeeds (the remaining garrisons
-        // surrender), or if an operation fails.
+        // The war ends here if Zille is cleared, if the last operation succeeds or every objective of the campaign
+        // is already held (the remaining garrisons surrender), or if an operation fails. Without the last check an
+        // offensive that overran later objectives would leave nothing to order and the war could never end.
         bool cleared = !owners.Any(kv => !kv.Value && ZilleData.ByName[kv.Key].Region == "zille");
-        bool liberated = won && (cleared || objective == Sequence[^1]);
+        bool allObjectives = Sequence.All(o => AllTaken(Info(o), owners));
+        bool liberated = won && (cleared || objective == Sequence[^1] || allObjectives);
         if (liberated && !cleared)
         {
             foreach (string t in owners.Keys.Where(t => ZilleData.ByName[t].Region == "zille").ToList())
@@ -285,10 +303,11 @@ internal static class ZilleCampaign
         Variables.Set(VarLiberated, liberated);
         Variables.Set(VarDefeated, !won);
         Variables.Set(VarOpsDone, Math.Max(OperationsDone, k));
-        string hist = Variables.GetString(VarHistory);
+        string hist = Str(VarHistory);
         Variables.Set(VarHistory, $"{hist}{(string.IsNullOrEmpty(hist) ? "" : ";")}{objective}:{(won ? "won" : "lost")}");
         AfterAction a = AfterAction.Compute(k, OwnersAtStart(), owners);
         string report = a.FullReport(info, won);
+        Variables.Set(ReportTextVar(k), report);
         ZilleReports.SetDescription($"Operation_Zille_{k}_Result_Won", report);
         ZilleReports.SetDescription($"Operation_Zille_{k}_Result_Lost", report);
         NewsWire.PublishOperationResult(k, info, won, a);

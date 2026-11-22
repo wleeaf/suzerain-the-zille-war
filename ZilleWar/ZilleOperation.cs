@@ -29,6 +29,7 @@ internal static class ZilleOperation
         foreach (TownSpec t in (ZilleData.Towns ?? new List<TownSpec>()).Where(t => t.Role == "city"))
         {
             Variables.Register(CapturedVar(t.Name));
+            Vanilla.Expose(CapturedVar(t.Name));      // read by IsOperationFinishedEarly (articy:expresso)
         }
     }
 
@@ -75,7 +76,6 @@ internal static class ZilleOperation
         (string won, string lost) = ZilleReports.Register(k, info, vanillaOp.OperationProperties.WinReport, vanillaOp.OperationProperties.LoseReport);
 
         // --- story layer: OperationData ---
-        OperationProperties vp = vanillaOp.OperationProperties;
         var phases = new Il2CppStringList();
         phases.Add(FragmentName(k));
         string targetsTaken = string.Join(" && ", info.Towns.Select(t => $"{CapturedVar(t)} == true"));
@@ -87,7 +87,9 @@ internal static class ZilleOperation
             OperationProperties = new OperationProperties
             {
                 OperationName = ZilleCampaign.Title(info),
-                OperationStartCondition = vp.OperationStartCondition,
+                // Vanilla's Golden Shield needs 8 land units; when the condition fails the engine silently finishes the
+                // operation without our finish hook and the campaign would wait for it forever.
+                OperationStartCondition = string.Empty,
                 IsOperationFinishedEarly =
                     $"({targetsTaken}) || RiziaDLC.Army_Unit_GrandTotal_Deployed + RiziaDLC.Army_Unit_GrandTotal_Total <= 0",
                 ResultVariable = ZilleCampaign.ResultVar(k),

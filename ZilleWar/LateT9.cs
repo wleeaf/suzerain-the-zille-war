@@ -178,7 +178,7 @@ internal static class LateT9
         // the King already decided who governs Zille (Turn 7): the speech can only announce that decision
         string brenas = "Variable[\"ZilleWar.E7_ZilleAdmin\"] == \"brenas\"";
         string imperii = "Variable[\"ZilleWar.E7_ZilleAdmin\"] == \"imperii\"";
-        foreach (int id in new[] { 195, 196, 209, 211 })
+        foreach (int id in new[] { 195, 196, 201, 208, 209, 211 })
         {
             Vanilla.Require(Speech, id, $"not ({War} and {imperii})");
         }

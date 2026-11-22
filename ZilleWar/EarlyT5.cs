@@ -330,8 +330,8 @@ internal static class EarlyT5
             "\"And Wehlen, needless to say, will speak against us. Smolak's envoy has already told the committee that a kingdom at war " +
             "cannot be trusted with an economic zone.\"", new[] { "#1002" });
         t.Variant("Planes1", 341, new[] { 337 }, Active, Elena,
-            "\"Though with Wehzek aircraft over Zille, I can hardly argue that we don't need planes. My only question is whether they " +
-            "will arrive in time to matter.\"", new[] { "#352", "#355", "#356", "#357" });
+            "\"With Wehzek aircraft over Zille, I can hardly say we have no use for planes. But will they arrive before the fighting " +
+            "is over, or only in time for the victory parade?\"", new[] { "#352", "#355", "#356", "#357" });
         t.Variant("Planes2", 343, new[] { 342 }, Active, Elena,
             "\"Besides, with a war to pay for, I would rather spend what little we have on shells than on aircraft that may arrive " +
             "after the fighting is over.\"", new[] { "#352", "#355", "#356", "#357" });

@@ -77,11 +77,22 @@ internal static class CityEvents
         more?.Invoke();
     };
 
-    private static void News(string key, string paper, string title, params string[] paragraphs) =>
-        NewsWire.Publish($"City_{key}", paper, title, NewsWire.P(paragraphs));
+    // A city can change hands more than once: every story is told once per playthrough.
+    private static void News(string key, string paper, string title, params string[] paragraphs)
+    {
+        if (WorldSystems.Once($"CityNews_{key}_{paper}"))
+        {
+            NewsWire.Publish($"City_{key}", paper, title, NewsWire.P(paragraphs));
+        }
+    }
 
-    private static void Dispatch(string key, string token, string title, params string[] paragraphs) =>
-        NewsWire.Report($"City_{key}", token, title, NewsWire.P(paragraphs));
+    private static void Dispatch(string key, string token, string title, params string[] paragraphs)
+    {
+        if (WorldSystems.Once($"CityReport_{key}"))
+        {
+            NewsWire.Report($"City_{key}", token, title, NewsWire.P(paragraphs));
+        }
+    }
 
     // ------------------------------------------------------------------ the events
 

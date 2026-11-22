@@ -79,7 +79,7 @@ internal static partial class SupplyWar
         d.Say("CableEnd", Narrator, "Laurento folded the cable along its old creases and slipped it into his breast pocket.", "End");
 
         // ---- stage 2: Hegel rings himself
-        d.SceneIf("CallIn", $"{stage} >= 1",
+        d.Scene("CallIn",
             "An assistant brought in the blue telephone. The operator announced Valgsland, and the line went so quiet I could hear " +
             "the Chancellor breathing before he spoke.", null, Music + $"AddConversant(\"{Hegel}\");", "Call1");
         d.Say("Call1", Hegel, "\"Mr. Toras. I will be brief, since you are busy.\"", "Why");
@@ -221,9 +221,9 @@ internal static partial class SupplyWar
 
         d.Branch("Menu", Gate("Buy1"), Gate("Buy2"), Gate("Buy3"), Gate("Gulf"), "Decline");
         const string send = "\"Send the planes.\"";
-        d.Opt("Buy1", $"{cheap} and {budget} >= 1", send, "-1 Budget", buy + Inc(Budget, -1), "Bought");
-        d.Opt("Buy2", $"{fair} and {budget} >= 2", send, "-2 Budget", buy + Inc(Budget, -2), "Bought");
-        d.Opt("Buy3", $"{dear} and {budget} >= 3", send, "-3 Budget", buy + Inc(Budget, -3), "Bought");
+        d.Opt("Buy1", $"{cheap} and {budget} >= 1", send, "-1 Budget, +1 Fighter Jet", buy + Inc(Budget, -1), "Bought");
+        d.Opt("Buy2", $"{fair} and {budget} >= 2", send, "-2 Budget, +1 Fighter Jet", buy + Inc(Budget, -2), "Bought");
+        d.Opt("Buy3", $"{dear} and {budget} >= 3", send, "-3 Budget, +1 Fighter Jet", buy + Inc(Budget, -3), "Bought");
         d.Say("Bought", Saltana,
             "\"They'll arrive at night, painted grey, at whichever airfield your General Staff names. If one of them is shot down, " +
             "Morella has never heard of it. Good evening, Your Majesty, and do keep your war on your side of the gulf.\"", "Hangup");
@@ -251,7 +251,7 @@ internal static partial class SupplyWar
         d.SceneIf("RoomL", LucitaHere,
             "Laurento and Lucita were waiting in my study with a cardboard box on the desk between them. It smelled of smoke and wet paper.",
             "PlaySceneMusic(Suspense);", $"AddConversant(\"{Esquibel}\"); AddConversant(\"{Lucita}\");", "F1");
-        d.SceneIf("RoomC", LucitaGone,
+        d.Scene("RoomC",
             "Laurento and General Robles Azaro were waiting in my study with a cardboard box on the desk between them. It smelled of " +
             "smoke and wet paper.", "PlaySceneMusic(Suspense);", $"AddConversant(\"{Esquibel}\"); AddConversant(\"{Carlos}\");", "F1");
         d.Staff("F1",

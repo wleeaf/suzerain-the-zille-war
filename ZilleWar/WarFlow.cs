@@ -48,6 +48,10 @@ internal static class WarFlow
         }
 
         Run("war state", () => WarState.Apply(AtWar));
+        if (Variables.GetBool(AnDeclaration.VarDeclared))
+        {
+            Run("operation reports", ZilleReports.Restore);
+        }
 
         if (!AtWar && Variables.GetBool(AnDeclaration.VarDeclared) && !Variables.GetBool(VarEndingShown))
         {

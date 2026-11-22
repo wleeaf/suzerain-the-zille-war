@@ -69,7 +69,7 @@ internal static class EarlyT7Home
             "\"He will stand trial before the Royal Tribunal for the blood he spilled in Zille.\"", new[] { "#539" });
         t.Variant("NoWar617", 617, new[] { 554 }, Declared, Romus,
             "\"I will tell you the truth. Rico Toras is a criminal and a conspirator. Were it not for him, Zille would have come home without a war.\"",
-            new[] { "#545", "#543", "#537", "#555" });
+            new[] { "Trial545", "#543", "#537", "#555" });
         // The students protest the Zille war.
         t.Line("Shouts", Narrator, "I heard shouts of \"Rights for all!\" and \"Bring them home from Zille!\"", new[] { "#134" },
             condition: ZilleOnly, hooks: From(175));

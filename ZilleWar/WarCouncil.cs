@@ -45,6 +45,7 @@ internal static class WarCouncil
     private const string VarWaited = "ZilleWar.Council_Waited";
     private const string VarExtraTaken = "ZilleWar.Council_ExtraTaken";
     private const string VarVinaAsked = "ZilleWar.Council_VinaAsked";
+    private const string VarFought = "ZilleWar.Council_OperationsFought";   // operations fought so far (0: nothing to report yet)
     private static string LostVar(string city) => $"ZilleWar.Council_Lost_{city.Replace(" ", string.Empty)}";
     private static readonly string[] RizianCities = { "Mave Nortus", "Dapalle", "Balle", "Jales" };
 
@@ -70,13 +71,13 @@ internal static class WarCouncil
 
     public static Orders CurrentOrders()
     {
-        Approach a = Enum.TryParse(Variables.GetString(VarApproach) ?? string.Empty, out Approach x) ? x : Approach.Direct;
+        Approach a = Enum.TryParse(ZilleCampaign.Str(VarApproach), out Approach x) ? x : Approach.Direct;
         bool recalled = Variables.GetBool(VarFleetRecalled);
         bool split = !recalled && Variables.GetBool("RiziaDLC.Diplomacy_Pales_Military_BlockDrillship");
         return new Orders(a, Variables.GetBool(VarBombard), Variables.GetBool(VarDelegated), recalled, split);
     }
 
-    private static readonly HashSet<int> Reinjected = new();
+    private static readonly HashSet<string> Reinjected = new();     // "operation:turn", one re-injection per turn and session
     private static Talk t;
 
     public static void Register()
@@ -85,7 +86,7 @@ internal static class WarCouncil
                  {
                      VarApproach, VarBombard, VarDelegated, VarFleetRecalled, VarDoneTurn, VarOrderTurn, VarHeldTurn,
                      VarTurn, VarKind, VarObjective, VarCoastal, VarLastObjective, VarLossTier, VarSetback, VarWaited,
-                     VarExtraTaken, VarVinaAsked, AskedForces, AskedGarrison, AskedFronts, HubVisited,
+                     VarExtraTaken, VarVinaAsked, VarFought, AskedForces, AskedGarrison, AskedFronts, HubVisited,
                  }.Concat(RizianCities.Select(LostVar)))
         {
             Variables.Register(v);
@@ -112,7 +113,7 @@ internal static class WarCouncil
         }
 
         EnsureNumbers();
-        Reinject();
+        Reinject(turn);
         OfferCouncil(turn);
         OpenWarTable(turn);
     }
@@ -179,7 +180,8 @@ internal static class WarCouncil
         }
 
         int k = ZilleCampaign.OperationsDone;
-        string[] hist = (Variables.GetString(ZilleCampaign.VarHistory) ?? string.Empty).Split(';', StringSplitOptions.RemoveEmptyEntries);
+        Variables.Set(VarFought, k);
+        string[] hist = ZilleCampaign.Str(ZilleCampaign.VarHistory).Split(';', StringSplitOptions.RemoveEmptyEntries);
         string lastObjective = hist.Length > 0 ? hist[^1].Split(':')[0] : string.Empty;
         Variables.Set(VarLastObjective, lastObjective);
         int playerDead = k > 0 ? Variables.GetInt(ZilleCampaign.PlayerDeadVar(k)) : 0;
@@ -208,25 +210,38 @@ internal static class WarCouncil
         {
             Variables.Set(WarFlow.VarLastOperationTurn, turn);
             Variables.Set(WarFlow.VarOperationReady, true);
-            Reinjected.Add(ZilleCampaign.OperationsDone + 1);
+            Reinjected.Add($"{ZilleCampaign.OperationsDone + 1}:{turn}");
             WarProbe.InjectWarFragment(frag);
         }
     }
 
-    /// <summary>An operation was ordered but its fragment is gone (the game was reloaded): put it back once.</summary>
-    private static void Reinject()
+    /// <summary>
+    /// An operation was ordered but its fragment is gone: the game was reloaded, or the turn ended before the war table
+    /// was played (the operation is still "ready" on a later turn). Put it back, once per turn, once nothing that belongs
+    /// before the war is pending. Without this the campaign would wait forever (the council is not offered while an
+    /// operation is ready).
+    /// </summary>
+    private static void Reinject(int turn)
     {
         int k = ZilleCampaign.OperationsDone + 1;
-        if (!Variables.GetBool(WarFlow.VarOperationReady) || Reinjected.Contains(k) ||
-            GameState.StoryFragmentExistsInCurrentStep(ZilleOperation.FragmentName(k)) || ZilleCampaign.Available().Count == 0)
+        string key = $"{k}:{turn}";
+        if (!Variables.GetBool(WarFlow.VarOperationReady) || Reinjected.Contains(key) ||
+            GameState.StoryFragmentExistsInCurrentStep(ZilleOperation.FragmentName(k)) || PrePending())
         {
             return;
         }
 
-        Reinjected.Add(k);
+        Reinjected.Add(key);
+        if (ZilleCampaign.Available().Count == 0)
+        {
+            Variables.Set(WarFlow.VarOperationReady, false);
+            return;
+        }
+
         if (ZilleOperation.BuildNext(out WarFragmentData frag))
         {
-            Core.Log.Msg($"Re-opening the war table for operation {k} after a reload.");
+            Core.Log.Msg($"Re-opening the war table for operation {k} (turn {turn}).");
+            Variables.Set(WarFlow.VarLastOperationTurn, turn);
             WarProbe.InjectWarFragment(frag);
         }
     }
@@ -272,7 +287,8 @@ internal static class WarCouncil
                                        "and Variable[\"RiziaDLC.Taddeus_Arrested\"] ~= true and Variable[\"RiziaDLC.Taddeus_Executed\"] ~= true";
 
     private static string First => $"{V(VarKind)} == 1";
-    private static string Later => $"{V(VarKind)} == 2";
+    private static string Later => $"{V(VarKind)} ~= 1";
+    private static string Fought => $"{Num(VarFought)} > 0";
     private static string Obj(Objective o) => $"{V(VarObjective)} == \"{o}\"";
     private static string Equip(int n) => $"{Num("RiziaDLC.Resources_Military_Equipment")} >= {n}";
     private static string Lever(SupplyWar.Lever l) => $"{Num(SupplyWar.Count(l))} > 0";
@@ -282,6 +298,9 @@ internal static class WarCouncil
         "Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_AverageEnergyExport\"] == true or (Variable[\"ZilleWar.Lever_Embargo\"] or 0) > 0";
 
     private static string Strength => Num(ZilleCampaign.VarStrength);
+
+    // Turn 5, when EarlyT5 has not already held its own, fuller council scene: the Royal Council sits in.
+    private const string T5Council = "Variable[\"ZilleWar.Council_Turn\"] == 5 and Variable[\"ZilleWar.E5_CouncilOffered\"] ~= true";
     private static string FleetSplit => And(Is("RiziaDLC.Diplomacy_Pales_Military_BlockDrillship"), IsNot(VarFleetRecalled));
     private const int BarrageCost = 500;
 
@@ -331,11 +350,11 @@ internal static class WarCouncil
             $"AddConversant(\"{Carlos}\"); " +
             $"if {LucitaHere} then AddConversant(\"{Lucita}\") end; " +
             $"if {TaddeusHere} then AddConversant(\"{Taddeus}\") end; " +
-            $"if ({First} or {V(VarTurn)} == 5) then " +
+            $"if ({First} or ({T5Council})) then " +
             $"if {HugoHere} then AddConversant(\"{Hugo}\") end; if {ElenaHere} then AddConversant(\"{Elena}\") end; " +
             $"if {VinaHere} then AddConversant(\"{Vina}\") end; end; " +
             $"if {LaurentoHere} then AddConversant(\"{Laurento}\") end; ";
-        t.Logic("Start", new[] { "Truce", "Open1", "Open2", "Open2Setback" }, hooks: AtStart(Conv), script: reset + conversants);
+        t.Logic("Start", new[] { "Truce", "Open1", "Open2Quiet", "Open2Setback", "Open2" }, hooks: AtStart(Conv), script: reset + conversants);
 
         // The war ended earlier this turn (a ceasefire was accepted on the telephone): the briefing becomes a short stand-down.
         t.Line("Truce", Narrator,
@@ -372,11 +391,15 @@ internal static class WarCouncil
             "The rest of the room belonged to the generals, bent over a map of Zille covered in golden and silver tokens.",
             new[] { "Salute" });
 
-        // Later councils: the map has changed.
+        // Later councils: the map has changed (or, if no offensive has been fought yet, it has not).
+        t.Line("Open2Quiet", Narrator,
+            "The map in the Council Chambers looked exactly as I had left it. The golden tokens still stood on our side of the border, " +
+            "and the silver ones had not moved an inch.",
+            new[] { "Open2b" }, condition: And(Later, Not(Fought)), sequence: "PlaySceneMusic(Security);");
         t.Line("Open2", Narrator,
             "The map in the Council Chambers had been redrawn since I last saw it. The golden tokens had crossed the border, and the " +
             "silver ones had been pushed back toward the sea.",
-            new[] { "Open2b" }, condition: And(Later, IsNot(VarSetback)), sequence: "PlaySceneMusic(Security);");
+            new[] { "Open2b" }, sequence: "PlaySceneMusic(Security);");
         t.Line("Open2Setback", Narrator,
             "The map in the Council Chambers had been redrawn since I last saw it. Some of the golden tokens had crossed the border. " +
             "Others had been swept off the table, and a few silver ones now stood on our side of the line.",
@@ -402,8 +425,8 @@ internal static class WarCouncil
 
         t.Logic("Carlos", new[] { "Carlos1", "Pol2" });
         t.Line("Carlos1", Narrator,
-            "General Carlos Robles Azaro stepped forward. With Taddeus Azaro still recovering in Montaklar, the second-in-command of " +
-            "the Armed Forces had been running the mobilization from this room since the first cable arrived from Konstantium.",
+            "General Carlos Robles Azaro, Commander of the Armed Forces, stepped forward. He had been running the mobilization from " +
+            "this room since the first cable arrived from Konstantium.",
             new[] { "Carlos2" }, condition: First);
         t.Line("Carlos2", Carlos,
             "\"Your Majesty. The northern army group is mobilized. Our divisions are at Dapalle and Mave Nortus, and the fleet is putting to sea " +
@@ -453,7 +476,7 @@ internal static class WarCouncil
     private static void ResultsAndPolitics()
     {
         // Turn 5: the council sits in. This is what the player sees where vanilla had the Wehlen trade talks.
-        string t5 = $"{V(VarTurn)} == 5 and Variable[\"ZilleWar.E5_CouncilOffered\"] ~= true";   // EarlyT5 has its own fuller council scene
+        string t5 = T5Council;
         t.Logic("Pol2", new[] { "Pol2Open", "Res" });
         t.Line("Pol2Open", Narrator,
             "The Royal Council had asked to sit in on the briefing. They took the chairs along the wall, and the generals pretended not to mind.",
@@ -485,11 +508,14 @@ internal static class WarCouncil
             new[] { "Pol2Reply" }, condition: And(VinaHere, IsNot(VarVinaAsked)));
         t.Logic("Pol2Reply", new[] { "Pol2R1", "Pol2R2" });
         t.Choice("Pol2R1", "\"Every day we argue in this room is another day in those cellars. Let's end it quickly.\"", new[] { "Pol2R1b" });
-        t.Line("Pol2R1b", Narrator, "Hugo murmured his agreement. Vina looked away.", new[] { "Res" });
+        t.Logic("Pol2R1b", new[] { "Pol2R1HV", "Pol2R1N" });
+        t.Line("Pol2R1HV", Narrator, "Hugo murmured his agreement. Vina looked away.", new[] { "Res" }, condition: And(HugoHere, VinaHere));
+        t.Line("Pol2R1N", Narrator, "A few heads nodded along the wall. Nobody asked to speak again.", new[] { "Res" });
         t.Choice("Pol2R2", "\"Thank you all. Now let the generals speak.\"", new[] { "Res" });
 
-        // The result of the last operation.
-        t.Line("Res", Carlos, "\"Your Majesty. The latest from the front.\"", new[] { "ResHarbor", "ResWall", "ResOther" });
+        // The result of the last operation (nothing to report while no offensive has been fought yet).
+        t.Logic("Res", new[] { "ResSay", "ResWaited" });
+        t.Line("ResSay", Carlos, "\"Your Majesty. The latest from the front.\"", new[] { "ResHarbor", "ResWall", "ResOther" }, condition: Fought);
         t.Line("ResHarbor", Carlos,
             "\"Zille is ours. The harbor, the railway station and the Wehzek headquarters. Their whole southern front has lost its port.\"",
             new[] { "ResExtra" }, condition: $"{V(VarLastObjective)} == \"Harbor\"");
@@ -518,7 +544,7 @@ internal static class WarCouncil
             "\"The front has been quiet since we halted. Our men have rested. I'm afraid so have theirs.\"",
             And(Is(VarWaited), LucitaHere), "ResTwoWars");
         Opt("ResTwoWars", Taddeus,
-            "\"Two wars, Lieutenant. Your father tried that once, and I was there to see it. We will not repeat it. We sequence them. " +
+            "\"Two wars at once, Lieutenant. I have seen what that does to an army. We will not fight them both at full stretch. We sequence them. " +
             "Zille holds, Pales breaks, then we turn north again.\"",
             And(TaddeusHere, "Variable[\"RiziaDLC.Pales_War\"] == true"), "Push");
     }
@@ -532,7 +558,7 @@ internal static class WarCouncil
         Opt("PushTad", Taddeus, "\"A complete victory is in sight, Lieutenant.\"", TaddeusHere, "PushMenu");
         t.Logic("PushMenu", new[] { "PushGo", "PushWait", "Cease1", "Cease2" });
         t.Choice("PushGo", "\"Then we keep moving. Smolak doesn't get a week to recover.\"", new[] { "Intel" });
-        t.Choice("PushWait", "\"We'll hold for now. Let the men rest, and let the blockade do its work.\"", new[] { "PushWait2" });
+        t.Choice("PushWait", "\"We'll hold for now. The men need their rest.\"", new[] { "PushWait2" });
         Intel("PushWait2", "\"Wehlen will use the time too, Your Majesty. Every quiet week is another week of convoys across the strait.\"",
             new[] { "PushWaitYes", "PushWaitNo" });
         t.Choice("PushWaitYes", "\"I know. We hold.\"", new[] { "Hold" });

@@ -35,7 +35,7 @@ internal static partial class SupplyWar
         string dealScript = $"{V(Count(Lever.Lespia))} = 1; " + T(VarLespiaStrait) + Talk.Weaken(2) + Inc(NpLespia, 1) + Inc(NpWehlen, -1) +
                             SetTurn(VarLespiaDealTurn);
         string bindMitz = $"if {voted} then {T(MitzPromiseLate)} else {T(MitzPromise)} end; " + T(VarLespiaMitz);
-        string enter = $"AddConversant(\"{Alvarez}\");";
+        string enter = $"AddConversant(\"{Alvarez}\"); AddConversant(\"{Esquibel}\");";
 
         d.Start(AlvarezConv, ResetAsked + Inc(VarAlvarezCalls, 1) + Music, "Phone");
         d.Branch("Phone", "PhoneFirst", "PhoneLater");
@@ -139,7 +139,7 @@ internal static partial class SupplyWar
             "Hangup");
 
         // ---- invoices: one topic per call once the strait is closed
-        d.SayIf("InvOpen", deal, Alvarez,
+        d.Say("InvOpen", Alvarez,
             "\"Your Majesty. My admirals send their regards from the strait. Wehzek captains have discovered the joys of Lespian " +
             "paperwork, and some of them have taken up fishing instead.\"", "Inv");
         d.Branch("Inv", "InvPales", "InvGas", "InvGift", "InvNothing");
@@ -199,7 +199,7 @@ internal static partial class SupplyWar
             "\"The truth is a slippery concept, Your Majesty. Here is one that isn't: the enemy is President Smolak and his militarist " +
             "government. Not Lespia. So tell me what you want.\"", "CDeal", "CNoDeal");
         d.DoIf("CDeal", deal, null, "CRecall", "CPay", "CSendAway");
-        d.DoIf("CNoDeal", noDeal, null, "CFree", "CPay", "CNever");
+        d.Do("CNoDeal", null, "CFree", "CPay", "CNever");
         string done = T(VarRamiroConfronted);
         d.Opt("CRecall", null, "\"Recall Ramiro. Send him somewhere I'll never hear his name again.\"", null,
             done + Inc(NpLespia, -1) + S(VarRamiroOutcome, "recalled"), "CRecall2");

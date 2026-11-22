@@ -194,6 +194,16 @@ internal static class WorldModifiers
         }
 
         Vanilla.Expose(WarFlow.VarCeasefire);
+
+        foreach (Line l in Lines)
+        {
+            LuaLint.RecordExpresso($"HUD line {l.Name}", l.Condition);
+        }
+
+        foreach ((string ci, string cond, _) in Rows)
+        {
+            LuaLint.RecordExpresso($"Row {ci}", cond);
+        }
     }
 
     private static string Turns(string v) => v + "_Turns";
