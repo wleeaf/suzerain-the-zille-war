@@ -133,8 +133,8 @@ internal static class WorldVoices
                         : " Recruiting posters showing a soldier pointing north, toward Zille, are pasted on every wall."),
                     "Shopkeepers report that coffee, sugar and imported cloth have doubled in price since trade across the strait " +
                     "slowed. For now, most people grumble and pay. \"It is for Zille,\" one woman told a reporter, counting her coins."));
-                Dispatch($"Refugees_T{Turn}", SuzerainTokenName.RiziaCityMaveNortus, "Refugees on the Road to Mave Nortus", P(
-                    "Families from the Zille border villages, Rizian and Wehzek alike, have been arriving in Mave Nortus on foot and by cart. " +
+                Dispatch($"Refugees_T{Turn}", SuzerainTokenName.RiziaCityMaveNortus, "Refugees on the Road to " + SafeTown(), P(
+                    "Families from the Zille border villages, Rizian and Wehzek alike, have been arriving in " + SafeTown() + " on foot and by cart. " +
                     "The army has opened relief stations in the grain warehouses by the station, and the sanctuaries of Brenas are collecting " +
                     "blankets.",
                     "Relief officials say the money set aside for the refugees will be spent within weeks, and they have asked the Crown " +
@@ -199,7 +199,8 @@ internal static class WorldVoices
                       "with courage, and with the whole nation behind them.",
                 "Axa Victoria!"));
             News(key, "V", "The Bill Arrives", P(
-                "The Voice of Rizia promised to count the cost of the King's war. Here is the first instalment. Fuel is rationed. Bread " +
+                "The Voice of Rizia promised to count the cost of the King's war. Here is the first instalment. " +
+                (Variables.GetBool("ZilleWar.Decree_FuelRationing") ? "Fuel is rationed. " : "Fuel has doubled in price and the pumps run dry by noon. ") + "Bread " +
                 "costs more than it did a month ago. The northern railway carries soldiers instead of freight, and the farmers of Brenas " +
                 "watch their harvest rot at the sidings.",
                 Variables.GetBool("ZilleWar.Decree_WarCensorship")
@@ -283,7 +284,8 @@ internal static class WorldVoices
                 "Rizian loan request, once the war is over and the region's gold is flowing again."));
 
             bool yielded = Variables.GetString("ZilleWar.Valgsland_CallAnswer") == "yielded";
-            if (WorldSystems.LespiaCaleqabiz && !yielded)
+            bool softCable = Variables.GetString("ZilleWar.Valgsland_CableAnswer") is "guarantee" or "mitz";
+            if (WorldSystems.LespiaCaleqabiz && !yielded && !Variables.GetBool(SupplyWar.VarLespiaWithdrawn))
             {
                 Dispatch("ValgslandQabiz", SuzerainTokenName.RiziaCountryValgsland, "Valgish Destroyers Off Qabiz", P(
                     "Two Valgish destroyers have anchored just outside our territorial waters off Caleqabiz, within sight of the Lespian " +
@@ -295,7 +297,7 @@ internal static class WorldVoices
                     "Twenty-five years ago Zille was signed away to save a throne. The Voice of Rizia hopes the present King has read the " +
                     "history books more carefully than his advisers have."));
             }
-            else if (!yielded)
+            else if (!yielded && !softCable)
             {
                 Dispatch("ValgslandArms", SuzerainTokenName.RiziaCountryValgsland, "Valgish Ports Serve Wehlen", P(
                     "Valgish ports have openly begun handling Contanan cargoes bound for Wehlen, and Valgish crews are reported to be " +
@@ -308,7 +310,8 @@ internal static class WorldVoices
             {
                 Dispatch("RumburgFatigue", SuzerainTokenName.RiziaCountryRumburg, "Grumbling in Thornbourgh", P(
                     "Questions have been asked in the Rumburgian parliament about the cost of the Rizian war to Rumburg's own treasury, " +
-                    "and about the price of the gas that replaced Wehzek oil. The Queen's ministers answered them, but briefly.",
+                    (SupplyWar.RumburgOilCut ? "and about the price of the gas that replaced Wehzek oil. " : SupplyWar.RumburgOilHalved ? "and about the price of the gas that half-replaced Wehzek oil. " : "and about the price of the credits and the rifles. ") +
+                    "The Queen's ministers answered them, but briefly.",
                     "Our ambassador was told over dinner, by a minister who had drunk just enough, that Her Majesty's patience is \"a " +
                     "renewable resource, but not an infinite one.\""));
             }
@@ -336,7 +339,7 @@ internal static class WorldVoices
                       "not forgotten that every one of them must one day be paid back."
                     : "Councilor Werner's office calls the sums modest, and the letters the best news it has had since the declaration."));
             News("Volunteers", "RH", "They Came Home to Fight", P(
-                "Among the volunteers at the Mave Nortus depot this week were forty young men who had never set foot in Rizia. Born " +
+                "Among the volunteers at the " + SafeTown() + " depot this week were forty young men who had never set foot in Rizia. Born " +
                 "in Thornbourgh and Perla to families who fled Zille, they paid their own passage to enlist.",
                 "\"My grandmother kept the key to her house in Zille for twenty-five years,\" one of them told the Royal Herald. \"I " +
                 "promised her I would open the door.\""));
@@ -352,7 +355,7 @@ internal static class WorldVoices
             }
 
             Dispatch("Defector", SuzerainTokenName.RiziaCityMontaklar, "A Wehzek Officer Crosses the Lines", P(
-                "A major of the Wehzek coastal artillery walked across the river at Mave Nortus under a white handkerchief two nights " +
+                "A major of the Wehzek coastal artillery walked across the lines at " + SafeTown() + " under a white handkerchief two nights " +
                 "ago, carrying a briefcase full of maps. He says he is a Bludish Golcondist who has watched his men starve on half " +
                 "rations while officers from Wraclawitz sold the garrison's fuel on the black market.",
                 "The General Staff has spent two days with his maps, and believes them genuine. They show every gun position on the " +
@@ -394,6 +397,20 @@ internal static class WorldVoices
     }
 
     // ------------------------------------------------------------------ two wars at once
+
+    /// <summary>The first of Mave Nortus, Dapalle and Balle that Wehlen does not hold (a front town that is Rizian hands).</summary>
+    private static string SafeTown()
+    {
+        foreach (string t in new[] { "Mave Nortus", "Dapalle", "Balle" })
+        {
+            if (!Variables.GetBool(WarFlags.Occupied(t)))
+            {
+                return t;
+            }
+        }
+
+        return "Mave Nortus";
+    }
 
     private static void TwoWars()
     {
@@ -555,7 +572,7 @@ internal static class WorldVoices
             if (since == 1)
             {
                 Dispatch("ArmyHome", SuzerainTokenName.RiziaCityMaveNortus, "The Reservists Come Home", P(
-                    "The first battalions stood down from the Zille front crossed back over the river at Mave Nortus this week, leaving " +
+                    "The first battalions stood down from the Zille front crossed back over the river at " + SafeTown() + " this week, leaving " +
                     "the armistice line to the regulars. There were no bands and no crowds. Townspeople brought water to the trucks and " +
                     "did not ask questions.",
                     "Refugees from the Zille villages who followed the army south now fill the warehouses by the station. Most say they " +

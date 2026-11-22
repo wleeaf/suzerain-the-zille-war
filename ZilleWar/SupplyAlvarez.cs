@@ -117,7 +117,7 @@ internal static partial class SupplyWar
             "He sounds pleased with himself, which is never good news.\"", enter, "Open");
 
         d.Branch("Open", "ConfrontOpen", "GrievanceOpen", "GrievanceOpenB", "InvExpelled", "HelloKept", "HelloBurned", "HelloRefused", "HelloAgain3", "HelloAgain", "InvOpen1",
-            "InvOpen2");
+            "InvOpen2", "InvOpenCold");
         d.SayIf("HelloKept", $"{calls} == 1 and {noDeal} and {kept}", Alvarez,
             "\"Your Majesty. I hope my little note didn't get lost in all the excitement in Konstantium. It was a very exciting day.\"", "FrontA");
         d.SayIf("HelloBurned", $"{calls} == 1 and {noDeal}", Alvarez,
@@ -396,19 +396,23 @@ internal static partial class SupplyWar
         d.Opt("MitzIntel", null, "\"The convoys. Rizia will vote with Lespia.\"", "Binds Rizia's MITZ Vote to Lespia",
             bindMitz + Talk.Weaken(2) + S(VarLespiaMitzReward, "intel") + T(VarAlvarezGiftDone), "MitzIntel2");
         d.Say("MitzIntel2", Alvarez,
-            "\"A practical choice. My naval attaché will have the sailing times on your Admiralty's desk by morning. Accurate to the " +
+            "\"A practical choice. My embassy will have the sailing times on your Admiralty's desk by morning. Accurate to the " +
             "hour, I'm told.\"", "Hub");
         d.Opt("MitzNo", null, "\"Rizia's vote at the Meftiem isn't for sale.\"", null, T(VarAlvRefusedMitz), "MitzNo2");
         d.Say("MitzNo2", Alvarez,
             "\"Everything is for sale, Your Majesty. You simply haven't heard the right price yet.\"", "Hub");
 
         // ================================================================ invoices: one topic per call once the strait is closed
-        d.SayIfDo("InvOpen1", $"{invoices} == 0", Alvarez,
+        string lax = $"({grudge} or {Is(VarStraitThin)})";
+        d.SayIfDo("InvOpen1", $"{invoices} == 0 and not {lax}", Alvarez,
             "\"Your Majesty. My admirals send their regards from the strait. Wehzek captains have discovered the joys of Lespian " +
             "paperwork.\"", Inc(VarAlvInvoices, 1), "FrontI");
-        d.SayDo("InvOpen2", Alvarez,
+        d.SayIfDo("InvOpen2", $"not {lax}", Alvarez,
             "\"Your Majesty. A report from Kreleck, since your own admirals are too proud to send one. Every Wehzek ship this month " +
             "was stopped and searched, and most of them are still waiting for their papers.\"", Inc(VarAlvInvoices, 1), "FrontI");
+        d.SayDo("InvOpenCold", Alvarez,
+            "\"Your Majesty. My admirals are in the strait. Whether they read every manifest is a different question.\"",
+            Inc(VarAlvInvoices, 1), "FrontI");
         d.Branch("Inv", "InvMitz", "InvPales", "InvGift", "InvNothingHeld", "InvNothingMissed", "InvNothingWon", "InvNothing");
         // the attaché expelled over the Fort Ales photographs (SupplyWarRoom): he denies everything, smiling
         d.SayIfDo("InvExpelled", $"{Eq(VarPhotoPayoff, "expelled")} and {Not(VarAlvarezPhotoSaid)}", Alvarez,
@@ -443,8 +447,8 @@ internal static partial class SupplyWar
             "\"Then we understand each other perfectly. It's so rare, in my line of work.\"", "Hangup");
 
         // a good surprise
-        d.SayIf("InvGift", Not(VarAlvarezGiftDone), Alvarez,
-            "\"A small gift between partners. My naval attaché has the sailing schedule of every Wehzek convoy leaving the northern " +
+        d.SayIf("InvGift", $"{Not(VarAlvarezGiftDone)} and not {grudge}", Alvarez,
+            "\"A small gift between partners. My embassy has the sailing schedule of every Wehzek convoy leaving the northern " +
             "ports this month.\"", "InvGift2");
         d.Say("InvGift2", Alvarez, "\"Your admirals will find it in their morning post.\"", "GiftWhy", "GiftThanks");
         d.Opt("GiftWhy", null, "\"Why so generous all of a sudden?\"", null, T(VarAlvarezGiftDone) + Talk.Weaken(1), "GiftWhy2");

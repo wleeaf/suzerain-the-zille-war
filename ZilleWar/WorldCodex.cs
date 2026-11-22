@@ -171,7 +171,26 @@ internal static class WorldCodex
 
     private static bool Taken(string town) => Variables.GetBool(ZilleOperation.CapturedVar(town));
     private static bool Flag(string f) => Variables.GetBool(CityEvents.Flag(f));
+    private static string Hunters()
+    {
+        bool ships = Lever(SupplyWar.Lever.RoyalNavy) > 0;
+        bool subs = Lever(SupplyWar.Lever.Submarines) > 0;
+        return ships && subs ? "Rizian ships and submarines hunted" : ships ? "Rizian ships hunted" : subs ? "Rizian submarines hunted"
+            : "the Rizian fleet, which stayed in port, did not hunt";
+    }
+
     private static int Lever(SupplyWar.Lever l) => Variables.GetInt(SupplyWar.Count(l));
+
+    /// <summary>The Turn 8 treaty kind (renounced, border, accord, recognized, terms), or empty before or without a signed treaty.</summary>
+    private static string TreatyKind => Variables.GetBool(ZilleTreaty.VarSigned) ? Variables.GetString(ZilleTreaty.VarKind) ?? string.Empty : string.Empty;
+
+    private static string NotRecognized => TreatyKind == "recognized"
+        ? "a claim Rizia has since accepted in the treaty signed at Wraclawitz"
+        : "a claim Rizia does not recognize";
+
+    private static string Pending => TreatyKind == "border"
+        ? "the line having been made the border by the Mave Nortus Treaty."
+        : "pending a final settlement.";
 
     private static string P(params string[] paragraphs) => string.Join("\n\n", paragraphs.Where(p => !string.IsNullOrEmpty(p)));
 
@@ -213,9 +232,9 @@ internal static class WorldCodex
             WorldSystems.Declared
                 ? (WorldSystems.LespiaHelps
                     ? "During the Zille War, the strait was the decisive theater at sea. Lespian warships patrolling it under the banner " +
-                      "of free navigation turned back Wehzek convoys bound for Zille, while Rizian ships and submarines hunted those that slipped through."
+                      "of free navigation turned back Wehzek convoys bound for Zille, while " + Hunters() + " those that slipped through."
                     : "During the Zille War, the strait was the decisive theater at sea. Wehzek convoys crossed it at night to supply the " +
-                      "Zille garrison, and Rizian ships and submarines hunted them, while marine insurers suspended cover for every merchant " +
+                      "Zille garrison, and " + Hunters() + " them, while marine insurers suspended cover for every merchant " +
                       "ship in the passage.")
                 : null),
         "Organisations_Political_BludishFreedomFront_Rizia" => P(
@@ -275,7 +294,7 @@ internal static class WorldCodex
         var allies = new List<string>();
         if (SupplyWar.RumburgEmbargo)
         {
-            allies.Add("Rumburg kept its ports closed to Wehzek oil");
+            allies.Add(SupplyWar.RumburgOilCut ? "Rumburg kept its ports closed to Wehzek oil" : "Rumburg bought only half its old share of Wehzek oil");
         }
 
         if (Lever(SupplyWar.Lever.BffRaids) > 0)
@@ -309,7 +328,7 @@ internal static class WorldCodex
             "The war ended with the surrender of the last Wehzek garrisons and the return of the entire region to Rizian sovereignty, " +
             "ending twenty-five years of Wehzek administration.",
             "The war ended in a Rizian defeat. Wehlen continues to administer the region and has since declared the Zille Agreement void, " +
-            "a claim Rizia does not recognize.",
+            NotRecognized + ".",
             "The war ended in a ceasefire supervised by the Alliance of Nations, with the region divided along the line of contact" +
             (WorldSystems.ZilleCityHeld ? " and the city of Zille in Rizian hands." : ". Wehlen continues to administer most of the region."),
             "The war ended in an armistice signed under Alliance supervision, with Zille city in Rizian hands and the rest of the region in Wehzek hands.");
@@ -344,14 +363,16 @@ internal static class WorldCodex
                     "The war ended with the surrender of the last Wehzek garrisons, and the territory returned to Rizian sovereignty for " +
                     "the first time since 1927.",
                     "The Rizian offensive failed, and Wehlen continues to administer the territory. The Wehzek government has since " +
-                    "declared the Zille Agreement void, arguing that Rizia forfeited its claim by resorting to war. Rizia does not " +
-                    "recognize the claim.",
+                    "declared the Zille Agreement void, arguing that Rizia forfeited its claim by resorting to war. " +
+                    (TreatyKind == "recognized"
+                        ? "Rizia has since recognized Wehzek sovereignty over Zille in a treaty signed at Wraclawitz."
+                        : "Rizia does not recognize the claim."),
                     "Fighting ended with a ceasefire supervised by the Alliance of Nations. The line of contact now runs through the " +
                     "region" + (WorldSystems.ZilleCityHeld ? ", with the city of Zille under Rizian control," : string.Empty) +
-                    " and the rest of the territory remains under Wehzek administration pending a final settlement.",
+                    " and the rest of the territory remains under Wehzek administration, " + Pending,
                     "Fighting ended with an armistice signed under Alliance supervision. The line of contact now runs through the " +
                     "region, with the city of Zille under Rizian control, and the rest of the territory remains under Wehzek " +
-                    "administration pending a final settlement."));
+                    "administration, " + Pending));
             case "Locations_Regions_ZilleTerritory_Brenas":
             case "Locations_Regions_ZilleTerritory_RiziaImperii":
                 return WorldSystems.Liberated
@@ -383,10 +404,18 @@ internal static class WorldCodex
                     "was answered the same day by Rizia's declaration of war, making the Zille Agreement the only lease in the history " +
                     "of the Alliance of Nations to end on a battlefield.",
                     Outcome("The war over its terms continues.",
-                        "Rizia regards the agreement as fulfilled by force of arms. Wehlen regards it as broken.",
-                        "Wehlen now cites Rizia's declaration of war as grounds for voiding the agreement altogether.",
-                        "Under the ceasefire, the question of the agreement has been returned to the Alliance of Nations, where it remains unresolved.",
-                        "Under the armistice, the question of the agreement has been returned to the Alliance of Nations, where it remains unresolved."));
+                        TreatyKind is "renounced" or "border"
+                            ? "Rizia regards the agreement as fulfilled by force of arms. Wehlen has since renounced all claim to the region in a treaty signed with Rizia."
+                            : "Rizia regards the agreement as fulfilled by force of arms. Wehlen regards it as broken.",
+                        TreatyKind == "recognized"
+                            ? "Wehlen cited Rizia's declaration of war as grounds for voiding the agreement altogether, and Rizia has since recognized that in a treaty signed at Wraclawitz."
+                            : "Wehlen now cites Rizia's declaration of war as grounds for voiding the agreement altogether.",
+                        TreatyKind == "border"
+                            ? "The Mave Nortus Treaty settled the question by making the line of contact the border."
+                            : "Under the ceasefire, the question of the agreement has been returned to the Alliance of Nations, where it remains unresolved.",
+                        TreatyKind == "border"
+                            ? "The Mave Nortus Treaty settled the question by making the armistice line the border."
+                            : "Under the armistice, the question of the agreement has been returned to the Alliance of Nations, where it remains unresolved."));
             case "Locations_Countries_Wehlen":
                 return P(original,
                     "After refusing to return the Zille region at the end of its lease, Wehlen found itself at war with the Kingdom of " +
@@ -401,14 +430,17 @@ internal static class WorldCodex
                     "presented the conflict as a defense of the Wehzeks of Zille against \"Rumburg and its royal clients.\"" +
                     Outcome(string.Empty, " The loss of Zille was the first territorial defeat of his presidency.",
                         " Victory in Zille has strengthened his position at home, where the war is commemorated as the Defense of the Strait.",
-                        " He has called the ceasefire line \"a wound, not a border.\"", " He has called the armistice line \"a wound, not a border.\""));
+                        TreatyKind == "border" ? " He signed the Mave Nortus Treaty, which made the line of contact the border." : " He has called the ceasefire line \"a wound, not a border.\"",
+                        TreatyKind == "border" ? " He signed the Mave Nortus Treaty, which made the armistice line the border." : " He has called the armistice line \"a wound, not a border.\""));
             case "Characters_ForeignLeaders_PatricioAlvarez_1950":
             case "Characters_ForeignLeaders_PatricioAlvarez_1953":
                 return P(original,
                     WorldSystems.LespiaHelps
                         ? "During the Zille War, Alvarez's government deployed the Lespian navy to stop Wehzek shipping in the Strait of " +
                           "Kreleck, " + WorldSystems.LespiaPrice + ". Lespian officials described the operation as a contribution to regional stability."
-                        : "Lespia remained formally neutral in the Zille War, calling on both parties to keep the sea lanes open to neutral shipping.",
+                        : Variables.GetBool(SupplyWar.VarLespiaFuel)
+                            ? "Lespian harbors refueled Wehzek tankers bound for Zille during the Zille War, after Alvarez held Rizia's conduct at the Meftiem against it."
+                            : "Lespia remained formally neutral in the Zille War, calling on both parties to keep the sea lanes open to neutral shipping.",
                     lespiaPublic
                         ? "Rizian investigators have since linked a Lespian intelligence officer stationed in Zille to the Friendship Day " +
                           "bombing that preceded the war. Alvarez has denied any involvement."
@@ -422,7 +454,7 @@ internal static class WorldCodex
             case "Characters_ForeignLeaders_BeatriceLivingston":
                 return SupplyWar.RumburgEmbargo || Lever(SupplyWar.Lever.BffRaids) > 0 || Lever(SupplyWar.Lever.BffFighters) > 0
                     ? P(original, "During the Zille War she was Rizia's most important foreign backer" +
-                                  (SupplyWar.RumburgEmbargo ? ", keeping Rumburg's ports closed to Wehzek oil" : string.Empty) +
+                                  (SupplyWar.RumburgOilCut ? ", keeping Rumburg's ports closed to Wehzek oil" : SupplyWar.RumburgOilHalved ? ", cutting Rumburg's purchases of Wehzek oil by half" : string.Empty) +
                                   (Lever(SupplyWar.Lever.BffRaids) > 0 || Lever(SupplyWar.Lever.BffFighters) > 0
                                       ? ", and she was widely believed to have arranged Bludish Freedom Front raids in northern Wehlen, though Thornbourgh has never confirmed it."
                                       : "."))
@@ -476,7 +508,8 @@ internal static class WorldCodex
             case "Locations_Countries_RumburgOMECExpelled":
                 return P(original,
                     "Rumburg was the Kingdom of Rizia's principal foreign backer in the Zille War" +
-                    (SupplyWar.RumburgEmbargo ? ", and it kept its ports closed to Wehzek oil for the duration of the fighting." : "."));
+                    (SupplyWar.RumburgOilCut ? ", and it kept its ports closed to Wehzek oil for the duration of the fighting."
+                        : SupplyWar.RumburgOilHalved ? ", and it bought only half its old share of Wehzek oil while the fighting lasted." : "."));
             default:
                 return null;
         }

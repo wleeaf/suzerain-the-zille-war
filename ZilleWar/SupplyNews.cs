@@ -209,7 +209,9 @@ internal static class SupplyNews
                 "Foreign Office has dismissed the report as a forgery. Sordland has asked the Alliance of Nations to look into it, " +
                 "and several GRACE governments have asked Thornbourgh, privately, for reassurance.");
             Paper("Dossier", "V", "The Queen's Rifles",
-                "If Wehlen's dossier is even half true, the Bluds blowing up Wehzek harbors in our name are armed by Rumburg and paid, " +
+                (Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.BffRaids)) > 0
+                    ? "If Wehlen's dossier is even half true, the Bluds blowing up Wehzek harbors in our name are armed by Rumburg and paid, "
+                    : "If Wehlen's dossier is even half true, the Bludish fighters serving under Rizian officers in Montaklar are armed by Rumburg and paid, ") +
                 "at least in part, by us. The palace has not said a word.",
                 "The Voice of Rizia asks a simple question. Who decided this, and when were the people of Rizia going to be told?");
             Paper("Dossier", "RH", "Wraclawitz Turns to Forgery",
@@ -231,9 +233,12 @@ internal static class SupplyNews
                 "Rumburg will send no further military aid to Rizia \"for the time being,\" a spokesman for Queen Beatrice told " +
                 "reporters in Thornbourgh, adding that the Kingdom \"remains a loyal friend of the Rizian Crown and a firm believer " +
                 "in a negotiated peace.\"",
-                SupplyWar.RumburgEmbargo
+                SupplyWar.RumburgOilCut
                     ? "Diplomats read the statement as a message to Porte Drazon as much as to Wraclawitz. Rumburg's existing commitments, " +
                       "including its embargo on Wehzek oil, are understood to remain in force."
+                    : SupplyWar.RumburgOilHalved
+                    ? "Diplomats read the statement as a message to Porte Drazon as much as to Wraclawitz. Rumburgian tankers still load " +
+                      "Wehzek oil, if only half as often as they did before the spring."
                     : "Diplomats read the statement as a message to Porte Drazon as much as to Wraclawitz. Rumburgian tankers, they note, " +
                       "have never stopped loading Wehzek oil.");
             Rep("RumburgNo", SuzerainTokenName.RiziaCountryRumburg, "Thornbourgh Closes Its Purse",
@@ -407,15 +412,16 @@ internal static class SupplyNews
                 "The Lespian navy has withdrawn its ships from the Strait of Kreleck, ending the patrols that had kept Wehzek shipping " +
                 "out of Zille's harbors. Neither Perla nor Porte Drazon has explained the decision.",
                 "Shipping agents in Wraclawitz report that Wehzek convoys began loading for Zille within hours of the news."));
-        Once("StraitThin", Str("ZilleWar.Alvarez_GasTopic") == "refused" ||
-                           (Str(EarlyT6.VarAlvarezGasPrice) == "refused" && B(SupplyWar.VarLespiaStrait)), () =>
+        Once("StraitThin", Str(EarlyT6.VarAlvarezGasPrice) == "refused" && B(SupplyWar.VarLespiaStrait) &&
+                           !B(SupplyWar.VarLespiaWithdrawn), () =>
             Rep("StraitThin", SuzerainTokenName.RiziaCountryLespia, "Thinner Patrols in the Strait",
                 "The Lespian navy has pulled several patrol boats out of the Strait of Kreleck \"for refueling,\" according to Perla. " +
                 "Our naval attaché counts fewer Lespian ships on station than at any time since the closure began.",
                 "Wehzek convoys have noticed. Two of them crossed this week without being stopped."));
         Once("Gift", B("ZilleWar.Alvarez_GiftDone"), () =>
             Rep("Gift", SuzerainTokenName.RiziaCitySallabes, "Convoy Schedules from Perla",
-                "An envelope from the Lespian naval attaché reached the Admiralty in Sallabes this week. Inside were the sailing times " +
+                "An envelope from the Lespian " + (Str(SupplyWar.VarPhotoPayoff) == "expelled" ? "embassy" : "naval attaché") +
+                " reached the Admiralty in Sallabes this week. Inside were the sailing times " +
                 "of every Wehzek convoy leaving for Zille this month, accurate to the hour.",
                 "Our captains used it well. Two convoys were caught in open water, and the rest turned back. The Admiralty would like " +
                 "to know how Lespia came by the schedules. Nobody expects to find out."));
@@ -522,6 +528,8 @@ internal static class SupplyNews
 
         Once("SmolakAccepted", smolak is "accepted" or "countered", () =>
         {
+            var heldTowns = new[] { "Zille", "Auremina", "Isor", "Nanta" }
+                .Where(c => Variables.GetBool(ZilleOperation.CapturedVar(c))).ToList();
             string terms = Str(SupplyWar.VarCeasefireTerms) switch
             {
                 "full" => "the extradition of Ricardus Toras to Wehlen to answer for the Smolak Square bombing, the closure of Rizia's " +
@@ -537,8 +545,12 @@ internal static class SupplyNews
                 $"The guns are silent, and the Voice of Rizia is glad of it. But a ceasefire made over the telephone deserves to be read " +
                 $"aloud, so here it is: {terms}. The people of Rizia were not asked about any of it.");
             Paper("SmolakAccepted", "RH", "The Guns Fall Silent in Zille",
-                "At His Majesty's word, the Royal Army has ceased fire in Zille. It holds every inch of the ground it won, and Rizian " +
-                "flags fly over towns that had not seen one in a generation.",
+                heldTowns.Count == 0
+                    ? "At His Majesty's word, the Royal Army has ceased fire in Zille. The offensive gained no ground, and the Herald asks " +
+                      "only that the terms be read in full."
+                    : "At His Majesty's word, the Royal Army has ceased fire in Zille. It holds every inch of the ground it won, and Rizian " +
+                      "flags fly over " + (heldTowns.Count == 1 ? heldTowns[0] : string.Join(", ", heldTowns.Take(heldTowns.Count - 1)) +
+                      " and " + heldTowns[^1]) + ", which had not seen one in a generation.",
                 $"Wraclawitz asked a price for the quiet: {terms}. The Royal Herald will not pretend the price was nothing. It was " +
                 "less than the lives it spares.");
         });

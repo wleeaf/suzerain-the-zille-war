@@ -37,9 +37,19 @@ internal static class LateT9
     public const string VarEmbargoLifted = "ZilleWar.Late_RumburgEmbargoLifted";
     private const string VarVoteNews = "ZilleWar.Late_News_WehzekVote";
 
-    private static readonly string RumburgHelped =
-        "((Variable[\"ZilleWar.Lever_Embargo\"] or 0) > 0 or (Variable[\"ZilleWar.Lever_BffRaids\"] or 0) > 0 or (Variable[\"ZilleWar.Lever_BffFighters\"] or 0) > 0 " +
-        "or (Variable[\"ZilleWar.Rumburg_Credits\"] or 0) > 0)";
+    /// <summary>The one definition of "Rumburg helped in the Zille war": the Turn 3 oil deal (cut or halved), any telephone lever
+    /// (embargo, BFF raids, BFF fighters) or war credits.</summary>
+    public const string LuaRumburgHelped =
+        "(" + SupplyWar.LuaOilCut + " or " + SupplyWar.LuaOilHalved +
+        " or (Variable[\"ZilleWar.Lever_BffRaids\"] or 0) > 0 or (Variable[\"ZilleWar.Lever_BffFighters\"] or 0) > 0" +
+        " or (Variable[\"ZilleWar.Rumburg_Credits\"] or 0) > 0)";
+
+    public static bool RumburgHelpedNow =>
+        SupplyWar.RumburgOilCut || SupplyWar.RumburgOilHalved ||
+        Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.BffRaids)) > 0 || Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.BffFighters)) > 0 ||
+        Variables.GetInt(SupplyWar.VarRumburgCredits) > 0;
+
+    private static readonly string RumburgHelped = LuaRumburgHelped;
 
     /// <summary>Queen Beatrice telephoned during the war (SupplyBeatrice's call counter).</summary>
     private static readonly string BeatriceCalled = "((Variable[\"ZilleWar.Call_Beatrice_Count\"] or 0) > 0)";
@@ -76,7 +86,7 @@ internal static class LateT9
             NewsWire.Publish("Late_WehzekVote", "G", "Wehlen Holds Vote in Zille", string.Join("\n\n",
                 "Wehlen has held what it calls a \"referendum on reunification with the Wehzek motherland\" in the Zille region. According to " +
                 "Wehzek state radio, ninety-seven percent of voters approved. No foreign observers were admitted.",
-                "Rizian families who fled across the border at Mave Nortus say ballot boxes in the harbor district of Zille were carried in " +
+                (SuzerainModdingKit.Variables.GetBool(WarFlags.Occupied("Mave Nortus")) ? "Rizian families who fled across the armistice line say ballot boxes" : "Rizian families who fled across the border at Mave Nortus say ballot boxes")+" in the harbor district of Zille were carried in " +
                 "already sealed. President Smolak called the result \"the final word on the matter,\" and announced a national holiday."));
         }
 

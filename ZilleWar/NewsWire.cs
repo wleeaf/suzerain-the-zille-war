@@ -197,7 +197,7 @@ internal static class NewsWire
             "Kingdom. By dawn, reservists across Brenas were reporting to their depots. The Royal Herald stands with the King, with " +
             "the Royal Army, and with every Rizian family in Zille who has waited twenty-five years for this day."));
 
-        bool embargo = SupplyWar.RumburgEmbargo;
+        bool embargo = SupplyWar.RumburgOilCut, halved = SupplyWar.RumburgOilHalved;
         Publish("Rumburg", "RH", "Our Friends in Thornbourgh: Rumburg Stands With Rizia", P(
             "Within hours of the King's declaration, Her Majesty Queen Beatrice of Rumburg let it be known that the Kingdom of " +
             "Rumburg \"stands with its Rizian family, today and for as long as this takes.\" Rumburgian officials have promised to " +
@@ -205,8 +205,11 @@ internal static class NewsWire
             embargo
                 ? "Rumburg stopped buying Wehzek oil months ago, and a palace source says the Queen has no " +
                   "intention of letting that change. \"Smolak will pay for his convoys with money he no longer has,\" the source said."
-                : "Rumburg still imports Wehzek oil, a fact that Wehzek state radio was quick to point out last night. Palace sources " +
-                  "say the question is now \"under discussion\" between the two crowns.",
+                : halved
+                    ? "Rumburg halved its purchases of Wehzek oil earlier this year, at the King's request, and a palace source hints that " +
+                      "the other half is \"under discussion\" between the two crowns."
+                    : "Rumburg still imports Wehzek oil, a fact that Wehzek state radio was quick to point out last night. Palace sources " +
+                      "say the question is now \"under discussion\" between the two crowns.",
             "The bonds between our two crowns are bonds of family. Today they are also bonds of steel."));
 
         Publish("Frontline", "RH", "Mark Farus' From The Frontlines: The Night Trains North", P(
@@ -239,8 +242,10 @@ internal static class NewsWire
             "The Kingdom of Rumburg has announced its full support for Rizia's war to recover Zille, calling Wehlen's refusal to " +
             "honor the 1927 lease \"an act of bad faith that no sovereign nation could be expected to tolerate.\" " +
             (embargo
-                ? "Rumburg's partial embargo on Wehzek oil, agreed with Rizia earlier this year, now looks less like trade policy and more like preparation."
-                : "Rumburg has not, however, stopped buying Wehzek oil, and analysts in Konstantium are asking how long that can last."),
+                ? "Rumburg's embargo on Wehzek oil, agreed with Rizia earlier this year, now looks less like trade policy and more like preparation."
+                : halved
+                    ? "Rumburg's decision earlier this year to halve its purchases of Wehzek oil now looks less like trade policy and more like preparation."
+                    : "Rumburg has not, however, stopped buying Wehzek oil, and analysts in Konstantium are asking how long that can last."),
             "Diplomats in Konstantium expect other GRACE monarchies to follow. United Contana, Wehlen's principal backer, has so far " +
             "issued no statement, though its ambassador was seen leaving the Wehzek embassy late into the night.",
             "The split hardens a fault line that has run through South Merkopa for a generation, and observers fear that a local war " +
@@ -380,8 +385,11 @@ internal static class NewsWire
             embargo
                 ? "Rumburg is not buying a drop of Wehzek oil, and I see no reason to start again. Smolak can sell it to Contana, " +
                   "if Contana can be bothered to come and fetch it."
-                : "We are, as you know perfectly well, still buying Smolak's oil. I am prepared to discuss that. I am not prepared " +
-                  "to discuss it by letter. Ring me.",
+                : halved
+                    ? "We buy half the oil from Smolak that we used to, as you know, since you asked so nicely in the spring. The other half " +
+                      "I am prepared to discuss. Not by letter. Ring me."
+                    : "We are, as you know perfectly well, still buying Smolak's oil. I am prepared to discuss that. I am not prepared " +
+                      "to discuss it by letter. Ring me.",
             "The arms your generals ordered will sail ahead of everyone else's. And there are certain people inside Wehlen, the " +
             "Bludish Freedom Front, who would be delighted to make Smolak's life miserable. They are dreadful people. Ring me about " +
             "them too, if you must.",
@@ -1134,11 +1142,11 @@ internal static class NewsWire
 
         if (x.P == 1)
         {
-            Report(key + "_Montaklar", SuzerainTokenName.RiziaCityMontaklar, "Prisoners Talk at Dapalle", P(
+            Report(key + "_Montaklar", SuzerainTokenName.RiziaCityMontaklar, "Prisoners Talk at " + CageTown(x), P(
                 x.A.EnemyDead > 0
-                    ? "Intelligence officers at the prisoner cages in Dapalle have spent the week questioning the Wehzek soldiers taken in " +
+                    ? "Intelligence officers at the prisoner cages in " + CageTown(x) + " have spent the week questioning the Wehzek soldiers taken in " +
                       "the first phase."
-                    : "The handful of Wehzek prisoners taken in the first phase have been questioned at Dapalle.",
+                    : "The handful of Wehzek prisoners taken in the first phase have been questioned at " + CageTown(x) + ".",
                 x.Tier switch
                 {
                     "Strong" => "They are well fed, well shod and sure of themselves. Most of them crossed the strait in the last two months, " +
@@ -1292,7 +1300,7 @@ internal static class NewsWire
             return;
         }
 
-        bool embargo = Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.Embargo)) > 0;
+        bool embargo = SupplyWar.RumburgOilCut, halved = SupplyWar.RumburgOilHalved;
         bool saidNo = Variables.GetBool(SupplyWar.VarRumburgSaidNo);
         Report(key + "_Rumburg", SuzerainTokenName.RiziaCountryRumburg, x.Won ? "Thornbourgh Takes Credit" : "Thornbourgh Counts Its Money", P(
             x.Won
@@ -1306,26 +1314,33 @@ internal static class NewsWire
                 : embargo
                     ? "The Rumburgian embargo on Wehzek oil holds, and our ambassador hears that the Exchequer has begun to grumble about " +
                       "what it costs. \"A month more is a favor,\" one official told him. \"Two months is a policy.\""
-                    : "Rumburg still buys Wehzek oil. Our ambassador has raised it again, and was told again that the matter is \"under " +
-                      "discussion between the two crowns.\""));
+                    : halved
+                        ? "Rumburg still buys half the Wehzek oil it did before the spring. Our ambassador has asked about the other half, and was " +
+                          "told the matter is \"under discussion between the two crowns.\""
+                        : "Rumburg still buys Wehzek oil. Our ambassador has raised it again, and was told again that the matter is \"under " +
+                          "discussion between the two crowns.\""));
     }
+
+    private static string CageTown(PhaseNews x) =>
+        x.OwnLost.Contains("Dapalle") || Variables.GetBool(WarFlags.Occupied("Dapalle")) ? "Balle" : "Dapalle";
 
     private static void ValgslandReport(PhaseNews x, string key)
     {
-        bool soft = Variables.GetString(SupplyWar.VarValgslandCable) is "guarantee" or "mitz" || Variables.GetString(SupplyWar.VarValgslandCall) == "yielded";
+        bool soft = Variables.GetString(SupplyWar.VarValgslandCable) is "guarantee" or "mitz";
+        bool softP1 = soft || Variables.GetString(SupplyWar.VarValgslandCall) == "yielded";
         if (x.P == 1)
         {
             Report(key + "_Valgsland", SuzerainTokenName.RiziaCountryValgsland, x.Won ? "Valgsland Demands a Ceasefire" : "Valgsland Steps Up Aid", x.Won
                 ? P("Chancellor Emmerich Hegel has demanded an immediate ceasefire, saying Rizia \"has chosen conquest over law.\" Valgsland " +
                     "will propose to the Security Committee that the Alliance impose sanctions on Rizia for as long as its troops remain in Zille.",
-                    soft
+                    softP1
                         ? "Our embassy notes that the Chancellor's statement was a good deal shorter than his usual ones, and that the sanctions " +
                           "motion has not yet been tabled."
                         : "Valgslandian newspapers have begun calling the King \"the butcher of Zille.\" Our embassy expects the sanctions " +
                           "motion to fail, but narrowly.")
                 : P("Chancellor Emmerich Hegel has welcomed the failure of our first attack, saying that acts of aggression \"deserve to " +
                     "fail,\" and promised that Valgsland will go on supporting the people of Wehlen \"in their right to self-defense.\"",
-                    soft
+                    softP1
                         ? "In private, our embassy hears, he has told his ministers to keep that support within the limits agreed with Porte Drazon."
                         : "In practice, Valgslandian ports are now openly handling Contanan arms shipments bound for Wehlen."));
             return;
@@ -1405,9 +1420,11 @@ internal static class NewsWire
         bool helps = WorldSystems.LespiaHelps;
         bool kept = Variables.GetString(AnDeclaration.VarLespianNote) == "kept";
         bool grievance = Variables.GetBool(SupplyWar.VarLespiaGrievance) || Variables.GetBool("RiziaDLC.MITZ_ScrewedOverLespia");
+        bool withdrawn = Variables.GetBool(SupplyWar.VarLespiaWithdrawn);
+        bool onStation = Variables.GetBool(SupplyWar.VarLespiaStrait) && !withdrawn;
         if (x.P == 1)
         {
-            if (kept && !helps && !grievance)
+            if (kept && !helps && !grievance && !withdrawn)
             {
                 Report(key + "_Lespia", SuzerainTokenName.RiziaCountryLespia, "Lespia's Offer Stands", P(
                     "A Lespian diplomat has let our embassy know, very quietly, that Prime Minister Alvarez's offer of \"practical " +
@@ -1421,7 +1438,9 @@ internal static class NewsWire
         {
             Report(key + "_Lespia", SuzerainTokenName.RiziaCountryLespia, "Lespia Counts Its Losses", P(
                 "Lespian officials say Rizia has not kept its word, and that Prime Minister Alvarez keeps his own books. Lespian " +
-                "patrols in the Strait of Kreleck are described as routine, which our naval attaché takes to mean slow.",
+                (onStation
+                    ? "patrols in the Strait of Kreleck are described as routine, which our naval attaché takes to mean slow."
+                    : "harbor officials are described as unhelpful to Wehzek tankers and to us alike."),
                 "Our embassy has been told, politely, that the question of sanctions against Rizia in the Security Committee is " +
                 "\"under consideration.\""));
         }
@@ -1432,7 +1451,7 @@ internal static class NewsWire
                 "\"held for inspection,\" and one Wehzek ferry escorted into Perla with its holds full of artillery shells.",
                 "Prime Minister Alvarez has had the log delivered with his compliments. Our embassy expects the bill to follow."));
         }
-        else if (kept && !helps)
+        else if (kept && !helps && !withdrawn)
         {
             Report(key + "_Lespia", SuzerainTokenName.RiziaCountryLespia, "Perla Raises Its Price", P(
                 "Lespian officials have let our embassy understand that Prime Minister Alvarez's offer still stands, but that \"the " +
@@ -1597,8 +1616,11 @@ internal static class NewsWire
                     ? P("\"Romus,",
                         "An end date. You did listen, after all. My ministers have stopped adding things up, which is the nearest they " +
                         "come to applause.",
-                        "Half a province is not what you promised the crowds in Porte Drazon. It is, however, half a province more than " +
-                        "your father managed. I would stop there, if I were you, and I am very glad I am not.",
+                        WorldSystems.ZilleCityHeld || Variables.GetBool(ZilleOperation.CapturedVar("Auremina"))
+                            ? "Half a province is not what you promised the crowds in Porte Drazon. It is, however, half a province more than " +
+                              "your father managed. I would stop there, if I were you, and I am very glad I am not."
+                            : "Nothing is not what you promised the crowds in Porte Drazon. I would stop there, if I were you, and I am very " +
+                              "glad I am not.",
                         "Beatrice\"")
                     : P("\"Romus,",
                         "A ceasefire. Not a defeat, and not quite anything else either. Rumburg will say at the Alliance that it was " +

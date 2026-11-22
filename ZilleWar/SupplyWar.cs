@@ -220,8 +220,21 @@ internal static partial class SupplyWar
 
     private static string ReportedVar(Lever l) => $"ZilleWar.LeverReported_{l}";
 
-    public static bool RumburgEmbargo =>
-        Variables.GetBool(HighExport) || Variables.GetBool(AverageExport) || Variables.GetInt(Count(Lever.Embargo)) > 0;
+    /// <summary>Rumburg buys less Wehzek oil than before the war, or none (the Turn 3 deal halved or cut it; the telephone cut it).</summary>
+    public static bool RumburgEmbargo => RumburgOilCut || RumburgOilHalved;
+
+    /// <summary>Rumburg buys no Wehzek oil at all: the Turn 3 deal cut it off ("Cut off Wehlen completely"), or Beatrice did on the telephone.</summary>
+    public static bool RumburgOilCut =>
+        !Variables.GetBool(ExportFailed) && (Variables.GetBool(HighExport) || Variables.GetInt(Count(Lever.Embargo)) > 0);
+
+    /// <summary>Rumburg still buys half its old Wehzek oil (the Turn 3 deal: "Can you halve your imports?").</summary>
+    public static bool RumburgOilHalved =>
+        !Variables.GetBool(ExportFailed) && Variables.GetBool(AverageExport) && !RumburgOilCut;
+
+    internal const string LuaOilCut =
+        "(Variable[\"RiziaDLC.Situation_Diplomacy_EnergyCommitment_Rumburg_Failed\"] ~= true and (Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_HighEnergyExport\"] == true or (Variable[\"ZilleWar.Lever_Embargo\"] or 0) > 0))";
+    internal const string LuaOilHalved =
+        "(Variable[\"RiziaDLC.Situation_Diplomacy_EnergyCommitment_Rumburg_Failed\"] ~= true and Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_AverageEnergyExport\"] == true and not " + LuaOilCut + ")";
 
     private static readonly string[] IntVars =
     {

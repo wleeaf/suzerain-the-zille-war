@@ -71,7 +71,11 @@ internal static class ZilleTreaty
     private const string Budget = "RiziaDLC.Resources_Budget";
     private const string Authority = "RiziaDLC.Resources_Authority";
     private const string Opinion = "RiziaDLC.Country_PublicOpinion";
-    private static readonly string Files = $"(Variable[\"ZilleWar.Ramiro_Found\"] == true or Variable[\"RiziaDLC.Zille_Discovered_LespianInvolvement\"] == true)";
+    // The files are in hand: found and not burned, not already public (Smolak knows), or the security brief produced the evidence.
+    private static readonly string Files =
+        "(Variable[\"RiziaDLC.Zille_Publicized_LespianInvolvement\"] ~= true and Variable[\"ZilleWar.Ramiro_Choice\"] ~= \"publish\" and " +
+        "((Variable[\"ZilleWar.Ramiro_Found\"] == true and Variable[\"ZilleWar.Ramiro_Choice\"] ~= \"bury\") or " +
+        "Variable[\"RiziaDLC.Zille_Discovered_LespianInvolvement\"] == true))";
 
     private static readonly string Lib = LK.Lib;
     private static readonly string Part = LK.Part;
@@ -468,7 +472,7 @@ internal static class ZilleTreaty
             condition: PalesBusy);
         t.Line("ThInvade2", Smolak, "\"Beaches. He threatens me with beaches.\" He drummed his fingers on the table. \"My coast is long and my navy is short. You know it, and I know you know it. Fine.\"", new[] { "Hub" },
             script: $"if {Lib} then {AddLev(2)}else {AddLev(1)}end; " + Add(GlobalImage, -1));
-        t.Choice("ThMissile", "\"Rizia has Derdian missiles now. From Mave Nortus they reach Wraclawitz. I would rather not find out how accurately.\"", new[] { "ThMissile2" },
+        t.Choice("ThMissile", "\"Rizia has Derdian missiles now. From our side of the border they reach Wraclawitz. I would rather not find out how accurately.\"", new[] { "ThMissile2" },
             condition: Missiles, script: Set(VarThreat, "\"missiles\"") + $"if {Lib} then {AddLev(3)}else {AddLev(2)}end; " + Add(GlobalImage, -1));
         t.Line("ThMissile2", Narr, "For a moment Smolak said nothing at all. Then he laughed, too loudly, and the laugh did not reach his eyes.", new[] { "ThMissile3" });
         t.Line("ThMissile3", Smolak, "\"Azmal's toys. He sells them to anyone who hates me, which is a very large market. Very well, Your Majesty. You have my attention.\"", new[] { "Hub" });
@@ -505,7 +509,7 @@ internal static class ZilleTreaty
             condition: $"not ({Lost}) and not ({PalesBusy})",
             script: Set(VarThreat, "\"invasion\"") + $"if {Lib} then {AddLev(2)}else {AddLev(1)}end; " + Add(GlobalImage, -1));
         t.Line("ThInvade2b", Smolak, "\"On my coast.\" He drummed his fingers on the table. \"My coast is long and my navy is short. Let me read it again.\"", new[] { "Verdict2" });
-        t.Choice("Th2Missile", "\"Derdian missiles reach Wraclawitz from Mave Nortus. Sign.\"", new[] { "ThMissile2b" }, condition: Missiles,
+        t.Choice("Th2Missile", "\"Derdian missiles reach Wraclawitz from our side of the line. Sign.\"", new[] { "ThMissile2b" }, condition: Missiles,
             script: Set(VarThreat, "\"missiles\"") + $"if {Lib} then {AddLev(3)}else {AddLev(2)}end; " + Add(GlobalImage, -1));
         t.Line("ThMissile2b", Smolak, "\"Azmal's toys.\" He was quiet for a long moment. \"Very well. Let me read it again.\"", new[] { "Verdict2" });
         t.Choice("Th2Gas", "\"Rumburgian nerve agent, in Derdian warheads, over Wraclawitz. Sign.\"", new[] { "ThGas2b" }, condition: $"{Missiles} and {NerveGas}",
@@ -551,6 +555,28 @@ internal static class ZilleTreaty
 
     private static bool On(string key) => Variables.GetBool(Term(key));
 
+    /// <summary>The towns of the province Wehlen still holds under a border treaty (Auremina changes hands only if the treaty says so).</summary>
+    private static string WehzekTowns()
+    {
+        var left = new List<string>();
+        foreach (string town in new[] { "Auremina", "Isor", "Nanta" })
+        {
+            bool rizian = Variables.GetBool(ZilleOperation.CapturedVar(town)) || (town == "Auremina" && On("Aure"));
+            if (!rizian)
+            {
+                left.Add(town);
+            }
+        }
+
+        return left.Count switch
+        {
+            0 => string.Empty,
+            1 => left[0],
+            2 => left[0] + " and " + left[1],
+            _ => left[0] + ", " + left[1] + " and " + left[2],
+        };
+    }
+
     private static void Publish(string kind)
     {
         string threat = Variables.GetString(VarThreat) ?? string.Empty;
@@ -587,7 +613,7 @@ internal static class ZilleTreaty
                     "In a schoolhouse near Mave Nortus, under the flag of the Alliance of Nations, His Majesty and President Smolak have signed " +
                     "the Mave Nortus Treaty. The armistice line through Zille becomes the border of the Kingdom" +
                     (On("Aure") ? ", and Wehzek troops are to leave Auremina and the gold hills." : ".") + repText,
-                    "It is not all of Zille. It is Zille city, its harbor and its people, home for good, and a border no Wehzek general may cross again."));
+                    (WehzekTowns().Length > 0 ? "It is not all of Zille. " : "It is nearly all of Zille. ") + "It is Zille city, its harbor and its people, home for good, and a border no Wehzek general may cross again."));
                 NewsWire.Publish("Treaty", "V", "Half a Province, Signed and Sealed", NewsWire.P(
                     "The line our soldiers held when the guns stopped is a border now. On one side of it, families who were Rizian for a generation " +
                     "in name only will be Rizian in law. On the other, families who wanted the same thing will not be." +
@@ -596,7 +622,8 @@ internal static class ZilleTreaty
                 NewsWire.Publish("Treaty", "G", "Rizia and Wehlen Turn the Armistice Line into a Border", NewsWire.P(
                     "The Mave Nortus Treaty fixes the border between Rizia and Wehlen along the line of contact in Zille" +
                     (On("Aure") ? ", moved north to give Auremina and its gold hills to Rizia." : ".") +
-                    " Isor and Nanta remain Wehzek. Alliance observers will watch the new border for its first year."));
+                    (WehzekTowns().Length > 0 ? " " + WehzekTowns() + (WehzekTowns().Contains(" and ") ? " remain Wehzek." : " remains Wehzek.") : string.Empty) +
+                    " Alliance observers will watch the new border for its first year."));
                 break;
             case "accord":
                 NewsWire.Publish("Treaty", "G", "Rizia and Wehlen Sign an Accord, but Leave Zille Unsettled", NewsWire.P(
@@ -619,7 +646,9 @@ internal static class ZilleTreaty
                 break;
             case "terms":
                 NewsWire.Publish("Treaty", "G", "Rizia Signs Terms in Wraclawitz but Keeps Its Claim", NewsWire.P(
-                    "Rizia has accepted Wehzek terms on prisoners and reparations in Wraclawitz, but refused to recognize Wehzek sovereignty over Zille. " +
+                    (On("PayNone")
+                        ? "Rizia has signed Wehzek terms in Wraclawitz but refused to pay a guilder in reparations, and refused to recognize Wehzek sovereignty over Zille. "
+                        : "Rizia has accepted Wehzek terms on prisoners and reparations in Wraclawitz, but refused to recognize Wehzek sovereignty over Zille. ") +
                     "President Smolak called the claim \"a king's hobby, like stamps.\""));
                 break;
             default:

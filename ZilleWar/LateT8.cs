@@ -236,7 +236,7 @@ internal static class LateT8
         string helped = $"((Variable[\"ZilleWar.Lever_Lespia\"] or 0) > 0 or Variable[\"ZilleWar.Lespia_AllianceVote\"] == true or {Rel("Lespia", "Friendly", "Allied")})";
         string lespia = $"if {angry} then {V(Vote("Alvarez"))} = 1; {V(Vote("Walker"))} = 0 elseif {helped} then {V(Vote("Alvarez"))} = -1; {V(Vote("Walker"))} = -1 " +
                         $"else {V(Vote("Alvarez"))} = 0; {V(Vote("Walker"))} = 0 end; ";
-        string rumburg = $"if {Rel("Rumburg", "Hostile", "Unfriendly")} or (Variable[\"ZilleWar.Call_Beatrice_Count\"] or 0) >= 3 then {V(Vote("Beatrice"))} = 0 else {V(Vote("Beatrice"))} = -1 end; ";
+        string rumburg = $"if {Rel("Rumburg", "Hostile", "Unfriendly")} or (Variable[\"ZilleWar.Call_Beatrice_Count\"] or 0) >= 3 or {V(SupplyWar.VarRumburgSaidNo)} == true then {V(Vote("Beatrice"))} = 0 else {V(Vote("Beatrice"))} = -1 end; ";
         string derdia = $"if {Rel("Derdia", "Hostile")} then {V(Vote("Azmal"))} = 0 else {V(Vote("Azmal"))} = -1 end; ";
         string bad = "Variable[\"RiziaDLC.Situation_Diplomacy_GlobalImage_Bad\"] == true";
         string morella = $"if {Rel("Morella", "Hostile", "Unfriendly")} or {bad} then {V(Vote("Saltana"))} = 1 elseif {Rel("Morella", "Friendly", "Allied")} then {V(Vote("Saltana"))} = -1 else {V(Vote("Saltana"))} = 0 end; ";
@@ -362,7 +362,7 @@ internal static class LateT8
         t.Line("HegelWar", Hegel, "\"Rizia did not wait for a vote, or a treaty, or this Alliance. It sent its army into Zille, in the name of a lease that expired on paper while the people who live there were never asked.\"",
             new[] { "#12", "#13" }, condition: War, hooks: Talk.From(11));
         t.Line("HegelFleet", Hegel, "\"The Democratic Republic of Valgsland will not watch a monarchy redraw borders by force. Our fleet in the Antacean has been placed on alert.\"",
-            new[] { "#26" }, condition: And(War, $"not ({Lost})"), hooks: Talk.From(132));
+            new[] { "#26" }, condition: And(War, $"not ({Lost})", $"not ({SupplyWar.LuaHegelServed})"), hooks: Talk.From(132));
         t.Register();
     }
 
@@ -573,7 +573,9 @@ internal static class LateT8
         // the war with Wehlen, in the room before business (it is over by now): what Lespia did in it and what it was paid
         string lever = "(Variable[\"ZilleWar.Lever_Lespia\"] or 0) > 0";
         string withdrawn = $"{V(SupplyWar.VarLespiaWithdrawn)} == true";
-        string gas = $"{V(SupplyWar.VarLespiaGasDeal)} == true";
+        string gasAny = $"{V(SupplyWar.VarLespiaGasDeal)} == true";
+        string gas = $"{gasAny} and {V(SupplyWar.Extractions)} == true";   // the deal was signed and the field is producing
+        string gasWait = $"{gasAny} and {V(SupplyWar.Extractions)} ~= true";
         string money = $"{V(SupplyWar.VarLespiaPaid)} == true";
         t.Line("War1Lib", Alvarez, "\"So. The king who took Zille back with tanks. My generals still talk about it, Your Majesty. Mostly about the bill.\"",
             new[] { "WarPaid" }, condition: And(War, $"not ({PalesWar})", Lib), hooks: Talk.From(63));
@@ -582,7 +584,7 @@ internal static class LateT8
         // Lespia keeps books: a broken Meftiem promise or an unanswered Cavette grievance sours every line that praises the deal
         string grievance = $"Variable[\"{SupplyWar.VarLespiaGrievance}\"] == true or Variable[\"RiziaDLC.MITZ_ScrewedOverLespia\"] == true";
         string thin = "Variable[\"ZilleWar.Lespia_StraitThin\"] == true";
-        t.Logic("WarPaid", new[] { "WarGrievance", "WarOut", "WarLease", "WarNaval", "WarGas", "WarMoney", "WarMitz", "WarNone", "WarRamiro" });
+        t.Logic("WarPaid", new[] { "WarGrievance", "WarOut", "WarLease", "WarNaval", "WarGas", "WarGasWait", "WarMoney", "WarMitz", "WarNone", "WarRamiro" });
         t.Line("WarGrievance", Alvarez, "\"You gave my board the Meftiem in writing, Your Majesty, and then you gave Lespia nothing at Cavette. I have written that down too. Lespia will not forget it at the next vote.\"",
             new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", grievance));
         t.Line("WarOut", Alvarez, "\"My navy left the strait before your war was over. I know you have not forgotten. Neither has my parliament.\"",
@@ -593,10 +595,12 @@ internal static class LateT8
             new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", $"not ({grievance})", naval));
         t.Line("WarGas", Alvarez, "\"And the gas from Aureus arrives every month, at a price my parliament still cannot believe. Lespia remembers who keeps its lights on.\"",
             new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", $"not ({grievance})", $"not ({lease})", $"not ({naval})", gas));
+        t.Line("WarGasWait", Alvarez, "\"And the gas from Aureus has not come yet, you know. LesPower is a patient customer, Your Majesty. My parliament is less so.\"",
+            new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", $"not ({grievance})", $"not ({lease})", $"not ({naval})", gasWait));
         t.Line("WarMoney", Alvarez, "\"Your guilders paid for every shell my navy fired in the strait. Lespia is a democracy, Your Majesty. My parliament likes a war that pays its bills.\"",
-            new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", $"not ({lease})", $"not ({naval})", $"not ({grievance})", $"not ({gas})", money));
+            new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", $"not ({lease})", $"not ({naval})", $"not ({grievance})", $"not ({gasAny})", money));
         t.Line("WarMitz", Alvarez, "\"And Lespia has your vote in Meftiem, for what my navy did in the strait. I have not forgotten. Neither will the MITZ board.\"",
-            new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", $"not ({lease})", $"not ({naval})", $"not ({gas})", $"not ({money})",
+            new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", $"not ({lease})", $"not ({naval})", $"not ({gasAny})", $"not ({money})",
                 $"not ({grievance})", $"not ({thin})", $"{V(SupplyWar.VarLespiaMitz)} == true"));
         t.Line("WarNone", Alvarez, "\"Lespia stayed out of your war with Wehlen, Your Majesty. I like to think that was a favor too.\"",
             new[] { "WarRamiro" }, condition: $"not ({lever})");

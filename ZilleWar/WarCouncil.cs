@@ -920,7 +920,9 @@ internal static class WarCouncil
         t.Logic("SupGarr4", new[] { "SupEmbargo" }, script: Set(VarGarrTold, "4"));
 
         IntelOpt("SupEmbargo", "\"Rumburg no longer buys Wehzek oil. Smolak's treasury feels it, and so do his fuel depots in Zille.\"",
-            And(Embargo, IsNot(VarToldEmbargo)), "SupRaids", script: Set(VarToldEmbargo, "true"));
+            And(SupplyWar.LuaOilCut, IsNot(VarToldEmbargo)), "SupEmbargoHalf", script: Set(VarToldEmbargo, "true"));
+        IntelOpt("SupEmbargoHalf", "\"Rumburg buys half the Wehzek oil it used to. Smolak's treasury feels it, though his fuel depots in Zille are still full.\"",
+            And(SupplyWar.LuaOilHalved, IsNot(VarToldEmbargo)), "SupRaids", script: Set(VarToldEmbargo, "true"));
         IntelOpt("SupRaids",
             "\"The Bludish Freedom Front has been busy in the north of Wehlen. Every battalion Smolak keeps at home to guard his ports is one he " +
             "can't send to Zille.\"", And(Lever(SupplyWar.Lever.BffRaids), IsNot(VarToldRaids)), "SupLanded", script: Set(VarToldRaids, "true"));
@@ -975,14 +977,17 @@ internal static class WarCouncil
         t.Logic("ForcesShips", new[] { "ForcesShips1", "ForcesShips2", "ForcesSubs" });
         Intel("ForcesShips1", "\"The fleet has enough destroyers to rule the Gulf of Moridia.\"", new[] { "ForcesSubs" }, $"{ships} >= 5");
         Intel("ForcesShips2", "\"The fleet can contest the gulf, but I wouldn't ask much more of it.\"", new[] { "ForcesSubs" }, $"{ships} >= 1 and {ships} < 5");
-        t.Logic("ForcesSubs", new[] { "ForcesSubs1", "ForcesSubs2", "ForcesBff" });
+        t.Logic("ForcesSubs", new[] { "ForcesSubs1", "ForcesSubs2", "ForcesSubs3", "ForcesBff" });
+        string grounded = Is(SupplyWar.VarSubsGrounded);
         Intel("ForcesSubs1", "\"The submarines are already out in the strait, hunting their convoys.\"", new[] { "ForcesBff" },
-            And($"{subs} >= 1", Lever(SupplyWar.Lever.Submarines)));
+            And($"{subs} >= 1", Is(VarSubsOut), Not(grounded)));
         Intel("ForcesSubs2", "\"The submarines are in port at Sallabes, waiting for orders.\"", new[] { "ForcesBff" },
-            And($"{subs} >= 1", Not(Lever(SupplyWar.Lever.Submarines))));
+            And($"{subs} >= 1", Not(Is(VarSubsOut)), Not(grounded)));
+        Intel("ForcesSubs3", "\"The submarines are in port at Sallabes, and they stay there. You gave Hegel your word.\"", new[] { "ForcesBff" },
+            And($"{subs} >= 1", grounded));
         Opt("ForcesBff", Carlos,
-            "\"And the Bludish volunteers Rumburg sent us have arrived at Dapalle. My officers can't stand them. They fight well, I'll give them that.\"",
-            Lever(SupplyWar.Lever.BffFighters), "ForcesPara");
+            "\"And the Bludish volunteers Rumburg sent us have arrived at Montaklar. My officers can't stand them. They fight well, I'll give them that.\"",
+            And(Lever(SupplyWar.Lever.BffFighters), $"{V(SupplyWar.VarBludsIncident)} ~= \"trial\"", $"{V(SupplyWar.VarBludsIncident)} ~= \"home\""), "ForcesPara");
         IntelOpt("ForcesPara", "\"The paratroopers are ready at the airfield outside Sallabes, with the planes to carry them.\"", $"{Num(Para)} >= 1",
             "ForcesMount");
         Opt("ForcesMount", Carlos, "\"And the mountaineers are at full strength, if anyone needs to climb.\"", $"{Num(Mount)} >= 1", "Hub");

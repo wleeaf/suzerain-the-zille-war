@@ -40,8 +40,7 @@ internal static class SweepLateTalk
     private const string PalesNotWon = "Variable[\"RiziaDLC.War_Pales_Won\"] ~= true";
     private const string PalesNotLost = "not (Variable[\"RiziaDLC.Pales_War\"] == true and Variable[\"RiziaDLC.War_Pales_Won\"] ~= true)";
 
-    private static readonly string RumburgHelped =
-        "((Variable[\"ZilleWar.Lever_Embargo\"] or 0) > 0 or (Variable[\"ZilleWar.Lever_BffRaids\"] or 0) > 0 or (Variable[\"ZilleWar.Lever_BffFighters\"] or 0) > 0)";
+    private const string RumburgHelped = LateT9.LuaRumburgHelped;
 
     public static void Register()
     {
@@ -173,9 +172,11 @@ internal static class SweepLateTalk
         // Zille liberated: the report on its reintegration says nothing about the war that brought it back.
         f.Line("Damage", Narr,
             "\"The harbor district of Zille city is still being rebuilt after the fighting, and Wraclawitz has yet to accept that the province is gone. Wehzek radio still calls our administration an occupation.\"",
-            new[] { "Prisoners", "#228" }, condition: Lib, hooks: Talk.From(217, 218));
+            new[] { "Prisoners", "PrisonersTreaty", "#228" }, condition: Lib, hooks: Talk.From(217, 218));
         f.Line("Prisoners", Narr, "\"The Wehzek prisoners of war in our camps still wait on an exchange that President Smolak refuses to discuss.\"",
-            new[] { "#228" }, condition: $"{V(LateT8.VarPrisoners)} == \"held\"");
+            new[] { "#228" }, condition: $"{V(LateT8.VarPrisoners)} == \"held\" and {V(ZilleTreaty.VarSigned)} ~= true");
+        f.Line("PrisonersTreaty", Narr, "\"The Wehzek prisoners in our camps will go home as Wehlen pays what it owes under the Treaty of Kreleck.\"",
+            new[] { "#228" }, condition: $"{V(LateT8.VarPrisoners)} == \"held\" and {V(ZilleTreaty.VarSigned)} == true");
 
         // The military report.
         Swap(f, ForeignAffairs, "Buildup", 341, new[] { 344 }, Narr, new S(Lib:

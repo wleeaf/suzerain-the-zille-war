@@ -23,9 +23,8 @@ internal static class SweepMiddleT8
     private static string NoPales => EarlyT7.NoPales;
     private const string LivingBad = "Variable[\"RiziaDLC.Situation_Welfare_LivingStandards_Bad\"] == true";
 
-    /// <summary>Beatrice has been asked for help in the war at least once.</summary>
-    private static readonly string BeatriceHelped =
-        $"((Variable[\"ZilleWar.Call_Beatrice_Count\"] or 0) > 0 or (Variable[\"{SupplyWar.VarRumburgCredits}\"] or 0) > 0)";
+    /// <summary>Rumburg actually helped (oil deal, levers or credits), not merely rang.</summary>
+    private const string BeatriceHelped = LateT9.LuaRumburgHelped;
 
     public static void Register()
     {

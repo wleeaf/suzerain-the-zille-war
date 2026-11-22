@@ -261,7 +261,7 @@ internal static class EarlyT5
         // Alvarez's parting jab, if his navy is holding the strait for us.
         t.Line("AlvarezSea", Alvarez,
             "\"And don't forget whose ships are keeping Wehzek tankers out of your war, King Toras. Friends in high places. Friends at " +
-            "sea, too.\"", new[] { "#853" }, condition: $"{Active} and (Variable[\"ZilleWar.Lever_Lespia\"] or 0) > 0", hooks: From(852));
+            "sea, too.\"", new[] { "#853" }, condition: $"{Active} and Variable[\"{SupplyWar.VarLespiaStrait}\"] == true and Variable[\"ZilleWar.Lespia_StraitThin\"] ~= true", hooks: From(852));
         t.Register();
     }
 
@@ -330,6 +330,10 @@ internal static class EarlyT5
         t.Variant("Yes2", 611, new[] { 549, 550, 559, 610 }, War, Romus,
             "\"You can. Lespia will walk away from the Meftiem with nothing.\"", new[] { "Yes2a" });
         t.Logic("Yes2a", new[] { "#621" }, script: promise);
+        // Not yes, not no (vanilla [612] counted on Valgslandian support, which a war game does not get).
+        t.Variant("Maybe2", 612, new[] { 549, 550, 559, 610 }, War, Romus,
+            "\"I cannot promise anything, Mr. Hegel. We'll see what is left of Lespia's share when Cavette is done.\"", new[] { "Maybe2a" });
+        t.Line("Maybe2a", Hegel, "\"Then I will see it too, Mr. Toras. So will the Alliance.\"", new[] { "#622" });
 
         // In a war game Valgsland does not back Rizia in the Pales arbitration either: Hegel will not support a kingdom that
         // redraws borders by force. The dialogue skips vanilla's thanks and goes straight on; the news item about Valgsland's
@@ -416,6 +420,52 @@ internal static class EarlyT5
     private static void RegisterSecurity()
     {
         var t = new Talk(Security, "ZilleWar.E5.Security.");
+
+        // The consulate files from Zille (SupplyVoices: Héctor Ramiro, a Lespian officer, behind the Friendship Day bombing) were
+        // read before this meeting: the Palesian parts are a footnote, not a lead. Skip the "investigate Pales" debate.
+        string found = $"{War} and Variable[\"{SupplyWar.VarRamiroFound}\"] == true";
+        string lucitaLeads = "Variable[\"RiziaDLC.Turn03_Security_LucitaLeadsInvestigation\"] == true";
+        Vanilla.Require(Security, 21, $"({found}) ~= true");
+        Vanilla.Require(Security, 22, $"({found}) ~= true");
+        t.Logic("Files", new[] { "FilesL", "FilesT" }, condition: found, hooks: From(20));
+        t.Line("FilesL", Narrator, "Lucita had brought her dossier on the Friendship Day bombing. She laid it on the table and, for once, did not open it.",
+            new[] { "FilesL2" }, condition: lucitaLeads);
+        t.Line("FilesL2", Lucita,
+            "\"My team traced parts of the device to a Palesian electronics firm, Your Majesty. Before Zille, I would have asked you to turn the " +
+            "whole investigation on Pales. Then our soldiers opened the Lespian consulate.\"", new[] { "FilesL3" });
+        t.Line("FilesL3", Lucita,
+            "\"Héctor Ramiro bought those parts through a trading house in Remaz, with Lespian money. Pales sold the wire. Lespia lit the fuse.\"",
+            new[] { "FilesHugo" });
+        t.Line("FilesT", Narrator, "Titus had the bombing file under his arm. He set it down beside the papers our soldiers had brought back from the Lespian consulate in Zille.",
+            new[] { "FilesT2" }, condition: $"not ({lucitaLeads})");
+        t.Line("FilesT2", "Titus Gordion",
+            "\"The Palesian parts we found came through a trading house in Remaz, sir, paid for by Héctor Ramiro with Lespian money. There is " +
+            "no Palesian connection worth your evening. The man who planned it answers to Perla.\"", new[] { "FilesHugo" });
+        t.Line("FilesHugo", Hugo,
+            "\"So Wehlen was wrong about Su Omina, and some of us were wrong about Wehlen. I suppose that makes it a good evening for nobody.\"",
+            new[] { "FilesC1", "FilesC2" });
+        string closed = Set("RiziaDLC.Turn05_Security_InvestigateEndInvestigation", "true");
+        t.Choice("FilesC1", "\"Close the Palesian line. We know who did it.\"", new[] { "FilesC1L", "FilesC1T" }, script: closed);
+        t.Line("FilesC1L", Lucita, "\"Closed. I'll keep the file on Ramiro open instead. Lespia has a long reach, and I'd like to know where it ends.\"",
+            new[] { "#96" }, condition: lucitaLeads);
+        t.Line("FilesC1T", "Titus Gordion", "\"Closed, sir. Ramiro's file stays on my desk.\"", new[] { "#96" }, condition: $"not ({lucitaLeads})");
+        t.Choice("FilesC2", "\"Keep one man on the Palesian supplier. Someone in Remaz sold a bomb to a stranger.\"", new[] { "FilesC2L", "FilesC2T" }, script: closed);
+        t.Line("FilesC2L", Lucita, "\"One man, then. Quietly. Pales has enough reasons to dislike us this year.\"", new[] { "#96" }, condition: lucitaLeads);
+        t.Line("FilesC2T", "Titus Gordion", "\"One man, sir. Quietly.\"", new[] { "#96" }, condition: $"not ({lucitaLeads})");
+
+        // The royal yacht (c320): the King asks Vina, bound for Pales, about the bombing. With the files read, he knows who planned it.
+        var y = new Talk(Yacht, "ZilleWar.E5.YachtFiles.");
+        y.Variant("Ask", 180, new[] { 182 }, found, Romus,
+            "\"A Lespian officer planned the Friendship Day bombing, but the parts for the bomb came from a Palesian factory. If you hear who in Remaz sold them, I want to know.\"",
+            new[] { "#186" });
+        y.Register();
+
+        // The Turn 6 council (c361): Lucita's "ties between Pales and the bombing" after the files named Ramiro.
+        var c = new Talk("Rizia/Turn 6/A_CouncilMeeting", "ZilleWar.E5.CouncilFiles.");
+        c.Variant("Ties", 406, new[] { 817 }, found, Lucita,
+            "\"Are we forgetting that a Palesian factory supplied the parts for the bomb in Zille? Lespia planned it, Your Majesty, but Reinhart's export controls looked the other way.\"",
+            new[] { "#157" });
+        c.Register();
 
         // [1425] "...especially after our failure to come to a diplomatic agreement" (and [471] "despite the agreement we signed").
         t.Variant("Casus", 1425, new[] { 1424 }, War, Lucita,

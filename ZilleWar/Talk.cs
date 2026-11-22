@@ -43,7 +43,7 @@ internal sealed class Talk
     }
 
     /// <summary>Hooks for a node that branches off vanilla entries: when its condition holds it is taken before the
-    /// vanilla continuation (high priority, condition-gated). For player choices it is added to the menu.</summary>
+    /// vanilla continuation (high priority, condition-gated). Player choices are added to the menu at normal priority (Choice).</summary>
     public static ConversationNodeHook[] From(params int[] vanillaEntries) =>
         vanillaEntries.Select(id => new ConversationNodeHook(new EntrySelector(id), ConversationNodeHook.HookMode.ConditionGated,
             ConversationNodeHook.HookPriority.High)).ToArray();
@@ -231,6 +231,12 @@ internal sealed class Talk
         condition = LuaFix.Rewrite(condition);
         script = LuaFix.Rewrite(script);
         LuaLint.Record(_prefix + name, condition, script);
+
+        // A player choice joins the vanilla menu at the vanilla links' priority. At High priority the Dialogue System would show
+        // only the highest-priority valid group, so one added choice would hide every vanilla option beside it.
+        hooks = hooks?.Select(h => h.Mode == ConversationNodeHook.HookMode.ConditionGated && h.Priority == ConversationNodeHook.HookPriority.High
+            ? new ConversationNodeHook(h.Selector, h.Mode, ConversationNodeHook.HookPriority.Normal)
+            : h).ToArray();
 
         _inj.AddNode(new ConversationNode(
             name: _prefix + name,

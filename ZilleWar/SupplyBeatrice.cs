@@ -148,7 +148,7 @@ internal static partial class SupplyWar
             "the newspapers taking a second look at who sent them.\"", T(VarBeaToldBluds), "AskL");
         d.SayIfDo("RecBludsHome", $"{Eq(VarBludsIncident, "home")} and {Not(VarBeaToldBluds)}", Beatrice,
             "\"I hear you sent my Bluds home on a night train, with the blinds down. Quietly. You're learning.\"", T(VarBeaToldBluds), "AskL");
-        d.SayIf("RecEmbargo", gave("embargo"), Beatrice,
+        d.SayIf("RecEmbargo", $"{gave("embargo")} and {SupplyWar.LuaOilCut}", Beatrice,
             "\"Smolak's tankers are turning back in the Markian Sea, by the way. I'm told he's rationing petrol in Wraclawitz. I sleep " +
             "beautifully.\"", "AskL");
         d.SayIf("RecCredit", gave("credit"), Beatrice,
@@ -184,7 +184,7 @@ internal static partial class SupplyWar
             "\"We've already halved it. If I cut Smolak off entirely, I'll need more of your gas to keep the Steelfield lit.\"",
             "EmbMenu");
         d.Say("EmbNone", Beatrice,
-            "\"You turned that very deal down in your own stateroom, if memory serves. And it does.\"", "EmbNone2");
+            "\"That deal was on the table in your own stateroom, and nothing came of it. If memory serves. And it does.\"", "EmbNone2");
         d.Say("EmbNone2", Beatrice,
             "\"The terms haven't changed. Your gas keeps my furnaces lit, and Smolak gets nothing from me.\"", "EmbMenu");
         d.Do("EmbMenu", null, Gate("EmbWhy"), Gate("EmbYes"), Gate("EmbAvgYes"), "EmbNo");

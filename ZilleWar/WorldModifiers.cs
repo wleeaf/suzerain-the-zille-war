@@ -296,7 +296,7 @@ internal static class WorldModifiers
         Set(ZilleEnergy, liberated && since >= 3 ? 1 : 0);
         Set(Refugees, refugees);
         Set(Shipping, shipping);
-        Set(WarBonds, active && w is >= 2 and <= 3 ? 1 : 0);
+        Set(WarBonds, active && w is >= 2 and <= 3 && Variables.GetBool(EarlyT5.VarWarBonds) ? 1 : 0);
         Set(WarFuel, active ? -1 : 0);
         Set(Fervor, active && !two && w <= 2 ? 1 : 0);
         Set(Weariness, active && !two && w >= 3 ? (w >= 4 ? -2 : -1) : 0);

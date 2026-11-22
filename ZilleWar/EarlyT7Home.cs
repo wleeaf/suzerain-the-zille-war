@@ -8,9 +8,7 @@ namespace ZilleWar;
 internal static class EarlyT7Home
 {
     private const string Hugo = "Hugo Toras";
-    private const string Rumburg = "(Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_HighEnergyExport\"] == true or " +
-                                   "(Variable[\"ZilleWar.Lever_Embargo\"] or 0) > 0 or (Variable[\"ZilleWar.Lever_BffRaids\"] or 0) > 0 or " +
-                                   "(Variable[\"ZilleWar.Lever_BffFighters\"] or 0) > 0)";
+    private const string Rumburg = LateT9.LuaRumburgHelped;
 
     public static void Register()
     {

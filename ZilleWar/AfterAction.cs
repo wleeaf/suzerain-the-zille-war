@@ -355,7 +355,7 @@ internal sealed class AfterAction
         string theirs = EnemyDead > 0
             ? p switch
             {
-                1 => $" Wehzek losses are estimated at {EnemyDeadMen} men, and the prisoner cages at Dapalle are filling.",
+                1 => $" Wehzek losses are estimated at {EnemyDeadMen} men, and the prisoner cages at {(CitiesLost.Contains("Dapalle") || Variables.GetBool(WarFlags.Occupied("Dapalle")) ? "Balle" : "Dapalle")} are filling.",
                 2 => $" The enemy lost an estimated {EnemyDeadMen} men. A column of prisoners was marched south through the Rizian lines, " +
                      "and the townspeople of the border villages came out to watch it pass in silence.",
                 _ => $" The Wehzek garrison lost an estimated {EnemyDeadMen} men in the last phase alone.",

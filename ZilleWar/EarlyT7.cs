@@ -524,10 +524,11 @@ internal static class EarlyT7
         // Two wars: Lespia closes the strait for Rizia in the north and sells Pales its warships in the south.
         // EarlyT6 files the same story ("E6_LespiaBothSides") as soon as both wars run; publish this one only if it did not.
         if (Variables.GetBool(WarFlags.TwoWars) && Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.Lespia)) > 0 &&
-            !Variables.GetBool(VarNewsLespiaBothSides) && !Variables.GetBool("ZilleWar.E6_News_LespiaBothSides"))
+            !Variables.GetBool(SupplyWar.VarLespiaWithdrawn) && !Variables.GetBool("ZilleWar.Lespia_StraitThin") &&
+            !Variables.GetBool(SupplyWar.VarLespiaGrievance) && !Variables.GetBool(VarNewsLespiaBothSides) && !Variables.GetBool("ZilleWar.E6_News_LespiaBothSides"))
         {
             Variables.Set(VarNewsLespiaBothSides, true);
-            NewsWire.Publish("E7_LespiaBothSides", "G", "Lespian Destroyers Sail for Pales as Lespia Guards Kreleck for Rizia", string.Join("\n\n",
+            NewsWire.Publish("E7_LespiaBothSides", "G", "Lespian Destroyers Sail for Pales After Lespia Guarded Kreleck for Rizia", string.Join("\n\n",
                 "PERLA, LESPIA - Two Lespian-built destroyers sailed for the Palesian port of Remaz this week, only weeks after the Lespian " +
                 "navy closed the Strait of Kreleck to Wehzek shipping at Rizia's request.",
                 "Asked how Lespia could help Rizia against Wehlen while arming the Grand Duchy against Rizia, a spokesman for Prime Minister " +

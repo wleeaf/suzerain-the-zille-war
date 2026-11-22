@@ -292,14 +292,20 @@ internal static class AnDeclaration
         inj.AddNode(Choice("E3", "\"Pray that it ends quickly.\"", Next("Cable")));
         inj.AddNode(Line("Cable", Esquibel,
             "\"One more, Your Majesty.\" Laurento held up a telegram form. \"From Thornbourgh. It must have been sent the minute the news reached the Queen.\"",
-            Next("Cable2", "Cable2NoEmbargo")));
+            Next("Cable2", "Cable2Half", "Cable2NoEmbargo")));
         const string embargo =
             "Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_HighEnergyExport\"] == true or Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_AverageEnergyExport\"] == true";
         inj.AddNode(Line("Cable2", Narrator,
             "He read it aloud, and by the second sentence he was trying not to smile. \"Romus. I gather from the wireless that " +
             "you have declared war. One does like to hear these things before the newspapers do. Rumburg stands with you, naturally, " +
             "and we stopped buying Smolak's oil months ago, so you needn't ask. Do try to win it quickly. Long wars are ruinous for " +
-            "treasuries, and worse for thrones. Beatrice.\"", Next("Cable3"), condition: embargo));
+            "treasuries, and worse for thrones. Beatrice.\"", Next("Cable3"), condition: "Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_HighEnergyExport\"] == true"));
+        inj.AddNode(Line("Cable2Half", Narrator,
+            "He read it aloud, and by the second sentence he was trying not to smile. \"Romus. I gather from the wireless that " +
+            "you have declared war. One does like to hear these things before the newspapers do. Rumburg stands with you, naturally. " +
+            "We halved our purchases of Smolak's oil months ago, at your request, and I suppose you'll be wanting the other half. Ring " +
+            "me when you've finished making speeches. Beatrice.\"", Next("Cable3"),
+            condition: "Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_AverageEnergyExport\"] == true and Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_HighEnergyExport\"] ~= true"));
         inj.AddNode(Line("Cable2NoEmbargo", Narrator,
             "He read it aloud, and by the second sentence he was trying not to smile. \"Romus. I gather from the wireless that " +
             "you have declared war. One does like to hear these things before the newspapers do. Rumburg stands with you, naturally. " +

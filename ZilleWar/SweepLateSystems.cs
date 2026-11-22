@@ -27,9 +27,7 @@ internal static class SweepLateSystems
     private static bool Fought => LateState.Declared && ZilleCampaign.OperationsDone >= 1;
 
     /// <summary>Rumburg actually helped in the Zille war (Queen Beatrice's levers or war credits).</summary>
-    private static bool RumburgHelped =>
-        Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.Embargo)) + Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.BffRaids)) +
-        Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.BffFighters)) + Variables.GetInt(SupplyWar.VarRumburgCredits) > 0;
+    private static bool RumburgHelped => LateT9.RumburgHelpedNow;
 
     public static void Register()
     {

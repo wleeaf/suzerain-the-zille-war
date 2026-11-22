@@ -17,6 +17,7 @@ internal static class Audit
 
     public static void Register()
     {
+        MenuFixes.Register();
         foreach ((string what, Action register, _) in Modules)
         {
             Run($"audit {what}", register);

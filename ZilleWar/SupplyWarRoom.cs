@@ -100,7 +100,7 @@ internal static partial class SupplyWar
             "\"As you wish, Your Majesty. I'll keep them away from the villages. That is the best I can promise.\"", exit);
 
         // The photographs of our harbors pay off one council after the Lespian cameras were reported.
-        string photoOpen = $"{meetings} >= 3 and ({V(VarPhotoPayoff)} == nil or {V(VarPhotoPayoff)} == \"\")";
+        string photoOpen = $"{strait} and {meetings} >= 3 and ({V(VarPhotoPayoff)} == nil or {V(VarPhotoPayoff)} == \"\")";
         Say("WRRaid", $"{photoOpen} and {Eq(VarPhotoBoats, "ignore")}",
             "\"Wehzek aircraft came over Fort Ales at first light. Six of them, straight for the fuel depot and the shell stores. They never " +
             "once circled to look.\"",
@@ -194,16 +194,20 @@ internal static partial class SupplyWar
         // ---- where the strait stands
         // A month after the last council, the strait is told as what changed (or didn't), not word for word again.
         string again = $"{N(VarWarRoomMeetings)} >= 3";
-        t.Logic(entry, new[] { "WRGone", "WRThin", "WRClosedAgain", "WRClosed", "WROpenAgain", "WROpen" });
+        t.Logic(entry, new[] { "WRGone", "WRThin", "WRClosedAgain", "WRClosed", "WROpenFleet", "WROpenAgain", "WROpen" });
         Say("WRClosedAgain", $"{closed} and {again}",
             "\"The strait, then. Another month of Lespian inspections. Their captains get slower every week, and the Wehzek night runners " +
             "bolder.\"",
             "\"The strait, Your Majesty. Another month of Lespian inspections, slower every week, and the Wehzek night runners bolder.\"",
             "WRState");
-        Say("WROpenAgain", $"{open} and {again}",
+        Say("WROpenFleet", $"{open} and {inStrait}",
+            "\"Now the strait. Nobody guards it but us, Your Majesty. What crosses to Nanta tonight crosses under our guns, and it costs them.\"",
+            "\"Now the strait, Your Majesty. The Lespians are not there, and we are. What crosses to Nanta tonight crosses under our guns.\"",
+            "WRState");
+        Say("WROpenAgain", $"{open} and not {inStrait} and {again}",
             "\"The strait is still open, Your Majesty. Every night we leave it alone, Nanta gets another trainload of men off the ships.\"",
             "\"The strait is still open, Your Majesty. Every night we leave it alone, Nanta takes in another battalion.\"", "WROpen2");
-        Say("WRGone", $"{open} and {Is(VarLespiaWithdrawn)}",
+        Say("WRGone", $"{open} and not {inStrait} and {Is(VarLespiaWithdrawn)} and {N(Count(Lever.Lespia))} > 0",
             "\"Now the strait. The Lespian ships are gone, and the convoys came back the same week. As if someone had sent them a telegram.\"",
             "\"Now the strait, Your Majesty. The Lespian ships have left, and the convoys came back within the week.\"", "WROpen2");
         Say("WRThin", $"{closed} and {Is(VarStraitThin)}",
@@ -214,7 +218,7 @@ internal static partial class SupplyWar
             "with a destroyer for escort.\"",
             "\"Now the strait, Your Majesty. The Lespians stop most of what crosses. What slips past them runs at night along the Wehzek " +
             "coast, under escort.\"", "WRState");
-        Say("WROpen", null,
+        Say("WROpen", $"not {inStrait}",
             "\"Now the strait. Nobody is closing it, Your Majesty. Not Lespia, not us. Wehlen brings men and shells across to Nanta every night.\"",
             "\"Now the strait, Your Majesty. Nobody is closing it. Wehlen brings men and shells across to Nanta every night.\"", "WROpen2");
         Say("WROpen2", null,

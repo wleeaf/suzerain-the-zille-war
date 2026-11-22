@@ -61,7 +61,7 @@ internal static class EarlyT6
     private static readonly string Ceasefire = WarFlags.L(WarFlags.Ceasefire);
     private static readonly string LostOrStopped =
         $"({Defeated} or {Ceasefire}) and {WarFlags.LNot(WarFlags.Active)} and {WarFlags.LNot(WarFlags.Liberated)}";
-    private const string LespiaDeal = "(Variable[\"ZilleWar.Lever_Lespia\"] or 0) > 0";
+    private const string LespiaDeal = "((Variable[\"ZilleWar.Lever_Lespia\"] or 0) > 0 and Variable[\"ZilleWar.Lespia_Withdrawn\"] ~= true)";
     private const string PalesWarComing =
         "(Variable[\"RiziaDLC.Pales_War\"] == true or Variable[\"RiziaDLC.Diplomacy_Pales_PrepareForWar\"] == true or Variable[\"RiziaDLC.Diplomacy_Pales_DeclareWar\"] == true)";
 
@@ -168,7 +168,7 @@ internal static class EarlyT6
             new[] { "#29", "#30" }, condition: $"{AuditT6.Over} and {LespiaDeal} and not {LespiaCold}", hooks: From(28));
         t.Line("LespiaBothWaysCold", Laurento,
             "\"I note that Prime Minister Alvarez voted with Pales all the same. He promised us the strait while our army was in Zille, " +
-            "kept it half open, and now backs Reinhart in the south. I would expect nothing less of him.\"",
+            "kept that promise with a sour face after the Meftiem, and now backs Reinhart in the south. I would expect nothing less of him.\"",
             new[] { "#29", "#30" }, condition: $"{AuditT6.Over} and {LespiaDeal} and {LespiaCold}", hooks: From(28));
         t.Register();
     }
@@ -320,8 +320,8 @@ internal static class EarlyT6
             "anchor in Wraclawitz because of it. And today, the Aureus gas starts flowing.\"", new[] { "Aside2" },
             condition: $"{AuditT6.Over} and not {LespiaCold}");
         t.Line("Aside1Cold", Alvarez,
-            "\"My admirals kept an eye on the Strait of Kreleck while your army was in Zille, Your Majesty, a good deal less closely " +
-            "than I promised you. You will remember the Meftiem. So do I. And today, the Aureus gas starts flowing.\"",
+            "\"My admirals watched the Strait of Kreleck while your army was in Zille, Your Majesty, though not with the warmth I " +
+            "promised you. You will remember the Meftiem. So do I. And today, the Aureus gas starts flowing.\"",
             new[] { "Aside2" }, condition: $"{AuditT6.Over} and {LespiaCold}");
         t.Line("Aside2", Alvarez,
             "\"I don't hold grudges. I hold invoices. I think Rizia can afford to sell some of its share back to its friends at a friendly price. Shall we say three Arcasian Liras per thousand cubic meters? Six units of the Aureus share for six billion guilders, between friends.\"",
@@ -450,7 +450,7 @@ internal static class EarlyT6
             "sold Reinhart destroyers all the while.\"", new[] { "Customers2" }, condition: $"{AuditT6.Over} and {LespiaDeal} and not {LespiaCold}", hooks: From(167, 189));
         t.Line("Customers1Cold", Lucita,
             "\"And yes, Your Majesty, those are the same Lespian shipyards. Alvarez promised us the strait while we fought for Zille, " +
-            "kept it half open, and sold Reinhart destroyers all the while.\"", new[] { "Customers2" },
+            "kept it with a sour face after the Meftiem, and sold Reinhart destroyers all the while.\"", new[] { "Customers2" },
             condition: $"{AuditT6.Over} and {LespiaDeal} and {LespiaCold}", hooks: From(167, 189));
         t.Line("Customers2", Taddeus, "\"Lespia does not have allies, Lieutenant. It has customers.\"", new[] { "#177" });
         t.Register();
@@ -725,7 +725,7 @@ internal static class EarlyT6
             return;
         }
 
-        bool strait = Variables.GetInt("ZilleWar.Lever_Lespia") > 0 && !LespiaColdNow;
+        bool strait = Variables.GetInt("ZilleWar.Lever_Lespia") > 0 && !Variables.GetBool(SupplyWar.VarLespiaWithdrawn) && !LespiaColdNow;
         NewsWire.Publish("E6_LespiaBothSides", "G",
             strait ? "Lespian Shipyards Arm Pales After Lespian Navy Guarded Kreleck for Rizia" : "Lespian Armor Reaches Pales as Rizia Goes to War Again",
             P(
@@ -744,7 +744,7 @@ internal static class EarlyT6
 
     private static void SmolakOnLespia()
     {
-        if (!Variables.GetBool("SharedSupport.News_G_WehlenCondemnsLespia") || Variables.GetInt("ZilleWar.Lever_Lespia") <= 0 || LespiaColdNow || !Once(NewsSmolakLespia))
+        if (!Variables.GetBool("SharedSupport.News_G_WehlenCondemnsLespia") || Variables.GetInt("ZilleWar.Lever_Lespia") <= 0 || Variables.GetBool(SupplyWar.VarLespiaWithdrawn) || LespiaColdNow || !Once(NewsSmolakLespia))
         {
             return;
         }

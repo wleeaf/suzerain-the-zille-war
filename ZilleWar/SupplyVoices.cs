@@ -194,14 +194,29 @@ internal static partial class SupplyWar
         d.Say("Offer1", Smolak,
             "\"Here is my offer. A ceasefire on the line where our armies stand tonight. The Alliance draws a pretty map, everybody " +
             "goes home, and in return...\"", "Terms");
-        d.Branch("Terms", "TermsReduced", "TermsFull");
-        d.SayIf("TermsReduced", reduced, Smolak,
-            "\"...every Wehzek living in Rizia gets the same rights as a Rizian, and your border closes to the Bludish bandits " +
-            "Thornbourgh keeps arming. Keep your cousin. I find I have less appetite than I used to.\"", "Aside");
-        d.Say("TermsFull", Smolak,
-            "\"...your cousin Ricardus comes to Wraclawitz to answer for Smolak Square, your border closes to the Bludish bandits " +
-            "Thornbourgh keeps arming, and every Wehzek living in Rizia gets the same rights as a Rizian. The very terms my ministers " +
-            "drafted before you decided to shoot instead.\"", "Aside");
+        // Each demand is voiced only while it is still open: Ricardus while he is held and not yet handed over, the border ban
+        // and the Wehzek rights until the King has already granted them.
+        string rico = $"(Variable[\"RiziaDLC.Rico_Arrested\"] == true and Variable[\"RiziaDLC.Rico_Extradited\"] ~= true and " +
+                      $"Variable[\"{RicoExtradition}\"] ~= true)";
+        string ban = $"(Variable[\"{BludishBan}\"] ~= true)";
+        string rights = $"(Variable[\"{WehzekRights}\"] ~= true)";
+        d.Branch("Terms", "TermsNone", "TRico", "TBan");
+        d.SayIf("TermsNone", $"not {ban} and not {rights} and ({reduced} or not {rico})", Smolak,
+            "\"...nothing, Your Majesty, that you have not already given me. A ceasefire on the line where we stand, and an end to it. " +
+            "I find I have less appetite than I used to.\"", "Aside");
+        d.SayIf("TRico", $"{full} and {rico}", Smolak,
+            "\"...your cousin Ricardus comes to Wraclawitz to answer for Smolak Square.\"", "TBan");
+        d.Branch("TBan", "TBanSay", "TRights");
+        d.SayIf("TBanSay", ban, Smolak,
+            "\"Your border closes to the Bludish bandits Thornbourgh keeps arming.\"", "TRights");
+        d.Branch("TRights", "TRightsSay", "TEnd");
+        d.SayIf("TRightsSay", rights, Smolak,
+            "\"And every Wehzek living in Rizia gets the same rights as a Rizian.\"", "TEnd");
+        d.Branch("TEnd", "TEndFull", "TEndReduced");
+        d.SayIf("TEndFull", full, Smolak,
+            "\"The very terms my ministers drafted before you decided to shoot instead.\"", "Aside");
+        d.Say("TEndReduced", Smolak,
+            "\"Keep your cousin. I find I have less appetite than I used to.\"", "Aside");
         d.Branch("Aside", "AsideBeatrice", "AsideAgain", "AsidePlain");
         d.SayIf("AsideAgain", $"{calls} >= 2", Esquibel,
             "Laurento leaned in. \"He is asking for less than he did last month, Your Majesty. That is what a garrison on half rations " +
@@ -272,7 +287,11 @@ internal static partial class SupplyWar
         d.Say("S2Zille", Saltana,
             "\"Wehzek fighters have been crossing the Gulf of Moridia to strafe your positions in Zille. Morella doesn't care for " +
             "anyone's fighters over our gulf. Least of all Wiktor Smolak's.\"", "S3");
-        d.Say("S3", Saltana,
+        d.Branch("S3", "S3More", "S3First");
+        d.SayIf("S3More", Is("RiziaDLCSupport.Reports_Turn05_Terador_AirplaneDeal"), Saltana,
+            "\"I have more aircraft. Good ones, built in Morella, the same as the two dozen already at Terador. A second squadron, " +
+            "without markings, without Morellan pilots, and with no paperwork that anyone in Konstantium could trace.\"", "Price");
+        d.Say("S3First", Saltana,
             "\"I have aircraft. Good ones, built in Morella. I could sell you a squadron, without markings, without Morellan pilots, " +
             "and with no paperwork that anyone in Konstantium could trace.\"", "Price");
         d.Branch("Price", "PriceCheap", "PriceDear", "PriceFair");

@@ -130,7 +130,7 @@ internal static class WorldSystems
     public static string LespiaPrice =>
         Variables.GetBool(SupplyWar.VarLespiaLease) ? "in exchange for a fifty-year lease of the Rizian island of Caleqabiz"
         : LespiaCaleqabiz ? "in exchange for naval rights at the Rizian island of Caleqabiz"
-        : Variables.GetBool("ZilleWar.Lespia_GasDeal") ? "in exchange for Aureus gas sold to LesPower at a discount"
+        : Variables.GetBool("ZilleWar.Lespia_GasDeal") && Variables.GetBool("RiziaDLC.Policy_Economy_AureusField_Extractions") ? "in exchange for Aureus gas sold to LesPower at a discount"
         : Variables.GetBool("ZilleWar.Lespia_PaidBudget") ? "for a fee of several billion guilders paid by the Rizian treasury"
         : Variables.GetString("ZilleWar.Ramiro_ConfrontOutcome") == "free" ? "for nothing at all, which in Lespia's case is its own kind of price"
         : "at a price neither government has made public";
