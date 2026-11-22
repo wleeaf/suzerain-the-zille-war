@@ -386,6 +386,7 @@ internal static class ZilleCampaign
         ObjectiveInfo info = Info(objective);
         bool won = AllTaken(info, owners);
         Variables.Set(ResultVar(k), won);
+        VictoryParade.OnPhaseResult(won);   // booked once per phase (VarPhaseDone above)
         Variables.Set(PhaseOfVar(k), phase);
         Variables.Set(EnemyDeadVar(k), PhaseDead(VarEnemyDeadTotal, VarEnemyDeadAtStart));
         Variables.Set(PlayerDeadVar(k), PhaseDead(VarPlayerDeadTotal, VarPlayerDeadAtStart));

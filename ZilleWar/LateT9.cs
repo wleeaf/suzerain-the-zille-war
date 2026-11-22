@@ -209,9 +209,13 @@ internal static class LateT9
             new[] { "#37" }, condition: WarFlags.L(EarlyT6.VarSpareOldQuarter));
         Swap(t, Speech, "Streets", 72, new[] { 71 }, Narr, S.All(
             "The streets were crowded for the festival. Scaffolding still covered half the harbor front, and here and there a roofless tenement stood among the freshly painted ones, waiting its turn."),
-            new[] { "SignFedo", "Sign" });
+            new[] { "SignNamed", "SignFedo", "Sign" });
+        // the King named the square at the victory parade (VictoryParade)
+        string sq = $"Variable[\"{VictoryParade.VarSquare}\"]";
+        t.Line("SignNamed", Narr, "At the corner of the square hung the new sign the city's painters had put up the night of the victory parade. The paint was barely dry, and already someone had left flowers under it.",
+            new[] { "Mother" }, condition: $"{sq} == \"liberation\" or {sq} == \"romus\" or {sq} == \"fallen\"");
         t.Line("SignFedo", Narr, "At the corner of the square, the old enamel sign our soldiers had screwed back onto the wall in the first days of the war still hung there, a little crooked: Fedo Square. Someone had left flowers under it.",
-            new[] { "MotherFedo" }, condition: WarFlags.L(CityEvents.Flag("Zille_BannerRaised")));
+            new[] { "MotherFedo" }, condition: $"{WarFlags.L(CityEvents.Flag("Zille_BannerRaised"))} or Variable[\"{VictoryParade.VarSquare}\"] == \"fedo\"");
         t.Line("MotherFedo", Estela, "\"Fedo Square. Papa would have wept, darling. He never once called it by the other name, not even in front of the Wehzek governor.\"", new[] { "#256" });
         t.Line("Sign", Narr, "The Smolak Square sign had come down the week our soldiers entered the city. In its place hung a plain board with no name on it at all, waiting for someone to decide.", new[] { "Mother" });
         t.Line("Mother", Estela, "\"Nobody dared choose a name without you, darling. Make it official before somebody puts the old one back up.\"", new[] { "#83", "Leave", "#79", "#80" });

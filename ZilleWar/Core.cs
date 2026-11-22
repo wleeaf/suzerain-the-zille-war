@@ -33,6 +33,7 @@ internal sealed class Core : MelonMod
         Step("AN declaration", AnDeclaration.Register);
         Step("war flow", WarFlow.Register);
         Step("scene keeper", FragmentKeeper.Register);
+        Step("victory", VictoryParade.Register);
         Step("supply war", SupplyWar.Register);
         Step("war council", WarCouncil.Register);
         Step("vanilla turns 4-7", VanillaEarly.Register);

@@ -129,7 +129,14 @@ internal static class SweepEarlyT6Home
             new[] { "#257" }, condition: Active, hooks: From(249));
         t.Line("HoldsWon", Hugo,
             "\"Zille helped, of course. Nothing fills a polling station like a victory.\"",
-            new[] { "#257" }, condition: Liberated, hooks: From(249));
+            new[] { "#257" }, condition: $"{Liberated} and Variable[\"RiziaDLC.HouseElections_RNCWinsSeats\"] ~= true", hooks: From(249));
+        // the Coalition's landslide (vanilla [13], "over three-quarters of delegates") after a liberation
+        t.Line("Landslide", Hugo,
+            "\"Most of it is Zille, Your Majesty. The vote came with the church bells still ringing for the liberation, and the Coalition's posters carried a single picture: our soldiers in the great square of Zille.\"",
+            new[] { "#83" }, condition: Liberated, hooks: From(13));
+        t.Line("LandslidePart", Hugo,
+            "\"Zille city carried it, I think. The voters have the harbor back and their sons home, and they thanked the Crown for both.\"",
+            new[] { "#83" }, condition: AuditT6.Part, hooks: From(13));
         t.Line("HoldsLost", Hugo,
             "\"Mercifully, the voters did not punish us for Zille. Not yet.\"",
             new[] { "#257" }, condition: AuditT6.Lost, hooks: From(249));

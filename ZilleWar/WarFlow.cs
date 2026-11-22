@@ -67,10 +67,12 @@ internal static class WarFlow
             Run("war end news", () => NewsWire.Batch(() => NewsWire.PublishWarEnd(ZilleCampaign.Liberated ? "victory"
                 : ZilleCampaign.Defeated ? (Variables.GetBool(ZilleOperation.CapturedVar("Zille")) ? "divided" : "defeat") : "ceasefire")));
             Run("close the operation", WarSaveSlot.EndZilleOperation);
+            Run("victory opinion", VictoryParade.OnWarEnded);
             // The war is over; vanilla's relation rule takes Wehlen from here, and it will not be friendly.
             Variables.Set("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower", Math.Min(-6, Variables.GetInt("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower")));
         }
 
+        Run("victory parade", VictoryParade.OnStep);
         if (!AtWar || (GameState.CurrentTurnNum == 1 && GameState.CurrentStepNum is null or < 2))
         {
             return;
