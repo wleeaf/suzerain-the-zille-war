@@ -30,7 +30,7 @@ internal static class SupplyNews
     {
         foreach (string k in new[]
                  {
-                     "Credit1", "Credit2", "Dossier", "RumburgNo", "LespiaGas", "LespiaMitz", "PalesArms", "PalesArmsStopped",
+                     "Credit1", "Credit2", "Dossier", "RumburgNo", "LespiaGas", "ValgslandLespia", "LespiaMitz", "PalesArms", "PalesArmsStopped",
                      "RamiroPublish", "RamiroRecalled", "RamiroComp", "LespiaGone", "StraitThin", "Gift", "Aureus", "Defector",
                      "Hegel1", "Hegel2", "SmolakRefused", "SmolakAccepted", "Saltana",
                  })
@@ -135,15 +135,34 @@ internal static class SupplyNews
     {
         Once("LespiaGas", B(SupplyWar.VarLespiaGasDeal), () =>
         {
-            Paper("LespiaGas", "G", "LesPower to Receive Aureus Gas at a \"Friendship Price\"",
-                "Lespia's state energy company LesPower will receive a large delivery of gas from the Aureus field at a fraction of " +
-                "the market price, according to documents seen by this newspaper. The sale is said to be part of an arrangement under " +
-                "which the Lespian navy patrols the Strait of Kreleck.",
-                "Prime Minister Alvarez called the deal \"a sensible exchange between neighbors.\" Analysts note that Lespia, which lost " +
-                "the Aureus field to Rizia, has now obtained its gas anyway, and at a better price than it ever offered Pales.");
+            Paper("LespiaGas", "G", "Rizia Signs Away Aureus Gas for Lespian Gunboats",
+                "Lespia's state energy company LesPower will receive six units of gas from the Aureus field every turn at the price of " +
+                "two, according to documents seen by this newspaper. The contract, open-ended and payable from the day the field's " +
+                "pipeline opens, is said to be the price of the Lespian navy's patrols in the Strait of Kreleck.",
+                "Prime Minister Alvarez called the arrangement \"a sensible exchange between neighbors.\" Analysts note that Lespia, which " +
+                "lost the Aureus field to Rizia, has now obtained its gas anyway, and at a better price than it ever offered Pales.");
             Paper("LespiaGas", "V", "Our Gas, Their Price",
-                "The Aureus field was supposed to keep the lights on in Rizia. Instead, its gas is sailing to Perla at a price no Rizian " +
-                "family will ever be offered. The palace calls it the cost of the war. The Voice of Rizia calls it what it is.");
+                "The Aureus field was supposed to keep the lights on in Rizia. Instead, most of its gas will sail to Lespia at a price no " +
+                "Rizian family will ever be offered, every turn, for as long as anyone can see. The palace calls it the cost of the war. " +
+                "The Voice of Rizia calls it what it is: a tribute.");
+        });
+
+        // Valgsland and Lespia are rivals (the Meftiem, the Antacean): any Lespian help in the strait draws a reaction.
+        Once("ValgslandLespia", B(SupplyWar.VarLespiaStrait), () =>
+        {
+            Paper("ValgslandLespia", "G", "Valgsland Denounces \"Lespian Piracy\" in the Strait of Kreleck",
+                "The government of Chancellor Emmerich Hegel has condemned the Lespian navy's stop-and-search patrols in the Strait of " +
+                "Kreleck as \"piracy under a royal flag,\" and warned that Valgslandian merchant ships will not submit to Lespian " +
+                "inspections.",
+                "Diplomats in Konstantium say Valgsland is less troubled by Wehlen's convoys than by the sight of Lespian warships " +
+                "working for Rizia. The two countries have spent years on opposite sides of the Meftiem dispute, and Hegel's ministers " +
+                "now speak openly of a Lespian-Rizian bloc in the Antacean.");
+            Rep("ValgslandLespia", SuzerainTokenName.RiziaCountryValgsland, "Valgsland Reacts to the Lespian Patrols",
+                "Chancellor Hegel's government has summoned our ambassador to protest what it calls Rizia's \"invitation to Lespian " +
+                "piracy\" in the Strait of Kreleck. A Valgslandian destroyer flotilla has been ordered to escort the country's merchant " +
+                "ships through the strait, and Valgslandian ports are said to be offering Wehzek convoys repairs at cost.",
+                "Our embassy reads the protest as aimed at Lespia more than at us. Still, every Lespian favour now carries a Valgslandian " +
+                "price, and Hegel has a long memory for both.");
         });
 
         Once("LespiaMitz", B(SupplyWar.VarLespiaMitz), () =>

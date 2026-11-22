@@ -56,6 +56,13 @@ internal static class WarFlags
         Variables.Set(Over, declared && !active);
         Variables.Set(ZilleCityHeld, declared && Variables.GetBool(ZilleOperation.CapturedVar("Zille")));
         Variables.Set(TwoWars, active && Variables.GetBool(PalesWar));
+
+        // Smolak's AN Threat Mitigation Protocol ("Zille stays Wehzek until the threat is over") is answered by the declaration of
+        // war; the vanilla AN ending switches it on after our declaration, so it is cleared on every step from then on.
+        if (declared)
+        {
+            Variables.Set("RiziaDLC.Situation_Diplomacy_AN_ThreatMitigationProtocol", false);
+        }
         foreach (string v in Bools)
         {
             Il2CppPixelCrushers.DialogueSystem.Lua.Run($"if Variable[\"{v}\"] == nil then Variable[\"{v}\"] = false end");

@@ -82,9 +82,9 @@ internal static class AnDeclaration
             name: P + "Declare",
             speakerSelector: new CharacterNameSelector(Romus),
             menuText: "\"I hereby declare war on Wehlen.\"",
-            text: "\"Twenty-five years ago, my father signed Zille away to save his throne. I will not sign away its future. " +
-                  "Let this Alliance bear witness: in the name of the Rizian Crown, I hereby declare war on Wehlen. Rizia will not " +
-                  "lay down its arms until the last Wehzek soldier has left Rizian soil.\"",
+            text: "\"Twenty-five years ago, in a dark hour, my father lent Zille to a friend who had stood by him. The lease has ended. " +
+                  "The friend has decided to keep what was only ever borrowed, and to call it security. Let this Alliance bear witness: " +
+                  "in the name of the Rizian Crown, I hereby declare war on Wehlen. Rizia will not lay down its arms until Zille is home.\"",
             luaScript:
                 $"Variable[\"{VarDeclared}\"] = true; Variable[\"{VarEntryAN}\"] = true; " +
                 $"Variable[\"{VarDeclaredTurn}\"] = 4; Variable[\"{WarState.VarActive}\"] = true; " +
@@ -106,7 +106,7 @@ internal static class AnDeclaration
             "\"Order! Order in the assembly! I will have order!\"", Next("Laurento"), conversant: true));
         inj.AddNode(Line("Laurento", Esquibel,
             "\"Your Majesty...\" Laurento had gone pale. \"What have you done?\"", Next("L1", "L2", "L3")));
-        inj.AddNode(Choice("L1", "\"What my father should have done twenty-five years ago.\"", Next("SmolakRises")));
+        inj.AddNode(Choice("L1", "\"I'm setting right my father's mistake, Laurento. Someone had to.\"", Next("SmolakRises")));
         inj.AddNode(Choice("L2", "\"What had to be done, Laurento. Now help me see it through.\"", Next("SmolakRises")));
         inj.AddNode(Choice("L3", "I said nothing and kept my eyes on Smolak.", Next("SmolakRises"), menu: "Say nothing."));
 
@@ -284,7 +284,7 @@ internal static class AnDeclaration
             "\"I told you to smile, preach unity and stab them in the back. I didn't mean in front of the entire Alliance. But I won't " +
             "pretend I'm not glad.\"", Next("Estela2"), condition: "Variable[\"RiziaDLCIsolated.Turn04_EstelaTalk_Wehlen\"] == true"));
         inj.AddNode(Line("Estela2", Estela,
-            "\"Your father never dared. Twenty-five years, and he never once dared.\"", Next("Estela3")));
+            "\"Your father gave Zille away to keep his crown, and spent twenty-five years telling himself it was only a loan. Someone finally had to collect it.\"", Next("Estela3")));
         inj.AddNode(Line("Estela3", Estela,
             "\"Bring me home, Romus. Bring all of them home.\"", Next("E1", "E2", "E3")));
         inj.AddNode(Choice("E1", "\"I will, Mother. I promise.\"", Next("Cable"), script: $"Variable[\"{VarEstelaCall}\"] = \"promise\";"));

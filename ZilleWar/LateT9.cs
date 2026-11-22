@@ -124,7 +124,7 @@ internal static class LateT9
         t.Choice("LibOurs", "\"Rizian soldiers paid for Zille. Nobody else.\"", new[] { "LibOurs2" }, script: Add("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", -1));
         t.Line("LibOurs2", Beatrice, "\"Spoken like a man who has never had to buy his own oil. We'll see how long that lasts.\"", new[] { "#592" });
 
-        t.Line("Part", Beatrice, "\"A ceasefire. How very Kyrutian of you. Half a province and a line of trenches. Still, it's half more than your father ever managed.\"",
+        t.Line("Part", Beatrice, "\"A ceasefire. How very Kyrutian of you. Half a province and a line of trenches. Still, it's half more than Smolak meant to give you.\"",
             new[] { "PartR1", "PartR2" }, condition: Part);
         t.Choice("PartR1", "\"Half is a beginning.\"", new[] { "PartR3" });
         t.Choice("PartR2", "\"Half is what we could hold.\"", new[] { "PartR3" });

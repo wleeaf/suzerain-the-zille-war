@@ -207,7 +207,7 @@ internal static class EarlyT6
             "\"Smolak? He has his hands full with your army. Though I grant you, nothing would please him more than to see us at each other's throats.\"",
             new[] { "Suspect2", "Suspect3" });
         t.Choice("Suspect2", "\"Every division I send south is one he no longer has to face. Think about who that serves.\"", new[] { "Suspect4" });
-        t.Choice("Suspect3", "\"Smolak has been trying to divide this region since he took Zille.\"", new[] { "Suspect4" });
+        t.Choice("Suspect3", "\"Smolak has been trying to divide this region since the day he decided Zille's lease was his to keep.\"", new[] { "Suspect4" });
         t.Line("Suspect4", Axel,
             "\"There are no reports or traces of any Wehzek activity. If you cannot show me any proof -- this will only sound like a conspiracy theory.\"",
             new[] { "#779" });

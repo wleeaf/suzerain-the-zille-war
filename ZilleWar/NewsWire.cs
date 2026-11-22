@@ -680,9 +680,9 @@ internal static class NewsWire
                         ? "Diplomats say Lespia has been granted naval rights at the Rizian island of Caleqabiz in return. Prime Minister " +
                           "Alvarez, asked about the arrangement, smiled and declined to comment."
                         : Variables.GetBool(SupplyWar.VarLespiaGasDeal)
-                            ? "Diplomats say the price was gas: Aureus gas from the Rizian-owned field, sold to LesPower well below " +
-                              "the market. Prime Minister Alvarez, asked about the arrangement, said only that \"Lespia believes in free " +
-                              "navigation, and in cheap energy.\""
+                            ? "Diplomats say the price was gas: six units of Aureus gas for LesPower every turn, at the price of two, " +
+                              "for as long as the field produces. Prime Minister Alvarez, asked about the arrangement, said only that " +
+                              "\"Lespia believes in free navigation, and in cheap energy.\""
                             : Variables.GetBool(SupplyWar.VarLespiaPaid)
                                 ? "Diplomats say Rizia is paying handsomely for the service. Prime Minister Alvarez, asked about the " +
                                   "arrangement, said only that \"Lespia believes in free navigation, and in being paid for it.\""

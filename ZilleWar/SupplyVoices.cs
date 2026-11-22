@@ -83,10 +83,13 @@ internal static partial class SupplyWar
             "An assistant brought in the blue telephone. The operator announced Valgsland, and the line went so quiet I could hear " +
             "the Chancellor breathing before he spoke.", null, Music + $"AddConversant(\"{Hegel}\");", "Call1");
         d.Say("Call1", Hegel, "\"Mr. Toras. I will be brief, since you are busy.\"", "Why");
-        d.Branch("Why", "WhyCaleqabiz", "WhyBff", "WhySubs", "WhyCable");
+        d.Branch("Why", "WhyCaleqabiz", "WhyLespia", "WhyBff", "WhySubs", "WhyCable");
         d.SayIf("WhyCaleqabiz", Is(VarLespiaCaleqabiz), Hegel,
             "\"Lespian warships now refuel at Caleqabiz. You have invited ATO into the Antacean, Mr. Toras. Do not be surprised when " +
             "the Contanan Security Pact answers.\"", "Demand");
+        d.SayIf("WhyLespia", Is(VarLespiaStrait), Hegel,
+            "\"Lespian warships are stopping ships in the Strait of Kreleck on your behalf. Alvarez has wanted a hand on that strait for " +
+            "years, and you have given him both. Valgsland will not sail its merchants past Lespian inspectors, Mr. Toras.\"", "Demand");
         d.SayIf("WhyBff", $"{N(Count(Lever.BffRaids))} > 0", Hegel,
             "\"You have hired the Bludish Freedom Front to blow up harbors full of dockworkers. Valgsland has a word for that, and so " +
             "will the Alliance.\"", "Demand");

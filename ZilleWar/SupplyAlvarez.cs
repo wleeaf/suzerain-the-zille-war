@@ -32,8 +32,9 @@ internal static partial class SupplyWar
         string help = Is("RiziaDLC.Diplomacy_Lespia_WehlenHelp");
         string markup = Is(VarLespiaMarkup);
         string budget = N(Budget);
+        // Lespia's rival Valgsland takes every Lespian favour to Rizia badly.
         string dealScript = $"{V(Count(Lever.Lespia))} = 1; " + T(VarLespiaStrait) + Talk.Weaken(2) + Inc(NpLespia, 1) + Inc(NpWehlen, -1) +
-                            SetTurn(VarLespiaDealTurn);
+                            Inc(NpValgsland, -1) + SetTurn(VarLespiaDealTurn);
         string bindMitz = $"if {voted} then {T(MitzPromiseLate)} else {T(MitzPromise)} end; " + T(VarLespiaMitz);
         string enter = $"AddConversant(\"{Alvarez}\"); AddConversant(\"{Esquibel}\");";
 
@@ -98,20 +99,44 @@ internal static partial class SupplyWar
         d.Say("MitzNo2", Alvarez,
             "\"Everything is for sale, Your Majesty. You simply haven't heard the right price yet. Until then, my admirals stay home.\"", "Hangup");
 
-        // ---- then the price
-        d.Branch("PriceLine", "PriceGas", "PriceHarbor");
-        d.SayIf("PriceGas", field, Alvarez,
-            "\"Now, the price. You bought the Aureus field out from under LesPower. I don't hold grudges, Your Majesty, I hold invoices. " +
-            "Sell us six units of your gas for the price of two, and my navy closes Kreleck by Sunday.\"", "EsqGas");
+        // ---- then the price. With the Aureus field bought from Pales, Lespia wants its gas: -6 Energy for +2 Budget every turn,
+        //      from the turn the gas flows (Policy_Economy_AureusField_Extractions, set at the Turn 6 deal signing). Without it,
+        //      Caleqabiz or money.
+        string flowing = Is(Extractions);
+        string pending = $"({field} and not {flowing} and {TurnLua} <= 6)";
+        string gasPrice = $"({field} and ({flowing} or {TurnLua} <= 6))";
+        d.Branch("PriceLine", "PriceGasNow", "PriceGasLater", "PriceHarbor");
+        d.SayIf("PriceGasNow", $"{field} and {flowing}", Alvarez,
+            "\"Now, the price, and do let me walk you through it slowly, Your Majesty, because I know Rizia is new to this sort of " +
+            "thing. You took the Aureus field from under LesPower. Very bold. Now the gas is flowing, and Lespia would like its share. " +
+            "Six units every turn, for which LesPower will pay you, oh, the price of two. For as long as you sit on that throne.\"", "EsqGas");
+        d.SayIf("PriceGasLater", pending, Alvarez,
+            "\"Now, the price. I'll keep it simple for you. Your pipeline to Aureus isn't finished, I know, I have engineers too. " +
+            "So my navy closes the strait now, on credit, because I am a generous man. The day your gas starts flowing, six units of " +
+            "it come to LesPower every turn, at the price of two. You'll find that's how grown-up countries do business.\"", "EsqGas");
         d.Say("EsqGas", Esquibel,
-            "Laurento covered the mouthpiece. \"Six for two is not a friendship price, Your Majesty. It's a ransom. But it is only gas.\"", "PriceMenu");
+            "Laurento covered the mouthpiece. \"Six for two, every turn, for the rest of your reign. It's not a price, Your Majesty. " +
+            "It's a tribute. But he can close that strait, and nobody else can.\"", "PriceMenuGas");
         d.Say("PriceHarbor", Alvarez,
-            "\"Now, the price. My admirals like harbors, and Caleqabiz has a very nice one. A pier, a fuel depot, a few hundred sailors " +
-            "for as long as the war lasts. Rizia keeps the island, of course. We would only be guests.\"", "EsqHarbor");
+            "\"Now, the price. I'll keep it simple. My admirals like harbors, and Caleqabiz has a very nice one. A pier, a fuel depot, " +
+            "a few hundred sailors for as long as the war lasts. Rizia keeps the island, of course. We would only be guests. You " +
+            "understand the concept of guests, I'm sure. Zille had some.\"", "EsqHarbor");
         d.Say("EsqHarbor", Esquibel,
             "Laurento covered the mouthpiece. \"Guests with a lease, Your Majesty. That's how Zille began.\"", "PriceMenu");
 
-        d.Branch("PriceMenu", Gate("Free"), Gate("Gas"), "Harbor", Gate("Money2"), Gate("Money3"), Gate("Money4"), Gate("Money5"), "Refuse");
+        // the gas price: take it, call his bluff with the Ramiro file, or refuse
+        d.Branch("PriceMenuGas", Gate("Free"), Gate("GasNow"), Gate("GasLater"), "Refuse");
+        d.Opt("GasNow", $"{field} and {flowing}", "\"Six for two. LesPower gets its gas.\"", "-6 Energy Per Turn, +2 Budget Per Turn",
+            dealScript + Talk.Weaken(1) + T(VarLespiaGasDeal), "DealGas");
+        d.Opt("GasLater", pending, "\"Close the strait. LesPower gets its gas when the pipeline opens.\"",
+            "-6 Energy Per Turn, +2 Budget Per Turn Once the Aureus Gas Flows",
+            dealScript + Talk.Weaken(1) + T(VarLespiaGasDeal), "DealGas");
+        d.Say("DealGas", Alvarez,
+            "\"There. That wasn't so painful, was it? My admirals will be in the strait by Sunday, and the Wehzeks will learn what a " +
+            "real navy looks like. Do give my regards to your treasury. It's about to become a very good customer of ours.\"", "Hangup");
+
+        // the other currencies
+        d.Branch("PriceMenu", Gate("Free"), "Harbor", Gate("Money2"), Gate("Money3"), Gate("Money4"), Gate("Money5"), "Refuse");
         d.Opt("Free", $"{leverage} and {Not(VarRamiroConfronted)}",
             "\"I think you'll close the strait for nothing, Prime Minister. Ask me about Héctor Ramiro.\"", null, null, "Free2");
         d.Say("Free2", Narrator, "There was a pause long enough for me to hear the line hum.", "Free3");
@@ -119,8 +144,6 @@ internal static partial class SupplyWar
             "\"I see Rizia's soldiers have been reading other people's mail in Zille. How very modern of them. Very well, Your Majesty. " +
             "Call it a gesture of friendship. And let's never speak of Mr. Ramiro again, on this line or any other.\"", "FreeDeal");
         d.Do("FreeDeal", dealScript + Inc(NpLespia, -2) + T(VarRamiroConfronted) + S(VarRamiroOutcome, "free"), "Deal2");
-        d.Opt("Gas", $"{field} and {N(Energy)} >= 6", "\"Six for two. LesPower gets its gas.\"", "-6 Energy, +2 Budget",
-            dealScript + Inc(Energy, -6) + Inc(Budget, 2) + T(VarLespiaGasDeal), "Deal2");
         d.Opt("Harbor", null, "\"Your ships may use Caleqabiz for as long as the war lasts.\"", "-1 Authority, Lespian Naval Rights at Caleqabiz",
             dealScript + Inc(Authority, -1) + T(VarLespiaCaleqabiz) + Inc(NpValgsland, -1), "Deal2");
         string money = "\"Not Caleqabiz. I'll pay for your ships instead.\"";
@@ -131,9 +154,10 @@ internal static partial class SupplyWar
         d.Opt("Money5", $"not {help} and {markup} and {budget} >= 5", money, "-5 Budget", paid + Inc(Budget, -5), "Money");
         d.Say("Money", Alvarez,
             "\"Money. How refreshingly direct. Warships are expensive, Your Majesty, and Lespian admirals more so, but I think we can " +
-            "make it work.\"", "Deal2");
+            "make it work. Do try to pay on time. I'd hate for us to have one of those awkward conversations.\"", "Deal2");
         d.Opt("Refuse", null, "\"No. Not at that price.\"", null, null, "NoDeal");
-        d.Say("NoDeal", Alvarez, "\"Ha. I suppose I walked into that one. The offer stands, Your Majesty. For now.\"", "Hangup");
+        d.Say("NoDeal", Alvarez,
+            "\"Ha. Pride. I remember pride, I had some once, before I had a navy. The offer stands, Your Majesty. For now.\"", "Hangup");
         d.Say("Deal2", Alvarez,
             "\"A pleasure, Your Majesty. My admirals will be in the strait by Sunday. I suspect Mr. Smolak will be on the radio by Monday.\"",
             "Hangup");
@@ -164,7 +188,7 @@ internal static partial class SupplyWar
             "\"Then we understand each other perfectly. It's so rare, in my line of work.\"", "Hangup");
 
         // the gas, again
-        d.SayIf("InvGas", $"{Is(VarLespiaGasDeal)} and {V(VarAlvarezGasDone)} == \"\" and not {Eq(VarAlvarezGasPriceT6, "paid")}", Alvarez,
+        d.SayIf("InvGas", "false", Alvarez,   // the gas is a standing per-turn contract now; no extra shipments
             "\"LesPower's engineers tell me the Aureus wells produce rather more than you admitted. One more shipment at the same " +
             "friendly price, and my patrols stay exactly as thick as they are.\"", Gate("GasYes"), "GasNo");
         d.Opt("GasYes", $"{N(Energy)} >= 3", "\"One more shipment. Then we're square.\"", "-3 Energy, +1 Budget",

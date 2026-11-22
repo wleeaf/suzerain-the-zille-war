@@ -75,6 +75,8 @@ internal static partial class SupplyWar
     internal const string VoteStatusQuo = "RiziaDLC.Turn05_ITZVote_StatusQuo";
     internal const string LespianPalesSupport = "RiziaDLC.War_Pales_LespianSupport";
     internal const string TurnLua = "(Variable[\"RiziaDLCSetup.CurrentTurn\"] or 0)";
+    internal const string Extractions = "RiziaDLC.Policy_Economy_AureusField_Extractions";   // Aureus gas flowing (Turn 6 deal)
+    internal const int LastTurn = 10;
 
     // ---- our state: read these from other modules
     /// <summary>Budget still owed to Rumburg for war credits (int, 0 when repaid).</summary>
@@ -297,7 +299,7 @@ internal static partial class SupplyWar
 
         foreach ((string what, Action step) in new (string, Action)[]
                  {
-                     ("numbers", EnsureNumbers), ("upkeep", Upkeep), ("modifiers", SupplyModifiers.Install), ("calls", Offer),
+                     ("numbers", EnsureNumbers), ("upkeep", Upkeep), ("gas contract", GasContract), ("modifiers", SupplyModifiers.Install), ("calls", Offer),
                      ("levers", ReportNewLevers), ("news", SupplyNews.OnStep),
                  })
         {
@@ -313,6 +315,17 @@ internal static partial class SupplyWar
     }
 
     // ------------------------------------------------------------------ per turn
+
+    /// <summary>
+    /// Lespia's price for the strait: six units of Aureus gas to LesPower every turn for the price of two, from the turn the gas
+    /// flows. Shown and charged through WorldModifiers' LesPower lines.
+    /// </summary>
+    private static void GasContract()
+    {
+        bool owed = Variables.GetBool(VarLespiaGasDeal) && Variables.GetBool(Extractions);
+        Variables.Set(WorldModifiers.LespiaGas, owed ? -6 : 0);
+        Variables.Set(WorldModifiers.LespiaGasBudget, owed ? 2 : 0);
+    }
 
     /// <summary>Once per new turn: the strait closure bites, credits are repaid, the dossier lands.</summary>
     private static void Upkeep()
@@ -347,21 +360,9 @@ internal static partial class SupplyWar
             Variables.Set(VarStraitThin, false);
         }
 
-        // Rumburgian war credits: the HUD charged the installment at the end of last turn; book it.
-        int debt = Variables.GetInt(VarRumburgDebt);
-        if (debt > 0)
-        {
-            int rate = Math.Max(1, Variables.GetInt(VarRumburgCredits));
-            int since = Variables.GetInt(VarDebtTurn);
-            if (since > 0 && turn > since)
-            {
-                debt = Math.Max(0, debt - (turn - since) * rate);
-            }
-
-            Variables.Set(VarRumburgDebt, debt);
-            Variables.Set(VarDebtTurn, turn);
-            Variables.Set(ModRumburgCredit, debt > 0 ? -Math.Min(rate, debt) : 0);
-        }
+        // Rumburgian war credit: the repayment line counts itself down (WorldModifiers "_Turns"); keep the debt figure in step.
+        int left = Variables.GetInt(ModRumburgCredit + "_Turns");
+        Variables.Set(VarRumburgDebt, left > 0 ? left * -Variables.GetInt(ModRumburgCredit) : 0);
 
         // Wraclawitz publishes its file on Rumburg and the BFF a turn after the Bluds first strike for Rizia.
         bool bff = Variables.GetInt(Count(Lever.BffRaids)) + Variables.GetInt(Count(Lever.BffFighters)) > 0;
@@ -498,8 +499,7 @@ internal static partial class SupplyWar
 
         bool palesTopic = Variables.GetBool(PalesWar) && Variables.GetInt(LespianPalesSupport) > 0 &&
                           Str(VarAlvarezPalesDone).Length == 0;
-        bool gasTopic = Variables.GetBool(VarLespiaGasDeal) && Str(VarAlvarezGasDone).Length == 0 &&
-                        Variables.GetString(VarAlvarezGasPriceT6) != "paid";
+        const bool gasTopic = false;   // the gas is a standing per-turn contract
         return palesTopic || gasTopic || !Variables.GetBool(VarAlvarezGiftDone);
     }
 
