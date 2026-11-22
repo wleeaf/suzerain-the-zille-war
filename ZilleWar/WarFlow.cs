@@ -56,7 +56,7 @@ internal static class WarFlow
         if (!AtWar && Variables.GetBool(AnDeclaration.VarDeclared) && !Variables.GetBool(VarEndingShown))
         {
             Variables.Set(VarEndingShown, true);
-            Run("war end news", () => NewsWire.PublishWarEnd(ZilleCampaign.Liberated ? "victory" : ZilleCampaign.Defeated ? "defeat" : "ceasefire"));
+            Run("war end news", () => NewsWire.Batch(() => NewsWire.PublishWarEnd(ZilleCampaign.Liberated ? "victory" : ZilleCampaign.Defeated ? "defeat" : "ceasefire")));
             // The war is over; vanilla's relation rule takes Wehlen from here, and it will not be friendly.
             Variables.Set("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower", Math.Min(-6, Variables.GetInt("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower")));
         }
@@ -72,7 +72,7 @@ internal static class WarFlow
             {
                 Variables.Set(VarMobilizationShown, true);
                 SupplyWar.OnWarDeclared();
-                NewsWire.PublishDeclaration();
+                NewsWire.Batch(NewsWire.PublishDeclaration);
             }
         });
         Run("supply war", () =>
@@ -87,6 +87,7 @@ internal static class WarFlow
         // Last, so every module's pre-war fragments for this step already exist when the council decides
         // whether the war table may open.
         Run("council", WarCouncil.OnStep);
+        Run("scheduler", Scheduler.Flush);
     }
 
     private static void Run(string what, Action step)

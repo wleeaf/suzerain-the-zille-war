@@ -371,6 +371,7 @@ internal static class Patch_FinishOperation_MoveNext
         }
 
         (int k, Objective objective) = ZilleCampaign.CurrentOperation();
+        ArmyCarry.Record();
         ZilleCampaign.OnOperationFinished(k, objective);
         WarFlow.OnOperationFinished();
     }

@@ -353,6 +353,13 @@ internal static class Vanilla
         }
     }
 
+    /// <summary>True once the vanilla story fragment has been played (or skipped) this playthrough.</summary>
+    public static bool Done(string fragmentName)
+    {
+        var done = Managers.Instance?.GameFlowManager?.doneStoryFragmentsNames;
+        return done != null && done.Contains(fragmentName);
+    }
+
     /// <summary>Self-test: which declared edits found their vanilla target.</summary>
     internal static List<string> Audit()
     {

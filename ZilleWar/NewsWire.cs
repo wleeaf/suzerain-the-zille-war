@@ -20,7 +20,50 @@ internal static class NewsWire
     // ------------------------------------------------------------------ plumbing
 
     /// <summary>Publish one item in a newspaper now. Safe to call more than once per key.</summary>
+    private static List<Action> _batch;
+    private static int _batchDepth;
+
+    /// <summary>
+    /// The newspapers show the most recently enabled story on top. Inside a batch, stories are written headline first (as
+    /// everywhere in this mod) and enabled in reverse when the batch ends, so each paper's headline leads.
+    /// </summary>
+    public static void Batch(Action write)
+    {
+        if (_batchDepth++ == 0)
+        {
+            _batch = new List<Action>();
+        }
+
+        try
+        {
+            write();
+        }
+        finally
+        {
+            if (--_batchDepth == 0)
+            {
+                List<Action> list = _batch;
+                _batch = null;
+                for (int i = list.Count - 1; i >= 0; i--)
+                {
+                    list[i]();
+                }
+            }
+        }
+    }
+
     public static void Publish(string key, string paper, string title, string text)
+    {
+        if (_batchDepth > 0)
+        {
+            _batch.Add(() => PublishNow(key, paper, title, text));
+            return;
+        }
+
+        PublishNow(key, paper, title, text);
+    }
+
+    private static void PublishNow(string key, string paper, string title, string text)
     {
         try
         {

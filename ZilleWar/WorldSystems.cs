@@ -30,6 +30,7 @@ internal static class WorldSystems
         Run("codex", WorldCodex.Register);
         Run("press", WorldPress.Register);
         Run("voices", WorldVoices.Register);
+        Run("embargo", WorldEmbargo.Register);
 
         if (!_registered)
         {
@@ -62,6 +63,7 @@ internal static class WorldSystems
         Run("codex step", WorldCodex.OnStep);
         Run("press step", WorldPress.OnStep);
         Run("voices step", WorldVoices.OnStep);
+        Run("embargo step", WorldEmbargo.OnStep);
     }
 
     private static void Run(string what, Action a)

@@ -121,6 +121,11 @@ internal static class WarCouncil
     /// <summary>True while one of our pre-war fragments (council, calls, other modules' "ZilleWar.Pre_*") is still to be played.</summary>
     public static bool PrePending()
     {
+        if (Scheduler.HasQueued(PrePrefixes))
+        {
+            return true;    // still waiting its turn in this step
+        }
+
         var names = Managers.Instance?.GameFlowManager?.enabledNotDoneStoryFragmentsNames;
         if (names == null)
         {

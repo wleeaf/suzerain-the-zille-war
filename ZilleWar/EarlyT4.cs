@@ -31,16 +31,22 @@ internal static class EarlyT4
 
     private const string VarReportsFiled = "ZilleWar.E4_ReportsFiled";
     private const string VarMartialLaw = "ZilleWar.E4_MartialLawFiled";
+    private const string VarSordlandWithdrawn = "ZilleWar.E4_SordlandBondsWithdrawn";
     private const string VarWineryNews = "ZilleWar.E4_WineryNews";
 
     private static readonly string War = WarFlags.LDeclared;
 
     public static void Register()
     {
-        foreach (string v in new[] { VarToastReunited, VarToastSoldiers, VarConfessedWar, VarReportsFiled, VarMartialLaw, VarWineryNews })
+        foreach (string v in new[] { VarToastReunited, VarToastSoldiers, VarConfessedWar, VarReportsFiled, VarMartialLaw, VarWineryNews,
+                                     VarSordlandWithdrawn })
         {
             Variables.Register(v);
         }
+
+        // A royal trip to Holsord to buy Sordish bonds, two days into a war: Sordland withdraws the invitation instead.
+        Vanilla.Gate("Turn04_Decision_SordlandOffersInvestment", WarFlags.XPeace);
+        Vanilla.Gate("Turn04_FPnT_SordlandBondPurchase", WarFlags.XPeace);
 
         RegisterWinery();
         RegisterDrinkingGame();
@@ -177,6 +183,18 @@ internal static class EarlyT4
             FileResistanceReports();
         }
 
+        if (step >= 8 && !Variables.GetBool(VarSordlandWithdrawn))
+        {
+            Variables.Set(VarSordlandWithdrawn, true);
+            NewsWire.Report("E4_SordlandBonds", SuzerainTokenName.RiziaCountrySordland, "Sordland Withdraws Its Bond Offer", P(
+                "The Sordish finance ministry has quietly withdrawn its invitation to discuss a sale of government bonds in Holsord. " +
+                "A royal delegation, it explained in a short note to our embassy, \"would not be appropriate while the Kingdom is engaged " +
+                "in hostilities,\" and the offer will be \"revisited when the region is calmer.\"",
+                "Our ambassador reads the note as Holsord keeping its distance. Sordland is calling for talks between Rizia and Wehlen, " +
+                "and its government does not want photographs of the King in Holsord while Wehzek towns are being shelled. Sordish " +
+                "bankers, he adds, are still very interested in Rizian money. Just not this month."));
+        }
+
         if (step >= 8 && !Variables.GetBool(VarMartialLaw))
         {
             Variables.Set(VarMartialLaw, true);
@@ -188,7 +206,8 @@ internal static class EarlyT4
                 "radio has told the population that the measures are temporary and that \"the aggressor will be driven back into the sea.\""));
         }
 
-        if (step >= 8 && !Variables.GetBool(VarWineryNews))
+        // Right after the winery evening (Turn04_P_PabelLucitaRomance), not a step later.
+        if ((Vanilla.Done("Turn04_P_PabelLucitaRomance") || step >= 8) && !Variables.GetBool(VarWineryNews))
         {
             Variables.Set(VarWineryNews, true);
             bool toastedSoldiers = Variables.GetBool(VarToastSoldiers);
