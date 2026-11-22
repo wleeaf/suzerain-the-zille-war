@@ -324,12 +324,40 @@ internal static class NewsWire
             "The crews will be repatriated through a neutral port. Port authorities expect trade to collapse in the short term, and " +
             "several Monqiz trading houses with Wehzek partners have closed their doors."));
 
-        Report("Mobilization_Iza", SuzerainTokenName.RiziaCityIza, "Iza Celebrates, and Volunteers", P(
-            "In Iza, the news from Konstantium was greeted with sanctuary bells and fireworks. Su Omina banners, rarely seen in public, " +
-            "hung openly from balconies on the main square, and hundreds of young men queued outside the recruiting office before " +
-            "it opened.",
+        // Iza: the city of the 1926 Uprising, democratic and wary of the Crown, where Su Omina is strong. Its welcome for a
+        // king's war depends on where Su Omina stands.
+        bool suAllied = Variables.GetBool("RiziaDLC.Situation_Order_SuOmina_AlliedToCrown");
+        bool suHostile = Variables.GetBool("RiziaDLC.Situation_Order_SuOmina_Destabilizing") || Variables.GetBool("RiziaDLC.Iza_Outcome_SuOminaAgainstCrown");
+        string wehzekQuarter =
             "Across town, the Wehzek quarter of Little Wraclawitz kept its shutters down. Police have been posted at its entrances " +
-            "after rocks were thrown at a Wehzek bakery."));
+            "after rocks were thrown at a Wehzek bakery.";
+        if (suAllied)
+        {
+            Report("Mobilization_Iza", SuzerainTokenName.RiziaCityIza, "Su Omina Rallies in Iza; the Democrats Stay Silent", P(
+                "Su Omina turned out in force on Iza's main square, banners and all, and its young men queued at the recruiting office " +
+                "before it opened. Its leaders called the war \"the debt of 1926 finally paid.\"",
+                "The rest of Iza was quieter. The democratic clubs and the dockworkers' union held a silent vigil outside the town hall, " +
+                "under a single placard: \"A war declared without a vote.\"",
+                wehzekQuarter));
+        }
+        else if (suHostile)
+        {
+            Report("Mobilization_Iza", SuzerainTokenName.RiziaCityIza, "Iza Divided Over the King's War", P(
+                "Su Omina banners went up in Iza within the hour, but for Zille, not for the King. \"We will free Zille,\" one of its " +
+                "speakers told the square, \"and then we will see about Porte Drazon.\"",
+                "Students from the university and the dockworkers' union marched the other way, against a war declared in a foreign " +
+                "capital without a word to the House. Police kept the two crowds apart until nightfall.",
+                wehzekQuarter));
+        }
+        else
+        {
+            Report("Mobilization_Iza", SuzerainTokenName.RiziaCityIza, "A Cool Welcome in Iza", P(
+                "Iza, which has never forgiven the Crown for 1926, met the news from Konstantium without bells. A few hundred volunteers " +
+                "came forward, many of them families with relatives in Zille; the cafés on the main square argued late into the night.",
+                "The city's democratic clubs issued a short statement: Zille belongs to Rizia, and a war belongs to the people who will " +
+                "fight it. They want the House of Delegates to vote on it.",
+                wehzekQuarter));
+        }
 
         Report("Mobilization_Bronaz", SuzerainTokenName.RiziaCityBronaz, "Bronaz Factories Switch to War Production", P(
             "The workshops of Bronaz have been placed on a war footing by royal decree. Shifts have been extended to twelve hours, " +
@@ -729,23 +757,38 @@ internal static class NewsWire
                 Publish(k, "G", "Lespian Navy Closes the Strait of Kreleck", P(
                     "Lespian warships have begun stopping and searching Wehzek ships in the Strait of Kreleck, citing \"security of " +
                     "navigation.\" In practice, the strait is closed to Wehlen.",
-                    Variables.GetBool("ZilleWar.Lespia_Caleqabiz")
+                    Variables.GetBool(SupplyWar.VarLespiaLease)
+                        ? "Diplomats say the price is the Rizian island of Caleqabiz, leased to Lespia for fifty years for a token rent. Prime " +
+                          "Minister Alvarez, asked whether fifty years was not rather long, said that \"Zille managed twenty-five.\""
+                        : Variables.GetBool("ZilleWar.Lespia_Caleqabiz")
                         ? "Diplomats say Lespia has been granted naval rights at the Rizian island of Caleqabiz in return. Prime Minister " +
                           "Alvarez, asked about the arrangement, smiled and declined to comment."
                         : Variables.GetBool(SupplyWar.VarLespiaGasDeal)
-                            ? "Diplomats say the price was gas: six units of Aureus gas for LesPower every turn, at the price of two, " +
-                              "for as long as the field produces. Prime Minister Alvarez, asked about the arrangement, said only that " +
+                            ? "Diplomats say the price was gas: most of the Aureus field's output for LesPower, at three Arcasian Liras per thousand " +
+                              "cubic meters, for as long as the field produces. Prime Minister Alvarez, asked about the arrangement, said only that " +
                               "\"Lespia believes in free navigation, and in cheap energy.\""
                             : Variables.GetBool(SupplyWar.VarLespiaPaid)
-                                ? "Diplomats say Rizia is paying handsomely for the service. Prime Minister Alvarez, asked about the " +
+                                ? "Diplomats say Rizia is paying several billion guilders for the service. Prime Minister Alvarez, asked about the " +
                                   "arrangement, said only that \"Lespia believes in free navigation, and in being paid for it.\""
                                 : "Diplomats are at a loss to say what Rizia gave in return. Prime Minister Alvarez, asked about the " +
                                   "arrangement, called it \"a gesture of friendship\" and changed the subject."));
                 if (Variables.GetBool("ZilleWar.Lespia_Caleqabiz"))
                 {
+                    bool lease = Variables.GetBool(SupplyWar.VarLespiaLease);
                     Publish(k, "V", "Caleqabiz: The Price of Lespian Friendship", P(
-                        "To win back Zille, the King has opened a Rizian island to a foreign navy. History has a word for arrangements " +
-                        "like these. Twenty-five years ago, it was Zille."));
+                        lease
+                            ? "To win back Zille, the King has leased a Rizian island to a foreign navy for fifty years. History has a word " +
+                              "for arrangements like these. Twenty-five years ago, it was Zille; this one is twice as long."
+                            : "To win back Zille, the King has opened a Rizian island to a foreign navy. History has a word for arrangements " +
+                              "like these. Twenty-five years ago, it was Zille."));
+                    if (lease)
+                    {
+                        Publish(k, "RH", "Caleqabiz Lease Seals the Strait", P(
+                            "Under a lease signed this week, the Lespian navy will maintain a pier and fuel depot at Caleqabiz, and Lespia will " +
+                            "pay the Crown a handsome rent for the privilege. In return, not a single Wehzek convoy will reach Zille unseen.",
+                            "The Royal Herald notes that the island remains Rizian, that its flag still flies over the governor's house, and " +
+                            "that the rent will be paid in good Arcasian Liras."));
+                    }
                 }
 
                 Report(k, SuzerainTokenName.RiziaCountryLespia, "Alvarez Delivers", P(

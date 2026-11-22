@@ -141,7 +141,7 @@ internal static class EarlyT5
             script: Set(VarWarBonds, "true") + "Variable[\"RiziaDLC.Resources_Budget\"] = (Variable[\"RiziaDLC.Resources_Budget\"] or 0) + 2;",
             cost: "+2 Budget");
         t.Line("M_R1a", Elena,
-            "\"Patriotism is the cheapest money there is, Your Majesty. Until the war goes badly. Then it becomes the most expensive.\"",
+            "\"Six billion guilders, if they sell as well as the newspapers. Patriotism is the cheapest money there is, Your Majesty. Until the war goes badly. Then it becomes the most expensive.\"",
             new[] { "House1" });
         t.Choice("M_R2", "\"Then find the money, Ms. Werner. That is your job.\"", new[] { "M_R2a" });
         t.Line("M_R2a", Elena,

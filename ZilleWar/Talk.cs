@@ -71,19 +71,65 @@ internal sealed class Talk
         for (int i = 0; i < parts.Count; i++)
         {
             bool first = i == 0, last = i == parts.Count - 1;
-            string partName = first ? name : $"{name}_p{i + 1}";
-            _inj.AddNode(new ConversationNode(
-                name: _prefix + partName,
-                text: parts[i],
-                speakerSelector: new CharacterNameSelector(speaker),
-                hooks: first ? hooks : null,
-                nextNodes: last ? Next(next) : Next($"{name}_p{i + 2}"),
-                luaScript: first ? script : null,
-                luaCondition: first ? condition : null,
-                sequence: first ? Wait(sequence) : null));
+            _lines.Add(new LineSpec(first ? name : $"{name}_p{i + 1}", speaker, parts[i],
+                last ? (next ?? Array.Empty<string>()) : new[] { $"{name}_p{i + 2}" },
+                first ? condition : null, first ? script : null, first ? Wait(sequence) : null, first ? hooks : null));
         }
 
         return this;
+    }
+
+    private sealed class LineSpec
+    {
+        public LineSpec(string name, string speaker, string text, string[] next, string condition, string script, string sequence,
+            ConversationNodeHook[] hooks)
+        {
+            Name = name; Speaker = speaker; Text = text; NextNames = next; Condition = condition; Script = script; Sequence = sequence; Hooks = hooks;
+        }
+
+        public string Name, Speaker, Text, Condition, Script, Sequence;
+        public string[] NextNames;
+        public ConversationNodeHook[] Hooks;
+    }
+
+    private readonly List<LineSpec> _lines = new();
+    private readonly List<string> _otherRefs = new();   // next names used by choices and logic nodes
+
+    /// <summary>
+    /// Rejoins chains of short lines by one speaker (a line whose only continuation is a plain line by the same speaker,
+    /// reached from nowhere else) into small-to-medium replies, so a reply is never chopped sentence by sentence.
+    /// </summary>
+    private void MergeShortLines(int maxChars = 300)
+    {
+        bool changed = true;
+        while (changed)
+        {
+            changed = false;
+            var refs = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (string n in _lines.SelectMany(l => l.NextNames).Concat(_otherRefs))
+            {
+                refs[n] = refs.TryGetValue(n, out int c) ? c + 1 : 1;
+            }
+
+            var byName = _lines.ToDictionary(l => l.Name, StringComparer.Ordinal);
+            foreach (LineSpec a in _lines)
+            {
+                if (a.NextNames.Length != 1 || !byName.TryGetValue(a.NextNames[0], out LineSpec b) || b == a || b.Speaker != a.Speaker ||
+                    b.Condition != null || b.Script != null || b.Sequence != null || b.Hooks != null ||
+                    refs.GetValueOrDefault(b.Name) != 1 || a.Text == null || b.Text == null || a.Text.Length + b.Text.Length + 1 > maxChars)
+                {
+                    continue;
+                }
+
+                bool speechA = a.Text.Length > 1 && a.Text[0] == '"' && a.Text[^1] == '"' && a.Text.IndexOf('"', 1) == a.Text.Length - 1;
+                bool speechB = b.Text.Length > 1 && b.Text[0] == '"' && b.Text[^1] == '"' && b.Text.IndexOf('"', 1) == b.Text.Length - 1;
+                a.Text = speechA && speechB ? a.Text.Substring(0, a.Text.Length - 1) + " " + b.Text.Substring(1) : a.Text + " " + b.Text;
+                a.NextNames = b.NextNames;
+                _lines.Remove(b);
+                changed = true;
+                break;
+            }
+        }
     }
 
     private static readonly string[] Abbreviations = { "Mr.", "Mrs.", "Dr.", "St.", "Gen.", "Lt.", "Col.", "No.", "Sgt.", "Capt." };
@@ -92,12 +138,12 @@ internal sealed class Talk
     /// Splits a long reply into parts of about two sentences. Only pure speech ("...", quotes at both ends only) or pure
     /// narration (no quotes) is split; mixed lines are kept whole. Speech parts are each re-wrapped in quotes.
     /// </summary>
-    public static List<string> SplitSpeech(string text, int maxChars = 230)
+    public static List<string> SplitSpeech(string text, int maxChars = 300)
     {
         var whole = new List<string> { text };
-        if (string.IsNullOrEmpty(text) || text.Length <= maxChars)
+        if (string.IsNullOrEmpty(text) || text.Length <= 360)
         {
-            return whole;
+            return whole;      // small-to-medium replies stay whole
         }
 
         string body = text;
@@ -125,6 +171,12 @@ internal sealed class Talk
                     continue;
                 }
 
+                // an initial ("R. Toras") is not the end of a sentence
+                if (c == '.' && i >= 1 && char.IsUpper(body[i - 1]) && (i == 1 || !char.IsLetter(body[i - 2])))
+                {
+                    continue;
+                }
+
                 sentences.Add(candidate.Trim());
                 start = i + 2;
             }
@@ -141,7 +193,7 @@ internal sealed class Talk
         int n = 0;
         foreach (string sentence in sentences)
         {
-            if (n >= 2 || (n >= 1 && cur.Length + sentence.Length > maxChars))
+            if (n >= 3 || (n >= 1 && cur.Length + sentence.Length > maxChars))
             {
                 parts.Add(cur);
                 cur = string.Empty;
@@ -170,6 +222,7 @@ internal sealed class Talk
     public Talk Choice(string name, string text, string[] next, string condition = null, string script = null, string menu = null,
         string cost = null, ConversationNodeHook[] hooks = null)
     {
+        _otherRefs.AddRange(next ?? Array.Empty<string>());
         if (!string.IsNullOrEmpty(cost))
         {
             menu = $"{menu ?? text} ({cost})";
@@ -194,6 +247,7 @@ internal sealed class Talk
     /// <summary>An empty logic node: runs a script and/or branches on conditions of its children.</summary>
     public Talk Logic(string name, string[] next, string condition = null, string script = null, ConversationNodeHook[] hooks = null)
     {
+        _otherRefs.AddRange(next ?? Array.Empty<string>());
         condition = LuaFix.Rewrite(condition);
         script = LuaFix.Rewrite(script);
         LuaLint.Record(_prefix + name, condition, script);
@@ -220,7 +274,25 @@ internal sealed class Talk
         return this;
     }
 
-    public void Register() => _inj.Register();
+    public void Register()
+    {
+        MergeShortLines();
+        foreach (LineSpec l in _lines)
+        {
+            _inj.AddNode(new ConversationNode(
+                name: _prefix + l.Name,
+                text: l.Text,
+                speakerSelector: new CharacterNameSelector(l.Speaker),
+                hooks: l.Hooks,
+                nextNodes: Next(l.NextNames),
+                luaScript: l.Script,
+                luaCondition: l.Condition,
+                sequence: l.Sequence));
+        }
+
+        _lines.Clear();
+        _inj.Register();
+    }
 
     /// <summary>
     /// Replace a vanilla line or choice while <paramref name="luaWhen"/> holds: our node hangs off the vanilla parents,

@@ -424,7 +424,7 @@ internal static class LateT8
 
         // who gets the Auremina gold
         t.Logic("Gold", new[] { "Gold_L", "Gold_Ta", "Gold_Ti", "ToFarewell" });
-        Councilor(t, "Gold", "\"And Auremina. The mines are flooded, but the gold is still in the hills. Rizian Royal Gold has already written to the War Ministry. Montoro wants the concession back, and he is offering to pay for the privilege.\"",
+        Councilor(t, "Gold", "\"And Auremina. The mines are flooded, but the gold is still in the hills. Rizian Royal Gold has already written to the War Ministry. Montoro wants the concession back, and he is offering six billion guilders for the privilege.\"",
             new[] { "GoldRrg", "GoldCrown", "GoldSazon" }, condition: And(Auremina, $"not ({Lost})", $"not ({Ongoing})",
                 "Variable[\"ZilleWar.E7_ZilleGold\"] == nil or Variable[\"ZilleWar.E7_ZilleGold\"] == \"\" or Variable[\"ZilleWar.E7_ZilleGold\"] == \"later\""));
         t.Choice("GoldRrg", "\"Give Rizian Royal Gold the concession. Montoro can pay for the pumps.\"", new[] { "ToFarewell" }, cost: "+2 Budget",
@@ -682,7 +682,7 @@ internal static class LateT8
         t.Line("LibFree2", Smolak, "\"How very regal of you. I will tell their mothers it was my idea.\"", new[] { "Lib6" });
         t.Choice("LibRansom", "\"Your officers stay until Wehlen pays for what its garrison did to Zille.\"", new[] { "LibRansom2" }, cost: "+2 Budget",
             script: Set(VarPrisoners, "\"ransomed\"") + Add("RiziaDLC.Resources_Budget", 2) + Add("RiziaDLC.Diplomacy_Valgsland_NegotiatingPower", -1));
-        t.Line("LibRansom2", Smolak, "\"Ransom! From a king! Fine. Wehlen will pay for its officers. Think of it as the rent your father was too polite to charge.\"", new[] { "Lib6" });
+        t.Line("LibRansom2", Smolak, "\"Ransom! From a king! Fine. Six billion guilders for my officers, and not one more. Think of it as the rent your father was too polite to charge.\"", new[] { "Lib6" });
         t.Choice("LibHold", "\"Your prisoners go home when Wehlen recognizes the border at the strait.\"", new[] { "LibHold2" }, script: Set(VarPrisoners, "\"held\""));
         t.Line("LibHold2", Smolak, "\"Then they will grow old in Rizia. I hope your cooks are patient.\"", new[] { "Lib6" });
         t.Line("Lib6", Smolak, "\"One more thing. In Konstantium, I will ask the Alliance to condemn you. It is nothing personal. A man must be seen to try.\"", new[] { "Lib7" });
@@ -715,7 +715,7 @@ internal static class LateT8
         t.Line("Lost2", Narr, "Smolak received me in the presidential palace, in a room hung with photographs of his army in Zille. He had chosen the chairs himself. Mine was lower.",
             new[] { "Lost3" }, script: "AddConversant(\"Wiktor Smolak (R)\");");
         t.Line("Lost3", Smolak, "\"Your Majesty! Welcome to Wehlen. I wanted you to see it for yourself. You were so eager to visit last season.\"", new[] { "Lost4" });
-        t.Line("Lost4", Smolak, "\"I won't keep you. The war you started cost Wehlen dearly, and Wehlen expects to be paid. Then, a border at Mave Nortus without a single Rizian gun within twenty kilometers of it.\"", new[] { "Lost5" });
+        t.Line("Lost4", Smolak, "\"I won't keep you. The war you started cost Wehlen dearly, and Wehlen expects to be paid. Nine billion guilders, in Rizian money, since you are so fond of it. Then, a border at Mave Nortus without a single Rizian gun within twenty kilometers of it.\"", new[] { "Lost5" });
         t.Line("Lost5", Smolak, "\"And a souvenir. Your mother's old house in the harbor district of Zille. My son has taken a liking to it.\"", new[] { "LostHub" });
         t.Logic("LostHub", new[] { "LostPay", "LostRefuse" });
         t.Choice("LostPay", "\"Rizia will pay. Not because Wehlen won, but so that my soldiers' families don't see this war dragged through the courts for years.\"", new[] { "LostPay2" },

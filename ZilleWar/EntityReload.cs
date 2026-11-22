@@ -18,6 +18,7 @@ internal static class EntityReload
         WorldModifiers.ResetAdded();
         WorldCodex.ResetAdded();
         SupplyModifiers.ResetAdded();
+        WarDecrees.ResetAdded();
         Core.Log.Msg("Entity data reloaded: the mod's cards, lines and codex entries will be added again.");
     }
 }

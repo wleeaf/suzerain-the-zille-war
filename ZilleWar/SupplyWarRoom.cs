@@ -10,10 +10,11 @@ namespace ZilleWar;
 ///   Bludish companies' massacre, the Lespian cameras and their payoff (the Fort Ales raid or the film caught on the
 ///   Isor banks), a Wehzek captain defecting with his shells.
 /// - <see cref="CouncilNavy"/>: the strait (closed by Lespia, thinly watched, or open), the state of our fleet, and the
-///   King's naval order: the fleet into the strait (-1 Battle Ship), off the coast against the batteries, or kept in
-///   port; then the submarines (every second patrol loses a boat, and the option says so) unless Hegel was promised
-///   they would stay south. "What good is our fleet if Lespia is already closing the strait?" is a question the King
-///   can ask.
+///   King's naval orders. They are standing orders: the first council sets the opening posture (the fleet into the strait,
+///   -1 Battle Ship; off the coast against the batteries; or in port), and every later council hears where the fleet is
+///   and keeps or changes it (another week in the strait costs another ship). Then the submarines: sent out, kept out or
+///   called home (every second patrol loses a boat, and the option says so) unless Hegel was promised they would stay
+///   south. "What good is our fleet if Lespia is already closing the strait?" can be asked once per war.
 /// The orders are read by <see cref="WarCouncil.CurrentOrders"/> and shape the map in ZilleOperation.
 /// </summary>
 internal static partial class SupplyWar
@@ -172,11 +173,12 @@ internal static partial class SupplyWar
     }
 
     /// <summary>
-    /// The strait and the King's naval orders, then on to <paramref name="exit"/>. Sets <see cref="WarCouncil.VarNavy"/>
-    /// ("Strait" | "Coast" | "Home") and <see cref="WarCouncil.VarSubsOut"/>.
+    /// The strait and the King's naval orders, then on to <paramref name="exit"/>. Sets the standing orders
+    /// <see cref="WarCouncil.VarNavy"/> ("Strait" | "Coast" | "Home") and <see cref="WarCouncil.VarSubsOut"/>; <paramref name="later"/>
+    /// (Lua) holds at the progress meetings, where the current orders are heard first and kept or changed.
     /// </summary>
     internal static void CouncilNavy(Talk t, string entry, string exit, string lucitaHere, string coastal, string harbor, string ports,
-        string landing, string askedWhy)
+        string landing, string askedWhy, string later)
     {
         void Say(string name, string cond, string lucita, string carlos, params string[] next) =>
             Staff(t, lucitaHere, name, cond, lucita, carlos, next);
@@ -185,6 +187,9 @@ internal static partial class SupplyWar
         string closed = Is(VarLespiaStrait);
         string open = Not(VarLespiaStrait);
         string navy = WarCouncil.VarNavy;
+        string inStrait = Eq(navy, "Strait"), offCoast = Eq(navy, "Coast");
+        string inPort = $"not {inStrait} and not {offCoast}";
+        string subsOut = Is(WarCouncil.VarSubsOut);
 
         // ---- where the strait stands
         t.Logic(entry, new[] { "WRGone", "WRThin", "WRClosed", "WROpen" });
@@ -207,7 +212,7 @@ internal static partial class SupplyWar
             "\"If our ships stay in port, we will find more of them in Zille than we counted today.\"", "WRState");
 
         // ---- what we have at sea
-        t.Logic("WRState", new[] { "WRNone", "WRSubsOnly", "WRLast", "WRFew", "WRGood" });
+        t.Logic("WRState", new[] { "WRNone", "WRSubsOnly", "WRLast", "WRFew", "WRGoodLater", "WRGood" });
         Say("WRNone", $"{ships} + {subs} <= 0",
             "\"And we have nothing left at sea that could fight there. Whatever happens in the strait now, Lespia or the weather will decide it.\"",
             "\"And we have nothing left at sea that could fight there, Your Majesty.\"", exit);
@@ -216,16 +221,35 @@ internal static partial class SupplyWar
             "\"The surface fleet is gone, Your Majesty. What we have left is under the water.\"", "WRSubs");
         Say("WRLast", $"{ships} <= 1",
             "\"We have one ship left that can fight. If we lose her, the Royal Navy is a museum.\"",
-            "\"We have one ship left that can fight, Your Majesty. If she goes down, there is no navy.\"", "WRMenu");
+            "\"We have one ship left that can fight, Your Majesty. If she goes down, there is no navy.\"", "WROrders");
         Say("WRFew", $"{ships} + {subs} <= 2",
             "\"What's left of the fleet is tired and short of spares. I can send it once more, perhaps twice.\"",
-            "\"What's left of the fleet is worn out, Your Majesty. Once more, perhaps twice.\"", "WRMenu");
+            "\"What's left of the fleet is worn out, Your Majesty. Once more, perhaps twice.\"", "WROrders");
+        Say("WRGoodLater", later, "\"The fleet is in good order, and the crews want another go at them.\"",
+            "\"The fleet is in good order, Your Majesty, and the crews are eager.\"", "WROrders");
         Say("WRGood", null,
             "\"The fleet is in good order, and the crews want another go at them. Where do you want it?\"",
-            "\"The fleet is in good order, Your Majesty, and the crews are eager. Where do you want it?\"", "WRMenu");
+            "\"The fleet is in good order, Your Majesty, and the crews are eager. Where do you want it?\"", "WROrders");
+
+        // ---- later councils: the standing orders, to keep or change
+        t.Logic("WROrders", new[] { "WROrdStrait", "WROrdCoastInland", "WROrdCoast", "WROrdHome", "WRMenu" });
+        Say("WROrdStrait", $"{later} and {inStrait}",
+            "\"It's still in the strait on your orders, hunting their convoys. Every week out there costs us a ship. Do we keep it there?\"",
+            "\"It's still in the strait on your orders, Your Majesty. Every week out there costs us a ship. Do we keep it there?\"", "WRMenu");
+        Say("WROrdCoastInland", $"{later} and {offCoast} and not ({coastal})",
+            "\"The destroyers are still off the coast, but Auremina is far out of reach of their guns. They can wait there for Nanta, or go " +
+            "somewhere more useful.\"",
+            "\"The destroyers are still off the coast, Your Majesty, but Auremina is out of their reach. They can wait for Nanta, or go elsewhere.\"",
+            "WRMenu");
+        Say("WROrdCoast", $"{later} and {offCoast}",
+            "\"The destroyers are still off the coast on your orders. Their batteries have learned to keep their heads down.\"",
+            "\"The destroyers are still off the coast on your orders, Your Majesty. Their batteries keep their heads down.\"", "WRMenu");
+        Say("WROrdHome", later,
+            "\"The fleet is still in port at Sallabes, as you ordered. Do you want it out?\"",
+            "\"The fleet is still in port at Sallabes, Your Majesty. Do you want it out?\"", "WRMenu");
 
         // ---- the King's naval order
-        t.Logic("WRMenu", new[] { "WRWhy", "WRSendOpen", "WRSendClosed", "WRCoast", "WRHome" });
+        t.Logic("WRMenu", new[] { "WRWhy", "WRKeepStrait", "WRSendOpen", "WRSendClosed", "WRKeepCoast", "WRCoast", "WRKeepHome", "WRBringHome", "WRHome" });
         t.Choice("WRWhy", "\"If the Lespians are already closing the strait, what good is our fleet up there?\"", new[] { "WRWhy1" },
             condition: $"{closed} and {Not(askedWhy)}", script: T(askedWhy));
         Say("WRWhy1", null,
@@ -247,10 +271,14 @@ internal static partial class SupplyWar
             "\"Or we keep it in port and let Prime Minister Alvarez do the work. He will send us the bill either way.\"", "WRMenu");
 
         string sendScript = S(navy, "Strait") + Inc(Count(Lever.RoyalNavy), 1) + Inc(Ships, -1) + Talk.Weaken(1);
+        t.Choice("WRKeepStrait", "\"Keep it in the strait.\"", new[] { "WRKept" },
+            condition: $"{later} and {inStrait} and {ships} >= 1", cost: "-1 Battle Ship", script: sendScript);
+        Say("WRKept", null, "\"Then it stays. We'll go on sinking what crosses, and go on paying for it.\"",
+            "\"Then it stays, Your Majesty. We'll go on sinking what crosses, and paying for it.\"", "WRSentLanding");
         t.Choice("WRSendOpen", "\"Send the fleet into the strait. Sink their convoys.\"", new[] { "WRSent" },
-            condition: $"{open} and {ships} >= 1", cost: "-1 Battle Ship", script: sendScript);
+            condition: $"{open} and {ships} >= 1 and not {inStrait}", cost: "-1 Battle Ship", script: sendScript);
         t.Choice("WRSendClosed", "\"Send the fleet after their escorts.\"", new[] { "WRSent" },
-            condition: $"{closed} and {ships} >= 1", cost: "-1 Battle Ship", script: sendScript);
+            condition: $"{closed} and {ships} >= 1 and not {inStrait}", cost: "-1 Battle Ship", script: sendScript);
         Say("WRSent", null,
             "\"The order goes to Sallabes tonight. We'll sink transports, and likely an escort. We'll lose a ship of our own too. Their coastal " +
             "guns are good.\"",
@@ -261,8 +289,12 @@ internal static partial class SupplyWar
             "\"And the landing goes in without the fleet behind it. Their batteries will still be firing.\"",
             "\"And the landing goes in without the fleet behind it, Your Majesty. Their batteries will still be firing.\"", "WRSubs");
 
+        t.Choice("WRKeepCoast", "\"Keep the destroyers off the coast.\"", new[] { "WRCoastKept" },
+            condition: $"{later} and {offCoast} and {ships} >= 2", script: S(navy, "Coast"));
+        Say("WRCoastKept", null, "\"They stay on station. The batteries won't enjoy it.\"",
+            "\"They stay on station, Your Majesty.\"", "WRCoast3");
         t.Choice("WRCoast", "\"Put the fleet off the coast. Their batteries are the target.\"", new[] { "WRCoast2" },
-            condition: $"{coastal} and {ships} >= 2", script: S(navy, "Coast"));
+            condition: $"{coastal} and {ships} >= 2 and not {offCoast}", script: S(navy, "Coast"));
         Say("WRCoast2", null,
             "\"The destroyers will be on station by dawn. Once those guns are quiet, our boats can come into the bay.\"",
             "\"The destroyers will be on station by dawn, Your Majesty. Once those guns are quiet, the bay is ours.\"", "WRCoast3");
@@ -270,7 +302,10 @@ internal static partial class SupplyWar
         Say("WRCoastOpen", open, "\"The convoys will have the strait to themselves while we're at it.\"",
             "\"The convoys will have the strait to themselves while we're at it, Your Majesty.\"", "WRSubs");
 
-        t.Choice("WRHome", "\"Keep the fleet in port. We may need it later.\"", new[] { "WRHome2" }, script: S(navy, "Home"));
+        t.Choice("WRKeepHome", "\"Leave it in port.\"", new[] { "WRHome2" }, condition: $"{later} and {inPort}", script: S(navy, "Home"));
+        t.Choice("WRBringHome", "\"Bring the fleet back to Sallabes.\"", new[] { "WRHome2" }, condition: $"{later} and not ({inPort})",
+            script: S(navy, "Home"));
+        t.Choice("WRHome", "\"Keep the fleet in port. We may need it later.\"", new[] { "WRHome2" }, condition: $"not ({later})", script: S(navy, "Home"));
         t.Logic("WRHome2", new[] { "WRHomeOpen", "WRHomeClosed" });
         Say("WRHomeOpen", open, "\"As you wish. Then expect fresh Wehzek battalions at the front by the time we get there.\"",
             "\"As you wish, Your Majesty. Then expect fresh Wehzek battalions at the front.\"", "WRSubs");
@@ -278,7 +313,24 @@ internal static partial class SupplyWar
             "\"Then the strait is the Lespians' business, Your Majesty. Let's hope they keep minding it.\"", "WRSubs");
 
         // ---- the submarines (not while Hegel has their word that they stay south)
-        t.Logic("WRSubs", new[] { "WRSubsLucky", "WRSubsFresh", exit });
+        string patrol = T(WarCouncil.VarSubsOut) + Inc(Count(Lever.Submarines), 1) + Inc(VarSubPatrols, 1) + Talk.Weaken(1);
+        string patrolLoss = T(WarCouncil.VarSubsOut) + Inc(Count(Lever.Submarines), 1) + Inc(Subs, -1) + $"{V(VarSubPatrols)} = 0; " + Talk.Weaken(1);
+        t.Logic("WRSubs", new[] { "WRSubsOutLucky", "WRSubsOut", "WRSubsLucky", "WRSubsFresh", exit });
+        Say("WRSubsOutLucky", $"{subsOut} and {subs} > 0 and {Not(VarSubsGrounded)} and {N(VarSubPatrols)} >= 1",
+            "\"The submarines are still out. They've been lucky so far, but the convoys have escorts now. Another week out there will cost us a boat.\"",
+            "\"The submarines are still out, Your Majesty. The convoys have escorts now. Another week will cost us a boat.\"",
+            "WRSubsKeepLoss", "WRSubsRecall");
+        Say("WRSubsOut", $"{subsOut} and {subs} > 0 and {Not(VarSubsGrounded)}",
+            "\"The submarines are still out in the strait, and the Wehzek captains have learned to dread the dark.\"",
+            "\"The submarines are still out in the strait, Your Majesty. The Wehzek captains have learned to dread the dark.\"",
+            "WRSubsKeep", "WRSubsRecall");
+        t.Choice("WRSubsKeep", "\"Keep them out.\"", new[] { "WRSubsKept" }, script: patrol);
+        t.Choice("WRSubsKeepLoss", "\"Keep them out anyway.\"", new[] { "WRSubsKept" }, cost: "-1 Submarine", script: patrolLoss);
+        Say("WRSubsKept", null, "\"Then they stay on patrol. I'll have the depot ship sent out to meet them.\"",
+            "\"Then they stay on patrol, Your Majesty.\"", exit);
+        t.Choice("WRSubsRecall", "\"Bring them home.\"", new[] { "WRSubsRecalled" }, script: $"{V(WarCouncil.VarSubsOut)} = false; ");
+        Say("WRSubsRecalled", null, "\"They'll be back in Sallabes by the end of the week.\"",
+            "\"They'll be back in Sallabes by the end of the week, Your Majesty.\"", exit);
         Say("WRSubsLucky", $"{subs} > 0 and {Not(VarSubsGrounded)} and {N(VarSubPatrols)} >= 1",
             "\"The submarines were lucky last time. The Wehzeks have put destroyers on the convoys since. If they go again, we'll lose one.\"",
             "\"The submarines were lucky last time, Your Majesty. The convoys have escorts now. If they sail again, we'll lose one.\"",
@@ -288,10 +340,8 @@ internal static partial class SupplyWar
             "staring at the water.\"",
             "\"And the submarines, Your Majesty. Every Wehzek captain who crosses will spend the night staring at the water.\"",
             "WRSubsYes", "WRSubsNo");
-        t.Choice("WRSubsYes", "\"Send the submarines.\"", new[] { "WRSubs2" },
-            script: T(WarCouncil.VarSubsOut) + Inc(Count(Lever.Submarines), 1) + Inc(VarSubPatrols, 1) + Talk.Weaken(1));
-        t.Choice("WRSubsYesLoss", "\"Send them anyway.\"", new[] { "WRSubs2" }, cost: "-1 Submarine",
-            script: T(WarCouncil.VarSubsOut) + Inc(Count(Lever.Submarines), 1) + Inc(Subs, -1) + $"{V(VarSubPatrols)} = 0; " + Talk.Weaken(1));
+        t.Choice("WRSubsYes", "\"Send the submarines.\"", new[] { "WRSubs2" }, script: patrol);
+        t.Choice("WRSubsYesLoss", "\"Send them anyway.\"", new[] { "WRSubs2" }, cost: "-1 Submarine", script: patrolLoss);
         Say("WRSubs2", null, "\"They'll sail on the evening tide.\"", "\"They sail on the evening tide, Your Majesty.\"", exit);
         t.Choice("WRSubsNo", "\"Keep them in port for now.\"", new[] { exit });
     }

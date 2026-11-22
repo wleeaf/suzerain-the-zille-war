@@ -172,7 +172,27 @@ internal sealed class AfterAction
         };
     }
 
-    /// <summary>How the King's orders from the War Council played out.</summary>
+    private static string Noun(WarCouncil.Approach a) => a switch
+    {
+        WarCouncil.Approach.Feint => "feint",
+        WarCouncil.Approach.Armor => "armored thrust",
+        WarCouncil.Approach.Landing => "landing",
+        WarCouncil.Approach.Airborne => "airborne drop",
+        WarCouncil.Approach.Mountain => "move over the ridges",
+        _ => "direct assault",
+    };
+
+    private static string Spent(WarCouncil.Approach a) => a switch
+    {
+        WarCouncil.Approach.Armor => "most of the tanks",
+        WarCouncil.Approach.Landing => "the marines and their ships",
+        WarCouncil.Approach.Airborne => "the paratroopers",
+        _ => "the mountaineers",
+    };
+
+    private static string Cap(string s) => s.Length == 0 ? s : char.ToUpperInvariant(s[0]) + s.Substring(1);
+
+    /// <summary>How the war plan the King set at the start of the campaign, and his other orders, played out.</summary>
     private static string PlanSentence(WarCouncil.Orders o, ObjectiveInfo info, bool won)
     {
         var s = new List<string>();
@@ -184,37 +204,45 @@ internal sealed class AfterAction
                 : $"Not even the preparatory barrage ordered by {by} could break the Wehzek forward positions.");
         }
 
-        switch (o.Approach)
+        bool opening = ZilleCampaign.CurrentOperation().k <= 1;
+        string chosen = $"the {Noun(o.Plan)} the King chose {(opening ? "for the campaign" : "at the start of the campaign")}";
+        string target = info.Target;
+        switch (o.Adapt)
         {
-            case WarCouncil.Approach.Feint:
-                s.Add(won
-                    ? $"A feint drew the Wehzek reserves away from {info.Target}, as the Staff had hoped."
-                    : "The enemy did not take the bait of the feint, and their reserves were waiting.");
+            case "hills":
+                s.Add($"In the hills the tanks could not lead, so the Staff carried on {chosen} as an infantry push up the valley road, with the " +
+                      $"armor close behind. {(won ? "It was enough." : "It was not enough.")}");
                 break;
-            case WarCouncil.Approach.Landing:
-                s.Add(won
-                    ? "The landing went in behind the Wehzek lines and caught the garrison facing the wrong way."
-                    : "The landing proved costly, and the men who reached the beach could not break out of it.");
+            case "inland":
+                s.Add($"{target} lies far from the sea, so the Staff carried on {chosen} by putting the marines ashore on the coast behind the hills" +
+                      (won ? ", where they drew the Wehzek reserves down to meet them." : ", but the Wehzek reserves did not come down to meet them."));
                 break;
-            case WarCouncil.Approach.Armor:
-                s.Add(won
-                    ? "The armored columns went straight up the main road and were through the wall before its garrison knew where to turn."
-                    : "The tanks broke through the wall, but the infantry could not keep pace, and the Wehzeks closed the gap behind them.");
-                break;
-            case WarCouncil.Approach.Airborne:
-                s.Add(won
-                    ? $"Paratroopers dropped behind the Wehzek lines and held their ground until the columns reached them outside {info.Target}."
-                    : "The paratroopers came down where they were meant to, and were left there too long. Few of them came back.");
-                break;
-            case WarCouncil.Approach.Mountain:
-                s.Add(won
-                    ? "The mountain troops took the hill forts from above, where nobody had thought to dig in."
-                    : "The mountain troops reached the ridges, but the hill forts held, and the valleys below became a killing ground.");
+            case "units":
+                s.Add($"With {Spent(o.Plan)} spent, the Staff carried on {chosen} as a direct assault" +
+                      (won ? ", and it was enough." : ", and it ran straight into prepared Wehzek positions."));
                 break;
             default:
-                s.Add(won
-                    ? "The direct assault moved fast enough that the Wehzek armor never came up in time."
-                    : "The direct assault ran straight into prepared Wehzek positions.");
+                s.Add(o.Approach switch
+                {
+                    WarCouncil.Approach.Feint => won
+                        ? $"{Cap(chosen)} {(opening ? "drew" : "once again drew")} the Wehzek reserves away from {target}."
+                        : $"This time the enemy did not take the bait of {chosen}, and their reserves were waiting.",
+                    WarCouncil.Approach.Landing => won
+                        ? $"{Cap(chosen)} went in behind the Wehzek lines and caught the garrison facing the wrong way."
+                        : $"{Cap(chosen)} proved costly, and the men who reached the beach could not break out of it.",
+                    WarCouncil.Approach.Armor => won
+                        ? $"{Cap(chosen)} went straight up the main road and was through the Wehzek line before its garrison knew where to turn."
+                        : $"The tanks of {chosen} broke through, but the infantry could not keep pace, and the Wehzeks closed the gap behind them.",
+                    WarCouncil.Approach.Airborne => won
+                        ? $"{Cap(chosen)} put paratroopers behind the Wehzek lines, and they held their ground until the columns reached them outside {target}."
+                        : $"{Cap(chosen)} put the paratroopers down where they were meant to be, and they were left there too long. Few of them came back.",
+                    WarCouncil.Approach.Mountain => won
+                        ? $"{Cap(chosen)} put the mountain troops on the high ground above the Wehzek positions, where nobody had thought to dig in."
+                        : $"{Cap(chosen)} put the mountain troops on the ridges, but the positions below held, and the valleys became a killing ground.",
+                    _ => won
+                        ? $"{Cap(chosen)} moved fast enough that the Wehzek armor never came up in time."
+                        : $"{Cap(chosen)} ran straight into prepared Wehzek positions.",
+                });
                 break;
         }
 

@@ -31,8 +31,12 @@ internal static partial class SupplyWar
     /// <summary>Lua: Alvarez still has the Meftiem bargain to offer (no promise to Lespia or Valgsland, final vote not yet held).</summary>
     internal static readonly string MitzBargainOpen = $"(not {LespiaHasVote} and {Not(ValgslandMitz)} and {TurnLua} <= 8)";
 
+    /// <summary>Lespia holds Caleqabiz on a fifty-year lease (the price of the strait when the gas was refused).</summary>
+    public const string VarLespiaLease = "ZilleWar.Lespia_CaleqabizLease";
+
     private static void RegisterAlvarez()
     {
+        SuzerainModdingKit.Variables.Register(VarLespiaLease);
         SuzerainModdingKit.Variables.Register(VarLespiaAllianceVote);
         SuzerainModdingKit.Variables.Register(VarLespiaMitzReward);
         SuzerainModdingKit.Variables.Register(VarAlvarezPhotoSaid);
@@ -132,24 +136,43 @@ internal static partial class SupplyWar
         d.Say("GasNow2", Alvarez,
             "\"You took the Aureus field from under LesPower. Very bold. Now the gas is flowing, and Lespia would like its share.\"", "GasNow3");
         d.Say("GasNow3", Alvarez,
-            "\"Six units every turn, for which LesPower will pay you the price of two. For as long as you sit on that throne.\"", "GrudgeGas");
+            "\"A steady share every quarter, and LesPower pays three Liras per thousand cubic meters. A fair price, between friends. For as long as you sit on that throne.\"", "GrudgeGas");
         d.SayIf("PriceGasLater", pending, Alvarez,
             "\"Now, the price. I'll keep it simple for you. Your pipeline to Aureus isn't finished. I know, I have engineers too.\"",
             "GasLater2");
         d.Say("GasLater2", Alvarez,
-            "\"So my navy closes the strait now, on credit, because I'm a generous man. The day your gas flows, six units of it come " +
-            "to LesPower every turn, at the price of two.\"", "GasLater3");
+            "\"So my navy closes the strait now, on credit, because I'm a generous man. The day your gas flows, LesPower takes its " +
+            "share every quarter, at three Liras per thousand cubic meters.\"", "GasLater3");
         d.Say("GasLater3", Alvarez, "\"You'll find that's how grown-up countries do business.\"", "GrudgeGas");
         d.Branch("GrudgeGas", "GrudgeGasSay", "EsqGas");
         d.SayIf("GrudgeGasSay", grudge, Alvarez,
             "\"Oh, and since you looked me in the eye at the Meftiem and then voted with the Malenyevists, a little something up " +
-            "front. In cash. Call it the price of my disappointment.\"", "EsqGas");
+            "front. Three billion Liras, in cash. Call it the price of my disappointment.\"", "EsqGas");
         d.Say("EsqGas", Esquibel,
-            "Laurento covered the mouthpiece. \"Six for two, every turn, for the rest of your reign. It's not a price, Your Majesty. " +
-            "It's a tribute.\"", "EsqGas2");
+            "Laurento covered the mouthpiece. \"Three Liras, when the market pays ten. Most of the field, every quarter, for the rest " +
+            "of your reign. It's not a price, Your Majesty. It's a tribute.\"", "EsqGas2");
         d.Say("EsqGas2", Esquibel, "\"But he can close that strait, and nobody else can.\"", "MenuGas");
 
-        d.Branch("MenuGas", Gate("Free"), Gate("GasNow"), Gate("GasNowG"), Gate("GasLater"), Gate("GasLaterG"), "Refuse");
+        d.Branch("MenuGas", Gate("Free"), Gate("GasNow"), Gate("GasNowG"), Gate("GasLater"), Gate("GasLaterG"), "RefuseGas");
+
+        // No gas? Then land: a fifty-year lease of Caleqabiz, with a token rent paid to Rizia.
+        d.Opt("RefuseGas", null, "\"No gas. Not at that price.\"", null, null, "Lease1");
+        d.Say("Lease1", Alvarez,
+            "\"Then let's talk about land instead, since gas upsets you. Fifty years of Caleqabiz. A proper lease, signed and stamped: " +
+            "our pier, our depot, our flag over the harbor.\"", "Lease2");
+        d.Say("Lease2", Alvarez,
+            "\"And because I'm a generous man, Lespia pays rent. A billion and a half Liras a quarter, on time. You'll hardly notice " +
+            "the island is gone.\"", "EsqLease");
+        d.Say("EsqLease", Esquibel,
+            "Laurento covered the mouthpiece. \"Fifty years, Your Majesty. Your father signed twenty-five on Zille, and we are at war " +
+            "to get it back.\"", "MenuLease");
+        d.Branch("MenuLease", "Lease", "RefuseLease");
+        d.Opt("Lease", null, "\"Fifty years. Draw up the lease.\"", "-2 Authority, +1 Budget Per Turn, Caleqabiz Leased to Lespia for 50 Years",
+            dealScript + Talk.Weaken(1) + T(VarLespiaCaleqabiz) + T(VarLespiaLease) + Inc(Authority, -2) +
+            $"{V(WorldModifiers.CaleqabizRent)} = 1; ", "DealLease");
+        d.Say("DealLease", Alvarez,
+            "\"Splendid. My lawyers have had the papers ready since Konstantium. My admirals will be in the strait by Sunday.\"", "Hub");
+        d.Opt("RefuseLease", null, "\"No. Not the island, and not the gas.\"", null, null, "NoDeal");
         const string gasNowText = "\"Six for two. LesPower gets its gas.\"";
         const string gasLaterText = "\"Close the strait. LesPower gets its gas when the pipeline opens.\"";
         string gasDeal = dealScript + Talk.Weaken(1) + T(VarLespiaGasDeal);

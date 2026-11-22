@@ -195,7 +195,7 @@ internal static class CityEvents
                     Add(Opinion, -1);
                     News("AureminaGold", "V", "The Army Finds the Gold First",
                         "The first thing the Royal Army secured in Auremina, according to the miners we spoke to, was not the hospital or " +
-                        "the school but the refinery's strongroom. Its contents are on their way to Porte Drazon. The miners are still " +
+                        "the school but the refinery's strongroom. Its contents, some three billion guilders in gold bars, are on their way to Porte Drazon. The miners are still " +
                         "waiting to be paid for the last month they worked under the Wehzeks.");
                 })),
                 new EventOption("Open the gates. Tell the miners they are free men of Rizia. (+250 Manpower)", Do("Auremina_MinersFreed", () =>

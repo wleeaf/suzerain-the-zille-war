@@ -91,7 +91,7 @@ internal static class SweepMiddleT8
                  {
                      ("Lib", Lib, "\"Zille has come home, Your Majesty, and the bill came with it. Shells, fuel, pensions for the widows. The Auremina mines may pay some of it back, in a few years.\""),
                      ("Part", Part, "\"The ceasefire stopped the shelling, Your Majesty, but not the spending. We are paying to garrison half of Zille, and the war pensions begin this quarter.\""),
-                     ("Lost", Lost, "\"I won't dress it up, Your Majesty. We spent a fortune on the Zille campaign, and all we have to show for it are the pensions for the widows.\""),
+                     ("Lost", Lost, "\"I won't dress it up, Your Majesty. We spent close to thirty billion guilders on the Zille campaign, and all we have to show for it are the pensions for the widows.\""),
                  })
         {
             t.Line("Bill" + sfx, Elena, text, new[] { "#68" }, condition: And(state, NoPales), hooks: Talk.From(56));

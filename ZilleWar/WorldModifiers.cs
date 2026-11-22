@@ -27,11 +27,12 @@ internal static class WorldModifiers
     public const string LespiaGasBudget = "ZilleWar.Mod_LespiaGasBudget";       // budget, positive: what LesPower pays for it
     public const string BffContracts = "ZilleWar.Mod_BFFContracts";             // budget, negative: BFF contracts paid by Rizia
     public const string WehlenReparations = "ZilleWar.Mod_WehlenReparations";   // budget, negative: reparations after a lost war
+    public const string CaleqabizRent = "ZilleWar.Mod_CaleqabizRent";           // budget, positive: Lespia's rent for its 50-year lease
     /// <summary>Bool: the Strait of Kreleck is closed to Wehzek shipping by someone (Lespia, our fleet). Ends "Maritime Trade in Turmoil".</summary>
     public const string StraitClosed = "ZilleWar.World_StraitClosed";
 
     private static readonly string[] External =
-        { RumburgCredit, RumburgRepayment, RumburgGas, LespiaEscort, LespiaGas, LespiaGasBudget, BffContracts, WehlenReparations };
+        { RumburgCredit, RumburgRepayment, RumburgGas, LespiaEscort, LespiaGas, LespiaGasBudget, BffContracts, WehlenReparations, CaleqabizRent };
 
     // ---- values computed here
     private const string WarExpenditures = "ZilleWar.Mod_WarExpenditures";
@@ -88,6 +89,7 @@ internal static class WorldModifiers
         new("Rizia_Budget_Modifier_RumburgCreditRepayment", Budget, RumburgRepayment, Neg(RumburgRepayment), "{0} per turn from Rumburgian War Credit Repayments"),
         new("Rizia_Budget_Modifier_LespianEscortFees", Budget, LespiaEscort, Neg(LespiaEscort), "{0} per turn from Lespian Naval Escort Fees"),
         new("Rizia_Budget_Modifier_LesPowerGasSales", Budget, LespiaGasBudget, Pos(LespiaGasBudget), "{0} per turn from Gas Sales to LesPower"),
+        new("Rizia_Budget_Modifier_CaleqabizLease", Budget, CaleqabizRent, Pos(CaleqabizRent), "{0} per turn from the Lespian Lease of Caleqabiz"),
         new("Rizia_Budget_Modifier_BFFContracts", Budget, BffContracts, Neg(BffContracts), "{0} per turn from Bludish Freedom Front Contracts"),
         new("Rizia_Budget_Modifier_WehlenReparations", Budget, WehlenReparations, Neg(WehlenReparations), "{0} per turn from Reparations to Wehlen"),
         // the vanilla variable Turn 9 MITZ already moves, never shown in vanilla; only in a war playthrough

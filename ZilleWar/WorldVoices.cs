@@ -102,7 +102,7 @@ internal static class WorldVoices
 
         Dispatch("TreasuryCost", SuzerainTokenName.RiziaCityPorteDrazon, "The Treasury Counts the Cost of War", P(
             "Councilor Elena Werner's office has sent the palace its first estimate of what the war will cost. Pay, fuel, shells and " +
-            "the requisitioned trains of the northern line will cost the treasury around two in every turn of the budget, and more if " +
+            "the requisitioned trains of the northern line will cost the treasury six billion guilders a quarter, and nine billion if " +
             "the fighting goes badly. Trade across the Strait of Kreleck has stopped, and insurers have raised the price of every cargo " +
             "that still sails.",
             "The memorandum ends with a sentence underlined twice: \"The treasury can pay for a short war. It cannot pay for a long one.\""));
@@ -325,7 +325,7 @@ internal static class WorldVoices
                       "ports of Agnolia, have been sending money to the palace in plain envelopes, addressed simply to \"the King, for Zille.\" " +
                       "The Crown issued no war bonds, so the treasury has had to open a special account for gifts.",
                 bonds
-                    ? "Councilor Werner's office expects the bonds to bring in a modest but welcome sum for as long as the war lasts. It has " +
+                    ? "Councilor Werner's office expects the bonds to bring in three billion guilders a quarter for as long as the war lasts. It has " +
                       "not forgotten that every one of them must one day be paid back."
                     : "Councilor Werner's office calls the sums modest, and the letters the best news it has had since the declaration."));
             News("Volunteers", "RH", "They Came Home to Fight", P(
@@ -509,7 +509,7 @@ internal static class WorldVoices
                       "Since the news from Zille, small holders have queued outside the Royal Treasury every morning to sell them back."
                     : "The war bonds issued after Konstantium were sold on the promise of a Rizian Zille. With a ceasefire line through the " +
                       "province, they now change hands at half their face value, and small holders have begun queueing at the Royal Treasury.",
-                "Councilor Werner has bought back the first of them to stop the panic, at a cost of one unit of budget. Her covering note " +
+                "Councilor Werner has bought back the first of them to stop the panic, at a cost of three billion guilders. Her covering note " +
                 "to the palace is a single line: \"I said patriotism would become the most expensive money there is. I take no pleasure in " +
                 "being right.\""));
         }

@@ -40,7 +40,7 @@ internal static class WarFlow
 
         foreach ((string what, Action step) in new (string, Action)[]
                  {
-                     ("war flags", WarFlags.Sync), ("vanilla edits", Vanilla.Apply), ("lua check", LuaLint.RunOnce), ("turns 4-7", VanillaEarly.OnStep),
+                     ("war flags", WarFlags.Sync), ("war decrees", WarDecrees.OnStep), ("vanilla edits", Vanilla.Apply), ("lua check", LuaLint.RunOnce), ("turns 4-7", VanillaEarly.OnStep),
                      ("turns 8-10", VanillaLate.OnStep), ("world", WorldSystems.OnStep),
                      ("sweep 4-6", SweepEarly.OnStep), ("sweep 7-8", SweepMiddle.OnStep), ("sweep 9-10", SweepLate.OnStep), ("strategic map", StrategicMap.OnStep), ("finish", Finish.OnStep),
                  })

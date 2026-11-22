@@ -77,7 +77,7 @@ internal static class EarlyT7Diplomacy
             new[] { "Fat" }, condition: fundBff);
         t.Line("BffUsed", Beatrice,
             "\"The Bludish Freedom Front has been setting fire to Smolak's ports on your behalf for weeks now, and Rumburg has been paying " +
-            "for the matches. I would like Rizia to start sharing the bill.\"", new[] { "BffLaurento" }, condition: bffUsed);
+            "for the matches. I would like Rizia to start sharing the bill. Three billion guilders would do, for a start. A trifle, between family.\"", new[] { "BffLaurento" }, condition: bffUsed);
         t.Line("BffOffer", Beatrice,
             "\"I suggest you take advantage of Rumburg's contacts within the Bludish Freedom Front. Your soldiers could use friends behind " +
             "Smolak's lines.\"", new[] { "BffLaurento" });

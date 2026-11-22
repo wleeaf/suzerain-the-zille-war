@@ -283,7 +283,7 @@ internal static class EarlyT6
             "\"My admirals have been holding the Strait of Kreleck shut for you, Your Majesty. Wehzek tankers are rusting at anchor in " +
             "Wraclawitz because of it. And today, the Aureus gas starts flowing.\"", new[] { "Aside2" });
         t.Line("Aside2", Alvarez,
-            "\"I don't hold grudges. I hold invoices. I think Rizia can afford to sell some of its share back to its friends at a friendly price.\"",
+            "\"I don't hold grudges. I hold invoices. I think Rizia can afford to sell some of its share back to its friends at a friendly price. Shall we say three Arcasian Liras per thousand cubic meters?\"",
             new[] { "Pay", "Caleqabiz", "Refuse" });
         t.Choice("Pay", "\"Rizia pays its debts, Mr. Prime Minister.\"", new[] { "PayA" }, cost: "-6 Energy, +2 Budget",
             script: Set(VarAlvarezGasPrice, "\"paid\"") + Inc("RiziaDLC.Resources_Energy", -6) + Inc("RiziaDLC.Resources_Budget", 2) +

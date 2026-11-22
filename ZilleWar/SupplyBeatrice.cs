@@ -102,7 +102,7 @@ internal static partial class SupplyWar
             "\"The treasury is bleeding, Beatrice. Could Rumburg lend us money?\"", null, T(Q(2)), "Credit");
         d.Say("Credit", Beatrice, "\"Lend. What a charming word.\"", "Credit2");
         d.Say("Credit2", Beatrice,
-            "\"Very well. A war credit in Rizia's name. A handsome sum now, from my Exchequer to yours.\"", "CreditTerms");
+            "\"Very well. A war credit in Rizia's name. Eighteen billion guilders now, from my Exchequer to yours. Pocket money, between family.\"", "CreditTerms");
         d.Branch("CreditTerms", "TermsLong", "TermsMid", "TermsShort");
         d.SayIf("TermsLong", $"{turn} <= 2", Beatrice,
             "\"Repaid in small installments over a good many seasons. My Exchequer is in a patient mood.\"", "CreditMenu");
@@ -115,7 +115,7 @@ internal static partial class SupplyWar
         d.Do("CreditMenu", null, Gate("CreditWhy"), Gate("Credit8"), Gate("Credit4"), Gate("Credit3"), Gate("Credit2x"), "CreditNo");
         d.Opt("CreditWhy", Not(Q(6)), "\"And the interest?\"", null, T(Q(6)), "CreditWhy2");
         d.Say("CreditWhy2", Beatrice,
-            "\"Family rates, Romus. Which is to say, higher than you'd like and lower than you deserve.\"", "CreditMenu");
+            "\"Family rates, Romus. Twenty-four billion back for every eighteen lent. Which is to say, higher than you'd like and lower than you deserve.\"", "CreditMenu");
         string creditScript = Inc(Budget, 6) + Inc(VarRumburgCredits, 1) + $"{V(VarRumburgDebt)} = 8; " + Inc(VarRumburgPatience, -1);
         string Repay(int rate, int turns) =>
             creditScript + $"{V(ModRumburgCredit)} = {-rate}; {V(ModRumburgCredit + "_Turns")} = {turns}; ";

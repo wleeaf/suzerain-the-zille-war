@@ -37,6 +37,7 @@ internal sealed class Core : MelonMod
         Step("vanilla turns 4-7", VanillaEarly.Register);
         Step("vanilla turns 8-10", VanillaLate.Register);
         Step("world systems", WorldSystems.Register);
+        Step("war decrees", WarDecrees.Register);
         Step("sweep turns 4-6", SweepEarly.Register);
         Step("sweep turns 7-8", SweepMiddle.Register);
         Step("sweep turns 9-10", SweepLate.Register);

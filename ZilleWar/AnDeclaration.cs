@@ -82,7 +82,8 @@ internal static class AnDeclaration
             name: P + "Declare",
             speakerSelector: new CharacterNameSelector(Romus),
             menuText: "\"I hereby declare war on Wehlen.\"",
-            text: "\"Twenty-five years ago, in a dark hour, my father lent Zille to a friend who had stood by him. The lease has ended.\"",
+            text: "\"Twenty-five years ago, in a dark hour, my father lent Zille to a friend who had stood by him. The lease has ended, " +
+                  "and the friend has decided to keep what was only ever borrowed, and to call it security.\"",
             luaScript:
                 $"Variable[\"{VarDeclared}\"] = true; Variable[\"{VarEntryAN}\"] = true; " +
                 $"Variable[\"{VarDeclaredTurn}\"] = 4; Variable[\"{WarState.VarActive}\"] = true; " +
@@ -94,9 +95,8 @@ internal static class AnDeclaration
             sequence: Wait(new ConversationNodeSequenceBuilder().PlaySceneMusic("Critical").ToString()),
             nextNodes: Next("Declare_p2")));
 
-        inj.AddNode(Choice("Declare_p2", "\"The friend has decided to keep what was only ever borrowed, and to call it security.\"", Next("Declare_p3")));
-        inj.AddNode(Choice("Declare_p3", "\"Let this Alliance bear witness: in the name of the Rizian Crown, I hereby declare war on Wehlen.\"", Next("Declare_p4")));
-        inj.AddNode(Choice("Declare_p4", "\"Rizia will not lay down its arms until Zille is home.\"", Next("Silence")));
+        inj.AddNode(Choice("Declare_p2", "\"Let this Alliance bear witness: in the name of the Rizian Crown, I hereby declare war on Wehlen. " +
+            "Rizia will not lay down its arms until Zille is home.\"", Next("Silence")));
 
         // --- the hall ---
         inj.AddNode(Line("Silence", Narrator,

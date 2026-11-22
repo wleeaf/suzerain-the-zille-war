@@ -248,10 +248,10 @@ internal static partial class SupplyWar
             "and without my name on the invoice.\"", "Price");
         d.Branch("Price", "PriceCheap", "PriceDear", "PriceFair");
         d.SayIf("PriceCheap", cheap, Saltana,
-            "\"Rizia stood with the workers on the Meftiem, so you'll have the price I would give a friend.\"", "Menu");
+            "\"Rizia stood with the workers on the Meftiem, so you'll have the price I would give a friend. Three billion guilders for the squadron.\"", "Menu");
         d.SayIf("PriceDear", dear, Saltana,
-            "\"I hear you've promised your Meftiem vote to Mr. Alvarez. Then you can pay Alvarez prices.\"", "Menu");
-        d.Say("PriceFair", Saltana, "\"The price is fair. Ask anyone who has bought from us.\"", "Menu");
+            "\"I hear you've promised your Meftiem vote to Mr. Alvarez. Then you can pay Alvarez prices. Nine billion guilders for the squadron.\"", "Menu");
+        d.Say("PriceFair", Saltana, "\"Six billion guilders for the squadron. The price is fair. Ask anyone who has bought from us.\"", "Menu");
 
         d.Branch("Menu", Gate("Buy1"), Gate("Buy2"), Gate("Buy3"), Gate("Gulf"), "Decline");
         const string send = "\"Send the planes.\"";

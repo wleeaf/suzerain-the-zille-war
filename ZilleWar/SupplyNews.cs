@@ -181,20 +181,20 @@ internal static class SupplyNews
         Once("Credit1", credits >= 1, () =>
         {
             Paper("Credit1", "G", "Rumburg Opens a War Credit for Rizia",
-                "The Exchequer of Rumburg has opened a line of credit in the name of the Kingdom of Rizia, Thornbourgh confirmed " +
-                "yesterday, to be repaid in monthly installments. Queen Beatrice's government described it as \"a family arrangement " +
+                "The Exchequer of Rumburg has opened a line of credit worth eighteen billion guilders in the name of the Kingdom of Rizia, " +
+                "Thornbourgh confirmed yesterday, to be repaid in quarterly installments. Queen Beatrice's government described it as \"a family arrangement " +
                 "between members of GRACE.\"",
                 "Economists in Konstantium note that the loan will keep Rizia's war in Zille funded through the season, and keep " +
                 "Rizia's treasury tied to Thornbourgh for a good deal longer. It remains to be seen what else the arrangement includes.");
             Rep("Credit1", SuzerainTokenName.RiziaCountryRumburg, "The Exchequer's Terms",
-                "The first tranche of the Rumburgian war credit has reached the Royal Treasury. Repayments begin at once, a little " +
-                "every month, until the debt is cleared.",
+                "Eighteen billion guilders of Rumburgian war credit have reached the Royal Treasury. Twenty-four billion must go back, " +
+                "a little every quarter, starting at once.",
                 "Councilor Werner has read the small print twice. She reports that the terms are generous, and that Rumburg will be in " +
                 "a position to remind us of that generosity for years to come.");
         });
         Once("Credit2", credits >= 2, () =>
             Rep("Credit2", SuzerainTokenName.RiziaCountryRumburg, "A Second Loan from Thornbourgh",
-                "Thornbourgh has extended a second war credit to the Crown. The Rumburgian Exchequer, our embassy notes, drafted the " +
+                "Thornbourgh has extended a second war credit to the Crown, another eighteen billion guilders. The Rumburgian Exchequer, our embassy notes, drafted the " +
                 "papers in a single afternoon and left the interest rate for last.",
                 "Our repayments to Rumburg have doubled. A senior official at the Rumburgian Foreign Office remarked to our ambassador " +
                 "that \"Rizia now owes Thornbourgh more than gratitude,\" and appeared to mean it as a compliment."));
@@ -252,20 +252,20 @@ internal static class SupplyNews
         Once("LespiaGas", B(SupplyWar.VarLespiaGasDeal), () =>
         {
             Paper("LespiaGas", "G", "Rizia Signs Away Aureus Gas for Lespian Gunboats",
-                "Lespia's state energy company LesPower will receive six units of gas from the Aureus field every turn at the price of " +
-                "two, according to documents seen by this newspaper. The contract, open-ended and payable from the day the field's " +
+                "Lespia's state energy company LesPower will receive most of the Aureus field's gas at three Arcasian Liras per thousand " +
+                "cubic meters, less than half what any other buyer pays, according to documents seen by this newspaper. The contract, open-ended and payable from the day the field's " +
                 "pipeline opens, is said to be the price of the Lespian navy's patrols in the Strait of Kreleck.",
                 "Prime Minister Alvarez called the arrangement \"a sensible exchange between neighbors.\" Analysts note that Lespia, which " +
                 "lost the Aureus field to Rizia, has now obtained its gas anyway, and at a better price than it ever offered Pales.");
             Paper("LespiaGas", "V", "Our Gas, Their Price",
                 "The Aureus field was supposed to keep the lights on in Rizia. Instead, most of its gas will sail to Lespia at a price no " +
-                "Rizian family will ever be offered, every turn, for as long as anyone can see. The palace calls it the cost of the war. " +
+                "Rizian family will ever be offered, year after year, for as long as anyone can see. The palace calls it the cost of the war. " +
                 "The Voice of Rizia calls it what it is: a tribute.");
             Paper("LespiaGas", "RH", "A Shrewd Bargain at Sea",
                 "Lespian warships now stand between Wehlen and its garrison in Zille, and every Wehzek convoy they turn back is a " +
                 "battle our soldiers will not have to fight. The price is paid in Aureus gas, gas Rizia has to sell only because His " +
                 "Majesty had the foresight to buy the field.",
-                "The critics count units of gas. The Royal Herald counts the Rizian sons who will come home because of it.");
+                "The critics count cubic meters of gas. The Royal Herald counts the Rizian sons who will come home because of it.");
         });
 
         // Valgsland and Lespia are rivals (the Meftiem, the Antacean): any Lespian help in the strait draws a reaction.
@@ -369,7 +369,7 @@ internal static class SupplyNews
                 "elaborating, that Prime Minister Alvarez spoke to the King of Rizia by telephone the day before."));
         Once("RamiroComp", outcome == "compensated", () =>
             Rep("RamiroComp", SuzerainTokenName.RiziaCountryLespia, "A Quiet Payment from Perla",
-                "A sum has arrived at the Royal Treasury from an account in Perla, described in the transfer papers as a contribution " +
+                "Just over four billion Arcasian Liras have arrived at the Royal Treasury from an account in Perla, described in the transfer papers as a contribution " +
                 "to \"the victims of terrorism in Zille.\"",
                 "Nobody in Perla will say who authorized it. Nobody in Porte Drazon has asked."));
         Once("LespiaGone", B(SupplyWar.VarLespiaWithdrawn) && lespiaPatrolled && Str(SupplyWar.VarRamiro) != "publish", () =>

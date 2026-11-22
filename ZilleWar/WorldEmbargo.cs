@@ -67,11 +67,11 @@ internal static class WorldEmbargo
                 "long as Rizian troops threaten the Republic of Wehlen.\" Contanan freighters have been ordered not to call at Rizian " +
                 "ports, and Valgslandian banks have frozen new credit to Rizian firms.",
                 "The embargo stops short of a blockade, and goods still reach Rizia through third countries, late and at a premium. " +
-                "Economists in Konstantium estimate the cost to the Rizian treasury at several million guilders a month."));
+                "Economists in Konstantium estimate the cost to the Rizian treasury at several billion guilders a quarter."));
             NewsWire.Report("Embargo", SuzerainTokenName.RiziaCountryValgsland, "A Contanan Embargo", NewsWire.P(
                 "Chancellor Hegel's government has announced, with the support of United Contana, that trade with Rizia is suspended " +
                 "until the war in Zille ends. Shipments already at sea will be turned back; contracts in force are frozen.",
-                "Councilor Werner estimates the loss at two units of budget every turn. Our embassy notes that the measure was drafted " +
+                "Councilor Werner puts the loss at six billion guilders a quarter, for as long as the embargo lasts. Our embassy notes that the measure was drafted " +
                 "before the King had finished his speech in Konstantium. Valgsland, it seems, had been waiting for a reason."));
         }
     }

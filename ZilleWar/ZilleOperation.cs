@@ -7,7 +7,8 @@ namespace ZilleWar;
 
 /// <summary>
 /// Builds one Zille operation from the campaign state: who holds which tile (carried over from the last
-/// operation), the chosen objective, and Wehlen's strength tier. Registers it in the game's story data
+/// operation), the chosen objective, Wehlen's strength tier, and the one war plan the King set at the first War Council
+/// (every operation continues the same campaign; the plan is adapted per objective, never re-picked). Registers it in the game's story data
 /// (OperationData + WarFragmentData) and war data (WarOperation + WarOperationData), modelled on vanilla
 /// Operation_1 ("Golden Shield").
 /// </summary>
@@ -149,8 +150,9 @@ internal static class ZilleOperation
         ObjectiveInfo info = ZilleCampaign.Info(objective);
         string targetTile = ZilleCampaign.FocusTile(info, owners);
 
-        // The War Council's orders shape the map.
-        WarCouncil.Orders orders = WarCouncil.CurrentOrders();
+        // The War Council's orders shape the map: the war plan chosen at the first council, carried onto this objective in its
+        // nearest sensible form (WarCouncil.Form), and the fleet's standing orders.
+        WarCouncil.Orders orders = WarCouncil.OrdersFor(objective);
 
         // Airborne: the paratroopers hold a patch of ground behind the Wehzek line when the operation opens.
         string dropZone = orders.Approach == WarCouncil.Approach.Airborne ? Plan.DropZone(owners, targetTile) : null;

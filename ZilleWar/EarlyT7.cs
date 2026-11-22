@@ -424,7 +424,8 @@ internal static class EarlyT7
             Variables.Set(VarNewsWarTax, true);
             NewsWire.Publish("E7_WarTax", "RH", "Every Rizian Shares the Burden", string.Join("\n\n",
                 "By royal decree, the extraordinary profits made on war contracts will be taxed for the duration of the campaign in Zille. " +
-                "The soldier gives his blood; it is only right, the Palace says, that the factory give its share.",
+                "The soldier gives his blood; it is only right, the Palace says, that the factory give its share. The Treasury expects the " +
+                "tax to raise a full ten billion guilders for the army before the year is out.",
                 "The Royal Herald is confident the great houses of industry will answer the call with the same patriotism as the men of Brenas."));
             NewsWire.Publish("E7_WarTax", "V", "War Profiteers Taxed", string.Join("\n\n",
                 "If the war in Zille must go on, then at the very least our corporations should not grow fat on it. His Majesty has " +

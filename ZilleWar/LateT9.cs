@@ -261,7 +261,7 @@ internal static class LateT9
 
         // lost
         t.Line("Lost1", Smolak, "\"I'm calling to be magnanimous. It's a new hobby. I won, you lost, and now we should both stop pretending otherwise.\"", new[] { "Lost2" }, condition: Lost);
-        t.Line("Lost2", Smolak, "\"Recognize Wehzek Zille. Properly, on paper, for a hundred years. Like your father's lease, but this time with no expiry date. In return, Wehlen releases the Rizian accounts we froze in Zille. A great deal of money, Your Majesty.\"",
+        t.Line("Lost2", Smolak, "\"Recognize Wehzek Zille. Properly, on paper, for a hundred years. Like your father's lease, but this time with no expiry date. In return, Wehlen releases the Rizian accounts we froze in Zille. Six billion guilders, Your Majesty. I had them counted twice.\"",
             new[] { "LostYes", "LostNo" });
         t.Choice("LostYes", "\"Send the papers. Rizia needs the money more than it needs the argument.\"", new[] { "LostYes2" }, cost: "+2 Budget",
             script: Set(VarRecognized, "true") + Add("RiziaDLC.Resources_Budget", 2) + Add("RiziaDLC.Country_HouseSazon", -3) + Add("RiziaDLC.Country_PublicOpinion", -1));

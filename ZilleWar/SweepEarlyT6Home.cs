@@ -88,12 +88,12 @@ internal static class SweepEarlyT6Home
             new[] { "Gold2Held", "Gold2" }, condition: $"{Active} and {RustyUnasked}", hooks: From(1100, 1120, 1124, 1073));
         t.Line("Gold2Held", Rusty,
             "\"Our boys are in Auremina now. Those hills are what brought RRG north in the first place, before the Wehzeks took over the " +
-            "pits. So here's my offer. RRG puts a little something into the war chest today, and when the shooting stops, RRG gets " +
+            "pits. So here's my offer. RRG puts six billion guilders into the war chest today, and when the shooting stops, RRG gets " +
             "first claim on the Auremina concession.\"",
             new[] { "Pledge", "Refuse", "Later" }, condition: AureminaHeld);
         t.Line("Gold2", Rusty,
             "\"Those hills around Auremina are what brought RRG north in the first place, before the Wehzeks took over the pits. So " +
-            "here's my offer. RRG puts a little something into the war chest today, and when our boys plant the flag over Auremina, RRG " +
+            "here's my offer. RRG puts six billion guilders into the war chest today, and when our boys plant the flag over Auremina, RRG " +
             "gets first claim on the concession.\"",
             new[] { "Pledge", "Refuse", "Later" }, condition: $"not ({AureminaHeld})");
         t.Choice("Pledge", "\"Rizian Royal Gold will have first claim on Auremina. Send the money.\"", new[] { "PledgeA" }, cost: "+2 Budget",
@@ -239,7 +239,7 @@ internal static class SweepEarlyT6Home
         }
 
         NewsWire.Publish("SE_Home_RustyGold", "V", "Montoro's Gold Goes to War", P(
-            "Rizian Royal Gold has quietly transferred a large sum to the Royal Treasury, days after its chief executive Russello Montoro " +
+            "Rizian Royal Gold has quietly transferred some six billion guilders to the Royal Treasury, days after its chief executive Russello Montoro " +
             "was seen sharing the royal tribune with King Romus at the charity match in Montaklar. In exchange, sources at the Treasury " +
             "tell the Voice, RRG has been promised first claim on the gold mines of Auremina once the fighting in Zille is over.",
             "\"Our sons are dying in Zille so that Montoro can dig,\" one miner in Argno told us. RRG declined to comment, beyond a " +
