@@ -79,7 +79,7 @@ internal sealed class AfterAction
     public int Cost => PlayerDead <= 1 ? 0 : PlayerDead <= 3 ? 1 : 2;
 
     // Reads in "{x} enemy soldiers", "{x} of our soldiers" and "{x} men" alike.
-    private static string Men(int units, int salt) => units <= 0 ? "a few dozen" : $"{units * 850 + (units * 137 + salt * 31) % 300:N0}";
+    private static string Men(int units, int salt) => units <= 0 ? "a few dozen" : (units * 850 + (units * 137 + salt * 31) % 300).ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
 
     private const string General = "General Carlos Robles Azaro";
 

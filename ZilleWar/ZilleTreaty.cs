@@ -123,7 +123,7 @@ internal static class ZilleTreaty
                 }),
                 new("LibAsks", "Wehlen's Requests", "Smolak's own wishes. Each one granted makes the rest easier for him to swallow.", 0, -1, new Opt[]
                 {
-                    new("Rico", "Ricardus Toras is handed over to Wraclawitz to answer for Smolak Square", 2, "RiziaDLC.Rico_Arrested == true and RiziaDLC.Rico_Extradited == false"),
+                    new("Rico", "Ricardus Toras is handed over to Wraclawitz to answer for Smolak Square", 2, "RiziaDLC.Rico_Arrested == true && RiziaDLC.Rico_Extradited == false"),
                     new("Rights", "Wehzek families in Zille keep their homes and their citizenship", 1),
                     new("Ban", "Rizia's border is closed to the Bludish Freedom Front", 1, $"{BludishBan} == false"),
                     new("Villa", "President Smolak's villa in Zille is returned to him", 1),
@@ -160,7 +160,7 @@ internal static class ZilleTreaty
                 }),
                 new("PartAsks", "Wehlen's Requests", "Smolak's own wishes. Each one granted makes the rest easier for him to swallow.", 0, -1, new Opt[]
                 {
-                    new("Rico", "Ricardus Toras is handed over to Wraclawitz to answer for Smolak Square", 2, "RiziaDLC.Rico_Arrested == true and RiziaDLC.Rico_Extradited == false"),
+                    new("Rico", "Ricardus Toras is handed over to Wraclawitz to answer for Smolak Square", 2, "RiziaDLC.Rico_Arrested == true && RiziaDLC.Rico_Extradited == false"),
                     new("Rights", "Wehzeks in Zille city keep their homes and their citizenship", 1),
                     new("Ban", "Rizia's border is closed to the Bludish Freedom Front", 1, $"{BludishBan} == false"),
                     new("Dmz", "No soldier of either side within twenty kilometers of the line [-1 Authority]", 2),
@@ -191,7 +191,7 @@ internal static class ZilleTreaty
                 new("LostAsks", "Wehlen's Demands", "Smolak's further demands. Each one granted makes the rest easier for him to swallow.", 0, -1, new Opt[]
                 {
                     new("House", "The Queen Mother's old house in Zille goes to Smolak's son", 1),
-                    new("Rico", "Ricardus Toras is handed over to Wraclawitz to answer for Smolak Square", 2, "RiziaDLC.Rico_Arrested == true and RiziaDLC.Rico_Extradited == false"),
+                    new("Rico", "Ricardus Toras is handed over to Wraclawitz to answer for Smolak Square", 2, "RiziaDLC.Rico_Arrested == true && RiziaDLC.Rico_Extradited == false"),
                     new("Ban", "Rizia's border is closed to the Bludish Freedom Front", 1, $"{BludishBan} == false"),
                     new("Rights", "Every Wehzek living in Rizia has the same rights as a Rizian", 1, $"{WehzekRights} == false"),
                     new("Dmz", "No Rizian gun within twenty kilometers of the border [-1 Authority]", 2),
@@ -338,10 +338,12 @@ internal static class ZilleTreaty
             Variables.Register(v);
         }
 
+        // Written by the panel options' expresso instructions ("X = true;", "X += n;"), so plain Variable["x"]: the nil-safe
+        // read forms are not assignable. Start() sets every term and the leverage before the panel opens.
         foreach (string v in AllTermVars())
         {
             Variables.Register(v);
-            Vanilla.Expose(v);
+            Vanilla.ExposePlain(v);
         }
 
         foreach (string v in new[] { VarSigned, VarPeace })
@@ -349,7 +351,7 @@ internal static class ZilleTreaty
             Vanilla.Expose(v);
         }
 
-        Vanilla.Expose(VarLeverage, isBool: false);
+        Vanilla.ExposePlain(VarLeverage);
         ConversationRegistry.RegisterConversation(Conv);
         RegisterTalk();
     }
@@ -385,10 +387,12 @@ internal static class ZilleTreaty
         try
         {
             SuzerainModdingKit.GameState.AddCustomConversation(Conv);
-            SuzerainModdingKit.GameState.AddCustomStoryFragment(new CustomConversationFragment(frag, SuzerainStoryPackInfo.Rizia, "Rizia_Country_Wehlen", title, sub,
-                Il2Cpp.ConversationData.ConversationType.ForeignPolicyAndTrade, Conv));
-            Variables.Set(LateT8.VarSmolakT8, true);
-            Core.Log.Msg($"The peace talks with Wehlen open (turn {turn}, step {step}).");
+            if (SuzerainModdingKit.GameState.AddCustomStoryFragment(new CustomConversationFragment(frag, SuzerainStoryPackInfo.Rizia, "Rizia_Country_Wehlen", title, sub,
+                    Il2Cpp.ConversationData.ConversationType.ForeignPolicyAndTrade, Conv)))
+            {
+                Variables.Set(LateT8.VarSmolakT8, true);
+                Core.Log.Msg($"The peace talks with Wehlen open (turn {turn}, step {step}).");
+            }
         }
         catch (Exception ex)
         {
@@ -400,7 +404,8 @@ internal static class ZilleTreaty
     {
         Install();
         Schedule();
-        if (Variables.GetBool(LateT8.VarSmolakT8) && !Variables.GetBool(VarNewsDone) && Variables.GetString(VarKind) is { Length: > 0 } kind)
+        // Unset, the kind reads "nil": the talks are offered but not yet held.
+        if (Variables.GetBool(LateT8.VarSmolakT8) && !Variables.GetBool(VarNewsDone) && Variables.GetString(VarKind) is { Length: > 0 } kind && kind != "nil")
         {
             Variables.Set(VarNewsDone, true);
             try

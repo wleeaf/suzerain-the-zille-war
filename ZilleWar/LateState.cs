@@ -305,6 +305,11 @@ internal static class LateState
 
     private static void OverrideTexts(bool declared)
     {
+        if (!declared && Originals.Count == 0)
+        {
+            return;     // nothing swapped in this session, so nothing to put back (peace games: no scan of the news and report lists)
+        }
+
         foreach (TextSwap s in Swaps)
         {
             bool on = declared && Safe(s.When);
@@ -396,7 +401,8 @@ internal static class LateState
     {
         bool over = Over;
         (int ours, int theirs) = Casualties();
-        string o = ours.ToString("N0"), t = theirs.ToString("N0");
+        // vanilla writes "1,325" whatever the player's locale
+        string o = ours.ToString("N0", System.Globalization.CultureInfo.InvariantCulture), t = theirs.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
 
         string casualties = null;
         if (ours > 0 && theirs > 0)

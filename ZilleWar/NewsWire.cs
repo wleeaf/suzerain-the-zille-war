@@ -17,6 +17,68 @@ internal static class NewsWire
     private static readonly Dictionary<string, NewsData> Templates = new();
     private static bool _logged;
 
+    /// <summary>Every item published this session, by name, so it can be put back after the game rebuilds its news lists.</summary>
+    private static readonly Dictionary<string, NewsData> Published = new();
+    private static bool _reinstall;
+
+    /// <summary>The game rebuilt its entity lists (a save was loaded): put this session's published items back on the next step.</summary>
+    internal static void ResetAdded()
+    {
+        _reinstall = true;
+        Templates.Clear();
+    }
+
+    /// <summary>
+    /// Re-adds the items published this session whose enable variable is still set in the loaded game (an item published
+    /// after the loaded save point reads false there and stays out). They are not enabled again: they were filed already.
+    /// </summary>
+    public static void Reinstall()
+    {
+        if (!_reinstall || EntityDataManager.NewsData == null)
+        {
+            return;
+        }
+
+        _reinstall = false;
+        int n = 0;
+        foreach ((string name, NewsData data) in Published)
+        {
+            try
+            {
+                if (data == null || !Variables.GetBool(data.NewsProperties?.IsEnabledVariable ?? string.Empty))
+                {
+                    continue;
+                }
+
+                bool present = false;
+                foreach (NewsData x in EntityDataManager.NewsData)
+                {
+                    if (x?.NameInDatabase == name)
+                    {
+                        present = true;
+                        break;
+                    }
+                }
+
+                if (!present)
+                {
+                    ZilleOperation.AddByName(EntityDataManager.newsData, data, d => d.NameInDatabase);
+                    ZilleOperation.AddByName(EntityDataManager.NewsData, data, d => d.NameInDatabase);
+                    n++;
+                }
+            }
+            catch (Exception ex)
+            {
+                Core.Log.Warning($"Re-adding news '{name}' failed: {ex.Message}");
+            }
+        }
+
+        if (n > 0)
+        {
+            Core.Log.Msg($"Re-added {n} published war news items after the entity reload.");
+        }
+    }
+
     // ------------------------------------------------------------------ plumbing
 
     /// <summary>Publish one item in a newspaper now. Safe to call more than once per key.</summary>
@@ -97,6 +159,7 @@ internal static class NewsWire
             };
             ZilleOperation.AddByName(EntityDataManager.newsData, data, n => n.NameInDatabase);
             ZilleOperation.AddByName(EntityDataManager.NewsData, data, n => n.NameInDatabase);
+            Published[name] = data;
             Variables.Set(variable, true);
             Il2CppPixelCrushers.DialogueSystem.Lua.Run($"EnableNews(\"{name}\")");
             Core.Log.Msg($"News [{data.NewsProperties.Newspaper}] turn {GameState.CurrentTurnNum}: {title}");

@@ -47,7 +47,7 @@ internal static class WarFlow
 
         foreach ((string what, Action step) in new (string, Action)[]
                  {
-                     ("war flags", WarFlags.Sync), ("war decrees", WarDecrees.OnStep), ("vanilla edits", Vanilla.Apply), ("lua check", LuaLint.RunOnce), ("turns 4-7", VanillaEarly.OnStep),
+                     ("news reload", NewsWire.Reinstall), ("war flags", WarFlags.Sync), ("war decrees", WarDecrees.OnStep), ("vanilla edits", Vanilla.Apply), ("lua check", LuaLint.RunOnce), ("turns 4-7", VanillaEarly.OnStep),
                      ("turns 8-10", VanillaLate.OnStep), ("world", WorldSystems.OnStep),
                      ("sweep 4-6", SweepEarly.OnStep), ("sweep 7-8", SweepMiddle.OnStep), ("sweep 9-10", SweepLate.OnStep), ("audit", Audit.OnStep), ("strategic map", StrategicMap.OnStep), ("finish", Finish.OnStep),
                  })
@@ -90,6 +90,8 @@ internal static class WarFlow
         Run("supply war", () =>
         {
             SupplyWar.ReportNewLevers();
+            // Only an ordering choice: once a council has been held the calls are offered here, before this step's council.
+            // Before that (the declaration turn) SupplyWar's own step hook offers them anyway, after WarFlow's; Offer is once per turn.
             if (Variables.GetBool(VarCouncilHeld))
             {
                 SupplyWar.Offer();

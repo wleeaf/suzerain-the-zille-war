@@ -46,7 +46,9 @@ internal static class ZilleReports
     /// </summary>
     public static void Restore()
     {
-        if (Created.ContainsKey(WonName) || ZilleCampaign.OperationsDone <= 0)
+        // Created outlives a reload of the game's data (loading a save in the same session rebuilds every entity list), so
+        // ask the list itself whether the report is still there.
+        if (ZilleCampaign.OperationsDone <= 0 || InGame(WonName))
         {
             return;
         }
@@ -61,6 +63,26 @@ internal static class ZilleReports
     }
 
     private static readonly Dictionary<string, ReportData> Created = new();
+
+    /// <summary>Is the report in the game's current report list? Ours are appended last, so the search starts from the end.</summary>
+    private static bool InGame(string name)
+    {
+        var list = EntityDataManager.ReportsData;
+        if (list == null)
+        {
+            return true;    // data not loaded yet: nothing to restore into
+        }
+
+        for (int i = list.Count - 1; i >= 0; i--)
+        {
+            if (list[i]?.NameInDatabase == name)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /// <summary>Replace a report's body (used for the detailed after-action report at operation end).</summary>
     public static void SetDescription(string name, string text)

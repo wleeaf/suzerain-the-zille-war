@@ -115,7 +115,7 @@ internal static class SweepEarlyKit
         }
         catch (Exception ex)
         {
-            Core.Log.Warning($"SweepEarly Lua failed ({code.Substring(0, Math.Min(60, code.Length))}...): {ex.Message}");
+            Core.Log.Warning($"SweepEarly Lua failed ({code?.Substring(0, Math.Min(60, code.Length))}...): {ex.Message}");
         }
     }
 
@@ -164,7 +164,13 @@ internal static class SweepEarlyKit
         {
             try
             {
-                string state = Variables.GetString(it.Latch) ?? string.Empty;
+                // an unset variable reads "nil": that is no latched state (a peace game, or not yet enabled)
+                string state = Variables.GetString(it.Latch);
+                if (string.IsNullOrEmpty(state) || state == "nil")
+                {
+                    state = string.Empty;
+                }
+
                 if (state.Length == 0 && IsDeclared && Enabled(it.Kind, it.Name))
                 {
                     state = State();
@@ -241,7 +247,8 @@ internal static class SweepEarlyKit
                 {
                     if (n?.NameInDatabase == name && n.NewsProperties != null)
                     {
-                        return n.NewsProperties.IsEnabledVariable ?? string.Empty;
+                        // a news item hidden by Vanilla.HideNews reads ZilleWar.Never: look through the hide
+                        return Vanilla.UnhiddenEnableVariable("news:" + name, n.NewsProperties.IsEnabledVariable ?? string.Empty);
                     }
                 }
             }
@@ -259,7 +266,7 @@ internal static class SweepEarlyKit
                 {
                     if (r?.NameInDatabase == name && r.ReportProperties != null)
                     {
-                        return r.ReportProperties.IsEnabledVariable ?? string.Empty;
+                        return Vanilla.UnhiddenEnableVariable("report:" + name, r.ReportProperties.IsEnabledVariable ?? string.Empty);
                     }
                 }
             }

@@ -17,6 +17,9 @@ internal static class WarSaveSlot
     private const string AnyOperationInProgress = "RiziaDLCSetup.IsAnyOperationInProgress";
     private static WarSaveData _stashed;
 
+    /// <summary>A save is being loaded: a map set aside from the game left behind is not this save's.</summary>
+    internal static void ForgetSession() => _stashed = null;
+
     private static SaveData Save => Singleton<PersistenceManager>.Instance?.activeSaveFile?.saveData;
 
     /// <summary>True when the save holds the map of a Zille phase that ended (with its units), ready for the next phase.</summary>

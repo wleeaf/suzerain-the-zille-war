@@ -253,9 +253,25 @@ internal sealed class Talk
     }
 
     /// <summary>An empty logic node: runs a script and/or branches on conditions of its children.</summary>
-    public Talk Logic(string name, string[] next, string condition = null, string script = null, ConversationNodeHook[] hooks = null)
+    public Talk Logic(string name, string[] next, string condition = null, string script = null, ConversationNodeHook[] hooks = null,
+        string sequence = null)
     {
         _otherRefs.AddRange(next ?? Array.Empty<string>());
+        // PlaySceneMusic is a sequencer command, not a Lua function: called from a script it fails and no music plays.
+        if (script != null && script.Contains("PlaySceneMusic(", StringComparison.Ordinal))
+        {
+            foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(script, @"PlaySceneMusic\([^)]*\)\s*;?"))
+            {
+                sequence = (string.IsNullOrWhiteSpace(sequence) ? string.Empty : sequence.TrimEnd().TrimEnd(';') + "; ") + m.Value.TrimEnd().TrimEnd(';');
+            }
+
+            script = System.Text.RegularExpressions.Regex.Replace(script, @"PlaySceneMusic\([^)]*\)\s*;?\s*", string.Empty);
+            if (string.IsNullOrWhiteSpace(script))
+            {
+                script = null;
+            }
+        }
+
         condition = LuaFix.Rewrite(condition);
         script = LuaFix.Rewrite(script);
         LuaLint.Record(_prefix + name, condition, script);
@@ -266,7 +282,8 @@ internal sealed class Talk
             nextNodes: Next(next),
             luaScript: script,
             luaCondition: condition,
-            sequence: "Continue()"));
+            // an empty logic node passes on at once; a sequence of its own runs first
+            sequence: string.IsNullOrWhiteSpace(sequence) ? "Continue()" : sequence.TrimEnd().TrimEnd(';') + "; Continue()"));
         return this;
     }
 

@@ -109,9 +109,11 @@ internal static class LateT9
         try
         {
             GameState.AddCustomConversation(CallConv);
-            GameState.AddCustomStoryFragment(new CustomConversationFragment(frag, SuzerainStoryPackInfo.Rizia, "Rizia_City_Monqiz",
-                "An Evening in Monqiz", "Palas Toras, Monqiz", Il2Cpp.ConversationData.ConversationType.ForeignPolicyAndTrade, CallConv));
-            Variables.Set(VarCallOffered, true);
+            if (GameState.AddCustomStoryFragment(new CustomConversationFragment(frag, SuzerainStoryPackInfo.Rizia, "Rizia_City_Monqiz",
+                "An Evening in Monqiz", "Palas Toras, Monqiz", Il2Cpp.ConversationData.ConversationType.ForeignPolicyAndTrade, CallConv)))
+            {
+                Variables.Set(VarCallOffered, true);
+            }
         }
         catch (Exception ex)
         {

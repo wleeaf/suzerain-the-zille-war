@@ -20,6 +20,7 @@ namespace ZilleWar;
 internal static class StrategicMap
 {
     private const string LayerObjectName = "MapLayer Zille Divided (ZilleWar)";
+    private const string LayerMaterialName = "ZilleWar Divided Layer";
     private const string BadgeFront = "ZilleWar_Zille_FrontLine";
     private const string BadgeDivided = "ZilleWar_Zille_Divided";
     private const string Occupied = "Rizia_City_UnderOccupation";
@@ -102,18 +103,38 @@ internal static class StrategicMap
 
         bool crown = Variables.GetString(EarlyT7.VarZilleAdmin) == "imperii";
         string key = (crown ? "C:" : "B:") + string.Join(",", held.OrderBy(x => x, StringComparer.Ordinal));
+        Texture2D replaced = null;
         if (_composed == null || _composedKey != key)
         {
+            replaced = _composed;
             _composed = Compose(crown ? _ownState : _brenas, held);
             _composedKey = key;
             Core.Log.Msg($"Divided Zille map layer drawn: {held.Count} of {_zilleTiles.Length} Zille districts in Rizian hands.");
         }
 
+        // Called on every story step: give each renderer our own material once and reuse it, instead of a new copy each time.
         foreach (Renderer r in ours.modelContainer.GetComponentsInChildren<Renderer>(true))
         {
-            var mat = new Material(r.sharedMaterial);
+            Material cur = r.sharedMaterial;
+            if (cur == null)
+            {
+                continue;
+            }
+
+            if (cur.name == LayerMaterialName)
+            {
+                cur.SetTexture("_Diffuse", _composed);
+                continue;
+            }
+
+            var mat = new Material(cur) { name = LayerMaterialName };
             mat.SetTexture("_Diffuse", _composed);
             r.sharedMaterial = mat;
+        }
+
+        if (replaced != null)
+        {
+            UnityEngine.Object.Destroy(replaced);     // the old front's texture, no longer drawn anywhere
         }
 
         ours.SetMapLayerState(true);

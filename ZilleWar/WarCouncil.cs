@@ -137,6 +137,7 @@ internal static class WarCouncil
     /// <summary>The orders for the operation being built now: the plan's form is computed and kept for the report.</summary>
     public static Orders OrdersFor(Objective objective)
     {
+        LapseStandingOrders();
         Approach form = Form(WarPlan, objective, out string adapt);
         Variables.Set(VarOpForm, form.ToString());
         Variables.Set(VarOpAdapt, adapt);
@@ -226,8 +227,9 @@ internal static class WarCouncil
                 return;
             }
 
-            int turn = GameState.CurrentTurnNum ?? 0;
-            if (turn <= 0)
+            int turn = GameState.CurrentTurnNum ?? 0, step = GameState.CurrentStepNum ?? 0;
+            // Past the war's last step WarFlow ends it after this evaluation (ForceEnd): never open a table first.
+            if (turn <= 0 || turn >= 7 || (turn == 6 && step >= 6))
             {
                 return;
             }
@@ -278,6 +280,11 @@ internal static class WarCouncil
         bool first = !Variables.GetBool(WarFlow.VarCouncilHeld) && ZilleCampaign.OperationsDone == 0;
         ObjectiveInfo next = ZilleCampaign.Info(ZilleCampaign.NextObjective);
         Prepare(turn, first, next);
+        if (Scheduler.HasQueued(name))
+        {
+            return;     // already offered, waiting for the calls it follows
+        }
+
         try
         {
             GameState.AddCustomConversation(Conv);
@@ -289,6 +296,46 @@ internal static class WarCouncil
         catch (Exception ex)
         {
             Core.Log.Error($"Adding the War Council failed: {ex}");
+        }
+    }
+
+    /// <summary>
+    /// The council is opening (ConversationPanel.Setup): read the campaign state again, so the calls played after it was
+    /// offered (Hegel's word on the submarines, ships lost, a held month) are what the council talks about.
+    /// </summary>
+    internal static void OnOpened(string fragmentName)
+    {
+        try
+        {
+            int turn = GameState.CurrentTurnNum ?? 0;
+            if (fragmentName == null || !fragmentName.StartsWith(FragmentPrefix, StringComparison.Ordinal) || turn <= 0 ||
+                !WarFlow.AtWar || Variables.GetInt(VarDoneTurn) >= turn || ZilleCampaign.Available().Count == 0)
+            {
+                return;
+            }
+
+            bool first = !Variables.GetBool(WarFlow.VarCouncilHeld) && ZilleCampaign.OperationsDone == 0;
+            Prepare(turn, first, ZilleCampaign.Info(ZilleCampaign.NextObjective));
+        }
+        catch (Exception ex)
+        {
+            Core.Log.Warning($"Preparing the War Council failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>Standing naval orders lapse when the ships for them are gone, or Hegel has the submarines' word.</summary>
+    private static void LapseStandingOrders()
+    {
+        int ships = Variables.GetInt(SupplyWar.Ships), subs = Variables.GetInt(SupplyWar.Subs);
+        string navy = ZilleCampaign.Str(VarNavy);
+        if ((navy == "Strait" && ships < 1) || (navy == "Coast" && ships < 2))
+        {
+            Variables.Set(VarNavy, "Home");
+        }
+
+        if (Variables.GetBool(VarSubsOut) && (subs < 1 || Variables.GetBool(SupplyWar.VarSubsGrounded)))
+        {
+            Variables.Set(VarSubsOut, false);
         }
     }
 
@@ -338,18 +385,7 @@ internal static class WarCouncil
         int n = Math.Max(Variables.GetInt(VarMeetings), k);
         Variables.Set(VarMatter, Variables.GetBool(VarWaited) ? "Rest" : (n % 3) switch { 1 => "Morale", 2 => "Supply", _ => "Reinforce" });
 
-        // Standing naval orders lapse when the ships for them are gone (or Hegel has the submarines' word).
-        int ships = Variables.GetInt(SupplyWar.Ships), subs = Variables.GetInt(SupplyWar.Subs);
-        string navy = ZilleCampaign.Str(VarNavy);
-        if ((navy == "Strait" && ships < 1) || (navy == "Coast" && ships < 2))
-        {
-            Variables.Set(VarNavy, "Home");
-        }
-
-        if (Variables.GetBool(VarSubsOut) && (subs < 1 || Variables.GetBool(SupplyWar.VarSubsGrounded)))
-        {
-            Variables.Set(VarSubsOut, false);
-        }
+        LapseStandingOrders();
     }
 
     /// <summary>The council has given its order and nothing that belongs before the war is left: open the war table.</summary>

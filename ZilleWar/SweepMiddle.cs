@@ -300,7 +300,7 @@ internal static class SweepMiddle
     private static void ApplyMedicine()
     {
         // Record where the medicine went on the step after the choice (the war cannot change in between).
-        string front = Variables.GetString(VarMedicineFront);
+        string front = ZilleCampaign.Str(VarMedicineFront); // an unset variable reads "nil"
         if (string.IsNullOrEmpty(front) && Variables.GetBool("RiziaDLC.Decision_Turn08_SurplusOfMedicine_SendToWarEffort") && Active)
         {
             front = PalesWar ? "both" : "zille";

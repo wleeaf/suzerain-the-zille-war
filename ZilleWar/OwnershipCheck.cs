@@ -22,14 +22,15 @@ internal static class OwnershipCheck
         try
         {
             WarFlowManager flow = Managers.Instance?.WarFlowManager;
-            if (flow == null || !ZilleOperation.IsOurFragment(flow.currentWarFragmentData) || __instance?.allTiles == null)
+            WarFragmentData onTable = Patch_WarFlowManager_SetupWarFragment.OnTable(flow);
+            if (flow == null || !ZilleOperation.IsOurFragment(onTable) || __instance?.allTiles == null)
             {
                 return;
             }
 
             // The game also calls SetupReinforcementTiles whenever a tile changes hands during play. Only the first call of
             // each operation (the map being built) may be checked; later ones are real captures and must stand.
-            IntPtr fragment = flow.currentWarFragmentData.Pointer;
+            IntPtr fragment = onTable.Pointer;
             if (flow.isInOperationPhase || fragment == _checkedFragment)
             {
                 return;
@@ -46,6 +47,9 @@ internal static class OwnershipCheck
                 {
                     continue;
                 }
+
+                // The paratroopers' ground starts Rizian on a fresh map although the saved front still shows it Wehzek.
+                player |= n == ZilleOperation.FreshDropZone;
 
                 if (player && ZilleData.ByName[n].Region == "zille")
                 {

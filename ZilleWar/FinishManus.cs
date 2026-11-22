@@ -332,7 +332,8 @@ internal static class FinishManus
 
     private static void ResolveFate(int turn)
     {
-        if (!string.IsNullOrEmpty(Variables.GetString(VarFate)))
+        // an unset variable reads "nil", which is no fate yet
+        if (ZilleCampaign.Str(VarFate).Length > 0)
         {
             return;
         }
@@ -493,10 +494,12 @@ internal static class FinishManus
         try
         {
             GameState.AddCustomConversation(VinaConv);
-            GameState.AddCustomStoryFragment(new CustomConversationFragment(frag, SuzerainStoryPackInfo.Rizia, SuzerainTokenName.RiziaCityPorteDrazon,
-                "News from Zille", "The King's study, Palas Rezna", ConversationData.ConversationType.Personal, VinaConv));
-            Variables.Set(VarVinaOffered, turn);
-            Variables.Set(VarVinaDone, true);
+            if (GameState.AddCustomStoryFragment(new CustomConversationFragment(frag, SuzerainStoryPackInfo.Rizia, SuzerainTokenName.RiziaCityPorteDrazon,
+                "News from Zille", "The King's study, Palas Rezna", ConversationData.ConversationType.Personal, VinaConv)))
+            {
+                Variables.Set(VarVinaOffered, turn);
+                Variables.Set(VarVinaDone, true);
+            }
         }
         catch (Exception ex)
         {

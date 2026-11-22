@@ -100,10 +100,12 @@ internal static class VictoryParade
         try
         {
             GameState.AddCustomConversation(Conv);
-            GameState.AddCustomStoryFragment(new CustomConversationFragment(Frag, SuzerainStoryPackInfo.Rizia, "Rizia_City_Zille",
-                lib ? "Victory Parade in Zille" : "Homecoming in Zille City", lib ? "Fedo Square, Zille" : "Zille City",
-                Il2Cpp.ConversationData.ConversationType.Personal, Conv));
-            Variables.Set(VarOffered, true);
+            if (GameState.AddCustomStoryFragment(new CustomConversationFragment(Frag, SuzerainStoryPackInfo.Rizia, "Rizia_City_Zille",
+                    lib ? "Victory Parade in Zille" : "Homecoming in Zille City", lib ? "Fedo Square, Zille" : "Zille City",
+                    Il2Cpp.ConversationData.ConversationType.Personal, Conv)))
+            {
+                Variables.Set(VarOffered, true);
+            }
         }
         catch (Exception ex)
         {

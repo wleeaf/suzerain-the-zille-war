@@ -15,15 +15,29 @@ internal static class Patch_WarFlowManager_SetupWarFragment
 {
     internal static WarFragmentData Current;
 
+    /// <summary>
+    /// The war fragment on the table: the one last set up. WarFlowManager.currentWarFragmentData is not yet filled in while
+    /// the map is built (the ownership check never fired with it), so the fragment seen here comes first.
+    /// </summary>
+    internal static WarFragmentData OnTable(WarFlowManager flow) => Current ?? flow?.currentWarFragmentData;
+
     private static void Prefix(WarFragmentData warFragmentData)
     {
         Current = warFragmentData;
         Core.Log.Msg($"SetupWarFragment('{warFragmentData?.NameInDatabase}', op='{warFragmentData?.WarFragmentProperties?.Operation}')");
         if (ZilleOperation.IsOurFragment(warFragmentData))
         {
-            OwnershipCheck.Reset();
-            WarSaveSlot.PrepareForZille(warFragmentData);
-            ZilleCampaign.MarkPhaseStart();
+            try
+            {
+                OwnershipCheck.Reset();
+                ArmyCarry.Reset();
+                WarSaveSlot.PrepareForZille(warFragmentData);
+                ZilleCampaign.MarkPhaseStart();
+            }
+            catch (Exception ex)
+            {
+                Core.Log.Error($"Preparing the Zille war fragment failed: {ex}");
+            }
         }
     }
 }
@@ -94,6 +108,9 @@ internal static class ZilleMapSwap
 
         if (root.name.EndsWith(SwappedSuffix))
         {
+            // The map kept from an earlier phase: the base map's load showed the table props again in between.
+            DisableVanillaBlockades();
+            SetTableProps(false);
             return;
         }
 
@@ -269,7 +286,8 @@ internal static class ZilleMapSwap
     private static void DisableVanillaBlockades()
     {
         WarConfiguration cfg = Managers.Instance?.WarFlowManager?.warConfiguration;
-        if (cfg == null || _vanillaBlockades != null)
+        // Judge by the live list, not by whether a copy is kept: a reloaded configuration comes back with its blockades.
+        if (cfg == null || cfg.navalBlockades == null || cfg.navalBlockades.Count == 0)
         {
             return;
         }

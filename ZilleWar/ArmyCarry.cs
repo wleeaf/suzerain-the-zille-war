@@ -20,6 +20,9 @@ internal static class ArmyCarry
 
     public static void Register() => Variables.Register(VarArmy);
 
+    /// <summary>A Zille war fragment is being set up: its deployment may be filled again (fragment pointers can be reused).</summary>
+    public static void Reset() => _restoredFor = IntPtr.Zero;
+
     /// <summary>At the end of an operation, while the map still exists.</summary>
     public static void Record()
     {
@@ -62,12 +65,13 @@ internal static class ArmyCarry
     internal static void OnDeploymentShown(WarDeploymentPanel panel)
     {
         WarFlowManager flow = Managers.Instance?.WarFlowManager;
-        if (panel == null || flow == null || !ZilleOperation.IsOurFragment(flow.currentWarFragmentData) || flow.isInOperationPhase)
+        WarFragmentData onTable = Patch_WarFlowManager_SetupWarFragment.OnTable(flow);
+        if (panel == null || flow == null || !ZilleOperation.IsOurFragment(onTable) || flow.isInOperationPhase)
         {
             return;
         }
 
-        IntPtr frag = flow.currentWarFragmentData.Pointer;
+        IntPtr frag = onTable.Pointer;
         if (frag == _restoredFor)
         {
             return;
@@ -91,8 +95,10 @@ internal static class ArmyCarry
         }
 
         WarTileManager tiles = Managers.Instance?.WarTileManager;
-        var types = Managers.Instance?.WarFlowManager?.warConfiguration?.allWarUnitTypeDatas;
-        if (tiles == null || types == null)
+        WarFlowManager flow = Managers.Instance?.WarFlowManager;
+        var types = flow?.warConfiguration?.allWarUnitTypeDatas;
+        // The player may already have pressed Start (or left the table): never deploy into a running operation.
+        if (panel == null || tiles == null || types == null || flow.isInOperationPhase || !ZilleOperation.IsOurFragment(Patch_WarFlowManager_SetupWarFragment.OnTable(flow)))
         {
             yield break;
         }

@@ -328,6 +328,8 @@ internal static class ZilleCampaign
     {
         Variables.Set(VarEnemyDeadAtStart, Variables.GetInt(VarEnemyDeadTotal));
         Variables.Set(VarPlayerDeadAtStart, Variables.GetInt(VarPlayerDeadTotal));
+        // Only a resumed phase lands Wehzek reinforcements (PhaseResume); never report an earlier phase's landing again.
+        Variables.Set(PhaseResume.VarLanded, 0);
     }
 
     private static int PhaseDead(string total, string atStart)

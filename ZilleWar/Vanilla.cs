@@ -31,6 +31,19 @@ internal static class Vanilla
     /// <summary>Make a ZilleWar variable usable in expresso conditions. Booleans read nil as false, numbers read nil as 0.</summary>
     public static void Expose(string variable, bool isBool = true) => Exposed[variable] = isBool;
 
+    private static readonly HashSet<string> ExposedPlain = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Make a ZilleWar variable writable from expresso instructions ("X = true;", "X += 2;"): mapped to plain Variable["x"]
+    /// like a vanilla variable, since the nil-safe forms of <see cref="Expose"/> are not valid assignment targets. Reads nil
+    /// as nil, so use it only for variables that are set before any expresso reads them.
+    /// </summary>
+    public static void ExposePlain(string variable)
+    {
+        Exposed.Remove(variable);
+        ExposedPlain.Add(variable);
+    }
+
     internal static void AddExposedToConverter()
     {
         try
@@ -46,6 +59,12 @@ internal static class Vanilla
             {
                 names.Add(v);
                 map[v] = isBool ? $"(Variable[\"{v}\"] == true)" : $"(Variable[\"{v}\"] or 0)";
+            }
+
+            foreach (string v in ExposedPlain)
+            {
+                names.Add(v);
+                map[v] = $"Variable[\"{v}\"]";
             }
         }
         catch (Exception ex)
@@ -103,6 +122,11 @@ internal static class Vanilla
 
     /// <summary>The vanilla report never appears while <paramref name="when"/> is true (checked every step).</summary>
     public static void HideReport(string name, Func<bool> when) => ReportHides.Add((name, when));
+
+    /// <summary>The vanilla enable variable of a news item or report ("news:Name" / "report:Name"), seen through a hide:
+    /// null while it is hidden and its own variable is not known.</summary>
+    internal static string UnhiddenEnableVariable(string key, string current) =>
+        current != Never ? current : OriginalEnable.TryGetValue(key, out string original) ? original : null;
 
     private static void Toggle(string key, Func<string> get, Action<string> set, bool hide)
     {
@@ -200,7 +224,120 @@ internal static class Vanilla
             string s = e.userScript ?? string.Empty;
             if (!s.Contains(lua, StringComparison.Ordinal))
             {
-                e.userScript = string.IsNullOrWhiteSpace(s) ? lua : s.TrimEnd() + (s.TrimEnd().EndsWith(";") ? " " : "; ") + lua;
+                string t = s.Trim();
+                // Many vanilla logic nodes carry only a Lua comment as their script ("--; ", "-- Continue; "): code appended on the
+                // same line would be commented out, so a comment-only script is replaced and a script with a comment gets a new line.
+                e.userScript = string.IsNullOrWhiteSpace(s) || (t.StartsWith("--", StringComparison.Ordinal) && !t.Contains('\n')) ? lua
+                    : s.Contains("--", StringComparison.Ordinal) ? s.TrimEnd() + "\n" + lua
+                    : s.TrimEnd() + (s.TrimEnd().EndsWith(";") ? " " : "; ") + lua;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Mod choices join vanilla menus at the vanilla links' priority (<see cref="Talk.Choice"/>). Where a vanilla entry continues
+    /// with a line or a logic node instead of a menu, the Dialogue System plays that line and never offers choices of the same
+    /// priority, so a mod choice hooked there would never show. There the mod choices' links are raised to High: they show while
+    /// their condition holds, and the vanilla line follows otherwise. Idempotent; run after the modding kit has linked our nodes.
+    /// </summary>
+    internal static void RaiseChoicesOverLines(DialogueConversation conv)
+    {
+        DialogueDatabase db = DialogueManager.MasterDatabase;
+        if (conv?.dialogueEntries == null || db == null)
+        {
+            return;
+        }
+
+        var ours = new HashSet<int>();
+        foreach (DialogueEntry e in conv.dialogueEntries)
+        {
+            if (e != null && IsMod(e) && !e.isGroup && db.IsPlayerID(e.ActorID))
+            {
+                ours.Add(e.id);
+            }
+        }
+
+        if (ours.Count == 0)
+        {
+            return;
+        }
+
+        foreach (DialogueEntry e in conv.dialogueEntries)
+        {
+            var links = e?.outgoingLinks;
+            if (links == null || links.Count < 2)
+            {
+                continue;
+            }
+
+            List<Link> raise = null;
+            foreach (Link l in links)
+            {
+                if (l != null && l.priority == ConditionPriority.Normal && l.destinationConversationID == conv.id && ours.Contains(l.destinationDialogueID))
+                {
+                    (raise ??= new List<Link>()).Add(l);
+                }
+            }
+
+            if (raise == null || raise.Count == links.Count || IsMod(e))
+            {
+                continue;
+            }
+
+            bool npc = false, pc = false;
+            foreach (Link l in links)
+            {
+                if (l != null && l.priority == ConditionPriority.Normal && !(l.destinationConversationID == conv.id && ours.Contains(l.destinationDialogueID)))
+                {
+                    Classify(db, db.GetDialogueEntry(l.destinationConversationID, l.destinationDialogueID), ref npc, ref pc, 0);
+                }
+            }
+
+            if (npc && !pc)
+            {
+                foreach (Link l in raise)
+                {
+                    l.priority = ConditionPriority.High;
+                }
+            }
+        }
+    }
+
+    private static bool IsMod(DialogueEntry e) =>
+        Field.LookupValue(e.fields, "SuzerainModdingKit.NodeName")?.StartsWith("ZilleWar.", StringComparison.Ordinal) ?? false;
+
+    /// <summary>Does the link lead to a line (npc) or a menu (pc)? Group nodes pass on to their children.</summary>
+    private static void Classify(DialogueDatabase db, DialogueEntry d, ref bool npc, ref bool pc, int depth)
+    {
+        if (d == null)
+        {
+            return;
+        }
+
+        if (!d.isGroup)
+        {
+            if (db.IsPlayerID(d.ActorID))
+            {
+                pc = true;
+            }
+            else
+            {
+                npc = true;
+            }
+
+            return;
+        }
+
+        if (depth > 4 || d.outgoingLinks == null)
+        {
+            return;
+        }
+
+        foreach (Link l in d.outgoingLinks)
+        {
+            if (l != null)
+            {
+                Classify(db, db.GetDialogueEntry(l.destinationConversationID, l.destinationDialogueID), ref npc, ref pc, depth + 1);
             }
         }
     }
@@ -228,6 +365,17 @@ internal static class Vanilla
             PatchDialogue(DialogueManager.MasterDatabase?.GetConversation(title));
         }
 
+        ApplyEntities();
+    }
+
+    /// <summary>
+    /// The gates, hides and instruction gates on vanilla entities. Also run right before the game evaluates a step
+    /// (<see cref="Patch_VanillaBeforeStepEvaluation"/>): loading a save rebuilds every entity list from the data files, and the
+    /// step is evaluated before the mod's step event, so without this a gated vanilla scene could be offered on the step a war
+    /// save is loaded.
+    /// </summary>
+    internal static void ApplyEntities()
+    {
         foreach (var list in new[] { EntityDataManager.conversationsData, EntityDataManager.ConversationsData })
         {
             if (list == null)
@@ -495,15 +643,39 @@ internal sealed class EntrySelector : ConversationNodeSelector
 [HarmonyPatch(typeof(ConversationPanel), nameof(ConversationPanel.Setup))]
 internal static class Patch_VanillaDialogue
 {
+    // after the modding kit's own Setup prefix, which injects and links our nodes
+    [HarmonyPriority(Priority.Low)]
     private static void Prefix(ConversationData conversationData)
     {
         try
         {
-            Vanilla.PatchDialogue(DialogueManager.MasterDatabase?.GetConversation(conversationData?.ConversationProperties?.Dialogue));
+            DialogueConversation conv = DialogueManager.MasterDatabase?.GetConversation(conversationData?.ConversationProperties?.Dialogue);
+            Vanilla.PatchDialogue(conv);
+            Vanilla.RaiseChoicesOverLines(conv);
         }
         catch (Exception ex)
         {
             Core.Log.Warning($"Vanilla dialogue patch failed: {ex.Message}");
+        }
+    }
+}
+
+/// <summary>Gates and hides are in place before the game evaluates the step (they are lost when a save is loaded).</summary>
+[HarmonyPatch(typeof(GameFlowManager), nameof(GameFlowManager.EvaluateCurrentStep))]
+internal static class Patch_VanillaBeforeStepEvaluation
+{
+    private static void Prefix()
+    {
+        try
+        {
+            if (SuzerainModdingKit.GameState.IsCurrentStoryPack(SuzerainModdingKit.VanillaData.SuzerainStoryPackInfo.Rizia))
+            {
+                Vanilla.ApplyEntities();
+            }
+        }
+        catch (Exception ex)
+        {
+            Core.Log.Warning($"Vanilla edits before the step evaluation failed: {ex.Message}");
         }
     }
 }

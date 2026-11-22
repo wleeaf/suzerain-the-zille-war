@@ -7,6 +7,10 @@ namespace ZilleWar;
 /// <summary>
 /// Dev tracing for the war setup: logs entry into key manager methods and failed tile lookups,
 /// so native exceptions (which arrive without a stack) can be located by the last log line.
+/// Not only tracing: a patched method runs behind Il2CppInterop's native-to-managed trampoline, which logs and swallows an
+/// exception thrown inside it. WarSupplyLineManager.SetupSupplyLines throws on the Zille map (Pales supply-line tiles that
+/// are not there) for every tile set up; patched, the error is logged and WarTile.Setup goes on, unpatched it would abort
+/// the map's setup coroutine. Keep these hooks installed in every game.
 /// </summary>
 internal static class Trace
 {

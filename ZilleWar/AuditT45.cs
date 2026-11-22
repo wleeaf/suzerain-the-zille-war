@@ -64,8 +64,8 @@ internal static class AuditT45
     private static bool Latch(string key, Func<bool> now)
     {
         string v = "ZilleWar.A45_L_" + key;
-        string s = Variables.GetString(v);
-        if (string.IsNullOrEmpty(s))
+        string s = ZilleCampaign.Str(v); // an unset latch reads "nil"
+        if (s.Length == 0)
         {
             s = now() ? "y" : "n";
             Variables.Set(v, s);

@@ -74,14 +74,17 @@ internal static class ZilleData
     {
         get
         {
-            if (_panels == null)
+            // Kept only once all six loaded (a failed load must not leave holes for the next war map), reloaded if one is gone.
+            if (_panels == null || _panels.Any(p => p == null))
             {
-                _panels = new Texture2D[6];
+                var panels = new Texture2D[6];
                 for (int i = 0; i < 6; i++)
                 {
-                    _panels[i] = LoadTexture(Path.Combine(Dir, $"map_0{i + 1}.png"), mipmaps: true, readable: false);
-                    _panels[i].name = $"T_Map_Zille_0{i + 1}";
+                    panels[i] = LoadTexture(Path.Combine(Dir, $"map_0{i + 1}.png"), mipmaps: true, readable: false);
+                    panels[i].name = $"T_Map_Zille_0{i + 1}";
                 }
+
+                _panels = panels;
             }
 
             return _panels;

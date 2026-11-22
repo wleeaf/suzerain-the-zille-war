@@ -306,7 +306,8 @@ internal static class EarlyT5
         void Stick(string k, string intro, string introStopped, string introNoEmbargo, int vanilla, int[] parents, string ask)
         {
             t.Variant(k, vanilla, parents, $"{War} and {SupplyWar.EmbargoOn} and {Active}", Hegel, intro, new[] { k + "S" });
-            t.Variant(k + "Q", vanilla, parents, $"{War} and {SupplyWar.EmbargoOn} and not ({Active})", Hegel, introStopped, new[] { k + "S" });
+            // "V", not "Q": the kit's 32-bit Articy ids made StickAQ collide with StickB2.
+            t.Variant(k + "V", vanilla, parents, $"{War} and {SupplyWar.EmbargoOn} and not ({Active})", Hegel, introStopped, new[] { k + "S" });
             t.Variant(k + "N", vanilla, parents, $"{War} and not {SupplyWar.EmbargoOn}", Hegel, introNoEmbargo, new[] { k + "S" });
             t.Line(k + "S", Hegel, stick, new[] { k + "1", k + "2", k + "3" });
             t.Choice(k + "1", "\"You are threatening a king in the middle of the night, Mr. Hegel?\"", new[] { k + "1a" });
@@ -587,10 +588,12 @@ internal static class EarlyT5
             try
             {
                 GameState.AddCustomConversation(CouncilConv);
-                GameState.AddCustomStoryFragment(new CustomConversationFragment(CouncilFragment, SuzerainStoryPackInfo.Rizia,
+                if (GameState.AddCustomStoryFragment(new CustomConversationFragment(CouncilFragment, SuzerainStoryPackInfo.Rizia,
                     SuzerainTokenName.RiziaCityPorteDrazon, "The Council After Konstantium", "Council Chambers, Palas Rezna",
-                    ConversationData.ConversationType.Administration, CouncilConv));
-                Variables.Set(VarCouncilOffered, true);
+                    ConversationData.ConversationType.Administration, CouncilConv)))
+                {
+                    Variables.Set(VarCouncilOffered, true);
+                }
             }
             catch (Exception ex)
             {

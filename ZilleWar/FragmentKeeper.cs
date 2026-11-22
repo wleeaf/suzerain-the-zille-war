@@ -14,7 +14,8 @@ namespace ZilleWar;
 /// offered it believed it had been offered). Every conversation fragment we add is recorded in a save variable with its turn and
 /// step; it is struck off the moment its conversation opens. After a load, any recorded scene of the current step that has not
 /// been played, is not on the map and is not waiting in the Scheduler's queue is added again. Records of earlier steps are
-/// dropped: a step can't end with one of our scenes still pending.
+/// dropped (a step can't end with one of our scenes still pending), except a scene still waiting in the Scheduler's queue,
+/// which carries over to the step it will be added in.
 /// </summary>
 internal static class FragmentKeeper
 {
@@ -71,7 +72,7 @@ internal static class FragmentKeeper
 
         try
         {
-            List<Rec> recs = Load().Where(r => r.Turn == Turn && r.Step == Step && r.Name != c.Name).ToList();
+            List<Rec> recs = Load().Where(r => r.Name != c.Name && ((r.Turn == Turn && r.Step == Step) || Scheduler.HasQueued(r.Name))).ToList();
             recs.Add(new Rec(Turn, Step, c.Name, c.AssignedTokenName, c.HubTitle, c.HubDescription, (int)c.Type, c.ConversationName));
             Save(recs);
         }
@@ -111,8 +112,10 @@ internal static class FragmentKeeper
         try
         {
             List<Rec> recs = Load();
-            List<Rec> current = recs.Where(r => r.Turn == Turn && r.Step == Step).ToList();
-            if (current.Count != recs.Count)
+            // A scene still waiting in the Scheduler's queue when its step ended carries over: keep it on this step's books.
+            List<Rec> current = recs.Where(r => (r.Turn == Turn && r.Step == Step) || Scheduler.HasQueued(r.Name))
+                .Select(r => r with { Turn = Turn, Step = Step }).ToList();
+            if (!current.SequenceEqual(recs))
             {
                 Save(current);
             }
@@ -148,7 +151,14 @@ internal static class FragmentKeeper
 [HarmonyPatch(typeof(GameState), nameof(GameState.AddCustomStoryFragment))]
 internal static class Patch_RecordFragments
 {
-    private static void Postfix(CustomStoryFragmentData customStoryFragmentData) => FragmentKeeper.Record(customStoryFragmentData);
+    // Only what was added or queued (a refused fragment, e.g. one whose conversation is missing, would be retried every step).
+    private static void Postfix(CustomStoryFragmentData customStoryFragmentData, bool __result)
+    {
+        if (__result)
+        {
+            FragmentKeeper.Record(customStoryFragmentData);
+        }
+    }
 }
 
 [HarmonyPatch(typeof(ConversationPanel), "Setup")]
@@ -159,6 +169,7 @@ internal static class Patch_MarkScenePlayed
         if (conversationData != null)
         {
             FragmentKeeper.Played(conversationData.NameInDatabase, conversationData.ConversationProperties?.Dialogue);
+            WarCouncil.OnOpened(conversationData.NameInDatabase);
         }
     }
 }

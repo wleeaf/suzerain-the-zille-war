@@ -188,6 +188,8 @@ internal static class WorldModifiers
 
     private const string WehlenGate = "ZilleWar.War_Declared == false";
 
+    private static readonly HashSet<string> RowTargets = new(Rows.Select(r => r.ci), StringComparer.Ordinal);
+
     public static void Register()
     {
         foreach (string v in External.Concat(External.Select(Turns)).Concat(Computed)
@@ -302,7 +304,8 @@ internal static class WorldModifiers
         Set(Fervor, active && !two && w <= 2 ? 1 : 0);
         Set(Weariness, active && !two && w >= 3 ? (w >= 4 ? -2 : -1) : 0);
         Set(TwoFronts, two ? -1 : 0);
-        Set(Humiliation, defeated && since >= 0 ? (since <= 1 ? -2 : since <= 3 ? -1 : 0) : 0);
+        // "from the Defeat in Zille": a lost war only, like its Overview card (an armistice with Zille city held is the divided outcome)
+        Set(Humiliation, defeated && !cityHeld && since >= 0 ? (since <= 1 ? -2 : since <= 3 ? -1 : 0) : 0);
         Set(Victory, liberated && since is >= 0 and <= 1 ? 1 : 0);
         Set(Tutelage, suzerain ? -1 : 0);
 
@@ -444,7 +447,7 @@ internal static class WorldModifiers
     {
         bool raw = false, filtered = false;
         string variable = null;
-        foreach (SituationData d in EntityDataManager.situationsData)
+        foreach (SituationData d in EntityDataManager.situationsData ?? new Il2CppSystem.Collections.Generic.List<SituationData>())
         {
             if (d?.NameInDatabase == name)
             {
@@ -453,7 +456,7 @@ internal static class WorldModifiers
             }
         }
 
-        foreach (SituationData d in EntityDataManager.SituationsData)
+        foreach (SituationData d in EntityDataManager.SituationsData ?? new Il2CppSystem.Collections.Generic.List<SituationData>())
         {
             filtered |= d?.NameInDatabase == name;
         }
@@ -594,7 +597,14 @@ internal static class WorldModifiers
 
             foreach (ConditionalInstructionData c in list)
             {
-                var rows = c?.ConditionalInstructionProperties?.ConditionalInstructions;
+                // one name read per entry (this runs every step over a few hundred entries, peace games included)
+                string name = c?.NameInDatabase;
+                if (name == null || !RowTargets.Contains(name))
+                {
+                    continue;
+                }
+
+                var rows = c.ConditionalInstructionProperties?.ConditionalInstructions;
                 if (rows == null)
                 {
                     continue;
@@ -602,7 +612,7 @@ internal static class WorldModifiers
 
                 foreach ((string ci, string cond, string instr) in Rows)
                 {
-                    if (c.NameInDatabase != ci)
+                    if (name != ci)
                     {
                         continue;
                     }

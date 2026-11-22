@@ -91,63 +91,150 @@ internal static class WorldText
         }
     }
 
+    /// <summary>Where each name sits in the entity lists of one kind, valid while the lists are the same objects with the same counts.</summary>
+    private sealed class NameIndex
+    {
+        public IntPtr[] Ptrs;
+        public int[] Counts;
+        public Dictionary<string, List<(int list, int i)>> Map;
+    }
+
+    private static readonly Dictionary<string, NameIndex> Indexes = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// The entities named <paramref name="name"/> in <paramref name="lists"/>. Scanning thousands of Il2Cpp entities on every call
+    /// (dozens of calls per step evaluation) was the cost; the index is rebuilt when a list is replaced (a data reload) or its
+    /// count changes, and every hit is checked against the live list, so a moved or replaced entity forces a rebuild.
+    /// </summary>
+    private static List<T> Lookup<T>(string kind, Il2CppSystem.Collections.Generic.List<T>[] lists, string name, Func<T, string> nameOf)
+    {
+        var found = new List<T>();
+        for (int attempt = 0; attempt < 2; attempt++)
+        {
+            found.Clear();
+            if (!Indexes.TryGetValue(kind, out NameIndex ix) || !Current(ix, lists))
+            {
+                ix = Build(lists, nameOf);
+                Indexes[kind] = ix;
+            }
+
+            if (!ix.Map.TryGetValue(name, out var hits))
+            {
+                return found;
+            }
+
+            bool stale = false;
+            foreach ((int l, int i) in hits)
+            {
+                var list = lists[l];
+                T e = list != null && i < list.Count ? list[i] : default;
+                if (e != null && nameOf(e) == name)
+                {
+                    found.Add(e);
+                }
+                else
+                {
+                    stale = true;
+                }
+            }
+
+            if (!stale)
+            {
+                return found;
+            }
+
+            Indexes.Remove(kind);
+        }
+
+        return found;
+    }
+
+    private static bool Current<T>(NameIndex ix, Il2CppSystem.Collections.Generic.List<T>[] lists)
+    {
+        if (ix.Ptrs.Length != lists.Length)
+        {
+            return false;
+        }
+
+        for (int l = 0; l < lists.Length; l++)
+        {
+            IntPtr p = lists[l]?.Pointer ?? IntPtr.Zero;
+            if (p != ix.Ptrs[l] || (lists[l]?.Count ?? -1) != ix.Counts[l])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static NameIndex Build<T>(Il2CppSystem.Collections.Generic.List<T>[] lists, Func<T, string> nameOf)
+    {
+        var ix = new NameIndex { Ptrs = new IntPtr[lists.Length], Counts = new int[lists.Length], Map = new Dictionary<string, List<(int, int)>>(StringComparer.Ordinal) };
+        for (int l = 0; l < lists.Length; l++)
+        {
+            var list = lists[l];
+            ix.Ptrs[l] = list?.Pointer ?? IntPtr.Zero;
+            ix.Counts[l] = list?.Count ?? -1;
+            if (list == null)
+            {
+                continue;
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                T e = list[i];
+                string n = e == null ? null : nameOf(e);
+                if (n == null)
+                {
+                    continue;
+                }
+
+                if (!ix.Map.TryGetValue(n, out var at))
+                {
+                    ix.Map[n] = at = new List<(int, int)>();
+                }
+
+                at.Add((l, i));
+            }
+        }
+
+        return ix;
+    }
+
     private static IEnumerable<(object entity, Func<(string title, string text)> get, Action<(string title, string text)> set)> Entities(string kind, string name)
     {
         switch (kind)
         {
             case "news":
-                foreach (var list in new[] { EntityDataManager.newsData, EntityDataManager.NewsData })
+                foreach (NewsData n in Lookup(kind, new[] { EntityDataManager.newsData, EntityDataManager.NewsData }, name, x => x.NameInDatabase))
                 {
-                    if (list == null)
+                    NewsProperties p = n.NewsProperties;
+                    if (p != null)
                     {
-                        continue;
-                    }
-
-                    foreach (NewsData n in list)
-                    {
-                        NewsProperties p = n?.NewsProperties;
-                        if (p != null && n.NameInDatabase == name)
-                        {
-                            yield return (n, () => (p.Title, p.Description), v => { p.Title = v.title; p.Description = v.text; });
-                        }
+                        yield return (n, () => (p.Title, p.Description), v => { p.Title = v.title; p.Description = v.text; });
                     }
                 }
 
                 break;
             case "report":
-                foreach (var list in new[] { EntityDataManager.reportsData, EntityDataManager.ReportsData })
+                foreach (ReportData r in Lookup(kind, new[] { EntityDataManager.reportsData, EntityDataManager.ReportsData }, name, x => x.NameInDatabase))
                 {
-                    if (list == null)
+                    ReportProperties p = r.ReportProperties;
+                    if (p != null)
                     {
-                        continue;
-                    }
-
-                    foreach (ReportData r in list)
-                    {
-                        ReportProperties p = r?.ReportProperties;
-                        if (p != null && r.NameInDatabase == name)
-                        {
-                            yield return (r, () => (p.Title, p.Description), v => { p.Title = v.title; p.Description = v.text; });
-                        }
+                        yield return (r, () => (p.Title, p.Description), v => { p.Title = v.title; p.Description = v.text; });
                     }
                 }
 
                 break;
             case "codex":
-                foreach (var list in new[] { EntityDataManager.codexEntriesData, EntityDataManager.CodexEntriesData })
+                foreach (CodexEntryData c in Lookup(kind, new[] { EntityDataManager.codexEntriesData, EntityDataManager.CodexEntriesData }, name, x => x.NameInDatabase))
                 {
-                    if (list == null)
+                    CodexEntryProperties p = c.CodexEntryProperties;
+                    if (p != null)
                     {
-                        continue;
-                    }
-
-                    foreach (CodexEntryData c in list)
-                    {
-                        CodexEntryProperties p = c?.CodexEntryProperties;
-                        if (p != null && c.NameInDatabase == name)
-                        {
-                            yield return (c, () => (p.Title, p.Description), v => { p.Title = v.title; p.Description = v.text; });
-                        }
+                        yield return (c, () => (p.Title, p.Description), v => { p.Title = v.title; p.Description = v.text; });
                     }
                 }
 

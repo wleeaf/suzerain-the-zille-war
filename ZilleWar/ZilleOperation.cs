@@ -25,6 +25,12 @@ internal static class ZilleOperation
     public static int CurrentPhase { get; private set; }
     public static Objective CurrentObjective { get; private set; }
 
+    /// <summary>
+    /// The airborne drop zone of the phase last built when it is set up fresh (null otherwise): the map starts it in Rizian
+    /// hands although the saved front does not, so the ownership check must leave it alone.
+    /// </summary>
+    public static string FreshDropZone { get; private set; }
+
     public static void RegisterVariables()
     {
         foreach (TownSpec t in (ZilleData.Towns ?? new List<TownSpec>()).Where(t => t.Role == "city"))
@@ -168,14 +174,16 @@ internal static class ZilleOperation
 
         // --- war layer
         RemoveOurWarOperations();
-        WarOperation warOp = BuildWarOperation(opName, objective, vanillaWarOp.warOperationData);
+        WarOperation warOp = BuildWarOperation(opName, objective, vanillaWarOp.warOperationData, out string dropZone);
+        // A resumed phase takes its tiles from the snapshot, so only a fresh setup starts with the paratroopers' ground.
+        FreshDropZone = resume ? null : dropZone;
         Managers.Instance.operations.Add(warOp);
         fragment = frag;
         Core.Log.Msg($"Built {ZilleCampaign.PhaseTitle(phase)} ({opName}, {(resume ? "resumes the map" : "fresh setup")}), aim {info.Target}: {ZilleCampaign.Describe()}");
         return true;
     }
 
-    private static WarOperation BuildWarOperation(string opName, Objective objective, WarOperationData vanilla)
+    private static WarOperation BuildWarOperation(string opName, Objective objective, WarOperationData vanilla, out string dropZone)
     {
         Dictionary<string, bool> owners = ZilleCampaign.CurrentOwners();
         var by = ZilleData.ByName;
@@ -189,7 +197,7 @@ internal static class ZilleOperation
         WarCouncil.Orders orders = WarCouncil.OrdersFor(objective);
 
         // Airborne: the paratroopers hold a patch of ground behind the Wehzek line when the operation opens.
-        string dropZone = orders.Approach == WarCouncil.Approach.Airborne ? Plan.DropZone(owners, targetTile) : null;
+        dropZone = orders.Approach == WarCouncil.Approach.Airborne ? Plan.DropZone(owners, targetTile) : null;
         if (dropZone != null)
         {
             owners[dropZone] = true;

@@ -31,6 +31,9 @@ internal static class WarState
     /// <summary>True while the war is fought (mirrors <see cref="VarActive"/> for the Harmony patch).</summary>
     public static bool Active { get; private set; }
 
+    /// <summary>A save is being loaded: the mirror belongs to the game left behind until the next story step sets it.</summary>
+    internal static void ForgetSession() => Active = false;
+
     /// <summary>Called on every story step. <paramref name="atWar"/> is true while the war is being fought.</summary>
     public static void Apply(bool atWar)
     {
@@ -114,6 +117,35 @@ internal static class Patch_UpdateCountryRelationship
         {
             Core.Log.Msg($"Wehlen relation '{relationship}' requested during the war; keeping At War.");
             relationship = "AtWar";
+        }
+    }
+}
+
+/// <summary>
+/// A loaded save (or a new game) must not inherit the war of the game left behind: until its first story step the at-war
+/// mirror would keep Wehlen At War in a peace game, and a set-aside war map could be handed to the wrong save.
+/// </summary>
+[HarmonyPatch]
+internal static class Patch_WarStateOnLoad
+{
+    private static System.Collections.Generic.IEnumerable<System.Reflection.MethodBase> TargetMethods() =>
+        new[]
+        {
+            AccessTools.Method(typeof(PersistenceManager), nameof(PersistenceManager.LoadSaveFile)),
+            AccessTools.Method(typeof(PersistenceManager), nameof(PersistenceManager.LoadLastCheckpoint)),
+            AccessTools.Method(typeof(PersistenceManager), nameof(PersistenceManager.CreateNewCampaign)),
+        }.Where(m => m != null);
+
+    private static void Prefix()
+    {
+        try
+        {
+            WarState.ForgetSession();
+            WarSaveSlot.ForgetSession();
+        }
+        catch (Exception ex)
+        {
+            Core.Log.Warning($"Resetting the war state on load failed: {ex.Message}");
         }
     }
 }

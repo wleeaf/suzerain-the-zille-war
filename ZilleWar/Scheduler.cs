@@ -1,3 +1,4 @@
+using System.Reflection;
 using HarmonyLib;
 using Il2Cpp;
 using SuzerainModdingKit.StoryFragments;
@@ -11,7 +12,8 @@ namespace ZilleWar;
 /// are done. The queue is flushed right before the game evaluates the step, so a waiting scene keeps the step open.
 /// Order within a step: the post-Konstantium council and the consulate files (tier 0, added as soon as they are
 /// offered); then, after the step's vanilla scenes, Beatrice, Alvarez and
-/// Saltana; the war room, Hegel and Smolak (they react to the calls); the War Council (it briefs on all of it);
+/// Saltana; the war room and Hegel (they react to the calls); Smolak last of the calls, since accepting his ceasefire ends
+/// the war and no war-time call may follow it; the War Council (it briefs on all of it);
 /// then the war table (WarCouncil waits for every queued or pending "ZilleWar.Pre_" fragment).
 /// </summary>
 internal static class Scheduler
@@ -20,12 +22,12 @@ internal static class Scheduler
     {
         ("ZilleWar.Pre_EarlyCouncil_", 0), ("ZilleWar.Pre_Call_Consulate_", 0),
         ("ZilleWar.Pre_Call_Beatrice_", 1), ("ZilleWar.Pre_Call_Alvarez_", 1), ("ZilleWar.Pre_Call_Saltana_", 1),
-        ("ZilleWar.Pre_Call_WarRoom_", 2), ("ZilleWar.Pre_Call_Hegel_", 2), ("ZilleWar.Pre_Call_Smolak_", 2),
-        ("ZilleWar.Pre_Council_", 3),
+        ("ZilleWar.Pre_Call_WarRoom_", 2), ("ZilleWar.Pre_Call_Hegel_", 2), ("ZilleWar.Pre_Call_Smolak_", 3),
+        ("ZilleWar.Pre_Council_", 4),
         ("ZilleWar.Late_", 1),
     };
 
-    private sealed record Item(CustomStoryFragmentData Data, AddStoryFragmentOptions Options, string Name, int Tier);
+    private sealed record Item(CustomStoryFragmentData Data, AddStoryFragmentOptions Options, string Name, int Tier, int Turn);
 
     private static readonly List<Item> Queue = new();
     private static bool _bypass;
@@ -109,8 +111,32 @@ internal static class Scheduler
     }
 
     /// <summary>True while a queued fragment's name starts with one of the prefixes (it will appear later in this step).</summary>
-    public static bool HasQueued(params string[] prefixes) =>
-        Queue.Any(q => prefixes.Any(p => q.Name.StartsWith(p, StringComparison.Ordinal)));
+    public static bool HasQueued(params string[] prefixes)
+    {
+        Prune();
+        return Queue.Any(q => prefixes.Any(p => q.Name.StartsWith(p, StringComparison.Ordinal)));
+    }
+
+    /// <summary>
+    /// A scene can still be waiting when its step ends (its last blocker finished without a step evaluation in between); it
+    /// then carries over. The per-turn scenes before the war ("ZilleWar.Pre_*_T&lt;turn&gt;": councils and calls) do not
+    /// carry into the next turn: that turn offers its own, and the old one would play twice (two councils, two barrages). A
+    /// scene queued on a later turn than the current one belongs to another game (a new game, or an earlier save).
+    /// </summary>
+    private static void Prune()
+    {
+        int turn = SuzerainModdingKit.GameState.CurrentTurnNum ?? 0;
+        if (turn <= 0 || Queue.Count == 0)
+        {
+            return;
+        }
+
+        foreach (Item item in Queue.Where(q => q.Turn > turn || (q.Turn < turn && q.Name.StartsWith("ZilleWar.Pre_", StringComparison.Ordinal))).ToList())
+        {
+            Queue.Remove(item);
+            Core.Log.Msg($"Scheduler: '{item.Name}' (turn {item.Turn}) dropped on turn {turn}.");
+        }
+    }
 
     /// <summary>Harmony prefix on SMK's AddCustomStoryFragment. Returns false (skip) when the fragment was queued.</summary>
     internal static bool Intercept(CustomStoryFragmentData data, AddStoryFragmentOptions options, ref bool result)
@@ -126,13 +152,14 @@ internal static class Scheduler
             return true;
         }
 
+        Prune();
         if (Queue.Any(q => q.Name == data.Name))
         {
             result = true;
             return false;
         }
 
-        var item = new Item(data, options, data.Name, tier.Value);
+        var item = new Item(data, options, data.Name, tier.Value, SuzerainModdingKit.GameState.CurrentTurnNum ?? 0);
         if (!Blocked(item))
         {
             return true;
@@ -147,6 +174,7 @@ internal static class Scheduler
     /// <summary>Add every queued fragment whose predecessors are done (or, when one is being played, whose last one is).</summary>
     public static void Flush(bool lastMayBeActive = false)
     {
+        Prune();
         if (Queue.Count == 0)
         {
             return;
@@ -231,9 +259,17 @@ internal static class Patch_FlushOnFragmentStart
     }
 }
 
-[HarmonyPatch(typeof(PersistenceManager), nameof(PersistenceManager.LoadSaveFile))]
+/// <summary>A save is loaded, a checkpoint restored or a new game started: nothing queued or re-injected belongs to it.</summary>
+[HarmonyPatch]
 internal static class Patch_ClearScheduleOnLoad
 {
+    private static IEnumerable<MethodBase> TargetMethods() => new[]
+    {
+        AccessTools.Method(typeof(PersistenceManager), nameof(PersistenceManager.LoadSaveFile)),
+        AccessTools.Method(typeof(PersistenceManager), nameof(PersistenceManager.LoadLastCheckpoint)),
+        AccessTools.Method(typeof(PersistenceManager), nameof(PersistenceManager.CreateNewCampaign)),
+    }.Where(m => m != null);
+
     private static void Prefix()
     {
         Scheduler.Clear();
