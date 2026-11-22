@@ -141,6 +141,7 @@ internal static class Vanilla
     /// <summary>The vanilla dialogue entry only shows when the Lua condition also holds.</summary>
     public static void Require(string conversationTitle, int entryId, string luaCondition)
     {
+        luaCondition = LuaFix.Rewrite(luaCondition);
         LuaLint.Record($"Require {conversationTitle} #{entryId}", luaCondition, null);
         Requirements.Add((conversationTitle, entryId, luaCondition));
     }
@@ -148,6 +149,7 @@ internal static class Vanilla
     /// <summary>Run extra Lua when a vanilla dialogue entry plays (appended to its script).</summary>
     public static void AppendScript(string conversationTitle, int entryId, string lua)
     {
+        lua = LuaFix.Rewrite(lua);
         LuaLint.Record($"AppendScript {conversationTitle} #{entryId}", null, lua);
         ScriptAppends.Add((conversationTitle, entryId, lua));
     }
@@ -349,6 +351,106 @@ internal static class Vanilla
                 }
             }
         }
+    }
+
+    /// <summary>Self-test: which declared edits found their vanilla target.</summary>
+    internal static List<string> Audit()
+    {
+        var problems = new List<string>();
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        void Add<T>(Il2CppSystem.Collections.Generic.List<T> list, Func<T, string> name)
+        {
+            if (list == null)
+            {
+                return;
+            }
+
+            foreach (T x in list)
+            {
+                string n = x == null ? null : name(x);
+                if (n != null)
+                {
+                    names.Add(n);
+                }
+            }
+        }
+
+        Add(EntityDataManager.conversationsData, d => d.NameInDatabase);
+        Add(EntityDataManager.decisionsData, d => d.NameInDatabase);
+        Add(EntityDataManager.AllDecisionsData, d => d.NameInDatabase);
+        Add(EntityDataManager.billsData, d => d.NameInDatabase);
+        foreach (string g in FragmentGates.Keys.Where(g => !names.Contains(g)))
+        {
+            problems.Add($"Gate target not found: {g}");
+        }
+
+        var news = new HashSet<string>(StringComparer.Ordinal);
+        foreach (NewsData n in EntityDataManager.newsData ?? new Il2CppSystem.Collections.Generic.List<NewsData>())
+        {
+            if (n?.NameInDatabase != null)
+            {
+                news.Add(n.NameInDatabase);
+            }
+        }
+
+        foreach (string n in NewsHides.Select(h => h.name).Distinct().Where(n => !news.Contains(n)))
+        {
+            problems.Add($"HideNews target not found: {n}");
+        }
+
+        var reports = new HashSet<string>(StringComparer.Ordinal);
+        foreach (ReportData r in EntityDataManager.reportsData ?? new Il2CppSystem.Collections.Generic.List<ReportData>())
+        {
+            if (r?.NameInDatabase != null)
+            {
+                reports.Add(r.NameInDatabase);
+            }
+        }
+
+        foreach (string n in ReportHides.Select(h => h.name).Distinct().Where(n => !reports.Contains(n)))
+        {
+            problems.Add($"HideReport target not found: {n}");
+        }
+
+        foreach ((string ci, string contains, string cond) in InstructionGates)
+        {
+            bool found = false, rowFound = false;
+            foreach (ConditionalInstructionData c in EntityDataManager.conditionalInstructionData ?? new Il2CppSystem.Collections.Generic.List<ConditionalInstructionData>())
+            {
+                if (c?.NameInDatabase != ci)
+                {
+                    continue;
+                }
+
+                found = true;
+                foreach (ConditionalInstruction row in c.ConditionalInstructionProperties?.ConditionalInstructions ?? new Il2CppSystem.Collections.Generic.List<ConditionalInstruction>())
+                {
+                    rowFound |= contains == null || (row?.Instruction?.Contains(contains, StringComparison.Ordinal) ?? false);
+                }
+            }
+
+            if (!found || !rowFound)
+            {
+                problems.Add($"GateInstruction target not found: {ci} / {contains}");
+            }
+        }
+
+        foreach ((string title, int id, string _) in Requirements.Concat(ScriptAppends))
+        {
+            DialogueConversation conv = DialogueManager.MasterDatabase?.GetConversation(title);
+            if (conv == null)
+            {
+                problems.Add($"Dialogue edit: conversation not found: {title}");
+            }
+            else if (Entry(conv, id) == null)
+            {
+                problems.Add($"Dialogue edit: entry {id} not found in {title}");
+            }
+        }
+
+        problems.Insert(0, $"Vanilla edits declared: {FragmentGates.Count} gates, {NewsHides.Count} news hides, {ReportHides.Count} report hides, " +
+                           $"{InstructionGates.Count} instruction gates, {Requirements.Count} node conditions, {ScriptAppends.Count} node scripts.");
+        return problems;
     }
 
     private static bool Safe(Func<bool> f)

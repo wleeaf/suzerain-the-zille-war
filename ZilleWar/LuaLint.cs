@@ -12,6 +12,8 @@ internal static class LuaLint
     private static readonly List<(string where, string lua, bool condition)> Lua_ = new();
     private static readonly List<(string where, string expresso)> Expresso = new();
     private static bool _done;
+    public static readonly List<string> Problems = new();
+    public static int Checked { get; private set; }
 
     public static void Record(string where, string condition, string script)
     {
@@ -49,6 +51,7 @@ internal static class LuaLint
             if (!Compiles(wrapped, out string error))
             {
                 bad++;
+                Problems.Add($"{(condition ? "condition" : "script")} of {where}: {error} | {lua}");
                 Core.Log.Error($"Lua check: {(condition ? "condition" : "script")} of {where} does not compile: {error}\n    {lua}");
             }
         }
@@ -63,6 +66,7 @@ internal static class LuaLint
             catch (Exception ex)
             {
                 bad++;
+                Problems.Add($"{where}: expresso '{expresso}' cannot be converted: {ex.Message}");
                 Core.Log.Error($"Lua check: {where}: expresso '{expresso}' cannot be converted: {ex.Message}");
                 continue;
             }
@@ -71,10 +75,12 @@ internal static class LuaLint
                 || !Compiles($"local __zw = function() return ({lua}) end", out string error2))
             {
                 bad++;
+                Problems.Add($"{where}: expresso '{expresso}' converts to '{lua}'");
                 Core.Log.Error($"Lua check: {where}: expresso '{expresso}' converts to '{lua}', which is not valid Lua.");
             }
         }
 
+        Checked = Lua_.Count + Expresso.Count;
         Core.Log.Msg($"Lua check: {Lua_.Count} Lua strings and {Expresso.Count} expresso conditions checked, {bad} problem(s).");
     }
 

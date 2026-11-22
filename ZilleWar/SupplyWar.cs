@@ -212,9 +212,9 @@ internal static partial class SupplyWar
             Variables.Register(ReportedVar(l));
         }
 
-        foreach (string v in IntVars.Concat(BoolVars).Concat(StringVars).Concat(new[] { VarAskedAll }))
+        foreach (string v in IntVars.Concat(BoolVars).Concat(StringVars).Concat(new[] { VarAskedAll }).Where(v => v != ModRumburgCredit))
         {
-            Variables.Register(v);
+            Variables.Register(v);   // ModRumburgCredit is WorldModifiers' variable and registered there
         }
 
         foreach (string v in Asked)

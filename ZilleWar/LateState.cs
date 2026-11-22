@@ -449,7 +449,7 @@ internal static class LateState
     {
         try
         {
-            Il2CppPixelCrushers.DialogueSystem.Lua.Run(code);
+            Il2CppPixelCrushers.DialogueSystem.Lua.Run(LuaFix.Rewrite(code));
         }
         catch (Exception ex)
         {

@@ -349,8 +349,8 @@ internal static class AnDeclaration
             text: text,
             speakerSelector: new CharacterNameSelector(speaker),
             sequence: Wait(sequence),
-            luaScript: (conversant ? $"AddConversant(\"{speaker}\"); " : string.Empty) + script,   // vanilla Rizia adds conversants in Lua, quoted
-            luaCondition: condition,
+            luaScript: LuaFix.Rewrite((conversant ? $"AddConversant(\"{speaker}\"); " : string.Empty) + script),   // vanilla Rizia adds conversants in Lua, quoted
+            luaCondition: LuaFix.Rewrite(condition),
             nextNodes: next);
 
     // A node with its own sequence replaces the default one, which is what waits for the player to click on.
@@ -362,6 +362,6 @@ internal static class AnDeclaration
     // explicitly or the game plays them as ordinary lines. Action choices use the italic narration actor.
     private static ConversationNode Choice(string name, string text, ConversationNodeSelector[] next, string menu = null, string script = null,
         string condition = null) =>
-        new(name: P + name, text: text, menuText: menu, luaScript: script, nextNodes: next, luaCondition: condition,
+        new(name: P + name, text: text, menuText: menu, luaScript: LuaFix.Rewrite(script), nextNodes: next, luaCondition: LuaFix.Rewrite(condition),
             speakerSelector: new CharacterNameSelector(menu != null && !text.StartsWith("\"") ? RomusAction : Romus));
 }

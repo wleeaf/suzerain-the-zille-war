@@ -61,6 +61,8 @@ internal sealed class Talk
             script = $"AddConversant(\"{speaker}\"); " + script;
         }
 
+        condition = LuaFix.Rewrite(condition);
+        script = LuaFix.Rewrite(script);
         LuaLint.Record(_prefix + name, condition, script);
 
         _inj.AddNode(new ConversationNode(
@@ -87,6 +89,8 @@ internal sealed class Talk
             menu = $"{menu ?? text} ({cost})";
         }
 
+        condition = LuaFix.Rewrite(condition);
+        script = LuaFix.Rewrite(script);
         LuaLint.Record(_prefix + name, condition, script);
 
         _inj.AddNode(new ConversationNode(
@@ -104,6 +108,8 @@ internal sealed class Talk
     /// <summary>An empty logic node: runs a script and/or branches on conditions of its children.</summary>
     public Talk Logic(string name, string[] next, string condition = null, string script = null, ConversationNodeHook[] hooks = null)
     {
+        condition = LuaFix.Rewrite(condition);
+        script = LuaFix.Rewrite(script);
         LuaLint.Record(_prefix + name, condition, script);
         _inj.AddNode(new ConversationNode(
             name: _prefix + name,
@@ -137,7 +143,7 @@ internal sealed class Talk
     public Talk Variant(string name, int vanillaEntry, int[] vanillaParents, string luaWhen, string speaker, string text, string[] next,
         string script = null, string menu = null, string cost = null)
     {
-        Vanilla.Require(_conversation, vanillaEntry, $"not ({luaWhen})");
+        Vanilla.Require(_conversation, vanillaEntry, $"({luaWhen}) ~= true");
         if (speaker == Romus || speaker == RomusAction || speaker == null)
         {
             Choice(name, text, next, luaWhen, script, menu, cost, From(vanillaParents));
