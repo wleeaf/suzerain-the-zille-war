@@ -551,7 +551,7 @@ internal static class WarCouncil
     {
         // The first council: straight back from Konstantium.
         t.Line("Open1", Narrator,
-            "The flight back from Kyrute had been a quiet one. Nobody aboard wanted to be the first to say out loud what we had done.",
+            "The flight back from Kyrute had been a quiet one, and the night at Qalus that followed was longer still. Nobody had wanted to be the first to say out loud what we had done.",
             new[] { "Open1b" }, condition: First, sequence: "PlaySceneMusic(Security);");
         t.Line("Open1b", Narrator,
             "By the time I reached Palas Rezna, the Council Chambers had been turned into a war room. My councilors sat along one wall. " +
@@ -741,10 +741,10 @@ internal static class WarCouncil
             "\"We did not take Zille. The columns reached the river crossings and the outskirts, but the harbor and the station are still in " +
             "Wehzek hands. The next phase goes in from the ground we hold.\"", new[] { "ResExtra" }, condition: And(missedAim, lastObj("Harbor")));
         t.Line("ResMissA", Carlos,
-            "\"Auremina held. We are in the foothills and among the first mine heads, but the town and the ridges above it are still theirs.\"",
+            "\"We did not take Auremina. We are in the foothills and among the first mine heads, but the town and the ridges above it are still theirs.\"",
             new[] { "ResExtra" }, condition: And(missedAim, lastObj("Wall")));
         t.Line("ResMissP", Carlos,
-            "\"The ports held, Your Majesty. Our columns are on the coast road, but Isor and Nanta are still in Wehzek hands.\"",
+            "\"The ports are still theirs, Your Majesty. Our columns are on the coast road, but Isor and Nanta are still in Wehzek hands.\"",
             new[] { "ResExtra" }, condition: missedAim);
         t.Line("ResHarborLate", Carlos,
             "\"Zille is ours at last. It took two phases instead of one, but the harbor, the station and their headquarters are in our hands.\"",
@@ -805,7 +805,7 @@ internal static class WarCouncil
         t.Logic("Push", new[] { "PushSetback", "PushGood" });
         string missed = And(Fought, IsNot(VarLastWon), IsNot(VarWaited));
         string last = $"{Num(VarPhase)} >= {ZilleCampaign.LastPhase}";
-        t.Logic("PushGood", new[] { "PushGoodHeld", "PushGoodMissed", "PushGoodLast", "PushGood0" }, condition: IsNot(VarSetback));
+        t.Logic("PushGood", new[] { "PushGoodHeld", "PushGoodMissed", "PushGoodLast", "PushGood0" }, condition: $"(({IsNot(VarSetback)}) or ({Is(VarWaited)}))");
         t.Line("PushGoodHeld", Carlos, "\"The men are rested and the guns are up, Your Majesty. The Staff is ready to move the moment you give the word.\"",
             new[] { "PushTad" }, condition: Is(VarWaited));
         t.Line("PushGoodMissed", Carlos,
@@ -836,7 +836,7 @@ internal static class WarCouncil
 
         t.Line("PushSetback", Carlos,
             "\"We are not in a good position, Your Majesty. The divisions that went in last time are exhausted, and we have lost ground of our own.\"",
-            new[] { "SetbackMenu" }, condition: Is(VarSetback));
+            new[] { "SetbackMenu" }, condition: And(Is(VarSetback), IsNot(VarWaited)));
         t.Logic("SetbackMenu", new[] { "SbPush", "SbHold", "SbLast", "Cease1", "Cease2" });
         t.Choice("SbPush", "\"Simply holding the line is unacceptable. We push on, whatever it costs.\"", new[] { "SbObj1" });
         t.Line("SbObj1", Carlos, "\"Our hands are tied, Your Majesty. Those men are not ready to go in again.\"", new[] { "SbObj2" });
@@ -896,7 +896,7 @@ internal static class WarCouncil
         t.Line("IntelOpenC2", Narrator, "Carlos pinned the month's reconnaissance photographs beside the map.", new[] { "Garr" }, condition: ph2);
         t.Line("IntelOpenC1", Narrator, "Carlos picked up a pointer and tapped the Strait of Kreleck.", new[] { "Garr" });
         // The same reading as at the last council is told as "no change", not word for word again.
-        string told(int n) => And(Later, $"{Num(VarGarrTold)} == {n}");
+        string told(int n) => And(Later, IsNot(VarWaited), $"{Num(VarGarrTold)} == {n}");
         t.Logic("Garr", new[] { "GarrSame1", "GarrSame2", "GarrSame3", "GarrSame4", "Garr1", "Garr2", "Garr3", "Garr4" });
         Intel("GarrSame1", "\"The garrison is as strong as it was last month, Your Majesty. Whatever we sink or kill, Wehlen replaces.\"",
             new[] { "SupEmbargo" }, And($"{Strength} >= 8", told(1)));
@@ -1097,7 +1097,7 @@ internal static class WarCouncil
         string canMount = $"{mount} >= 1";
 
         t.Line("CommandPlan", Carlos,
-            "\"Now, the plan for the campaign. Whatever you decide today, the Staff will carry it through every phase until Zille is ours. " +
+            "\"Now, the plan for the campaign. Whatever you decide today, the Staff will carry it through every phase of Northern Crown, until the last objective is taken or the war ends. " +
             "And not every plan on paper is one this army can carry out.\"",
             new[] { "RFeint" }, condition: ChoosePlan);
 

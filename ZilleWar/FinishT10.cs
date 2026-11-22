@@ -54,7 +54,7 @@ internal static class FinishT10
             "\"Yeah. The Sazons got the Auremina pits, so I bought up the land around them instead. Mined out, most of it -- but ripe for rehabilitation as farmland.\"",
             new[] { "#700" });
         Swap(g, Gather, "Farm", 699, new[] { 698 }, "Russello Montoro", new S(
-            Part: "\"Yeah. Some of RRG's old land ended up on our side of the ceasefire line. All mined out -- but perfect for farming.\"",
+            Part: "\"Yeah. Some of RRG's old land ended up on our side of the armistice line. All mined out -- but perfect for farming.\"",
             Lost: "\"Yeah. Turns out the Wehzek colonel running Zille now likes Rizian money as much as the last one did. Got back a patch of old RRG land that's all mined out -- but perfect for farming.\""),
             new[] { "#700" });
         g.Register();
@@ -75,31 +75,37 @@ internal static class FinishT10
         // The Prime Minister's election brief: vanilla's "losing Zille" is a lost negotiation; after a war it is a ceasefire line
         // or a lost war. "also" versions follow the Pales update.
         var e = new Talk(Elections, "ZilleWar.Fin.Election10.");
-        foreach ((string name, int entry, int parent, string speaker, bool also, string part, string lost) in new[]
+        foreach ((string name, int entry, int parent, string speaker, bool also, string part, string lost, string lib) in new[]
                  {
                      ("Manus", 156, 171, "Manus Sazon", false,
-                         "The ceasefire in Zille has {0}become a rallying point for voters. Half a province won and half left behind the line, and many ask whether that was worth the price.",
-                         "The lost war for Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change."),
+                         "The armistice in Zille has {0}become a rallying point for voters. Half a province won and half left behind the line, and many ask whether that was worth the price.",
+                         "The lost war for Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change.",
+                         "Zille's return has {0}become a rallying point for voters, and many ask why the Crown never asked them what they wanted."),
                      ("ManusAlso", 172, 170, "Manus Sazon", true,
-                         "The ceasefire in Zille has {0}become a rallying point for voters. Half a province won and half left behind the line, and many ask whether that was worth the price.",
-                         "The lost war for Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change."),
+                         "The armistice in Zille has {0}become a rallying point for voters. Half a province won and half left behind the line, and many ask whether that was worth the price.",
+                         "The lost war for Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change.",
+                         "Zille's return has {0}become a rallying point for voters, and many ask why the Crown never asked them what they wanted."),
                      ("Daria", 163, 175, "Daria de Rava", false,
                          "The unfinished war in Zille has {0}become a rallying point for voters. They wanted a victory or a peace, and got a line of trenches.",
-                         "The defeat in Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change."),
+                         "The defeat in Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change.",
+                         "The return of Zille has {0}become a rallying point for voters, and their pride in the victory is tangled with anger at what it cost."),
                      ("DariaAlso", 176, 174, "Daria de Rava", true,
                          "The unfinished war in Zille has {0}become a rallying point for voters. They wanted a victory or a peace, and got a line of trenches.",
-                         "The defeat in Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change."),
+                         "The defeat in Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change.",
+                         "The return of Zille has {0}become a rallying point for voters, and their pride in the victory is tangled with anger at what it cost."),
                      ("Adarfo", 164, 167, "Adarfo Sotelato", false,
-                         "The ceasefire in Zille has {0}become a rallying point for voters. Their sons died for half a province, and they want to know who decided that was enough.",
-                         "The lost war in Zille has {0}become a rallying point for voters. Their sons died for nothing, and they know exactly whose war it was."),
+                         "The armistice in Zille has {0}become a rallying point for voters. Their sons died for half a province, and they want to know who decided that was enough.",
+                         "The lost war in Zille has {0}become a rallying point for voters. Their sons died for nothing, and they know exactly whose war it was.",
+                         "Zille's return has {0}become a rallying point for voters. Their sons won it back, and they want to know whether the Crown will ever thank them."),
                      ("AdarfoAlso", 168, 166, "Adarfo Sotelato", true,
-                         "The ceasefire in Zille has {0}become a rallying point for voters. Their sons died for half a province, and they want to know who decided that was enough.",
-                         "The lost war in Zille has {0}become a rallying point for voters. Their sons died for nothing, and they know exactly whose war it was."),
+                         "The armistice in Zille has {0}become a rallying point for voters. Their sons died for half a province, and they want to know who decided that was enough.",
+                         "The lost war in Zille has {0}become a rallying point for voters. Their sons died for nothing, and they know exactly whose war it was.",
+                         "Zille's return has {0}become a rallying point for voters. Their sons won it back, and they want to know whether the Crown will ever thank them."),
                  })
         {
             string a = also ? "also " : string.Empty;
             Swap(e, Elections, name, entry, new[] { parent }, speaker,
-                new S(Part: "\"" + string.Format(part, a) + "\"", Lost: "\"" + string.Format(lost, a) + "\""), new[] { "#177" });
+                new S(Lib: "\"" + string.Format(lib, a) + "\"", Part: "\"" + string.Format(part, a) + "\"", Lost: "\"" + string.Format(lost, a) + "\""), new[] { "#177" });
         }
 
         e.Register();

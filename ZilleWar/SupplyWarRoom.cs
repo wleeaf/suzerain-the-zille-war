@@ -83,9 +83,9 @@ internal static partial class SupplyWar
             "and he has photographs.\"",
             "\"They found the village instead. Eleven dead, none of them soldiers. A foreign reporter was close enough to take photographs.\"",
             "WRBludsTrial", "WRBludsHome", "WRBludsKeep");
-        t.Choice("WRBludsTrial", "\"Court-martial the men who did it. In Zille, in public, with that reporter in the front row.\"", new[] { "WRBludsTrial2" },
+        t.Choice("WRBludsTrial", "\"Court-martial the men who did it. In Palas Rezna, in public, with that reporter in the front row.\"", new[] { "WRBludsTrial2" },
             cost: "Loses the Bludish Companies",
-            script: dropMercs + S(VarBludsIncident, "trial") + Inc(NpValgsland, 1) + Inc(NpRumburg, -1) + Inc(VarRumburgPatience, -1));
+            script: dropMercs + S(VarBludsIncident, "trial") + Inc(NpRumburg, -1) + Inc(VarRumburgPatience, -1));
         Say("WRBludsTrial2", null,
             "\"The rest of them will desert before the verdict. Good riddance. Queen Beatrice will take it personally, of course. They were " +
             "her Bluds before they were ours.\"",

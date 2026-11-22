@@ -175,10 +175,10 @@ internal static class WorldCodex
 
     private static string P(params string[] paragraphs) => string.Join("\n\n", paragraphs.Where(p => !string.IsNullOrEmpty(p)));
 
-    /// <summary>An armistice after the last phase with Zille city held reads like the divided ceasefire, not like a defeat.</summary>
-    private static string Outcome(string active, string liberated, string defeated, string ceasefire) =>
+    /// <summary>An armistice after the last phase with Zille city held is "divided" (its own words; the ceasefire text when none is given), not a defeat.</summary>
+    private static string Outcome(string active, string liberated, string defeated, string ceasefire, string divided = null) =>
         WorldSystems.Liberated ? liberated
-        : WorldSystems.Defeated ? (WorldSystems.ZilleCityHeld ? ceasefire : defeated)
+        : WorldSystems.Defeated ? (WorldSystems.ZilleCityHeld ? divided ?? ceasefire : defeated)
         : WorldSystems.Ceasefire ? ceasefire : active;
 
     /// <summary>The phases fought, in order, from the campaign history ("Harbor:won;Wall:lost"): phase, aim, result.</summary>
@@ -311,7 +311,8 @@ internal static class WorldCodex
             "The war ended in a Rizian defeat. Wehlen continues to administer the region and has since declared the Zille Agreement void, " +
             "a claim Rizia does not recognize.",
             "The war ended in a ceasefire supervised by the Alliance of Nations, with the region divided along the line of contact" +
-            (WorldSystems.ZilleCityHeld ? " and the city of Zille in Rizian hands." : ". Wehlen continues to administer most of the region."));
+            (WorldSystems.ZilleCityHeld ? " and the city of Zille in Rizian hands." : ". Wehlen continues to administer most of the region."),
+            "The war ended in an armistice signed under Alliance supervision, with Zille city in Rizian hands and the rest of the region in Wehzek hands.");
 
         string twoWars = Variables.GetInt(WorldSystems.VarTwoWarsTurn) > 0
             ? "For part of the war, Rizia was also at war with the Grand Duchy of Pales, and the Royal Army fought on two fronts at once."
@@ -347,7 +348,10 @@ internal static class WorldCodex
                     "recognize the claim.",
                     "Fighting ended with a ceasefire supervised by the Alliance of Nations. The line of contact now runs through the " +
                     "region" + (WorldSystems.ZilleCityHeld ? ", with the city of Zille under Rizian control," : string.Empty) +
-                    " and the rest of the territory remains under Wehzek administration pending a final settlement."));
+                    " and the rest of the territory remains under Wehzek administration pending a final settlement.",
+                    "Fighting ended with an armistice signed under Alliance supervision. The line of contact now runs through the " +
+                    "region, with the city of Zille under Rizian control, and the rest of the territory remains under Wehzek " +
+                    "administration pending a final settlement."));
             case "Locations_Regions_ZilleTerritory_Brenas":
             case "Locations_Regions_ZilleTerritory_RiziaImperii":
                 return WorldSystems.Liberated
@@ -381,14 +385,15 @@ internal static class WorldCodex
                     Outcome("The war over its terms continues.",
                         "Rizia regards the agreement as fulfilled by force of arms. Wehlen regards it as broken.",
                         "Wehlen now cites Rizia's declaration of war as grounds for voiding the agreement altogether.",
-                        "Under the ceasefire, the question of the agreement has been returned to the Alliance of Nations, where it remains unresolved."));
+                        "Under the ceasefire, the question of the agreement has been returned to the Alliance of Nations, where it remains unresolved.",
+                        "Under the armistice, the question of the agreement has been returned to the Alliance of Nations, where it remains unresolved."));
             case "Locations_Countries_Wehlen":
                 return P(original,
                     "After refusing to return the Zille region at the end of its lease, Wehlen found itself at war with the Kingdom of " +
                     "Rizia. The conflict strained an economy still recovering from the civil war and coincided with renewed operations " +
                     "against the Bludish Freedom Front in the northeast." +
                     Outcome(string.Empty, " It ended with the loss of Zille.", " Wehlen emerged from it holding Zille more firmly than before.",
-                        " It ended in a ceasefire that left the region divided."));
+                        " It ended in a ceasefire that left the region divided.", " It ended in an armistice that left Zille divided."));
             case "Characters_ForeignLeaders_WiktorSmolak":
                 return P(original,
                     "Smolak refused to return the Zille region to Rizia at the end of its lease, invoking the AN Threat Mitigation " +
@@ -396,7 +401,7 @@ internal static class WorldCodex
                     "presented the conflict as a defense of the Wehzeks of Zille against \"Rumburg and its royal clients.\"" +
                     Outcome(string.Empty, " The loss of Zille was the first territorial defeat of his presidency.",
                         " Victory in Zille has strengthened his position at home, where the war is commemorated as the Defense of the Strait.",
-                        " He has called the ceasefire line \"a wound, not a border.\""));
+                        " He has called the ceasefire line \"a wound, not a border.\"", " He has called the armistice line \"a wound, not a border.\""));
             case "Characters_ForeignLeaders_PatricioAlvarez_1950":
             case "Characters_ForeignLeaders_PatricioAlvarez_1953":
                 return P(original,

@@ -191,7 +191,7 @@ internal sealed class AfterAction
         {
             case 1:
                 return won
-                    ? $"{name} has reached its aim, the General Staff reports from its field headquarters at Mave Nortus. {target} {Is(plural)} " +
+                    ? $"{name} has reached its aim, the General Staff reports from its field headquarters behind the front. {target} {Is(plural)} " +
                       "in Rizian hands."
                     : $"{name} has ended without taking {target}, the General Staff has informed the Crown. {target} {(plural ? "remain" : "remains")} " +
                       "in Wehzek hands, and the next phase will go for it again.";
@@ -356,8 +356,8 @@ internal sealed class AfterAction
             ? p switch
             {
                 1 => $" Wehzek losses are estimated at {EnemyDeadMen} men, and the prisoner cages at Dapalle are filling.",
-                2 => $" The enemy lost an estimated {EnemyDeadMen} men. A column of prisoners was marched through Mave Nortus on the way " +
-                     "south, and the townspeople came out to watch it pass in silence.",
+                2 => $" The enemy lost an estimated {EnemyDeadMen} men. A column of prisoners was marched south through the Rizian lines, " +
+                     "and the townspeople of the border villages came out to watch it pass in silence.",
                 _ => $" The Wehzek garrison lost an estimated {EnemyDeadMen} men in the last phase alone.",
             }
             : p switch

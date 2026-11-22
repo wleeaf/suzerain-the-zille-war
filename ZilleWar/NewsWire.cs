@@ -179,7 +179,7 @@ internal static class NewsWire
         string press = Variables.GetString(AnDeclaration.VarPressStatement);
         string kingQuote = press switch
         {
-            "occupier" => "\"Rizia is at war with no one but the army occupying our land,\" the King told reporters outside the hall.",
+            "occupier" => "\"Rizia is at war with Wehlen's army, and with no one else,\" the King told reporters outside the hall.",
             "assurance" => "Outside the hall, the King promised reporters that \"every Wehzek family in Zille will be safe under the Rizian crown.\"",
             "silent" => "The King pushed through the waiting press without a word, his jaw set, and was driven straight to the airfield.",
             _ => "A palace spokesman said only that \"Rizia is taking back what is hers. Nothing more, and nothing less.\"",
@@ -203,7 +203,7 @@ internal static class NewsWire
             "Rumburg \"stands with its Rizian family, today and for as long as this takes.\" Rumburgian officials have promised to " +
             "speed up shipments of arms and equipment already contracted to the Royal Army.",
             embargo
-                ? "Rumburg stopped buying Wehzek oil after the King's visit to Thornbourgh, and a palace source says the Queen has no " +
+                ? "Rumburg stopped buying Wehzek oil months ago, and a palace source says the Queen has no " +
                   "intention of letting that change. \"Smolak will pay for his convoys with money he no longer has,\" the source said."
                 : "Rumburg still imports Wehzek oil, a fact that Wehzek state radio was quick to point out last night. Palace sources " +
                   "say the question is now \"under discussion\" between the two crowns.",
@@ -420,7 +420,7 @@ internal static class NewsWire
             ? " Prime Minister Alvarez's private note offering \"practical arrangements\" remains in the King's possession, and the " +
               "Lespian ambassador asked twice this week whether it had been read."
             : string.Empty;
-        Report("Declaration_Lespia", SuzerainTokenName.RiziaCountryLespia, alvarezBacks ? "Lespia Looks the Other Way" : "Lespia Urges Restraint", P(
+        Report("Declaration_Lespia", SuzerainTokenName.RiziaCountryLespia, alvarezBacks ? "Lespia Calls Wehlen's Occupation Illegal" : "Lespia Urges Restraint", P(
             alvarezBacks
                 ? "Prime Minister Patricio Alvarez has not condemned our declaration. In the hall he told the assembly that Lespia had " +
                   "already said what it thought of Wehlen's occupation of Zille, and that what Rizia chose to do about it was \"Rizia's " +
@@ -1250,7 +1250,7 @@ internal static class NewsWire
                     "bankers of Thornbourgh who arm Rizia.\"",
                     "\"Wehlen does not forget, and Wehlen does not forgive,\" Smolak said. Wehlen has since called up two more classes of " +
                     "reservists, and our agents report the Wehzek ports facing the Strait of Kreleck working around the clock.")
-                : P($"President Wiktor Smolak has claimed victory at {target}. Speaking on the radio from Smolak Square in Zille, he said " +
+                : P($"President Wiktor Smolak has claimed victory at {target}. Speaking on the radio from Wraclawitz, he said " +
                     $"the King had promised his people {target} \"and has given them coffins instead.\"",
                     "Smolak has toured the garrison and decorated the officers who held the line. Wehzek state radio is playing the speech " +
                     "every hour."));
@@ -1392,7 +1392,7 @@ internal static class NewsWire
                 ? "Our intelligence reports that Contanan cargo bound for Wehlen is piling up in Valgish and Wehzek warehouses because it " +
                   "cannot be got across the Strait of Kreleck. Kyow has begun to ask Wraclawitz, not very politely, what happened to the " +
                   "last shipment."
-                : $"Contanan military advisers have been seen in {(Variables.GetBool(ZilleOperation.CapturedVar("Nanta")) ? "Isor" : "Nanta")} for the first time, in Wehzek uniforms without insignia. Our " +
+                : $"Contanan military advisers have been seen in {(Variables.GetBool(ZilleOperation.CapturedVar("Nanta")) ? "Isor" : "Nanta")}, in Wehzek uniforms without insignia. Our " +
                   "intelligence believes they are artillery specialists, sent to help the garrison make the most of what Kyow ships it.",
             x.Won
                 ? "Chairman Malenyev has said nothing in public about the latest Rizian advance. Our analysts read the silence as a decision " +
@@ -1404,9 +1404,10 @@ internal static class NewsWire
     {
         bool helps = WorldSystems.LespiaHelps;
         bool kept = Variables.GetString(AnDeclaration.VarLespianNote) == "kept";
+        bool grievance = Variables.GetBool(SupplyWar.VarLespiaGrievance) || Variables.GetBool("RiziaDLC.MITZ_ScrewedOverLespia");
         if (x.P == 1)
         {
-            if (kept && !helps)
+            if (kept && !helps && !grievance)
             {
                 Report(key + "_Lespia", SuzerainTokenName.RiziaCountryLespia, "Lespia's Offer Stands", P(
                     "A Lespian diplomat has let our embassy know, very quietly, that Prime Minister Alvarez's offer of \"practical " +
@@ -1416,7 +1417,15 @@ internal static class NewsWire
             return;
         }
 
-        if (helps && !Variables.GetBool(SupplyWar.VarLespiaWithdrawn))
+        if (grievance)
+        {
+            Report(key + "_Lespia", SuzerainTokenName.RiziaCountryLespia, "Lespia Counts Its Losses", P(
+                "Lespian officials say Rizia has not kept its word, and that Prime Minister Alvarez keeps his own books. Lespian " +
+                "patrols in the Strait of Kreleck are described as routine, which our naval attaché takes to mean slow.",
+                "Our embassy has been told, politely, that the question of sanctions against Rizia in the Security Committee is " +
+                "\"under consideration.\""));
+        }
+        else if (helps && !Variables.GetBool(SupplyWar.VarLespiaWithdrawn))
         {
             Report(key + "_Lespia", SuzerainTokenName.RiziaCountryLespia, "The Lespian Patrols Report", P(
                 "The Lespian navy has sent our naval attaché its log of the month in the Strait of Kreleck: convoys turned back, cargoes " +
@@ -1519,7 +1528,7 @@ internal static class NewsWire
                     "Lespian warships have begun stopping and searching Wehzek ships in the Strait of Kreleck, citing \"security of " +
                     "navigation.\" In practice, the strait is closed to Wehlen.",
                     Variables.GetBool(SupplyWar.VarLespiaLease)
-                        ? "Diplomats say the price is the Rizian island of Caleqabiz, leased to Lespia for fifty years for a token rent. Prime " +
+                        ? "Diplomats say the price is the Rizian island of Caleqabiz, leased to Lespia for fifty years for a modest rent. Prime " +
                           "Minister Alvarez, asked whether fifty years was not rather long, said that \"Zille managed twenty-five.\""
                         : Variables.GetBool("ZilleWar.Lespia_Caleqabiz")
                         ? "Diplomats say Lespia has been granted naval rights at the Rizian island of Caleqabiz in return. Prime Minister " +
@@ -1546,9 +1555,9 @@ internal static class NewsWire
                     {
                         Publish(k, "RH", "Caleqabiz Lease Seals the Strait", P(
                             "Under a lease signed this week, the Lespian navy will maintain a pier and fuel depot at Caleqabiz, and Lespia will " +
-                            "pay the Crown a handsome rent for the privilege. In return, not a single Wehzek convoy will reach Zille unseen.",
+                            "pay the Crown a modest rent for the privilege. In return, not a single Wehzek convoy will reach Zille unseen.",
                             "The Royal Herald notes that the island remains Rizian, that its flag still flies over the governor's house, and " +
-                            "that the rent will be paid in good Arcasian Liras."));
+                            "that the rent will be paid in guilders."));
                     }
                 }
 
@@ -1669,7 +1678,7 @@ internal static class NewsWire
                     "Both capitals claim the outcome. President Smolak calls the city \"occupied, not lost,\" and the Security Committee is " +
                     "expected to discuss Rizia's conduct before it discusses the new line on the map."));
                 Publish("End", "V", "Half a Province, Full Price", P(
-                    "The King has Zille city. He does not have Zille. The war he declared alone in Kyrute has ended in an armistice, a line " +
+                    "The King has Zille city. He does not have Zille. The war he declared alone in Konstantium has ended in an armistice, a line " +
                     "of barbed wire through the middle of the region, and casualty lists the Ministry of War is still adding to.",
                     "The palace will call this a victory, and in the harbor it may look like one. In the villages on the wrong side of " +
                     "the line, it looks like a border that moved a few miles and stayed."));
@@ -1686,30 +1695,20 @@ internal static class NewsWire
                 Publish("End", "RH", "The Army Regroups", P(
                     "After hard fighting in Zille, the General Staff has ordered our forces back to defensive positions along the border. " +
                     "The Royal Herald reminds its readers that Rizia's claim to Zille is as just today as it was yesterday."));
-                Publish("End", "G", "Rizia's War in Zille Ends in Failure", WorldSystems.ZilleCityHeld
-                    ? P("Rizia's offensive in Zille has stalled for good, and the Alliance of Nations has brokered a ceasefire along the " +
-                        "line where the armies stopped. Rizian troops keep the city of Zille and its harbor; the hills and the northern " +
-                        "ports remain in Wehzek hands.",
-                        "Both capitals claim the outcome. President Smolak calls the city \"occupied, not lost,\" and the Security Committee " +
-                        "is expected to discuss sanctions against Rizia before it discusses the new line on the map.")
-                    : P("Rizia's offensive in Zille has collapsed, and the Alliance of Nations has brokered a ceasefire along the old " +
-                        "border. Wehlen keeps Zille. President Smolak has declared victory, and the Security Committee is expected to " +
-                        "discuss sanctions against Rizia."));
+                Publish("End", "G", "Rizia's War in Zille Ends in Failure", P(
+                    "Rizia's offensive in Zille has collapsed, and an armistice has been signed under the supervision of the Alliance of " +
+                    "Nations along the old border. Wehlen keeps Zille. President Smolak has declared victory, and the Security Committee " +
+                    "is expected to discuss sanctions against Rizia."));
                 Publish("End", "V", "Who Answers for This?", P(
                     "The King declared this war alone, in a foreign capital. It has failed. Thousands of our soldiers are dead, Zille is " +
                     "further away than ever, and the world now sees Rizia as an aggressor that could not even win. Someone in the palace " +
                     "must answer for this."));
-                Report("End_Defeat", SuzerainTokenName.RiziaCityPorteDrazon, "Ceasefire in Zille", P(
-                    "With the failure of our last operation, the General Staff has advised that the war cannot be continued. A ceasefire " +
-                    "has been agreed under Alliance supervision. " + (WorldSystems.ZilleCityHeld
-                        ? "Our troops hold the city of Zille and dig in around it; the rest of the region stays in Wehzek hands."
-                        : "Our troops are pulling back to the border, and Wehlen keeps Zille."),
+                Report("End_Defeat", SuzerainTokenName.RiziaCityPorteDrazon, "Armistice in Zille", P(
+                    "With the failure of our last operation, the General Staff has advised that the war cannot be continued. An armistice " +
+                    "has been signed under Alliance supervision. Our troops are pulling back to the border, and Wehlen keeps Zille.",
                     "There are angry crowds outside the Ministry of War."));
                 Report("End_Wehlen", SuzerainTokenName.RiziaCountryWehlen, "Smolak Triumphant", P(
-                    WorldSystems.ZilleCityHeld
-                        ? "President Smolak has toured the new front outside Zille city and promised the garrison that the city \"will be Wehzek " +
-                          "again before the next harvest.\" Wehzek reinforcements continue to cross the strait."
-                        : "President Smolak has toured Zille, been photographed in Smolak Square with the garrison, and promised that \"no Rizian " +
+                    "President Smolak has toured Zille, been photographed in Smolak Square with the garrison, and promised that \"no Rizian " +
                           "soldier will ever set foot here again.\" Wehzek reinforcements continue to cross the strait."));
                 break;
             default:
@@ -1717,11 +1716,10 @@ internal static class NewsWire
                 // Quiet in Zille", "What Did the King Give Away?"): here only the Herald's version and the report.
                 string smolakAnswer = Variables.GetString(SupplyWar.VarSmolakAnswer);
                 bool byPhone = smolakAnswer is "accepted" or "countered";
+                // A telephone ceasefire: SupplyNews publishes the Herald's piece under the same headline, so only the report follows.
+                if (!byPhone)
                 Publish("End", "RH", "The Guns Fall Silent in Zille", P(
-                    byPhone
-                        ? "President Smolak has asked for a ceasefire, and His Majesty, unwilling to spend one more Rizian life than " +
-                          "victory required, has granted it. Our soldiers hold every position they have won."
-                        : "At His Majesty's request, the Alliance of Nations has brokered a ceasefire in Zille. Our soldiers hold every " +
+                    "At His Majesty's request, the Alliance of Nations has brokered a ceasefire in Zille. Our soldiers hold every " +
                           "position they have won, and not one of them will be given up at the negotiating table.",
                     WorldSystems.ZilleCityHeld
                         ? "The Golden Banner flies over the city of Zille. The Royal Herald is confident that the rest of the region will " +

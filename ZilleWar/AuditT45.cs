@@ -93,8 +93,7 @@ internal static class AuditT45
         var t = new Talk("Rizia/Turn 4/Drinking Game", "ZilleWar.A45.Drinking.");
         // [668] after turning Lucita away: the same "slept more soundly than in months" the other endings already qualify.
         t.Variant("Sleep668", 668, new[] { 670, 765, 826, 827 }, WarFlags.LDeclared, Narrator,
-            "I shut the door and got back into bed. I slept more soundly than I had in months. It only struck me in the morning that, " +
-            "somewhere in the north, my soldiers had not.", new[] { "#2" });
+            "I turned the key and lay awake a while, thinking of the trains. When I finally slept, it was badly.", new[] { "#2" });
         t.Register();
     }
 
@@ -145,10 +144,12 @@ internal static class AuditT45
         t.Variant("External", 384, new[] { 383 }, stopped, esq,
             "\"" + externalStopped + "we need every friend we can find in Konstantium. Wehlen will tell the Alliance that the line of " +
             "contact is the border now.\"", new[] { "#387" });
-        t.Variant("Crates", 629, new[] { 627 }, stopped, esq, "\"A wise request, Your Majesty. " + internalStopped + "\"", new[] { "#636" });
+        t.Variant("Crates", 629, new[] { 627 }, stopped, esq,
+            "\"A wise request, Your Majesty. Smolak will not give up another village at a conference table, so the people inside the " +
+            "line are the only ones who can move him.\"", new[] { "#636" });
         t.Variant("Neighbors", 635, new[] { 633 }, stopped, esq,
-            "\"A wise request, Your Majesty. " + externalStopped + "the voices of Wehlen's neighbors will count for more than ever.\"",
-            new[] { "#508" });
+            "\"A wise request, Your Majesty. Wehlen's neighbors have been waiting for a reason to speak, and the armistice line " +
+            "gives them one.\"", new[] { "#508" });
 
         // Zille liberated before the turn was out: the requests are about keeping it.
         const string internalFree = "Zille is ours now, Your Majesty. Whatever Morella ships across the Gulf will help the people " +
@@ -157,12 +158,18 @@ internal static class AuditT45
                                     "an annexation.";
         t.Variant("InternalFree", 376, new[] { 377 }, liberated, esq, "\"" + internalFree + "\"", new[] { "#387" });
         t.Variant("ExternalFree", 384, new[] { 383 }, liberated, esq, "\"" + externalFree + "\"", new[] { "#387" });
-        t.Variant("CratesFree", 629, new[] { 627 }, liberated, esq, "\"A wise request, Your Majesty. " + internalFree + "\"", new[] { "#636" });
+        t.Variant("CratesFree", 629, new[] { 627 }, liberated, esq,
+            "\"A wise request, Your Majesty. Whatever Morella ships across the Gulf will help the people there rebuild, not resist.\"",
+            new[] { "#636" });
+        t.Variant("PledgeStopped", 507, new[] { 505 }, stopped, esq,
+            "\"Ms. Saltana has pledged to speak in our favor when the AN next convenes, if the guns stay silent until then.\"",
+            new[] { "#630" });
         t.Variant("PledgeFree", 507, new[] { 505 }, liberated, esq,
             "\"Ms. Saltana has pledged to speak in our favor when the AN next convenes, should Wehlen ask the Alliance to undo what " +
             "our army has done.\"", new[] { "#630" });
-        t.Variant("NeighborsFree", 635, new[] { 633 }, liberated, esq, "\"A wise request, Your Majesty. " + externalFree + "\"",
-            new[] { "#508" });
+        t.Variant("NeighborsFree", 635, new[] { 633 }, liberated, esq,
+            "\"A wise request, Your Majesty. Ms. Saltana's voice will carry further now that Zille is ours, and Wehlen is already " +
+            "calling it an annexation.\"", new[] { "#508" });
         t.Register();
     }
 

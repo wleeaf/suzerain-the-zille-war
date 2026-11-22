@@ -70,6 +70,9 @@ internal static class EarlyT5
         Vanilla.Gate("Turn05_FPnT_WehlenNegotiations", WarFlags.XPeace);
         // Saltana's communique "urging the speedy return of Zille" (c327 [1040]): replaced by a wartime one.
         Vanilla.HideReport("Turn05_Morella_DemandsZilleReturn", () => Variables.GetBool(WarFlags.Declared));
+        // The flag that starts the wartime communique is set only on vanilla's ATA branch ([1040]); the Su Omina-only supply branch
+        // ([1208]) must raise it too in a war game.
+        Vanilla.AppendScript(Feedback, 1208, $"if {War} then Variable[\"RiziaDLCSupport.Reports_Turn05_Morella_DemandsZilleReturn\"] = true end;");
 
         ConversationRegistry.RegisterConversation(CouncilConv);
         RegisterCouncil();
@@ -243,9 +246,9 @@ internal static class EarlyT5
 
         // "...not since my talk with President Smolak" / "My recent talk with President Smolak..."
         t.Variant("NoTalk1", 555, new[] { 31 }, War, Romus,
-            "\"No. Not while we are paying for a war. We cannot afford to lose any more of our gold.\"", new[] { "#566" });
+            "\"No. Not while we are still paying for this war. We cannot afford to lose any more of our gold.\"", new[] { "#566" });
         t.Variant("NoTalk2", 562, new[] { 27 }, War, Romus,
-            "\"An understatement, Ms. Werner. With a war to pay for, we must protect our remaining gold reserves at all costs.\"", new[] { "#569" });
+            "\"An understatement, Ms. Werner. With a war still to pay for, we must protect our remaining gold reserves at all costs.\"", new[] { "#569" });
 
         // Elena on gold demand: the war is why the royalties matter.
         t.Variant("Gold", 255, new[] { 254 }, Active, Elena,
@@ -298,7 +301,7 @@ internal static class EarlyT5
             t.Choice(k + "1", "\"You are threatening a king in the middle of the night, Mr. Hegel?\"", new[] { k + "1a" });
             t.Line(k + "1a", Hegel, "\"I am describing the weather, Mr. Toras. You chose the season when your army crossed the border.\"",
                 new[] { ask });
-            t.Choice(k + "2", "\"Lespian ships are keeping Wehzek convoys out of my war. You ask me to knife my only friend at sea.\"",
+            t.Choice(k + "2", "\"Lespian ships are keeping Wehzek convoys out of Zille. You ask me to knife my only friend at sea.\"",
                 new[] { k + "2a" }, condition: $"Variable[\"{SupplyWar.VarLespiaStrait}\"] == true");
             t.Line(k + "2a", Hegel,
                 "\"A friend who bills you by the hour. Mr. Alvarez would sell your strait to Wraclawitz the day the price was right, " +
@@ -310,12 +313,12 @@ internal static class EarlyT5
         }
 
         Stick("StickA", embargo,
-            "\"Valgsland will not sell so much as a rivet to a kingdom making war on a friend of Contana, Mr. Toras. Do not mistake " +
-            "this call for friendship.\"", 282, new[] { 276, 277, 278, 279, 281 }, "#412");
+            "\"Valgsland does not reward a kingdom that makes war on a friend of Contana, Mr. Toras. Do not mistake this call for " +
+            "friendship.\"", 282, new[] { 276, 277, 278, 279, 281 }, "#412");
         Stick("StickB",
             "\"Valgsland cannot sell anything to a kingdom at war with a friend of Contana, Mr. Toras, and would not if it could. Our " +
             "embargo stands until your soldiers come home.\"",
-            "\"Valgsland cannot sell anything to a kingdom at war with a friend of Contana, Mr. Toras, and would not if it could.\"", 517, new[] { 515, 587 }, "#550");
+            "\"Valgsland does not reward a kingdom at war with a friend of Contana, Mr. Toras.\"", 517, new[] { 515, 587 }, "#550");
 
         // Agreeing: the promise without the aid (vanilla 386 sets PromiseITZTakeover and its journal entry).
         string promise = Set("RiziaDLC.Diplomacy_Valgsland_PromiseITZTakeover", "true") +
@@ -328,17 +331,20 @@ internal static class EarlyT5
             "\"You can. Lespia will walk away from the Meftiem with nothing.\"", new[] { "Yes2a" });
         t.Logic("Yes2a", new[] { "#621" }, script: promise);
 
-        // His support in the Pales arbitration is a principle, not a kindness, and he means to quote it back over Zille.
+        // In a war game Valgsland does not back Rizia in the Pales arbitration either: Hegel will not support a kingdom that
+        // redraws borders by force. The dialogue skips vanilla's thanks and goes straight on; the news item about Valgsland's
+        // support (vanilla [762]) is switched off below.
         const string arbitration =
-            "\"I will, however, support Rizia in your arbitration case against Pales. Not for your sake. I want it on the record " +
-            "that borders are not redrawn by whoever has the bigger guns, and I will be quoting that record to you over Zille.\"";
+            "\"As for your arbitration case against Pales, do not count on Valgsland. We do not back a kingdom that redraws " +
+            "its borders by force, and I will be quoting that principle to you over Zille.\"";
         const string arbitrationAlso =
-            "\"And Valgsland will vote for Rizia in your arbitration case against Pales. Do not thank me. I want it on the record " +
-            "that borders are not redrawn by force, and I will be quoting that record to you over Zille.\"";
-        t.Variant("Arb1", 649, new[] { 647 }, War, Hegel, arbitration, new[] { "#651", "#652", "#654" });
-        t.Variant("Arb2", 659, new[] { 657 }, War, Hegel, arbitrationAlso, new[] { "#661", "#662", "#663" });
-        t.Variant("Arb3", 669, new[] { 667 }, War, Hegel, arbitrationAlso, new[] { "#671", "#672", "#673" });
-        t.Variant("Arb4", 679, new[] { 677 }, War, Hegel, arbitration, new[] { "#681", "#682", "#684" });
+            "\"And Valgsland will not back you in your arbitration case against Pales. Borders are not redrawn by whoever has the " +
+            "bigger guns, and I intend to say so on the record, with Zille in mind.\"";
+        t.Variant("Arb1", 649, new[] { 647 }, War, Hegel, arbitration, new[] { "#359" });
+        t.Variant("Arb2", 659, new[] { 657 }, War, Hegel, arbitrationAlso, new[] { "#348" });
+        t.Variant("Arb3", 669, new[] { 667 }, War, Hegel, arbitrationAlso, new[] { "#394" });
+        t.Variant("Arb4", 679, new[] { 677 }, War, Hegel, arbitration, new[] { "#596" });
+        Vanilla.AppendScript(HegelCall, 762, $"if {War} then Variable[\"RiziaDLCSupport.News_Turn05_G_ValgslandANSupport\"] = false end;");
         t.Register();
     }
 
@@ -390,7 +396,10 @@ internal static class EarlyT5
         t.Variant("Neighbors", 635, new[] { 633 }, Active, Esquibel,
             "\"A wise request, Your Majesty. Ms. Saltana will never applaud a war. But she may yet say, loudly, that Wehlen started " +
             "this one in 1927 and refused to end it this year.\"", new[] { "#508" });
-        t.Variant("Arbitration", 999, new[] { 997 }, War, Esquibel,
+        t.Variant("ArbitrationStopped", 999, new[] { 997 }, AuditT45.Stopped, Esquibel,
+            "\"And Wehlen, needless to say, will speak against us. Smolak's envoy has already told the committee that a kingdom that " +
+            "has just fought a war cannot be trusted with an economic zone.\"", new[] { "#1002" });
+        t.Variant("Arbitration", 999, new[] { 997 }, Active, Esquibel,
             "\"And Wehlen, needless to say, will speak against us. Smolak's envoy has already told the committee that a kingdom at war " +
             "cannot be trusted with an economic zone.\"", new[] { "#1002" });
         t.Variant("Planes1", 341, new[] { 337 }, Active, Elena,
@@ -414,7 +423,10 @@ internal static class EarlyT5
             "Alliance we went to war to cover for our own bombers.\"", new[] { "#53" });
         Vanilla.Require(Security, 1423, $"not ({War})");
         // Hugo [19]/[23]: "tread carefully... the last thing we need is an escalation of violence."
-        t.Variant("Sons", 19, new[] { 18 }, War, Hugo,
+        t.Variant("SonsStopped", 19, new[] { 18 }, AuditT45.Stopped, Hugo,
+            "\"I share your concerns, Your Majesty. But whoever lit that fuse, it was our sons who fought and died in Zille, and their " +
+            "families are still counting them. This investigation matters only if it wins us votes in Konstantium.\"", new[] { "#65" });
+        t.Variant("Sons", 19, new[] { 18 }, Active, Hugo,
             "\"I share your concerns, Your Majesty. But whoever lit that fuse, it is our sons who are dying in Zille now. This " +
             "investigation matters only if it wins us votes in Konstantium.\"", new[] { "#65" });
 
@@ -463,15 +475,19 @@ internal static class EarlyT5
 
         const string wehzeks = "I know how that sounds while we are at war with Wraclawitz. But these Wehzeks fled Smolak's kind decades ago. " +
                                "Win their votes, and you prove this war is against a government, not a people.";
+        const string wehzeks2 = "I know how that sounds with our soldiers in the north. Win their votes, and you prove this war is against a " +
+                                "government, not a people.";
+        const string wehzeks3 = "Our soldiers are fighting a government, not a people. Let these Wehzeks vote for that, and we win the " +
+                                "elections as well.";
         t.Variant("Base1", 880, new[] { 877 }, Active, Manus,
             "\"Rumburgians and ethnic Valgs would lean monarchist. But if we mobilize the Wehzek, Derdian and Morellan base now, we " +
             "should gain enough votes to come out on top. " + wehzeks + "\"", new[] { "#886" });
         t.Variant("Base2", 891, new[] { 890 }, Active, Manus,
             "\"But if we start mobilizing the Wehzek, Derdian and Morellan base now, we should gain enough votes to come out on top. " +
-            wehzeks + "\"", new[] { "#893", "#895" });
+            wehzeks2 + "\"", new[] { "#893", "#895" });
         t.Variant("Base3", 1098, new[] { 1095, 1096 }, Active, Manus,
             "\"Rumburgians and ethnic Valgs will lean monarchist. But if we mobilize the Wehzek, Derdian and Morellan base now, we " +
-            "should have a significant edge compared to the last elections. " + wehzeks + "\"", new[] { "#915" });
+            "should have a significant edge compared to the last elections. " + wehzeks3 + "\"", new[] { "#915" });
 
         t.Variant("Fuel", 585, new[] { 587 }, Active, Romus,
             "\"See, Vina? This is why the Pales deal matters. Every tank in Zille runs on fuel we don't make. If Reinhart turns off " +

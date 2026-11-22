@@ -176,9 +176,9 @@ internal static class AuditT6
 
         // [152] Reinhart: "We defended ourselves against Rizia once. We are ready to do so again." -> [153]
         t.Line("ReinhartLib", Axel, "\"You took Zille from Smolak, I know. We are not Smolak.\"", new[] { "#153" }, condition: Lib, hooks: From(152));
-        t.Line("ReinhartPart", Axel, "\"Your army has only just come back from Zille, Your Majesty. Smolak still holds half of it.\"",
+        t.Line("ReinhartPart", Axel, "\"Your army came back from Zille with half of it, Your Majesty. Do not ask me to believe it is ready for more.\"",
             new[] { "#153" }, condition: Part, hooks: From(152));
-        t.Line("ReinhartLost", Axel, "\"Your army could not even take Zille from Smolak, Your Majesty.\"",
+        t.Line("ReinhartLost", Axel, "\"You had the army for Zille, Your Majesty, and it was not enough. Do not ask me to believe the army is ready for more.\"",
             new[] { "#153" }, condition: Lost, hooks: From(152));
         t.Register();
     }
@@ -221,9 +221,15 @@ internal static class AuditT6
             "bargain can be struck, it need not be struck with guns.\"", new[] { "#273" });
 
         // [271] "It is my intention that Rizia continue on the path of peaceful conflict resolution."
-        t.Variant("Path", 271, new[] { 268 }, Over, Romus,
+        t.Variant("Path", 271, new[] { 268 }, Lib, Romus,
             "\"What had to be settled by arms in Zille has been settled. Everything else, Rizia means to settle at the table. We will " +
             "remain one of the most reliable trading partners in Merkopa.\"", new[] { "#273" });
+        t.Variant("PathPart", 271, new[] { 268 }, Part, Romus,
+            "\"Zille's city is ours again, and the rest will be settled at the table. We will remain one of the most reliable trading " +
+            "partners in Merkopa.\"", new[] { "#273" });
+        t.Variant("PathLost", 271, new[] { 268 }, Lost, Romus,
+            "\"What arms could not settle in Zille, Rizia will settle at the table. We will remain one of the most reliable trading " +
+            "partners in Merkopa.\"", new[] { "#273" });
 
         // [534] "My kingdom believes that our partnerships with our neighbors are our greatest asset."
         t.Variant("Partners", 534, new[] { 533 }, WarFlags.LDeclared, Romus,
@@ -341,12 +347,20 @@ internal static class AuditT6
         var t = new Talk("Rizia/Turn 6/A_PalaceBalconySpeech", "ZilleWar.A6.Balcony.");
 
         // [88] "Our peaceful nation now faces war, imposed by our southern neighbor."
-        t.Variant("PeacefulLib", 88, new[] { 90, 91, 92, 93, 94 }, Lib, Romus,
+        // Rizia chose this war itself (prepare or declare at the Turn 6 council): "imposed by our southern neighbor" would be false.
+        const string chose = "(Variable[\"RiziaDLC.Diplomacy_Pales_PrepareForWar\"] == true or Variable[\"RiziaDLC.Diplomacy_Pales_DeclareWar\"] == true)";
+        t.Variant("PeacefulChose", 88, new[] { 90, 91, 92, 93, 94 }, $"{Over} and {chose}", Romus,
+            "\"Our nation, which has fought one war this year for Zille, now goes to war again, over the Aureus field and a quarrel " +
+            "that has gone on too long.\"", new[] { "#148" });
+        t.Variant("PeacefulLib", 88, new[] { 90, 91, 92, 93, 94 }, $"{Lib} and not {chose}", Romus,
             "\"Our nation, which has only just brought Zille home, now faces war again, imposed by our southern neighbor.\"", new[] { "#148" });
-        t.Variant("PeacefulNotLib", 88, new[] { 90, 91, 92, 93, 94 }, NotLib, Romus,
+        t.Variant("PeacefulNotLib", 88, new[] { 90, 91, 92, 93, 94 }, $"{NotLib} and not {chose}", Romus,
             "\"Our nation, still mourning the soldiers it lost in Zille, now faces war again, imposed by our southern neighbor.\"", new[] { "#148" });
 
         // [27] "They tried to attack me in Zille but failed. Now, a new threat rises from the south." (EarlyT6: war fought, liberated)
+        t.Variant("ZilleLost", 27, new[] { 160 }, Lost, Romus,
+            "\"They tried to kill me in Zille and failed. Zille is still Wehzek, and I will not let that stand. Now a new threat rises " +
+            "from the south.\"", new[] { "#453" });
         t.Variant("ZillePart", 27, new[] { 160 }, Part, Romus,
             "\"They tried to kill me in Zille and failed. Today Zille city flies our flag again. Now a new threat rises from the south, " +
             "and we will meet it the same way.\"", new[] { "#453" });
@@ -383,9 +397,9 @@ internal static class AuditT6
             script: Set(SweepEarlyT6Home.VarRustyZilleGold, "\"refused\""));
         t.Line("RefuseA", Rusty,
             "\"Course not. They died for Rizia. I just figured Rizia could use somebody to pay for the pumps.\"", new[] { "#651" });
-        t.Choice("Later", "\"Ask me again once the Treasury has counted what the war cost.\"", new[] { "LaterA" },
+        t.Choice("Later", "\"Not today, Rusty. The Treasury will count what the war cost.\"", new[] { "LaterA" },
             script: Set(SweepEarlyT6Home.VarRustyZilleGold, "\"later\""));
-        t.Line("LaterA", Rusty, "\"I'll hold you to that. I'm a patient man. Not a very patient man, but a patient one.\"", new[] { "#651" });
+        t.Line("LaterA", Rusty, "\"Course it will. Ms. Werner always does. I'm a patient man. Not a very patient man, but a patient one.\"", new[] { "#651" });
 
         // [985] "But the results didn't count." The collection boxes by the gates.
         t.Line("Boxes", Narrator,

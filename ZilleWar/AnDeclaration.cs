@@ -11,7 +11,7 @@ namespace ZilleWar;
 /// Smolak has just invoked the AN Threat Mitigation Protocol to delay Zille's return. In his reply,
 /// after accusing Wehlen ([332] / [357] / [362]), the King can stop threatening and declare war from the
 /// podium. The branch plays out the uproar, Smolak's response, the delegations, the press, and rejoins
-/// vanilla at [755] (news flags, End()).
+/// vanilla at [815] (protocol flag, End()). The news flags of [755] are set in the Rain node instead.
 /// </summary>
 internal static class AnDeclaration
 {
@@ -25,11 +25,9 @@ internal static class AnDeclaration
     private const string TakeMattersIntoOwnHands = "0x01000052000145A2";        // [383]
 
     public const string VarDeclared = "ZilleWar.War_Declared";
-    public const string VarEntryAN = "ZilleWar.Entry_AN";
     public const string VarDeclaredTurn = "ZilleWar.War_DeclaredTurn";
     public const string VarPressStatement = "ZilleWar.AN_PressStatement";
     public const string VarLespianNote = "ZilleWar.AN_LespianNote";          // "kept" | "burned"
-    public const string VarEstelaCall = "ZilleWar.AN_EstelaCall";
     public const string VarRumburgCable = "ZilleWar.AN_RumburgCable";      // "grateful" | "careful"
     public const string VarAlvarezStance = "ZilleWar.AN_AlvarezStance";    // "backs" (he had called Zille an illegal occupation) | "restraint"
 
@@ -48,7 +46,7 @@ internal static class AnDeclaration
 
     public static void Register()
     {
-        foreach (string v in new[] { VarDeclared, VarEntryAN, VarDeclaredTurn, VarPressStatement, VarLespianNote, VarEstelaCall, VarRumburgCable, VarAlvarezStance, WarState.VarActive })
+        foreach (string v in new[] { VarDeclared, VarDeclaredTurn, VarPressStatement, VarLespianNote, VarRumburgCable, VarAlvarezStance, WarState.VarActive })
         {
             SuzerainModdingKit.Variables.Register(v);
         }
@@ -85,7 +83,7 @@ internal static class AnDeclaration
             text: "\"Twenty-five years ago, in a dark hour, my father lent Zille to a friend who had stood by him. The lease has ended, " +
                   "and the friend has decided to keep what was only ever borrowed, and to call it security.\"",
             luaScript:
-                $"Variable[\"{VarDeclared}\"] = true; Variable[\"{VarEntryAN}\"] = true; " +
+                $"Variable[\"{VarDeclared}\"] = true; " +
                 $"Variable[\"{VarDeclaredTurn}\"] = 4; Variable[\"{WarState.VarActive}\"] = true; " +
                 "Variable[\"RiziaDLC.Diplomacy_Wehlen_ANSpeech_Aggression\"] = true; " +
                 "Variable[\"RiziaDLC.CountryRelation_Wehlen_Neutral\"] = false; Variable[\"RiziaDLC.CountryRelation_Wehlen_Unfriendly\"] = false; " +
@@ -133,7 +131,7 @@ internal static class AnDeclaration
             "\"His Majesty condemned his own nationalists after the bombing. Today he marches with them. The Alliance may decide which of " +
             "his two faces it prefers.\"", Next("Smolak2"), condition: $"not ({scapegoats}) and not ({apology}) and {denounce}"));
         inj.AddNode(Line("JabCooperate", Smolak,
-            "\"Last week his security men sat across the table from mine and swore we were partners in finding the bombers. I wonder now " +
+            "\"Only hours ago his security men sat across the table from mine and swore we were partners in finding the bombers. I wonder now " +
             "how many of their questions were about the bombing, and how many were about our barracks.\"", Next("Smolak2"),
             condition: $"not ({scapegoats}) and not ({apology}) and not ({denounce}) and {cooperate}"));
         inj.AddNode(Line("Smolak2", Smolak,
@@ -168,7 +166,7 @@ internal static class AnDeclaration
         inj.AddNode(Line("Alvarez2", Narrator,
             "Alvarez's lips twitched as he sat back down. I could not tell whether he was hiding a frown or a smile.", Next("Hegel1")));
         inj.AddNode(Line("Hegel1", Hegel,
-            "\"Valgsland will be watching this very closely, Your Majesty. Very closely indeed.\"", Next("Azmal1"), conversant: true));
+            "\"Valgsland has heard enough to know what it thinks of this, Your Majesty. It will say so when the time comes.\"", Next("Azmal1"), conversant: true));
         inj.AddNode(Line("Azmal1", Azmal,
             "\"Derdia has long said that the occupation of Zille was a wound that would not close on its own.\"", Next("ReinhartBlockade", "ReinhartFriendly", "Reinhart1"), conversant: true));
         // Reinhart's tone follows Rizia's dealings with Pales: a gas deal or good relations soften him.
@@ -260,7 +258,7 @@ internal static class AnDeclaration
         inj.AddNode(Line("Flashbulbs", Narrator,
             "The doors opened onto a wall of flashbulbs. \"Your Majesty! Is Rizia at war?\" \"Did Rumburg approve this?\" \"What happens to the Wehzeks in Zille?\"",
             Next("Q1", "Q2", "Q3")));
-        inj.AddNode(Choice("Q1", "\"Rizia is at war with no one but the army occupying our land.\"", Next("Car"),
+        inj.AddNode(Choice("Q1", "\"Rizia is at war with Wehlen's army, and with no one else.\"", Next("Car"),
             script: $"Variable[\"{VarPressStatement}\"] = \"occupier\";"));
         inj.AddNode(Choice("Q2", "\"Every Wehzek family in Zille will be safe under the Rizian crown. You have my word.\"", Next("Car"),
             script: $"Variable[\"{VarPressStatement}\"] = \"assurance\";"));
@@ -286,12 +284,12 @@ internal static class AnDeclaration
             "\"I told you to smile, preach unity and stab them in the back. I didn't mean in front of the entire Alliance. But I won't " +
             "pretend I'm not glad.\"", Next("Estela2"), condition: "Variable[\"RiziaDLCIsolated.Turn04_EstelaTalk_Wehlen\"] == true"));
         inj.AddNode(Line("Estela2", Estela,
-            "\"Your father gave Zille away to keep his crown, and spent twenty-five years telling himself it was only a loan. Someone finally had to collect it.\"", Next("Estela3")));
+            "\"Your father lent Zille away to buy a friend's loyalty, and spent twenty-five years telling himself it was only a loan. Someone finally had to collect it.\"", Next("Estela3")));
         inj.AddNode(Line("Estela3", Estela,
             "\"Bring me home, Romus. Bring all of them home.\"", Next("E1", "E2", "E3")));
-        inj.AddNode(Choice("E1", "\"I will, Mother. I promise.\"", Next("Cable"), script: $"Variable[\"{VarEstelaCall}\"] = \"promise\";"));
-        inj.AddNode(Choice("E2", "\"This isn't about our old house, Mother. It's about Rizia.\"", Next("Cable"), script: $"Variable[\"{VarEstelaCall}\"] = \"rizia\";"));
-        inj.AddNode(Choice("E3", "\"Pray that it ends quickly.\"", Next("Cable"), script: $"Variable[\"{VarEstelaCall}\"] = \"pray\";"));
+        inj.AddNode(Choice("E1", "\"I will, Mother. I promise.\"", Next("Cable")));
+        inj.AddNode(Choice("E2", "\"This isn't about our old house, Mother. It's about Rizia.\"", Next("Cable")));
+        inj.AddNode(Choice("E3", "\"Pray that it ends quickly.\"", Next("Cable")));
         inj.AddNode(Line("Cable", Esquibel,
             "\"One more, Your Majesty.\" Laurento held up a telegram form. \"From Thornbourgh. It must have been sent the minute the news reached the Queen.\"",
             Next("Cable2", "Cable2NoEmbargo")));
@@ -319,11 +317,14 @@ internal static class AnDeclaration
             name: P + "Rain",
             text: "Outside, the rain had started again. By the time we reached the airfield, it was pouring.",
             speakerSelector: new CharacterNameSelector(Narrator),
-            // Skip vanilla [755]: it switches on the peacetime AN news ("Wehlen Refuses to Relinquish Zille"...).
-            // Keep the protocol flag ([815]) and vanilla's End().
+            // Skip vanilla [755] but keep what it does: it enables the three AN news items of the day. In a war game their texts are
+            // rewritten (WorldPress.OnStep), so the flags are set here on purpose. Then the protocol flag ([815]) and vanilla's End().
             // The vanilla protest reports ([805]-[812], "in the weeks since Smolak's AN announcement") are stale on the day war is
             // declared; EarlyT4 files wartime reports on the ATA and Su Omina in Zille instead.
-            luaScript: "PlayCustomMapMusic(\"Rizia_Map_Music_Tense\");",
+            luaScript: "PlayCustomMapMusic(\"Rizia_Map_Music_Tense\"); " +
+                       "Variable[\"RiziaDLCSupport.News_Turn04_RH_ZilleAnnouncement\"] = true; " +
+                       "Variable[\"RiziaDLCSupport.News_Turn04_G_AN_WehlenAnnouncement\"] = true; " +
+                       "Variable[\"RiziaDLCSupport.News_Turn04_G_AN_Hegel\"] = true;",
             nextNodes: new ConversationNodeSelector[] { new ConversationNodeArticyIDSelector(VanillaProtocolAndEnd) }));
 
         foreach (ConversationNode n in Extra)

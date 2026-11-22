@@ -145,7 +145,7 @@ internal static class WarDecrees
             "Nationalists will call it softness towards the enemy. Abroad, and in the Wehzek quarters of Rizia, it will be read as " +
             "proof that the King's war is with Smolak's army and not with a people.",
             $"{Declared} && {WarFlags.X(EnactedVar(Intern), false)}",
-            $"{Authority} -= 2;\n{Budget} -= 1;\nRiziaDLC.LeaningValue_Democratic += 1;\nRiziaDLC.Diplomacy_Valgsland_NegotiatingPower += 1;\n" + Std(),
+            $"{Authority} -= 2;\n{Budget} -= 1;\nRiziaDLC.LeaningValue_Democratic += 1;\n" + Std(),
             new[] { LowAuthority(1), LowBudget(0) },
             new[] { 0, -1, 1, 1, -1, 0, 0, -1, 1, 1, 1, 0, 0 },
             OnProtect),

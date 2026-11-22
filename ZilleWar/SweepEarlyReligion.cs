@@ -127,7 +127,10 @@ internal static class SweepEarlyReligion
     private static void SmolakAndDerdia(Talk t)
     {
         // [702] "You did not give into Wehzek pressure to ban Derdians from our borders..."
-        t.Variant("NoPressure", 702, new[] { 696 }, $"{Declared} and {BludishBanFree}", Sal,
+        t.Variant("NoPressureNotLib", 702, new[] { 696 }, $"{Declared} and {BludishBanFree} and not ({AuditT6.Lib})", Sal,
+            "\"Wehlen did not press us on the Derdians this time, Your Majesty. I would not read too much into that. It has its own " +
+            "problems to solve on the line in Zille.\"", new[] { "#677", "#697", "#699" });
+        t.Variant("NoPressure", 702, new[] { 696 }, $"{Declared} and {BludishBanFree} and {AuditT6.Lib}", Sal,
             "\"Wehlen is in no position to press us into banning Derdians from our borders anymore. I believe the door is open for " +
             "negotiations with their Supreme Wiseman.\"", new[] { "#677", "#697", "#699" });
 

@@ -122,17 +122,19 @@ internal static class LateT10
 
         var f = new Talk(ForeignAffairs, "ZilleWar.Late.FA.");
         Swap(f, ForeignAffairs, "Unchanged", 227, new[] { 203 }, Narr, new S(
+            Lib: "\"Zille has been under Rizian administration since the liberation. The Wehzek garrison is gone from the harbor, and Wraclawitz protests the loss every week.\"",
             Ongoing: "\"The war in Zille goes on. Neither army has moved the line in months, and both are losing men to it every week.\"",
             Lost: "\"Zille remains under Wehzek occupation. Since the war, President Smolak has doubled the garrison and fortified the hills above the city.\""),
             new[] { "#916" });
         // divided: Zille city ours, and the Auremina hills if Phase II took them; the ports of Isor and Nanta Wehzek
         Swap(f, ForeignAffairs, "UnchangedLine", 227, new[] { 203 }, Narr, new S(
-                Part: "\"The ceasefire line still runs through Zille. Zille city remains under our administration, while the gold hills and the northern ports stay in Wehzek hands. The Alliance's observers report violations by both sides.\""),
+                Part: "\"The armistice line still runs through Zille. Zille city remains under our administration, while the gold hills and the northern ports stay in Wehzek hands. The Alliance's observers report violations by both sides.\""),
             new[] { "#916" }, when: $"not ({Auremina})");
         Swap(f, ForeignAffairs, "UnchangedGold", 227, new[] { 203 }, Narr, new S(
-                Part: "\"The ceasefire line still runs through Zille. Zille city and the Auremina hills remain under our administration, while the ports of Isor and Nanta stay in Wehzek hands. The Alliance's observers report violations by both sides.\""),
+                Part: "\"The armistice line still runs through Zille. Zille city and the Auremina hills remain under our administration, while the ports of Isor and Nanta stay in Wehzek hands. The Alliance's observers report violations by both sides.\""),
             new[] { "#916" }, when: Auremina);
         Swap(f, ForeignAffairs, "Crackdown", 205, new[] { 917 }, Narr, new S(
+            Lib: "\"Rizian military police are hunting down the Wehzek agents and the collaborators they left behind in Zille. The arrests are quiet, and the lists are long.\"",
             Ongoing: "\"Behind the Wehzek lines, the military police are hunting anyone suspected of helping our army.\"",
             Part: "\"On the Wehzek side of the line, the military police are hunting down those who cheered our columns when they first crossed the river.\"",
             Lost: "\"Wehzek military police are detaining the Zilleans who flew our colors during the war. We estimate several hundred arrests.\""),
@@ -146,6 +148,7 @@ internal static class LateT10
             Lost: "\"Yes, I know. None of us could have anticipated that Your Majesty would start a war for Zille and lose it. Brenas buried its sons for nothing.\""),
             new[] { "#1276" });
         Swap(s, Sazon, "Losing1162", 1162, new[] { 1161 }, "Angelica Sazon", new S(
+                Lib: "\"Especially after Zille. Our sons won it back, and the Crown has still not said whose province it is.\"",
                 Part: "\"Especially after Zille. Our sons won back the city, and the rest of it still sits behind a line of trenches.\"",
                 Lost: "\"Especially after the disappointment in Zille.\""),
             new[] { "#1264" });
@@ -183,10 +186,11 @@ internal static class LateT10
         string recognized = WarFlags.L(LateT9.VarRecognized);
         var cr = new Talk(Continued, "ZilleWar.Late.Continued.");
         Swap(cr, Continued, "Border", 453, new[] { 447 }, Narr, new S(
+            Lib: "With Zille back under the Crown, the troublemakers who had challenged your borders in the north had mostly gone quiet, though a few clashes had already occurred.\nYour advice was to...",
             Ongoing: "The war in Zille had settled into a long, grinding stalemate, and the people of Brenas had stopped reading the casualty lists.\nYour advice was to..."),
             new[] { "#200", "#199", "#201" });
         Swap(cr, Continued, "BorderLine", 453, new[] { 447 }, Narr, new S(
-            Part: "The ceasefire line in Zille had held, barely. Wehzek patrols probed it every month, and President Smolak demanded Zille city back at every session of the Alliance.\nYour advice was to...",
+            Part: "The armistice line in Zille had held, barely. Wehzek patrols probed it every month, and President Smolak demanded Zille city back at every session of the Alliance.\nYour advice was to...",
             Lost: "Since the failed war, the Wehzek border guards in Zille had grown bold. Shells had landed on the Rizian side of the river twice that spring.\nYour advice was to..."),
             new[] { "#200", "#199", "#201" }, when: $"not ({permanent}) and not ({recognized})");
         Swap(cr, Continued, "BorderSigned", 453, new[] { 447 }, Narr, new S(
@@ -198,8 +202,9 @@ internal static class LateT10
         string homeTaken = WarFlags.L(LateT8.VarEstelaHome);
         var pt = new Talk(Peaceful, "ZilleWar.Late.Peaceful.");
         Swap(pt, Peaceful, "Mother", 468, new[] { 466 }, Narr, new S(
+            Lib: "Your mother, feeling homesick, went back to her old house in the harbor district of Zille, which the Crown had kept in the family. You saw her off, promising to visit as often as you could.\nYour focus turned to...",
             Ongoing: "Your mother, feeling homesick, asked every month whether the war in Zille was over yet. One day she stopped asking.\nYour focus turned to...",
-            Part: "Your mother, feeling homesick, went back to her old house in the harbor district of Zille, a few miles from the ceasefire line. You saw her off, promising to visit as often as you could.\nYour focus turned to...",
+            Part: "Your mother, feeling homesick, went back to her old house in the harbor district of Zille, a few miles from the armistice line. You saw her off, promising to visit as often as you could.\nYour focus turned to...",
             Lost: "Your mother, feeling homesick, petitioned the Wehzek government to let her spend her remaining years in her old house in the harbor district of Zille. The answer took four months and was one line long. She did not ask again.\nYour focus turned to..."),
             new[] { "#280", "#281", "#282", "#396" }, when: $"not ({homeTaken})");
         // the house Smolak asked for in Wraclawitz (LateT8), and got
@@ -210,8 +215,9 @@ internal static class LateT10
 
         var ex = new Talk(Exile, "ZilleWar.Late.Exile.");
         Swap(ex, Exile, "Mother", 544, new[] { 537 }, Narr, new S(
+            Lib: "Even when she was surrounded by loving family and friends, you could tell that Estela never truly felt at ease in her new home.\nWith her health beginning to fail, she went back to the harbor district of Zille, where she grew up, and asked for nothing more than a room with a view of the sea. She told you she hoped you'd find peace. You...",
             Ongoing: "Even when she was surrounded by loving family and friends, you could tell that Estela never truly felt at ease in her new home.\nShe followed the war in Zille in the newspapers every morning, and told you, the last time you saw her, that she hoped you'd find peace. You...",
-            Part: "Even when she was surrounded by loving family and friends, you could tell that Estela never truly felt at ease in her new home.\nWith her health beginning to fail, she went back to her old house in the harbor district of Zille, on the Rizian side of the ceasefire line. As she boarded the boat to leave, she told you she hoped you'd find peace. You...",
+            Part: "Even when she was surrounded by loving family and friends, you could tell that Estela never truly felt at ease in her new home.\nWith her health beginning to fail, she went back to her old house in the harbor district of Zille, on the Rizian side of the armistice line. As she boarded the boat to leave, she told you she hoped you'd find peace. You...",
             Lost: "Even when she was surrounded by loving family and friends, you could tell that Estela never truly felt at ease in her new home.\nWith her health beginning to fail, she petitioned Wehlen to let her live out her last days in the harbor district of Zille, where she grew up. Wehlen refused the mother of the king who had invaded it, in a single line. She read the letter twice, and told you she hoped you'd find peace. You..."),
             new[] { "#545", "#546", "#604" });
         ex.Register();

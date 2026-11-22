@@ -63,11 +63,11 @@ internal static partial class SupplyWar
             "Guarantee", "Defy", Gate("OfferMitz"), "Stall");
         d.Opt("Guarantee", null,
             "\"Give him his guarantees. The miners of Isor will be safe, and his observers may come and see it for themselves.\"",
-            "-1 Authority", Inc(Authority, -1) + Inc(NpValgsland, 1) + Talk.Weaken(1) + S(VarValgslandCable, "guarantee") +
+            "-1 Authority", Inc(Authority, -1) + Talk.Weaken(1) + S(VarValgslandCable, "guarantee") +
                             $"{V(VarValgslandStage)} = 1; " + stageDone, "Guarantee2");
         d.Say("Guarantee2", Esquibel,
-            "\"He'll be gracious about it. He may even hold a few Contanan freighters in port for inspection. Hegel likes to be thanked " +
-            "in kind.\"", "CableEnd");
+            "\"He'll accept it as his due. He may hold a few Contanan freighters in port for inspection, just to remind you who is " +
+            "watching. Hegel does not thank anyone.\"", "CableEnd");
         d.Opt("Defy", null, "\"Rizia takes no lectures from Valgsland. Tell him so.\"", "+1 Authority",
             Inc(Authority, 1) + Inc(NpValgsland, -2) + Strengthen(1) + S(VarValgslandCable, "defied") + $"{V(VarValgslandStage)} = 1; " +
             stageDone, "Defy2");
@@ -77,7 +77,7 @@ internal static partial class SupplyWar
         d.Opt("OfferMitz", $"{Not(VarLespiaMitz)} and {Not(MitzPromise)} and {Not(MitzPromiseLate)} and {Not(ValgslandMitz)}",
             "\"Tell him Rizia might see the Meftiem his way, if Valgsland's ports see this war ours.\"",
             "Promises Rizia's MITZ Vote to Valgsland",
-            T(ValgslandMitz) + Inc(NpValgsland, 2) + Inc(NpLespia, -1) + Talk.Weaken(1) + S(VarValgslandCable, "mitz") +
+            T(ValgslandMitz) + Inc(NpLespia, -1) + Talk.Weaken(1) + S(VarValgslandCable, "mitz") +
             $"{V(VarValgslandStage)} = 1; " + stageDone, "Mitz2");
         d.Say("Mitz2", Esquibel,
             "\"A dangerous promise, Your Majesty. Alvarez will hear of it before dinner. But I daresay the Contanan freighters will " +
@@ -134,7 +134,7 @@ internal static partial class SupplyWar
         d.SayIf("VetoSay", Is(VarLespiaAllianceVote), Hegel, veto, "Menu");
         d.Do("Menu", null, "Yield", "Refuse");
         d.Opt("Yield", null, "\"Very well. The submarines stay south.\"",
-            "No More Submarine Patrols", T(VarSubsGrounded) + Inc(NpValgsland, 1) + S(VarValgslandCall, "yielded") +
+            "No More Submarine Patrols", T(VarSubsGrounded) + S(VarValgslandCall, "yielded") +
             $"{V(VarValgslandStage)} = 2; " + stageDone, "Yield2");
         d.Say("Yield2", Hegel,
             "\"Good. You see, Mr. Toras, socialists and kings can agree on one thing at least. Fewer funerals.\"", "CallEnd");
@@ -180,7 +180,7 @@ internal static partial class SupplyWar
             "\"Your Majesty. Last month you told me Zille was not for sale. I have since learned that everything in Zille is for sale, " +
             "beginning with my soldiers' rifles. So I will be shorter this time. My offer has improved, because my situation has not.\"", "Offer");
         d.SayIf("OpenHeld", held, Smolak,
-            "\"Your Majesty. Your soldiers are sleeping in my harbor, in my hotels, in the square with my name on it. I hope the beds " +
+            "\"Your Majesty. Your soldiers are quartered in my harbor and my hotels. I hope the beds " +
             "are comfortable.\"", "Offer");
         d.SayIf("OpenStrong", $"{s} >= 7", Smolak,
             "\"Your Majesty. My generals tell me your army has been very brave and very unlucky. I thought I would call before it " +
@@ -274,12 +274,12 @@ internal static partial class SupplyWar
             "anyone's fighters over our gulf. Least of all Wiktor Smolak's.\"", "S3");
         d.Say("S3", Saltana,
             "\"I have aircraft. Good ones, built in Morella. I could sell you a squadron, without markings, without Morellan pilots, " +
-            "and without my name on the invoice.\"", "Price");
+            "and with no paperwork that anyone in Konstantium could trace.\"", "Price");
         d.Branch("Price", "PriceCheap", "PriceDear", "PriceFair");
         d.SayIf("PriceCheap", cheap, Saltana,
             "\"Rizia stood with the workers on the Meftiem, so you'll have the price I would give a friend. Three billion guilders for the squadron.\"", "Menu");
         d.SayIf("PriceDear", dear, Saltana,
-            "\"I hear you've promised your Meftiem vote to Mr. Alvarez. Then you can pay Alvarez prices. Nine billion guilders for the squadron.\"", "Menu");
+            "\"I hear you've sided with Mr. Alvarez at the Meftiem. Then you can pay Alvarez prices. Nine billion guilders for the squadron.\"", "Menu");
         d.Say("PriceFair", Saltana, "\"Six billion guilders for the squadron. The price is fair. Ask anyone who has bought from us.\"", "Menu");
 
         d.Branch("Menu", Gate("Buy1"), Gate("Buy2"), Gate("Buy3"), Gate("Gulf"), "Decline");

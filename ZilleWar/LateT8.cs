@@ -176,10 +176,14 @@ internal static class LateT8
         t.Line("Part2", Smolak, "\"The King of Rizia sits in Zille city behind a line of trenches and calls it a homecoming. Everything north of that line is Wehzek, and it will stay Wehzek.\"", new[] { "Part3" });
         t.Line("Part3", Smolak, "\"Wehlen asks this Alliance to place observers on the line, and to declare that no border in South Merkopa has been changed by force. Not one.\"", new[] { "Reply" });
 
-        t.Line("Lost1", Narr, "President Smolak climbed to the podium to applause from the Wehzek benches. He let it run for a while before he raised his hand.", new[] { "Lost2" }, condition: Lost);
+        t.Line("Lost1", Narr, "President Smolak climbed to the podium to applause from the Wehzek benches. He let it run for a while before he raised his hand.", new[] { "Lost2", "Lost2C" }, condition: Lost);
         string paid = $"{V(VarTerms)} == \"paid\"";
         string unpaid = $"{V(VarTerms)} ~= \"paid\"";
-        t.Line("Lost2", Smolak, "\"Dear fellow leaders! I once said I would have to drag King Romus to the bargaining table. In the end I had to drag him to the battlefield. But it was all worth it.\"", new[] { "Lost3", "Lost3Paid" });
+        t.Line("Lost2", Smolak, "\"Dear fellow leaders! I once said I would have to drag King Romus to the bargaining table. In the end I had to drag him to the battlefield. But it was all worth it.\"", new[] { "Lost3", "Lost3Paid" },
+            condition: $"not ({Ceasefire})");
+        // the King sought the ceasefire himself: nobody dragged him anywhere
+        t.Line("Lost2C", Smolak, "\"Dear fellow leaders! I once said I would have to drag King Romus to the bargaining table. In the end he came to it himself, with his hat in his hand. Zille is Wehzek, and I think we can all agree it was worth it.\"", new[] { "Lost3", "Lost3Paid" },
+            condition: Ceasefire);
         t.Line("Lost3", Smolak, "\"Wehlen asks this Alliance to confirm what our soldiers already have. Zille is Wehzek. And it asks that Rizia pay for the war it started.\"", new[] { "Reply" },
             condition: unpaid);
         // the King paid Smolak's bill in Wraclawitz (the Turn 8 meeting, before this session)
@@ -187,12 +191,13 @@ internal static class LateT8
             new[] { "Reply" }, condition: paid);
 
         // the King's reply
-        t.Logic("Reply", new[] { "Rep1", "Rep2", "Rep3", "Rep4", "Rep5", "Rep6" });
+        t.Logic("Reply", new[] { "Rep1", "Rep2", "Rep3", "Rep4", "Rep5", "Rep5C", "Rep6" });
         t.Choice("Rep1", "\"The lease expired. Wehlen kept Zille anyway. Rizia only came to collect what was ours.\"", new[] { "AfterReply" }, condition: NotLib);
         t.Choice("Rep2", "\"Every grave in Zille was dug by Wehlen's refusal to leave.\"", new[] { "AfterReply" }, condition: And(NotLib, $"not ({Lost})"));
         t.Choice("Rep3", "\"Zille is Rizian, not Wehzek. The lease ran out, and Wehlen chose not to leave.\"", new[] { "AfterReply" }, condition: Lib);
         t.Choice("Rep4", "\"Holding a territory for a time does not make it yours. Wehlen held Zille long enough to forget that.\"", new[] { "AfterReply" }, condition: Lib);
-        t.Choice("Rep5", "\"Rizia lost a battle. The lease is still expired, and it will be expired tomorrow.\"", new[] { "AfterReply" }, condition: Lost);
+        t.Choice("Rep5", "\"Rizia lost a battle. The lease is still expired, and it will be expired tomorrow.\"", new[] { "AfterReply" }, condition: And(Lost, $"not ({Ceasefire})"));
+        t.Choice("Rep5C", "\"Rizia stopped fighting because it chose to. The lease is still expired, and it will be expired tomorrow.\"", new[] { "AfterReply" }, condition: And(Lost, Ceasefire));
         t.Choice("Rep6", "\"Ask Lespia who planted the bomb in Smolak Square. This war was arranged long before I declared it.\"", new[] { "Rep6a" },
             condition: "Variable[\"RiziaDLC.Zille_Discovered_LespianInvolvement\"] == true or Variable[\"RiziaDLC.Zille_Discovered_LespianInvolvement_Rusty\"] == true",
             script: Set(VarLespiaAccused, "true") + Add("RiziaDLC.Diplomacy_Lespia_NegotiatingPower", -2));
@@ -311,7 +316,7 @@ internal static class LateT8
         // In a war game the Valgsland accusation also stands on the war alone (vanilla needs a bad image and a
         // hostile Valgsland; the Lespian one needs the Pales war).
         Vanilla.AppendScript(AN, 24,
-            $"if {War} and ({Ongoing} or {Lib} or {WarFlags.L(WarFlags.ZilleCityHeld)}) and not {Rel("Valgsland", "Friendly", "Allied")} " +
+            $"if {War} and not {Rel("Valgsland", "Friendly", "Allied")} " +
             $"and not {SupplyWar.LuaHegelServed} then " +
             "Variable[\"RiziaDLCIsolated.ANSanctionAccusation_Valgsland_GlobalImage\"] = true end");
 
@@ -396,7 +401,9 @@ internal static class LateT8
                     $"Variable[\"{ZilleCampaign.VarStrength}\"] = (Variable[\"{ZilleCampaign.VarStrength}\"] or 8) + 1 end; ");
         t.Line("EvPublish2", Narr, "It would be in every newspaper in Merkopa by the morning. Somewhere in Perla, I imagined, a telephone was already ringing.", new[] { "Consulate", "State" });
         t.Choice("EvKeep", "\"Keep it in the safe. Alvarez kept his side of the strait. I can keep a secret, for a price.\"", new[] { "Consulate", "State" },
-            condition: "(Variable[\"ZilleWar.Lever_Lespia\"] or 0) > 0 and Variable[\"ZilleWar.Lespia_Withdrawn\"] ~= true");
+            condition: "(Variable[\"ZilleWar.Lever_Lespia\"] or 0) > 0 and Variable[\"ZilleWar.Lespia_Withdrawn\"] ~= true and " +
+                       "Variable[\"ZilleWar.Lespia_StraitThin\"] ~= true and " +
+                       $"Variable[\"{SupplyWar.VarLespiaGrievance}\"] ~= true and Variable[\"RiziaDLC.MITZ_ScrewedOverLespia\"] ~= true");
         t.Choice("EvLater", "\"Not yet. We keep it until we need it.\"", new[] { "Consulate", "State" });
 
         // Héctor Ramiro, in a consulate inside a city we hold
@@ -429,7 +436,7 @@ internal static class LateT8
         t.Choice("LibMartial", "\"Martial law stays, until the last Wehzek rifle is handed in.\"", new[] { "Gold" },
             script: Set(VarOccupation, "\"martial\"") + Add("RiziaDLC.LeaningValue_Democratic", -1));
         t.Choice("LibAmnesty", "\"An amnesty for every conscript who lays down his arms. We are not here to punish Zille.\"", new[] { "Gold" },
-            script: Set(VarOccupation, "\"amnesty\"") + Add("RiziaDLC.LeaningValue_Democratic", 1) + Add("RiziaDLC.Diplomacy_Valgsland_NegotiatingPower", 1));
+            script: Set(VarOccupation, "\"amnesty\"") + Add("RiziaDLC.LeaningValue_Democratic", 1));
         t.Choice("LibGenerals", "\"Leave it to the generals for now.\"", new[] { "Gold" }, script: Set(VarOccupation, "\"generals\""));
 
         Councilor(t, "PartLine", "\"The line holds. The Wehzeks still probe it most nights. With money for concrete and wire, the engineers can make Zille city very expensive to take back.\"",
@@ -550,20 +557,25 @@ internal static class LateT8
             new[] { "WarPaid" }, condition: And(War, $"not ({PalesWar})", Lib), hooks: Talk.From(63));
         t.Line("War1", Alvarez, "\"So. Your war with Wehlen has stopped, if not quite ended. The Strait of Kreleck is quiet again, and my admirals are bored.\"",
             new[] { "WarPaid" }, condition: And(War, $"not ({PalesWar})", $"not ({Lib})"), hooks: Talk.From(63));
-        t.Logic("WarPaid", new[] { "WarOut", "WarLease", "WarNaval", "WarGas", "WarMoney", "WarMitz", "WarNone", "WarRamiro" });
+        // Lespia keeps books: a broken Meftiem promise or an unanswered Cavette grievance sours every line that praises the deal
+        string grievance = $"Variable[\"{SupplyWar.VarLespiaGrievance}\"] == true or Variable[\"RiziaDLC.MITZ_ScrewedOverLespia\"] == true";
+        string thin = "Variable[\"ZilleWar.Lespia_StraitThin\"] == true";
+        t.Logic("WarPaid", new[] { "WarGrievance", "WarOut", "WarLease", "WarNaval", "WarGas", "WarMoney", "WarMitz", "WarNone", "WarRamiro" });
+        t.Line("WarGrievance", Alvarez, "\"You gave my board the Meftiem in writing, Your Majesty, and then you gave Lespia nothing at Cavette. I have written that down too. Lespia will not forget it at the next vote.\"",
+            new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", grievance));
         t.Line("WarOut", Alvarez, "\"My navy left the strait before your war was over. I know you have not forgotten. Neither has my parliament.\"",
             new[] { "WarRamiro" }, condition: And(lever, withdrawn));
         t.Line("WarLease", Alvarez, "\"Fifty years of Caleqabiz for a few months of my navy. My parliament thinks I robbed you, Your Majesty. I tell them it was a fair price for a king in a hurry.\"",
-            new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", lease));
+            new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", $"not ({grievance})", lease));
         t.Line("WarNaval", Alvarez, "\"My sailors still refuel at Caleqabiz, you know. The war is over, and they show no sign of wanting to leave. Neither, to be honest, do I.\"",
-            new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", naval));
+            new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", $"not ({grievance})", naval));
         t.Line("WarGas", Alvarez, "\"And the gas from Aureus arrives every month, at a price my parliament still cannot believe. Lespia remembers who keeps its lights on.\"",
-            new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", $"not ({lease})", $"not ({naval})", gas));
+            new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", $"not ({grievance})", $"not ({lease})", $"not ({naval})", gas));
         t.Line("WarMoney", Alvarez, "\"Your guilders paid for every shell my navy fired in the strait. Lespia is a democracy, Your Majesty. My parliament likes a war that pays its bills.\"",
-            new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", $"not ({lease})", $"not ({naval})", $"not ({gas})", money));
+            new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", $"not ({lease})", $"not ({naval})", $"not ({grievance})", $"not ({gas})", money));
         t.Line("WarMitz", Alvarez, "\"And Lespia has your vote in Meftiem, for what my navy did in the strait. I have not forgotten. Neither will the MITZ board.\"",
             new[] { "WarRamiro" }, condition: And(lever, $"not ({withdrawn})", $"not ({lease})", $"not ({naval})", $"not ({gas})", $"not ({money})",
-                $"{V(SupplyWar.VarLespiaMitz)} == true"));
+                $"not ({grievance})", $"not ({thin})", $"{V(SupplyWar.VarLespiaMitz)} == true"));
         t.Line("WarNone", Alvarez, "\"Lespia stayed out of your war with Wehlen, Your Majesty. I like to think that was a favor too.\"",
             new[] { "WarRamiro" }, condition: $"not ({lever})");
         // the consulate in Zille (the security brief earlier this turn)
@@ -769,7 +781,7 @@ internal static class LateT8
         t.Line("Lib5", Smolak, "\"I want them home. All of them, the officers too. In return, Wehlen will consider the matter of Zille closed. For this year.\"", new[] { "LibHub" });
         t.Logic("LibHub", new[] { "LibFree", "LibRansom", "LibHold" });
         t.Choice("LibFree", "\"They can go home, all of them. Let it be the first thing about this war that ends well.\"", new[] { "LibFree2" },
-            script: Set(VarPrisoners, "\"released\"") + Add("RiziaDLC.Diplomacy_Valgsland_NegotiatingPower", 1));
+            script: Set(VarPrisoners, "\"released\""));
         t.Line("LibFree2", Smolak, "\"How very regal of you. I will tell their mothers it was my idea.\"", new[] { "Lib6" });
         t.Choice("LibRansom", "\"Your officers stay until Wehlen pays for what its garrison did to Zille.\"", new[] { "LibRansom2" }, cost: "+2 Budget",
             script: Set(VarPrisoners, "\"ransomed\"") + Add("RiziaDLC.Resources_Budget", 2) + Add("RiziaDLC.Diplomacy_Valgsland_NegotiatingPower", -1));

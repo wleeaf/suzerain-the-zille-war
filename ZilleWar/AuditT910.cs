@@ -20,13 +20,13 @@ internal static class AuditT910
             "\"Keeping it vague will prevent any diplomatic fallout. After Zille, the people will supply the culprit's name themselves.\"",
             new[] { "#1653" });
         t.Variant("VagueLucita", 1639, new[] { 1634 }, War, "Lucita Azaro",
-            "\"This lets us control the narrative without handing Wehlen a fresh grievance to air in Konstantium. After Zille, the people will draw their own conclusions.\"",
+            "\"This lets us control the narrative without handing Wehlen a fresh grievance to air in Konstantium. The people will draw their own conclusions.\"",
             new[] { "#1653" });
         t.Variant("VagueTitus", 1640, new[] { 1637 }, War, "Titus Gordion",
-            "\"Keeping it vague will prevent diplomatic fallout. After Zille, nobody will need to be told where to look.\"",
+            "\"Keep the accusation general and the Alliance quiet. Everyone in Zille already knows whom they blame.\"",
             new[] { "#1653" });
         t.Variant("VagueTaddeus", 1645, new[] { 1635 }, War, "Taddeus Azaro",
-            "\"This avoids retaliation from abroad. And after Zille, the public will look north without being told to.\"",
+            "\"This avoids retaliation from abroad, and the public will look north without being told to.\"",
             new[] { "#1653" });
         t.Register();
     }

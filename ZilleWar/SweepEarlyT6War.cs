@@ -84,8 +84,11 @@ internal static class SweepEarlyT6War
             "And there it was. The Invasion of Pales was about to begin, and the war in Zille was not yet over.", new[] { "#576" });
         t.Variant("BeginWon", 469, new[] { 468 }, Liberated, Narrator,
             "And there it was. Zille was ours, and the Invasion of Pales was about to begin.", new[] { "#576" });
-        t.Variant("BeginLost", 469, new[] { 468 }, LostOrStopped, Narrator,
+        t.Variant("BeginLost", 469, new[] { 468 }, AuditT6.Lost, Narrator,
             "And there it was. The Invasion of Pales was about to begin, before the country had finished mourning Zille.", new[] { "#576" });
+        t.Variant("BeginPart", 469, new[] { 468 }, AuditT6.Part, Narrator,
+            "And there it was. The Invasion of Pales was about to begin, with Zille city ours again and the rest of the province " +
+            "still behind the armistice line.", new[] { "#576" });
         t.Register();
     }
 
@@ -99,9 +102,12 @@ internal static class SweepEarlyT6War
         // EarlyT6 has the Active version of [78].
         t.Variant("BegunWon", 78, new[] { 88 }, Liberated, Narrator,
             "And just like that, the Second Pales War had begun. The guns in Zille had barely fallen silent.", new[] { "#90" });
-        t.Variant("BegunLost", 78, new[] { 88 }, AuditT6.Lost, Narrator,
+        t.Variant("BegunLost", 78, new[] { 88 }, $"{AuditT6.Lost} and {WarFlags.LNot(WarFlags.Ceasefire)}", Narrator,
             "And just like that, the Second Pales War had begun. I had already lost one war this year. I did not intend to lose another.",
             new[] { "#90" });
+        t.Variant("BegunCeasefire", 78, new[] { 88 }, $"{AuditT6.Lost} and {WarFlags.L(WarFlags.Ceasefire)}", Narrator,
+            "And just like that, the Second Pales War had begun. I had already stopped one war this year short of its aim. I did not " +
+            "intend to stop another.", new[] { "#90" });
         t.Variant("BegunPart", 78, new[] { 88 }, AuditT6.Part, Narrator,
             "And just like that, the Second Pales War had begun. The war in Zille had ended on an armistice line. This one, I meant to finish.",
             new[] { "#90" });
@@ -125,7 +131,10 @@ internal static class SweepEarlyT6War
             "with you instead.\"", afterDuke, condition: Liberated, hooks: From(51, 52));
         t.Line("DukeLost", Axel,
             "\"I was sorry to read the news from Zille, Your Majesty. Truly. On a day like this, it is good to see that Rizia still " +
-            "has friends in the south.\"", afterDuke, condition: LostOrStopped, hooks: From(51, 52));
+            "has friends in the south.\"", afterDuke, condition: AuditT6.Lost, hooks: From(51, 52));
+        t.Line("DukePart", Axel,
+            "\"I was sorry to read of the dead in Zille, Your Majesty. Truly. I hear Zille city flies your flag again. On a day like " +
+            "this, it is good to see that Rizia still has friends in the south.\"", afterDuke, condition: AuditT6.Part, hooks: From(51, 52));
 
         // Vina has spent the war in Pales as liaison.
         t.Line("Vina", Vina,

@@ -9,13 +9,13 @@ namespace ZilleWar;
 
 /// <summary>
 /// Manus Sazon at the Zille front. Vanilla's Turn 7 talk with Hugo (c395) can only send Manus to Pales. While the Zille
-/// war is fought (or Zille city sits on a ceasefire line), Hugo can suggest Zille instead and the King can send him there
+/// war is fought (or Zille city sits on a armistice line), Hugo can suggest Zille instead and the King can send him there
 /// with the Brenas levies: Zille was taken from Brenas and House Sazon in 1927. The vanilla machinery for a Manus at war
 /// is reused (Manus_SendToWar, Manus_Gone, the protest decision, the codex, the funeral), with its Pales wording rewritten;
 /// his fate follows the next Zille operation instead of the Pales war:
 /// as in vanilla, he dies if the House Sazon unit is destroyed (Army_Unit_Sazon_Dead rises after he left: "killed",
 /// vanilla Manus_DiesInWar); otherwise won lightly "decorated", won or lost at a heavy cost "wounded", lost lightly or the
-/// war over without another battle "line" (holding the ceasefire line, or having covered the retreat).
+/// war over without another battle "line" (holding the armistice line, or having covered the retreat).
 /// Vina reacts at the dinner and again when the news comes; Leona, Angelica and the endings remember where he served.
 /// </summary>
 internal static class FinishManus
@@ -65,7 +65,7 @@ internal static class FinishManus
     private static readonly string AliveWhole = And(Alive, $"not ({Fate("wounded")})");
     private static readonly string Over = WarFlags.L(WarFlags.Over);
 
-    /// <summary>There is a front in Zille to send him to: the war is fought, or a ceasefire line runs through Zille.</summary>
+    /// <summary>There is a front in Zille to send him to: the war is fought, or a armistice line runs through Zille.</summary>
     private static readonly string Front = $"({Ongoing}) or ({Part})";
 
     public static void Register()
@@ -159,15 +159,25 @@ internal static class FinishManus
     {
         // The Sazons at the birthday gathering.
         var s = new Talk(SazonT10, "ZilleWar.Fin.Sazon10.");
-        s.Variant("Front", 171, new[] { 169 }, And(ZM, Serving, NotDead), Leona, "\"He writes from Zille now and again.\"", new[] { "#172" });
-        s.Variant("Medal", 171, new[] { 169 }, And(Alive, Fate("decorated")), Leona,
+        s.Variant("Front", 171, new[] { 169 }, And(ZM, Serving, NotDead, $"not ({Lost})"), Leona, "\"He writes from Zille now and again.\"", new[] { "#172" });
+        // Zille city is Wehzek after a lost war: he writes from the border, not from Zille.
+        s.Variant("FrontLost", 171, new[] { 169 }, And(ZM, Serving, NotDead, Lost), Leona, "\"He writes from the border now and again.\"", new[] { "#172" });
+        s.Variant("Medal", 171, new[] { 169 }, And(Alive, Fate("decorated"), $"not ({Lost})"), Leona,
             "\"He writes from Zille now and again. They pinned a medal on him after the last offensive, and he hasn't mentioned it once.\"",
             new[] { "#172" });
-        s.Variant("Hand", 171, new[] { 169 }, Wounded, Leona,
+        s.Variant("MedalLost", 171, new[] { 169 }, And(Alive, Fate("decorated"), Lost), Leona,
+            "\"He writes from the border now and again. They pinned a medal on him after the last offensive, and he hasn't mentioned it once.\"",
+            new[] { "#172" });
+        s.Variant("Hand", 171, new[] { 169 }, And(Wounded, $"not ({Lost})"), Leona,
             "\"He writes from Zille now and again. His left hand still shakes from the shrapnel, though you'd never know it from his letters.\"",
             new[] { "#172" });
-        s.Variant("Line", 171, new[] { 169 }, And(Alive, Fate("line")), Leona,
+        s.Variant("HandLost", 171, new[] { 169 }, And(Wounded, Lost), Leona,
+            "\"He writes from the border now and again. His left hand still shakes from the shrapnel, though you'd never know it from his letters.\"",
+            new[] { "#172" });
+        s.Variant("Line", 171, new[] { 169 }, And(Alive, Fate("line"), $"not ({Lost})"), Leona,
             "\"He writes from the line in Zille now and again. Mud, sentries and Wehzek loudspeakers, mostly.\"", new[] { "#172" });
+        s.Variant("LineLost", 171, new[] { 169 }, And(Alive, Fate("line"), Lost), Leona,
+            "\"He writes from the border now and again. Mud, sentries and Wehzek loudspeakers, mostly.\"", new[] { "#172" });
         s.Variant("NoWord", 171, new[] { 169 }, Missing, Leona,
             "\"We haven't had a letter since the fighting stopped. The army lists him as missing, and the Wehzeks say they have no record of him.\"",
             new[] { "#93" });
@@ -201,23 +211,28 @@ internal static class FinishManus
         // Leona at the strike: "our heir is fighting to reclaim Pales for you".
         var k = new Talk(Strike, "ZilleWar.Fin.Strike10.");
         k.Variant("Heir_On", 328, new[] { 331 }, And(Alive, Ongoing), Leona, "\"As we speak, our heir is fighting to reclaim Zille for you.\"", new[] { "#43" });
-        k.Variant("Heir_Over", 328, new[] { 331 }, And(Alive, $"not ({Ongoing})"), Leona,
+        k.Variant("Heir_Over", 328, new[] { 331 }, And(Alive, $"not ({Ongoing})", $"not ({Lost})"), Leona,
             "\"As we speak, our heir is standing guard in Zille, on your orders.\"", new[] { "#43" });
+        k.Variant("Heir_Lost", 328, new[] { 331 }, And(Alive, Lost), Leona,
+            "\"As we speak, our heir is home from Zille, on your orders, and not saying much about it.\"", new[] { "#43" });
         k.Variant("Heir_Missing", 328, new[] { 331 }, Missing, Leona,
             "\"Our heir has been missing since the fighting in Zille. You sent him there, Your Majesty.\"", new[] { "#43" });
         k.Register();
 
         // The Pales victory parade: Manus is not among the Brenas troops.
         var p = new Talk(Parade, "ZilleWar.Fin.Parade10.");
-        p.Variant("Absent", 160, new[] { 158 }, Alive, Narr,
+        p.Variant("Absent", 160, new[] { 158 }, And(Alive, $"not ({Lost})"), Narr,
             "The Brenas levies marched without their commander. Manus Sazon had stayed behind with his battalion in Zille.", new[] { "#372" });
+        p.Variant("AbsentLost", 160, new[] { 158 }, And(Alive, Lost), Narr,
+            "The Brenas levies marched without their commander. Manus Sazon had stayed behind with his battalion on the border.", new[] { "#372" });
         p.Variant("Saddle", 160, new[] { 158 }, Missing, Narr,
             "The Brenas levies marched behind a riderless horse. Their commander, Manus Sazon, had been missing since Zille.", new[] { "#372" });
         p.Register();
 
         // Vina freed from Pales asks after Manus.
         var r = new Talk(Rescue, "ZilleWar.Fin.Rescue10.");
-        r.Variant("Still", 127, new[] { 125 }, Alive, R, "\"Manus is still in Zille, sweetheart. We'll have this conversation when he returns.\"", new[] { "#142" });
+        r.Variant("Still", 127, new[] { 125 }, And(Alive, $"not ({Lost})"), R, "\"Manus is still in Zille, sweetheart. We'll have this conversation when he returns.\"", new[] { "#142" });
+        r.Variant("StillLost", 127, new[] { 125 }, And(Alive, Lost), R, "\"Manus is on his way home from Zille, sweetheart. We'll have this conversation when he gets here.\"", new[] { "#142" });
         r.Variant("Missing", 127, new[] { 125 }, Missing, R, "\"Manus is missing, sweetheart. We'll have this conversation if he comes back to us.\"", new[] { "#142" });
         r.Register();
 
@@ -253,7 +268,7 @@ internal static class FinishManus
         t.Line("DecBr", Vina, "\"Thousands of others aren't the man I love. But I suppose that's never mattered much in this house.\"", new[] { "Close" });
 
         // wounded
-        t.Line("Wou1", Vina, "\"He's in the field hospital at Mave Nortus. Shrapnel, they said. They said it the way you'd talk about the weather.\"",
+        t.Line("Wou1", Vina, "\"He's in the field hospital at Dapalle. Shrapnel, they said. They said it the way you'd talk about the weather.\"",
             new[] { "Wou2" }, condition: Fate("wounded"));
         t.Line("Wou2", Vina, "\"I want to go to him. I'm not asking for permission, Father. I'm asking for a car.\"", new[] { "WouA", "WouB" });
         t.Choice("WouA", "\"Take the royal train. And take him whatever he needs.\"", new[] { "WouAr" },
@@ -399,7 +414,7 @@ internal static class FinishManus
                 case "wounded":
                     NewsWire.Report("Fin_ManusWounded", token, "Sazon Heir Wounded",
                         $"Manus Sazon was wounded by shell fragments during {op} while leading the Brenas battalion forward. He was evacuated to the " +
-                        "field hospital at Mave Nortus, where surgeons describe his injuries to the arm and shoulder as serious but not life-threatening. " +
+                        "field hospital at Dapalle, where surgeons describe his injuries to the arm and shoulder as serious but not life-threatening. " +
                         "He has been recommended for the Cross of Valor and has asked to return to his battalion as soon as he can hold a rifle.");
                     break;
                 case "missing":
@@ -419,10 +434,10 @@ internal static class FinishManus
                     break;
                 case "line":
                     NewsWire.Report("Fin_ManusLine", token, "Sazon Battalion Holds the Line", Variables.GetBool(WarFlags.ZilleCityHeld)
-                        ? "With the guns in Zille silent, the Brenas battalion under Manus Sazon has been posted to the ceasefire line north of Zille " +
+                        ? "With the guns in Zille silent, the Brenas battalion under Manus Sazon has been posted to the armistice line north of Zille " +
                           "city. Its officers report nightly Wehzek patrols and loudspeaker broadcasts urging Rizian soldiers to go home. Mr. Sazon is " +
                           "said to have answered the broadcasts by ordering his men to sing louder."
-                        : "When the offensive broke down, the Brenas battalion under Manus Sazon covered the retreat to the old border at Mave Nortus " +
+                        : "When the offensive broke down, the Brenas battalion under Manus Sazon covered the retreat to the old border " +
                           "and came back in good order, one of the few units that did. Mr. Sazon is unhurt. His officers say he walked the last miles " +
                           "beside the stretchers and refused a car.");
                     break;

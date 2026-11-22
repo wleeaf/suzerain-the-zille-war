@@ -116,7 +116,7 @@ internal static partial class SupplyWar
             "Laurento brought in the blue telephone and set it down as if it might bite. \"Prime Minister Alvarez again, Your Majesty. " +
             "He sounds pleased with himself, which is never good news.\"", enter, "Open");
 
-        d.Branch("Open", "ConfrontOpen", "GrievanceOpen", "GrievanceOpenB", "HelloKept", "HelloBurned", "HelloRefused", "HelloAgain3", "HelloAgain", "InvExpelled", "InvOpen1",
+        d.Branch("Open", "ConfrontOpen", "GrievanceOpen", "GrievanceOpenB", "InvExpelled", "HelloKept", "HelloBurned", "HelloRefused", "HelloAgain3", "HelloAgain", "InvOpen1",
             "InvOpen2");
         d.SayIf("HelloKept", $"{calls} == 1 and {noDeal} and {kept}", Alvarez,
             "\"Your Majesty. I hope my little note didn't get lost in all the excitement in Konstantium. It was a very exciting day.\"", "FrontA");
@@ -253,8 +253,8 @@ internal static partial class SupplyWar
         d.Say("GasLater3", Alvarez, "\"You'll find that's how grown-up countries do business.\"", "GrudgeGas");
         d.Branch("GrudgeGas", "GrudgeGasSay", "EsqGas");
         d.SayIf("GrudgeGasSay", grudge, Alvarez,
-            "\"Oh, and after the way Rizia treated Lespia at the Meftiem, a little something up front. Three billion " +
-            "Liras, in cash. Call it the price of my disappointment.\"", "EsqGas");
+            "\"Oh, and after the way Rizia treated Lespia at the Meftiem, a little something up front. Six billion " +
+            "guilders, in cash. Call it the price of my disappointment.\"", "EsqGas");
         d.Say("EsqGas", Esquibel,
             "Laurento covered the mouthpiece. \"Three Liras, when the market pays ten. Most of the field, every quarter, for the rest " +
             "of your reign. It's not a price, Your Majesty. It's a tribute.\"", "EsqGas2");
@@ -268,7 +268,7 @@ internal static partial class SupplyWar
             "\"Then let's talk about land instead, since gas upsets you. Fifty years of Caleqabiz. A proper lease, signed and stamped: " +
             "our pier, our depot, our flag over the harbor.\"", "Lease2");
         d.Say("Lease2", Alvarez,
-            "\"And because I'm a generous man, Lespia pays rent. A billion and a half Liras a quarter, on time. You'll hardly notice " +
+            "\"And because I'm a generous man, Lespia pays rent. Three billion Liras a month, on time. You'll hardly notice " +
             "the island is gone.\"", "EsqLease");
         d.Say("EsqLease", Esquibel,
             "Laurento covered the mouthpiece. \"Fifty years, Your Majesty. Your father signed twenty-five on Zille, and we are at war " +

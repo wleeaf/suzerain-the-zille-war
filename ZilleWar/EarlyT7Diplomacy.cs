@@ -315,6 +315,10 @@ internal static class EarlyT7Diplomacy
             new[] { "#383" });
         // "The ban is only in place as part of an agreement I made with Wehlen."
         Vanilla.Require(conv, 238, Peace);
+        // "...worth the potential loss of Zille": the war is already paid for
+        t.Variant("Cost970", 970, new[] { 237 }, Declared, Romus,
+            "\"I'm willing to negotiate on this point. But only if what you're willing to offer is worth what Zille has already cost us.\"",
+            new[] { "#971" });
         t.Variant("Sal249", 249, new[] { 244 }, Declared, Sal,
             "\"Please understand, Supreme Wiseman. There are good people in Zille, Wruhecists and Wehzeks alike, who will pay for every " +
             "promise this war breaks.\"", new[] { "#250" });

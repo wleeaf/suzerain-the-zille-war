@@ -105,7 +105,7 @@ internal static class CityEvents
             "windows. The foreign correspondents have their cameras ready, and the world is waiting to see what Rizia does next in Zille.",
             new[]
             {
-                new EventOption("Raise the Golden Banner over the square and give it back its old name. (+1 Authority)", Do("Zille_BannerRaised", () =>
+                new EventOption("Raise the Golden Banner over the square and give it back its old name. Effect: +1 Authority.", Do("Zille_BannerRaised", () =>
                 {
                     Add(Authority, 1);
                     Add(Opinion, 2);
@@ -119,10 +119,9 @@ internal static class CityEvents
                         "after its pre-war name. Wehzek residents largely stayed indoors.",
                         "Valgsland's foreign ministry called the ceremony \"a victory parade over a civilian population.\"");
                 })),
-                new EventOption("No celebrations yet. Order the troops to protect the Wehzek residents. (-1 Authority)", Do("Zille_Restraint", () =>
+                new EventOption("No celebrations yet. Order the troops to protect the Wehzek residents. Effect: -1 Authority.", Do("Zille_Restraint", () =>
                 {
                     Add(Authority, -1);
-                    Add(Valgsland, 1);
                     Add(Rumburg, 1);
                     News("ZilleRestraint", "G", "Rizian Troops Guard Wehzek Quarter in Zille",
                         "Foreign correspondents in Zille report that Rizian soldiers have been posted outside Wehzek homes and sanctuaries in the " +
@@ -140,7 +139,7 @@ internal static class CityEvents
             "Wehlen's convoys across the Strait of Kreleck came through here every night.",
             new[]
             {
-                new EventOption("Seize the ships and the stores. They will feed our own men. (+1 Budget, +250 Military Equipment)", Do("Nanta_PortSeized", () =>
+                new EventOption("Seize the ships and the stores. They will feed our own men. Effect: +1 Budget, +250 Military Equipment.", Do("Nanta_PortSeized", () =>
                 {
                     Add(Budget, 1);
                     Add(Equipment, 250);
@@ -172,7 +171,7 @@ internal static class CityEvents
                         "Every fishing boat in Isor flew the Rizian colors this morning. Some of the flags were older than the men who raised " +
                         "them. The Royal Herald salutes the people of Isor, who never forgot whose shore they live on.");
                 })),
-                new EventOption("Hire the skippers as pilots for the Royal Navy. (-1 Budget)", Do("Isor_Pilots", () =>
+                new EventOption("Hire the skippers as pilots for the Royal Navy. Effect: -1 Budget.", Do("Isor_Pilots", () =>
                 {
                     Add(Budget, -1);
                     Weaken();
@@ -189,7 +188,7 @@ internal static class CityEvents
             "Rizian, wait at the pit heads to see what kind of masters we are.",
             new[]
             {
-                new EventOption("Secure the mines and open the strongroom for the treasury. (+1 Budget)", Do("Auremina_MinesSecured", () =>
+                new EventOption("Secure the mines and open the strongroom for the treasury. Effect: +1 Budget.", Do("Auremina_MinesSecured", () =>
                 {
                     Add(Budget, 1);
                     Add(Opinion, -1);
@@ -198,7 +197,7 @@ internal static class CityEvents
                         "the school but the refinery's strongroom. Its contents, some three billion guilders in gold bars, are on their way to Porte Drazon. The miners are still " +
                         "waiting to be paid for the last month they worked under the Wehzeks.");
                 })),
-                new EventOption("Open the gates. Tell the miners they are free men of Rizia. (+250 Manpower)", Do("Auremina_MinersFreed", () =>
+                new EventOption("Open the gates. Tell the miners they are free men of Rizia. Effect: +250 Manpower.", Do("Auremina_MinersFreed", () =>
                 {
                     Add(Manpower, 250);
                     Add(Opinion, 1);
@@ -231,7 +230,7 @@ internal static class CityEvents
             yield return new WarEvent(LostName(c), title, text,
                 new[]
                 {
-                    new EventOption("Regroup and retake it. We do not abandon those who stood with us. (-250 Military Equipment)", Do("Counterattack", () =>
+                    new EventOption("Regroup and retake it. We do not abandon those who stood with us. Effect: -250 Military Equipment.", Do("Counterattack", () =>
                     {
                         Add(Equipment, -250);
                         Add(Opinion, 1);
@@ -253,7 +252,7 @@ internal static class CityEvents
             "where the King's train once stopped is burning. Refugees are streaming south toward Brenas.",
             new[]
             {
-                new EventOption("Organize the evacuation. Get the civilians out first. (-1 Budget)", Do("Evacuation", () =>
+                new EventOption("Organize the evacuation. Get the civilians out first. Effect: -1 Budget.", Do("Evacuation", () =>
                 {
                     Add(Budget, -1);
                     Add(Opinion, 1);
@@ -261,7 +260,7 @@ internal static class CityEvents
                         "Under Wehzek shellfire, the railwaymen of Mave Nortus ran trains south through the night until every civilian who " +
                         "wanted to leave had left. The Royal Herald will print their names, every one of them.");
                 })),
-                new EventOption("No retreat. Every man to the line. (-250 Manpower)", Do("Counterattack", () =>
+                new EventOption("No retreat. Every man to the line. Effect: -250 Manpower.", Do("Counterattack", () =>
                 {
                     Add(Manpower, -250);
                     Add(Opinion, -2);
@@ -277,20 +276,20 @@ internal static class CityEvents
                                  "cages outside the town were emptied in the night, and the Wehzek prisoners walked out to meet their own army."),
                      ("Balle", "Balle has fallen. Wehzek patrols are on the shores of Lake Jardim, deep inside Brenas, and the fishermen have " +
                                "pulled their boats up on the beach. Nobody in Porte Drazon thought the war could come this far south."),
-                     ("Jales", "Jales has fallen. The enemy holds a Sudis Sea port on Rizian soil, the first in a generation, and Wehzek " +
-                               "ships can now unload on our side of the strait."),
+                     ("Jales", "Jales has fallen. Wehzek ships can now unload on our side of the strait, and the General Staff wants an " +
+                               "answer before they do."),
                  })
         {
             string c = city;
             yield return new WarEvent(LostName(c), $"{c} Falls", flavour,
                 new[]
                 {
-                    new EventOption("Rally the reserves and counterattack. (-250 Manpower, -250 Military Equipment)", Do("Counterattack", () =>
+                    new EventOption("Rally the reserves and counterattack. Effect: -250 Manpower, -250 Military Equipment.", Do("Counterattack", () =>
                     {
                         Add(Manpower, -250);
                         Add(Equipment, -250);
                     })),
-                    new EventOption("Order a fighting withdrawal. Save the army. (-1 Authority)", Do("Withdrawal", () =>
+                    new EventOption("Order a fighting withdrawal. Save the army. Effect: -1 Authority.", Do("Withdrawal", () =>
                     {
                         Add(Authority, -1);
                         Add(Opinion, -1);
@@ -318,7 +317,7 @@ internal static class CityEvents
                 new[]
                 {
                     new EventOption("Restore order and press on.", () => Add(Opinion, 1)),
-                    new EventOption("Send army engineers and supplies to rebuild the town. (-1 Budget)", () =>
+                    new EventOption("Send army engineers and supplies to rebuild the town. Effect: -1 Budget.", () =>
                     {
                         Add(Budget, -1);
                         Add(Opinion, 2);

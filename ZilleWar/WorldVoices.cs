@@ -103,7 +103,7 @@ internal static class WorldVoices
         Dispatch("TreasuryCost", SuzerainTokenName.RiziaCityPorteDrazon, "The Treasury Counts the Cost of War", P(
             "Councilor Elena Werner's office has sent the palace its first estimate of what the war will cost. Pay, fuel, shells and " +
             "the requisitioned trains of the northern line will cost the treasury six billion guilders a quarter, and nine billion if " +
-            "the fighting goes badly. Trade across the Strait of Kreleck has stopped, and insurers have raised the price of every cargo " +
+            "the fighting goes badly. Trade across the Strait of Kreleck is slowing, and insurers have raised the price of every cargo " +
             "that still sails.",
             "The memorandum ends with a sentence underlined twice: \"The treasury can pay for a short war. It cannot pay for a long one.\""));
     }
@@ -131,9 +131,9 @@ internal static class WorldVoices
                     (Variables.GetBool(ZilleOperation.CapturedVar("Zille"))
                         ? " Recruiting posters showing a soldier raising the golden banner over Zille harbor are pasted on every wall."
                         : " Recruiting posters showing a soldier pointing north, toward Zille, are pasted on every wall."),
-                    "Shopkeepers report that coffee, sugar and imported cloth have doubled in price since the strait closed to merchant " +
-                    "shipping. For now, most people grumble and pay. \"It is for Zille,\" one woman told a reporter, counting her coins."));
-                Dispatch($"Refugees_T{Turn}", SuzerainTokenName.RiziaCityMaveNortus, "Refugees on the Road to Dapalle", P(
+                    "Shopkeepers report that coffee, sugar and imported cloth have doubled in price since trade across the strait " +
+                    "slowed. For now, most people grumble and pay. \"It is for Zille,\" one woman told a reporter, counting her coins."));
+                Dispatch($"Refugees_T{Turn}", SuzerainTokenName.RiziaCityMaveNortus, "Refugees on the Road to Mave Nortus", P(
                     "Families from the Zille border villages, Rizian and Wehzek alike, have been arriving in Mave Nortus on foot and by cart. " +
                     "The army has opened relief stations in the grain warehouses by the station, and the sanctuaries of Brenas are collecting " +
                     "blankets.",
@@ -266,13 +266,6 @@ internal static class WorldVoices
                 "oldest kind of government.\"",
                 "Lespian and Rumburgian naval officials say they are watching the exercises closely. Nobody in Konstantium expects " +
                 "Valgish ships to fire on anyone. Nobody is quite willing to rule it out, either."));
-
-            News("Markets", "G", "Gold Climbs as Zille Mines Fall Silent", P(
-                "Gold prices in Thornbourgh and Ventrie City have risen for the third week running, as the fighting in Zille idles " +
-                "some of the richest mines in South Merkopa. Insurers have doubled premiums for cargo bound for any port on the Gulf " +
-                "of Moridia.",
-                "The MITZ partners are said to be quietly pleased. Rizian Royal Gold, whose old mines lie behind the front, has " +
-                "declined to comment, though its chief executive is reported to have bought a new map."));
 
             Dispatch("Agnolia", "Rizia_Country_Agnolia", "Agnolia Offers Its Good Offices", P(
                 "Prime Minister Maartin Van Hoorten has offered to host talks between Rizia and Wehlen \"at any time, on any terms " +

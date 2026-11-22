@@ -215,16 +215,14 @@ internal static partial class SupplyWar
         d.Say("Credit", Beatrice, "\"Lend. What a charming word.\"", "Credit2");
         d.Say("Credit2", Beatrice,
             "\"Very well. A war credit in Rizia's name. Eighteen billion guilders now, from my Exchequer to yours. Pocket money, between family.\"", "CreditTerms");
-        d.Branch("CreditTerms", "TermsLong", "TermsMid", "TermsShort");
-        d.SayIf("TermsLong", $"{turn} <= 2", Beatrice,
-            "\"Repaid in small installments over a good many seasons. My Exchequer is in a patient mood.\"", "CreditMenu");
+        d.Branch("CreditTerms", "TermsMid", "TermsShort");
         d.SayIf("TermsMid", $"{turn} <= 6", Beatrice,
             "\"Repaid over the next few seasons. My Exchequer insists on being paid before your reign gets interesting in other ways.\"",
             "CreditMenu");
         d.Say("TermsShort", Beatrice,
             "\"Repaid quickly, I'm afraid. Your reign is getting on, and my Exchequer has a nasty habit of reading calendars.\"",
             "CreditMenu");
-        d.Do("CreditMenu", null, Gate("CreditWhy"), Gate("Credit8"), Gate("Credit4"), Gate("Credit3"), Gate("Credit2x"), "CreditNo");
+        d.Do("CreditMenu", null, Gate("CreditWhy"), Gate("Credit4"), "CreditNo");
         d.Opt("CreditWhy", Not(VarBeaAskedInterest), "\"And the interest?\"", null, T(VarBeaAskedInterest), "CreditWhy2");
         d.Say("CreditWhy2", Beatrice,
             "\"Family rates, Romus. Twenty-four billion back for every eighteen lent. Which is to say, higher than you'd like and lower than you deserve.\"", "CreditMenu");
@@ -233,10 +231,7 @@ internal static partial class SupplyWar
         string Repay(int rate, int turns) =>
             creditScript + $"{V(ModRumburgCredit)} = {-rate}; {V(ModRumburgCredit + "_Turns")} = {turns}; ";
         const string drawUp = "\"Draw it up.\"";
-        d.Opt("Credit8", $"{turn} <= 2", drawUp, "+6 Budget, -1 Budget Per Turn for 8 Turns", Repay(1, 8), "CreditDone");
-        d.Opt("Credit4", $"{turn} >= 3 and {turn} <= 6", drawUp, "+6 Budget, -2 Budget Per Turn for 4 Turns", Repay(2, 4), "CreditDone");
-        d.Opt("Credit3", $"{turn} == 7", drawUp, "+6 Budget, -3 Budget Per Turn for 3 Turns", Repay(3, 3), "CreditDone");
-        d.Opt("Credit2x", $"{turn} == 8", drawUp, "+6 Budget, -4 Budget Per Turn for 2 Turns", Repay(4, 2), "CreditDone");
+        d.Opt("Credit4", $"{turn} <= 6", drawUp, "+6 Budget, -2 Budget Per Turn for 4 Turns", Repay(2, 4), "CreditDone");
         d.Say("CreditDone", Beatrice, "\"The papers will be in Porte Drazon by Friday.\"", "CreditDone2");
         d.Say("CreditDone2", Beatrice, "\"Do read the small print. Rumburg always collects.\"", "Back");
         d.Opt("CreditNo", null, "\"Rizia doesn't borrow to fight.\"", null, T(VarBeaNoCredit), "CreditNo2");
@@ -324,16 +319,16 @@ internal static partial class SupplyWar
         d.Say("NoAsk2", Beatrice, "\"I don't need to. It's the same question it's been for months. The answer is what's changed.\"", "NoRecall");
         // What the King promised her in Thornbourgh (EarlyT7Diplomacy) is remembered.
         d.Branch("NoRecall", "NoQuick", "NoRepay", "NoWhy");
-        d.SayIf("NoQuick", Eq(VarRumburgPromise, "quick"), Beatrice,
-            "\"You flew all the way to Thornbourgh to promise me the next offensive would end it. I wrote the date in my diary.\"",
+        d.SayIf("NoQuick", promised("end"), Beatrice,
+            "\"At the last call you promised me it would be over. I wrote the date in my diary.\"",
             "NoQuick2");
         d.Say("NoQuick2", Beatrice, "\"I've had to turn the page twice since.\"", "NoWhy");
-        d.SayIf("NoRepay", Eq(VarRumburgPromise, "repay"), Beatrice,
-            "\"You gave me your word you'd repay every crate. My quartermasters have started counting them.\"", "NoRepay2");
-        d.Say("NoRepay2", Beatrice, "\"They are very good at counting.\"", "NoWhy");
+        d.SayIf("NoRepay", gave("credit"), Beatrice,
+            "\"You had your eighteen billion. My Exchequer would like to see some of it back.\"", "NoRepay2");
+        d.Say("NoRepay2", Beatrice, "\"Exchequers are very good at counting.\"", "NoWhy");
         d.Branch("NoWhy", "NoPales", "NoDossier", "NoTwoWars", "NoTired");
-        d.SayIf("NoPales", Eq(VarRumburgPriority, "pales"), Beatrice,
-            "\"You told me to send my rifles south, to the Pales front. I took you at your word. There's nothing left over for Zille.\"",
+        d.SayIf("NoPales", gave("raids"), Beatrice,
+            "\"I sent rifles for your raids on the ports, and the dossiers came back with them. There's nothing left over for more.\"",
             "NoFavour");
         d.SayIf("NoDossier", dossier, Beatrice,
             "\"Wraclawitz has photographs of Rumburgian rifles in Bludish hands, and Rayne has had them framed.\"", "NoDossier2");

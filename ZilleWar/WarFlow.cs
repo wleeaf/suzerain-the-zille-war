@@ -38,6 +38,13 @@ internal static class WarFlow
             return;
         }
 
+        // The war is over by Turn 6 at the latest (Phase III is its first scene); never let it run on.
+        int turnNow = GameState.CurrentTurnNum ?? 0, stepNow = GameState.CurrentStepNum ?? 0;
+        if (AtWar && (turnNow >= 7 || (turnNow == 6 && stepNow >= 6)))
+        {
+            Run("force the war's end", () => ZilleCampaign.ForceEnd($"at turn {turnNow} step {stepNow}"));
+        }
+
         foreach ((string what, Action step) in new (string, Action)[]
                  {
                      ("war flags", WarFlags.Sync), ("war decrees", WarDecrees.OnStep), ("vanilla edits", Vanilla.Apply), ("lua check", LuaLint.RunOnce), ("turns 4-7", VanillaEarly.OnStep),

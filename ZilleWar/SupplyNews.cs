@@ -309,7 +309,7 @@ internal static class SupplyNews
                 "Admiralty staff estimate the convoys to Nanta will run more often for it, and the garrison in Zille will feel the " +
                 "difference before the month is out.");
         });
-        Once("LespiaLax", B(SupplyWar.VarLespiaGrievance) && B("ZilleWar.Call_Alvarez_GrievanceSaid") && B(SupplyWar.VarLespiaStrait), () =>
+        Once("LespiaLax", WarFlow.AtWar && B(SupplyWar.VarLespiaGrievance) && B("ZilleWar.Call_Alvarez_GrievanceSaid") && B(SupplyWar.VarLespiaStrait), () =>
             Rep("LespiaLax", SuzerainTokenName.RiziaCountryLespia, "Lespian Patrols Grow Lax",
                 "The Lespian warships in the Strait of Kreleck are still on station, but their inspections have become strangely " +
                 "brief. Our attaché watched a Wehzek freighter pass a Lespian destroyer at noon without being boarded.",
@@ -534,7 +534,7 @@ internal static class SupplyNews
                 $"it holds. In return, according to the text circulated in Konstantium, Rizia has accepted {terms}.",
                 "President Smolak called it \"a peace that Wehlen can live with.\" It remains to be seen whether Rizia can.");
             Paper("SmolakAccepted", "V", "What Did the King Give Away?",
-                $"The guns are silent, and the Voice of Rizia is glad of it. But a peace made over the telephone deserves to be read " +
+                $"The guns are silent, and the Voice of Rizia is glad of it. But a ceasefire made over the telephone deserves to be read " +
                 $"aloud, so here it is: {terms}. The people of Rizia were not asked about any of it.");
             Paper("SmolakAccepted", "RH", "The Guns Fall Silent in Zille",
                 "At His Majesty's word, the Royal Army has ceased fire in Zille. It holds every inch of the ground it won, and Rizian " +

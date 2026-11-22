@@ -61,6 +61,8 @@ internal static class WorldModifiers
     // ---- situation / policy switches
     private const string SitOccupation = "ZilleWar.Sit_Occupation";
     private const string SitRefugees = "ZilleWar.Sit_Refugees";
+    private const string SitLost = "ZilleWar.Sit_Lost";
+    private const string SitDivided = "ZilleWar.Sit_Divided";
     private const string SitReconstruction = "ZilleWar.Sit_Reconstruction";
     private const string PolRepudiated = "ZilleWar.Pol_ZLLARepudiated";
     private const string VarLastTurn = "ZilleWar.Mod_LastTurn";
@@ -141,10 +143,14 @@ internal static class WorldModifiers
             "The harbor, the rail line to Nanta and the power stations that serve the mines were damaged in the fighting. Engineers " +
             "of the Royal Army and contractors from Brenas are clearing rubble and rebuilding piers. \n\nUntil the work is done, " +
             "Zille costs the treasury more than it returns. Once it is done, its gold will flow south again."),
-        new("ZilleWar_Military_ZilleDefeat", "Military", "High", ZilleCampaign.VarDefeated, "Defeat in Zille",
+        new("ZilleWar_Military_ZilleDefeat", "Military", "High", SitLost, "Defeat in Zille",
             "The campaign in Zille has failed. Wehzek forces hold the region more firmly than before, and the army has come home " +
             "with its losses and its questions. \n\nAbroad, the failure is read as the limit of the Rizian crown's reach. At home, " +
             "it is read as the King's."),
+        new("ZilleWar_Military_ZilleDividedArmistice", "Military", "Medium", SitDivided, "Armistice Line in Zille",
+            "An armistice signed under Alliance supervision fixes the line of contact. Rizian troops hold Zille city and its harbor, " +
+            "and Wehzek forces hold the ports and the hills. \n\nNeither government calls this peace, and both armies are still " +
+            "dug in within sight of each other."),
         new("ZilleWar_Military_ZilleArmistice", "Military", "Medium", WarFlow.VarCeasefire, "Armistice Line in Zille",
             "The guns in Zille are silent under a ceasefire supervised by the Alliance of Nations. The line of contact runs through " +
             "the region, and families on either side of it cannot cross. \n\nNeither government calls this peace, and both armies " +
@@ -180,7 +186,7 @@ internal static class WorldModifiers
     public static void Register()
     {
         foreach (string v in External.Concat(External.Select(Turns)).Concat(Computed)
-                     .Concat(new[] { StraitClosed, SitOccupation, SitRefugees, SitReconstruction, PolRepudiated, VarLastTurn }))
+                     .Concat(new[] { StraitClosed, SitOccupation, SitRefugees, SitReconstruction, PolRepudiated, VarLastTurn, SitLost, SitDivided }))
         {
             Variables.Register(v);
         }
@@ -190,7 +196,7 @@ internal static class WorldModifiers
             Vanilla.Expose(v, isBool: false);
         }
 
-        foreach (string v in new[] { StraitClosed, SitOccupation, SitRefugees, SitReconstruction, PolRepudiated, CityEvents.Flag("Zille_Restraint") })
+        foreach (string v in new[] { StraitClosed, SitOccupation, SitRefugees, SitReconstruction, PolRepudiated, SitLost, SitDivided, CityEvents.Flag("Zille_Restraint") })
         {
             Vanilla.Expose(v);
         }
@@ -299,6 +305,8 @@ internal static class WorldModifiers
         Variables.Set(SitRefugees, refugees < 0);
         Variables.Set(SitReconstruction, reconstruction < 0);
         Variables.Set(PolRepudiated, declared && !liberated);
+        Variables.Set(SitLost, declared && defeated && !cityHeld);
+        Variables.Set(SitDivided, declared && defeated && cityHeld);
 
         if (declared)
         {

@@ -106,8 +106,8 @@ internal static class SweepEarlyT6Home
         t.Line("RefuseA", Rusty,
             "\"Course not. They're dying for Rizia. I just figured Rizia could use somebody to pay for the pumps once they're done.\"",
             new[] { "#651" });
-        t.Choice("Later", "\"Ask me again when the guns are quiet.\"", new[] { "LaterA" }, script: Set(VarRustyZilleGold, "\"later\""));
-        t.Line("LaterA", Rusty, "\"I'll hold you to that. I'm a patient man. Not a very patient man, but a patient one.\"", new[] { "#651" });
+        t.Choice("Later", "\"Not today, Rusty. The Treasury will manage.\"", new[] { "LaterA" }, script: Set(VarRustyZilleGold, "\"later\""));
+        t.Line("LaterA", Rusty, "\"Course it will. Ms. Werner always does. The pumps will wait. I'm a patient man. Not a very patient man, but a patient one.\"", new[] { "#651" });
 
         // "But the results didn't count. The proper season had yet to begin."
         t.Line("Boxes", Narrator,
@@ -146,7 +146,10 @@ internal static class SweepEarlyT6Home
             new[] { "#256" }, condition: Liberated, hooks: From(250));
         t.Line("ThreatLost", Hugo,
             "\"And Zille did us no favors. The RPP has been asking every widow in Brenas what her husband died for.\"",
-            new[] { "#256" }, condition: LostOrStopped, hooks: From(250));
+            new[] { "#256" }, condition: AuditT6.Lost, hooks: From(250));
+        t.Line("ThreatPart", Hugo,
+            "\"And the armistice did us no favors. The RPP has been asking every widow in Brenas why the line stopped where it did.\"",
+            new[] { "#256" }, condition: AuditT6.Part, hooks: From(250));
         t.Register();
     }
 
@@ -250,8 +253,10 @@ internal static class SweepEarlyT6Home
         NewsWire.Publish("SE_Home_RustyGold", "V", "Montoro's Gold Goes to War", P(
             "Rizian Royal Gold has quietly transferred some six billion guilders to the Royal Treasury, days after its chief executive Russello Montoro " +
             "was seen sharing the royal tribune with King Romus at the charity match in Montaklar. In exchange, sources at the Treasury " +
-            "tell the Voice, RRG has been promised first claim on the gold mines of Auremina once the fighting in Zille is over.",
-            "\"Our sons are dying in Zille so that Montoro can dig,\" one miner in Argno told us. RRG declined to comment, beyond a " +
+            "tell the Voice, RRG has been promised first claim on the gold mines of Auremina " +
+            (WarFlow.AtWar ? "once the fighting in Zille is over." : "now that the fighting in Zille is over."),
+            (WarFlow.AtWar ? "\"Our sons are dying in Zille so that Montoro can dig,\"" : "\"Our sons died in Zille so that Montoro can dig,\"") +
+            " one miner in Argno told us. RRG declined to comment, beyond a " +
             "statement that the company is \"proud to stand behind our boys at the front.\""));
     }
 }

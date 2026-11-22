@@ -64,7 +64,11 @@ internal static class SweepLateTalk
             Lost: "\"And with your failed war of conquest in Zille, Rizia has shown everyone the boot it would like to wear.\""),
             new[] { "#86", "#81", "#82", "#94" });
         Swap(h, Hegel, "Boot64", 64, new[] { 62 }, "Emmerich Hegel (R)",
-            S.All("\"And with two wars of conquest, one in Pales and one in Zille, Rizia is wearing the biggest boot of all.\""),
+            new S(
+                Ongoing: "\"And with two wars of conquest, one in Pales and one in Zille, Rizia is wearing the biggest boot of all.\"",
+                Lib: "\"And with two wars of conquest, one in Pales and one in Zille, Rizia is wearing the biggest boot of all.\"",
+                Part: "\"And with two wars of conquest, one in Pales and one in Zille, Rizia is wearing the biggest boot of all.\"",
+                Lost: "\"And with two wars, one in Pales and one in Zille that you lost, Rizia is still wearing the biggest boot of all.\""),
             new[] { "#86", "#78", "#81", "#82", "#94" });
         h.Register();
 
@@ -73,7 +77,7 @@ internal static class SweepLateTalk
         var m = new Talk(Mitz, "ZilleWar.SL.T9.Mitz.");
         Swap(m, Mitz, "Waste", 285, new[] { 284 }, R, new S(
             Lib: "\"I'm ready for Morella to stop wasting my time. I have a province to rebuild.\"",
-            Part: "\"I'm ready for Morella to stop wasting my time. I have a ceasefire line to hold.\"",
+            Part: "\"I'm ready for Morella to stop wasting my time. I have an armistice line to hold.\"",
             Lost: "\"I'm ready for Morella to stop wasting my time. I have enough to answer for at home.\""),
             new[] { "#290" });
         m.Register();
@@ -118,7 +122,7 @@ internal static class SweepLateTalk
         Swap(az, Azaro, "Unit", 273, new[] { 134 }, "Taddeus Azaro", new S(
             Ongoing: "\"We can offer a unit from our provincial army. The rest of our men are in Zille, but these have been begging for something to do.\"",
             Lib: "\"We can offer a unit from our provincial army. They came home from Zille with their blood still up, and they've been looking for a fight.\"",
-            Part: "\"We can offer a unit from our provincial army. Half our regiments are still watching the ceasefire line in Zille, but I can spare one.\"",
+            Part: "\"We can offer a unit from our provincial army. Half our regiments are still watching the armistice line in Zille, but I can spare one.\"",
             Lost: "\"We can offer a unit from our provincial army. They came back from Zille with something to prove.\""),
             new[] { "#117", "#268", "#213" });
         az.Register();
@@ -182,7 +186,7 @@ internal static class SweepLateTalk
             new[] { "#357" });
         Swap(f, ForeignAffairs, "Intentions", 348, new[] { 342 }, Narr, new S(
             Ongoing: "\"After Zille, none of our neighbors doubts our intentions. They doubt our ability to defend our interests.\"",
-            Lib: "\"After Zille, none of our neighbors doubts our intentions. They doubt our ability to defend our interests.\"",
+            Lib: "\"After Zille, our neighbors take our army seriously. Some still doubt our intentions, and none can ignore our guns.\"",
             Part: "\"After Zille, none of our neighbors doubts our intentions. They doubt our ability to defend our interests.\""),
             new[] { "#357" });
         f.Register();
@@ -215,10 +219,12 @@ internal static class SweepLateTalk
         var p = new Talk(Prison, "ZilleWar.SL.End.Prison.");
         p.Line("ZilleLib", Narr, "A guard let slip that the new government had kept Zille. Your one victory had outlived your reign.",
             new[] { "#304" }, condition: Lib, hooks: Talk.From(340));
-        p.Line("ZillePart", Narr, "A guard let slip that the ceasefire line in Zille still held, and that the new government had kept Zille city. Nobody told you what they had promised Wehlen for it.",
+        p.Line("ZillePart", Narr, "A guard let slip that the armistice line in Zille still held, and that the new government had kept Zille city. Nobody told you what they had promised Wehlen for it.",
             new[] { "#304" }, condition: Part, hooks: Talk.From(340));
         p.Line("ZilleLost", Narr, "A guard let slip that the new government had renounced Rizia's claim to Zille. The treaty with Wehlen was signed in Konstantium, in the same hall where you had declared your war.",
-            new[] { "#304" }, condition: Lost, hooks: Talk.From(340));
+            new[] { "#304" }, condition: And(Lost, WarFlags.L(LateT9.VarRecognized)), hooks: Talk.From(340));
+        p.Line("ZilleLostNo", Narr, "A guard let slip that the new government had stopped talking about Zille. Nobody had signed anything, and nobody had asked for the province back.",
+            new[] { "#304" }, condition: And(Lost, WarFlags.LNot(LateT9.VarRecognized)), hooks: Talk.From(340));
         p.Register();
 
         // The Turn 11 speech has a Zille line only when Zille came back.
@@ -229,7 +235,7 @@ internal static class SweepLateTalk
             new[] { "#203" }, condition: Lost, hooks: Talk.From(163));
         s.Choice("PartCity", "\"Zille city is Rizian again. The rest of Zille will follow, in time.\"",
             new[] { "#203" }, condition: Part, hooks: Talk.From(163));
-        s.Choice("PartLine", "\"Our soldiers brought Zille city home. The ceasefire line will not last forever.\"",
+        s.Choice("PartLine", "\"Our soldiers brought Zille city home. The armistice line will not last forever.\"",
             new[] { "#203" }, condition: Part, hooks: Talk.From(163));
         foreach ((string sfx, int from) in new[] { ("B", 177), ("C", 668) })
         {
@@ -239,7 +245,7 @@ internal static class SweepLateTalk
                 new[] { "#178" }, condition: Lost, hooks: Talk.From(from));
             s.Choice("PartCity" + sfx, "\"Zille city is Rizian again. The rest of Zille will follow, in time.\"",
                 new[] { "#178" }, condition: Part, hooks: Talk.From(from));
-            s.Choice("PartLine" + sfx, "\"Our soldiers brought Zille city home. The ceasefire line will not last forever.\"",
+            s.Choice("PartLine" + sfx, "\"Our soldiers brought Zille city home. The armistice line will not last forever.\"",
                 new[] { "#178" }, condition: Part, hooks: Talk.From(from));
         }
 

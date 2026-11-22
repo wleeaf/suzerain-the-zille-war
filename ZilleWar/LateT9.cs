@@ -177,7 +177,7 @@ internal static class LateT9
                  {
                      ("On", Ongoing, "The General Staff had forbidden the pilot to fly anywhere near the front, so we went home the long way, out over the sea. Somewhere to the north, the guns were still working."),
                      ("Lib", Lib, "The harbor was still scarred, but our flag flew over the customs house. Zille was ours again. Now came the hard part: keeping it."),
-                     ("Part", Part, "I could make out the ceasefire line, a scar of trenches running from the hills to the sea. North of it, the cranes of Isor and Nanta still worked under the Wehzek flag."),
+                     ("Part", Part, "I could make out the armistice line, a scar of trenches running from the hills to the sea. North of it, the cranes of Isor and Nanta still worked under the Wehzek flag."),
                      ("Lost", Lost, "It was close enough to make out the Wehzek flag over the lighthouse. The pilot, without being asked, banked away."),
                  })
         {
@@ -290,7 +290,7 @@ internal static class LateT9
         t.Line("Lib2", Smolak, "\"It would be a shame if those poor people felt abandoned by their motherland. A shame for you, I mean.\"", new[] { "LibDeal", "LibThreat", "LibHang" });
         t.Choice("LibDeal", "\"Keep your agents out of Nanta, and the last of your prisoners go home.\"", new[] { "LibDeal2" },
             condition: $"{V(LateT8.VarPrisoners)} == \"held\" or {V(LateT8.VarPrisoners)} == \"ransomed\"",
-            script: Set(VarNanta, "\"deal\"") + Set(LateT8.VarPrisoners, "\"released\"") + Add("RiziaDLC.Diplomacy_Valgsland_NegotiatingPower", 1));
+            script: Set(VarNanta, "\"deal\"") + Set(LateT8.VarPrisoners, "\"released\""));
         t.Line("LibDeal2", Smolak, "\"Done. You will find Nanta very quiet. Suspiciously quiet. I'm told that's what peace sounds like.\"", new[] { "Bye" });
         t.Choice("LibThreat", "\"Touch Nanta, and the next thing you hear will be Rizian guns at the strait.\"", new[] { "LibThreat2" }, script: Set(VarNanta, "\"threat\""));
         t.Line("LibThreat2", Smolak, "\"So much anger. You won, Your Majesty. Try to enjoy it.\"", new[] { "Bye" });

@@ -170,6 +170,21 @@ internal static class ZilleCampaign
     }
 
     public static bool Defeated => Variables.GetBool(VarDefeated);
+
+    /// <summary>
+    /// Safety net: the war cannot outlive Turn 6. If the last phase was never booked (a reload between phases, the table left
+    /// without ending the phase), end it as the last phase would have: liberated if every city is held, otherwise an armistice
+    /// on the line as it stands.
+    /// </summary>
+    public static void ForceEnd(string why)
+    {
+        bool liberated = ZilleData.Towns.Where(t => t.Role == "city" && t.Side == "zille")
+            .All(t => Variables.GetBool(ZilleOperation.CapturedVar(t.Name)));
+        Variables.Set(VarLiberated, liberated);
+        Variables.Set(VarDefeated, !liberated);
+        Variables.Set(ResultVar(0), liberated);
+        Core.Log.Warning($"The Zille war was still open {why}; ended it ({(liberated ? "liberated" : "armistice on the line")}).");
+    }
     public static bool Liberated => Variables.GetBool(VarLiberated);
 
     /// <summary>The next operation in the fixed order whose towns Wehlen still holds (empty when the war is over).</summary>

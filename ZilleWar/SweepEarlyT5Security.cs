@@ -98,7 +98,10 @@ internal static class SweepEarlyT5Security
             "envoys in Konstantium talk of little else.\"", new[] { "#486" });
 
         // [520]/[526] "...granting us leverage in future Zille negotiations." There are no negotiations left, only the Alliance.
-        t.Variant("Leverage520", 520, new[] { 519 }, Declared, Romus,
+        t.Variant("Leverage520Stopped", 520, new[] { 519 }, AuditT45.Stopped, Romus,
+            "\"Continuing the investigation into Su Omina shows Konstantium that we police our own, whatever Smolak claims. With Zille " +
+            "still unsettled, that matters more than ever.\"", new[] { "#1184" });
+        t.Variant("Leverage520", 520, new[] { 519 }, Active, Romus,
             "\"Continuing the investigation into Su Omina shows Konstantium that we police our own, whatever Smolak claims. With our " +
             "army in Zille, that matters more than ever.\"", new[] { "#1184" });
         t.Variant("Leverage526", 526, new[] { 529 }, Declared, Romus,
@@ -117,7 +120,7 @@ internal static class SweepEarlyT5Security
 
         // [1306] Lucita on Reinhart's motive: "Sowing discord between Rizia and Wehlen..."
         t.Variant("Discord", 1306, new[] { 409, 413, 1305, 1308 }, Declared, Lucita,
-            "\"Sowing discord between Rizia and Wehlen. If that was the aim, it has worked better than anyone in Alca could have hoped.\"",
+            "\"Sowing discord between Rizia and Wehlen. If that was the aim, it has cost us a war in the north.\"",
             new[] { "#1310", "#1328", "#1330" });
 
         // [867] Hugo on the protesters: "...the peace and prosperity we've built for our people."

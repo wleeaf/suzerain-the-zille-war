@@ -65,6 +65,14 @@ internal static class EarlyT6
     private const string PalesWarComing =
         "(Variable[\"RiziaDLC.Pales_War\"] == true or Variable[\"RiziaDLC.Diplomacy_Pales_PrepareForWar\"] == true or Variable[\"RiziaDLC.Diplomacy_Pales_DeclareWar\"] == true)";
 
+    /// <summary>Lespia holds a grudge (grievance, MITZ betrayal, broken promise) or the strait patrols were lax: no claim that the strait was held shut.</summary>
+    private static readonly string LespiaCold =
+        $"(Variable[\"{SupplyWar.VarLespiaGrievance}\"] == true or Variable[\"RiziaDLC.MITZ_ScrewedOverLespia\"] == true or " +
+        $"Variable[\"{EarlyT5.VarLespiaBetrayed}\"] == true or Variable[\"ZilleWar.Lespia_StraitThin\"] == true)";
+    private static bool LespiaColdNow =>
+        Variables.GetBool(SupplyWar.VarLespiaGrievance) || Variables.GetBool("RiziaDLC.MITZ_ScrewedOverLespia") ||
+        Variables.GetBool(EarlyT5.VarLespiaBetrayed) || Variables.GetBool("ZilleWar.Lespia_StraitThin");
+
     private static string NotSet(string v) => $"Variable[\"{v}\"] ~= true";
 
     /// <summary>Nil-safe increment of a vanilla number.</summary>
@@ -157,7 +165,11 @@ internal static class EarlyT6
         t.Line("LespiaBothWaysOver", Laurento,
             "\"I note that Prime Minister Alvarez voted with Pales all the same. He sold us the strait while our army was in Zille, and " +
             "now he backs Reinhart in the south. I would expect nothing less of him.\"",
-            new[] { "#29", "#30" }, condition: $"{AuditT6.Over} and {LespiaDeal}", hooks: From(28));
+            new[] { "#29", "#30" }, condition: $"{AuditT6.Over} and {LespiaDeal} and not {LespiaCold}", hooks: From(28));
+        t.Line("LespiaBothWaysCold", Laurento,
+            "\"I note that Prime Minister Alvarez voted with Pales all the same. He promised us the strait while our army was in Zille, " +
+            "kept it half open, and now backs Reinhart in the south. I would expect nothing less of him.\"",
+            new[] { "#29", "#30" }, condition: $"{AuditT6.Over} and {LespiaDeal} and {LespiaCold}", hooks: From(28));
         t.Register();
     }
 
@@ -260,9 +272,11 @@ internal static class EarlyT6
         t.Line("OneWarWonA", Lucita, "\"We took Zille. Pales knows it. Why do you think Reinhart is so polite these days?\"", new[] { "#284" });
         t.Variant("OneWarLost", 274, new[] { 273 }, LostOrStopped, Romus,
             "\"After Zille, the army needed time. Not another war.\"", new[] { "OneWarLostA" });
-        t.Logic("OneWarLostA", new[] { "OneWarLostA1", "OneWarPartA" });
+        t.Logic("OneWarLostA", new[] { "OneWarLostA1", "OneWarLostCease", "OneWarPartA" });
         t.Line("OneWarLostA1", Lucita, "\"And Smolak would have laughed at us from Wraclawitz if we'd lost twice in one year.\"", new[] { "#284" },
-            condition: $"not ({AuditT6.Part})");
+            condition: $"not ({AuditT6.Part}) and {WarFlags.LNot(WarFlags.Ceasefire)}");
+        t.Line("OneWarLostCease", Lucita, "\"And Smolak would have laughed at us from Wraclawitz if we'd stopped short twice in one year.\"",
+            new[] { "#284" }, condition: $"not ({AuditT6.Part}) and {Ceasefire}");
         t.Line("OneWarPartA", Lucita,
             "\"And Smolak is still sitting behind his armistice line, waiting for us to stumble. Better he waits a long time.\"", new[] { "#284" },
             condition: AuditT6.Part);
@@ -297,15 +311,20 @@ internal static class EarlyT6
             "away from the photographers.", new[] { "Aside1" },
             condition: $"{Declared} and {LespiaDeal} and {alvarezHere} and {NotSet(AlvarezAsideDone)}",
             script: Set(AlvarezAsideDone, "true") + $"AddConversant(\"{Alvarez}\"); AddConversant(\"{Laurento}\");", hooks: From(374));
-        t.Logic("Aside1", new[] { "Aside1On", "Aside1Over" });
+        t.Logic("Aside1", new[] { "Aside1On", "Aside1Over", "Aside1Cold" });
         t.Line("Aside1On", Alvarez,
             "\"My admirals have been holding the Strait of Kreleck shut for you, Your Majesty. Wehzek tankers are rusting at anchor in " +
             "Wraclawitz because of it. And today, the Aureus gas starts flowing.\"", new[] { "Aside2" }, condition: Active);
         t.Line("Aside1Over", Alvarez,
             "\"My admirals held the Strait of Kreleck shut for you while your army was in Zille, Your Majesty. Wehzek tankers rusted at " +
-            "anchor in Wraclawitz because of it. And today, the Aureus gas starts flowing.\"", new[] { "Aside2" }, condition: AuditT6.Over);
+            "anchor in Wraclawitz because of it. And today, the Aureus gas starts flowing.\"", new[] { "Aside2" },
+            condition: $"{AuditT6.Over} and not {LespiaCold}");
+        t.Line("Aside1Cold", Alvarez,
+            "\"My admirals kept an eye on the Strait of Kreleck while your army was in Zille, Your Majesty, a good deal less closely " +
+            "than I promised you. You will remember the Meftiem. So do I. And today, the Aureus gas starts flowing.\"",
+            new[] { "Aside2" }, condition: $"{AuditT6.Over} and {LespiaCold}");
         t.Line("Aside2", Alvarez,
-            "\"I don't hold grudges. I hold invoices. I think Rizia can afford to sell some of its share back to its friends at a friendly price. Shall we say three Arcasian Liras per thousand cubic meters?\"",
+            "\"I don't hold grudges. I hold invoices. I think Rizia can afford to sell some of its share back to its friends at a friendly price. Shall we say three Arcasian Liras per thousand cubic meters? Six units of the Aureus share for six billion guilders, between friends.\"",
             new[] { "Pay", "Caleqabiz", "Refuse" });
         t.Choice("Pay", "\"Rizia pays its debts, Mr. Prime Minister.\"", new[] { "PayA" }, cost: "-6 Energy, +2 Budget",
             script: Set(VarAlvarezGasPrice, "\"paid\"") + Inc("RiziaDLC.Resources_Energy", -6) + Inc("RiziaDLC.Resources_Budget", 2) +
@@ -316,7 +335,7 @@ internal static class EarlyT6
             script: Set(VarAlvarezGasPrice, "\"caleqabiz\""));
         t.Line("CaleqabizA", Alvarez,
             "\"So it was. You can't blame a man for asking twice.\" He raised his glass to me, entirely unembarrassed.", new[] { "Laurento" });
-        t.Choice("Refuse", "\"Six for two is not friendship, Mr. Prime Minister. It is extortion.\"", new[] { "RefuseA" },
+        t.Choice("Refuse", "\"Six units of gas for six billion guilders is not friendship, Mr. Prime Minister. It is extortion.\"", new[] { "RefuseA" },
             script: Set(VarAlvarezGasPrice, "\"refused\"") + Inc("RiziaDLC.Diplomacy_Lespia_NegotiatingPower", -2));
         t.Line("RefuseA", Alvarez,
             "\"Extortion is such an ugly word. I prefer 'terms'. My admirals will be disappointed, Your Majesty. They do get bored at Kreleck.\"",
@@ -428,7 +447,11 @@ internal static class EarlyT6
             "Reinhart destroyers in the south.\"", new[] { "Customers2" }, condition: $"{Active} and {LespiaDeal}", hooks: From(167, 189));
         t.Line("Customers1Over", Lucita,
             "\"And yes, Your Majesty, those are the same Lespian shipyards. Alvarez sold us the strait while we fought for Zille, and " +
-            "sold Reinhart destroyers all the while.\"", new[] { "Customers2" }, condition: $"{AuditT6.Over} and {LespiaDeal}", hooks: From(167, 189));
+            "sold Reinhart destroyers all the while.\"", new[] { "Customers2" }, condition: $"{AuditT6.Over} and {LespiaDeal} and not {LespiaCold}", hooks: From(167, 189));
+        t.Line("Customers1Cold", Lucita,
+            "\"And yes, Your Majesty, those are the same Lespian shipyards. Alvarez promised us the strait while we fought for Zille, " +
+            "kept it half open, and sold Reinhart destroyers all the while.\"", new[] { "Customers2" },
+            condition: $"{AuditT6.Over} and {LespiaDeal} and {LespiaCold}", hooks: From(167, 189));
         t.Line("Customers2", Taddeus, "\"Lespia does not have allies, Lieutenant. It has customers.\"", new[] { "#177" });
         t.Register();
     }
@@ -665,7 +688,7 @@ internal static class EarlyT6
             "Rizia, as it is to be considered part of Rizia proper. Rumburg, Morella and Derdia backed up this position.",
             (WarFlow.AtWar
                 ? "Wehlen, at war with Rizia since the King's declaration in Konstantium, voted against the ruling."
-                : "Wehlen, whose war with Rizia over Zille ended only weeks ago, voted against the ruling.") +
+                : "Wehlen, whose war with Rizia over Zille has only just ended, voted against the ruling.") +
             " Its envoy told the committee that \"a kingdom that settles its borders with tanks has no business asking this assembly to " +
             "draw its maps.\"",
             "While some in Rizia are disappointed over not receiving full exploitation rights, the AN stresses that both countries " +
@@ -696,61 +719,73 @@ internal static class EarlyT6
 
     private static void LespiaBothSides()
     {
-        if (!Variables.GetBool(WarFlags.Active) || !Variables.GetBool(WarFlags.PalesWar) || !Once(NewsLespiaBothSides))
+        // The Pales war starts on Turn 6, after the Zille war has ended: past tense.
+        if (!Variables.GetBool(WarFlags.PalesWar) || !Once(NewsLespiaBothSides))
         {
             return;
         }
 
-        bool strait = Variables.GetInt("ZilleWar.Lever_Lespia") > 0;
+        bool strait = Variables.GetInt("ZilleWar.Lever_Lespia") > 0 && !LespiaColdNow;
         NewsWire.Publish("E6_LespiaBothSides", "G",
-            strait ? "Lespian Shipyards Arm Pales as Lespian Navy Guards Kreleck for Rizia" : "Lespian Armor Reaches Pales as Rizia Fights on Two Fronts",
+            strait ? "Lespian Shipyards Arm Pales After Lespian Navy Guarded Kreleck for Rizia" : "Lespian Armor Reaches Pales as Rizia Goes to War Again",
             P(
                 strait
                     ? "Lespian destroyers delivered to the Palesian navy this year will now face the Rizian fleet in the Gulf of Ales, " +
-                      "even as Lespian warships keep the Strait of Kreleck closed to the Wehzek convoys supplying Zille. Lespia is, in " +
-                      "effect, on both sides of Rizia's two wars."
+                      "after Lespian warships kept the Strait of Kreleck closed to the Wehzek convoys supplying Zille. Lespia armed Pales " +
+                      "while it shut the strait for Rizia, and was, in effect, on both sides of Rizia's two wars."
                     : "Lespian armored vehicles and destroyers delivered to Pales in recent months will now face the Rizian army on " +
-                      "the River Alca. Rizia, already at war with Wehlen over Zille, now fights a second neighbor armed from Perla.",
+                      "the River Alca. Rizia, which fought Wehlen over Zille earlier this year, now fights a second neighbor armed from Perla.",
                 "Asked about the apparent contradiction, a spokesman for Prime Minister Patricio Alvarez said that Lespia \"honors " +
                 "its contracts with every partner, and expects every partner to honor theirs.\"",
-                "Analysts in Konstantium note that LesPower's interest in the Aureus field depends on Pales surviving the war, while " +
-                "Lespia's quarrel with Wraclawitz depends on Wehlen losing its own. \"Alvarez wants both wars to end,\" one said, " +
-                "\"but only in the right order.\""));
+                "Analysts in Konstantium note that LesPower's interest in the Aureus field depends on Pales surviving this war, while " +
+                "Lespia's quarrel with Wraclawitz made the strait worth selling. \"Alvarez has always wanted both sides to " +
+                "owe him,\" one said."));
     }
 
     private static void SmolakOnLespia()
     {
-        if (!Variables.GetBool("SharedSupport.News_G_WehlenCondemnsLespia") || Variables.GetInt("ZilleWar.Lever_Lespia") <= 0 || !Once(NewsSmolakLespia))
+        if (!Variables.GetBool("SharedSupport.News_G_WehlenCondemnsLespia") || Variables.GetInt("ZilleWar.Lever_Lespia") <= 0 || LespiaColdNow || !Once(NewsSmolakLespia))
         {
             return;
         }
+
+        // After a liberation Wehlen has no garrison left in Zille.
+        string route = ZilleCampaign.Liberated
+            ? "cutting the sea route to the garrison Wehlen once kept in Zille"
+            : "cutting the sea route between the Wehzek mainland and its garrison in Zille";
 
         NewsWire.Publish("E6_SmolakLespia", "G", "Smolak: Lespia Lends Its Navy to Rizian Aggression", P(
             "WRACLAWITZ, WEHLEN - President Wiktor Smolak has accused Lespia of \"lending its navy to Rizian aggression\" while " +
             "inviting Arcasian soldiers to the borders of Wehlen, in his sharpest attack yet on the government of Prime Minister " +
             "Patricio Alvarez.",
-            "Lespian warships have kept the Strait of Kreleck closed to Wehzek shipping for weeks, cutting the sea route between the " +
-            "Wehzek mainland and its garrison in Zille. \"Perla claims neutrality in the morning and blockades our ports in the " +
+            "Lespian warships have kept the Strait of Kreleck closed to Wehzek shipping for weeks, " + route + ". \"Perla claims neutrality in the morning and blockades our ports in the " +
             "afternoon,\" Smolak said. \"We will remember which flags flew over the strait.\"",
             "The Lespian foreign ministry declined to comment."));
     }
 
     private static void AzaroOfficers()
     {
-        if (!Variables.GetBool("RiziaDLC.Lucita_Arrested") || !Variables.GetBool(WarFlags.Active) || !Once(ReportAzaroOfficers))
+        if (!Variables.GetBool("RiziaDLC.Lucita_Arrested") || !Once(ReportAzaroOfficers))
         {
             return;
         }
 
-        Variables.Set(VarLucitaArrestedMidWar, true);
+        bool atWar = WarFlow.AtWar;
+        if (atWar)
+        {
+            Variables.Set(VarLucitaArrestedMidWar, true);
+        }
+
         NewsWire.Report("E6_AzaroOfficers", "Rizia_City_Montaklar", "Azaro Officers Question Command After Duchess's Arrest", P(
-            "The arrest of Duchess Lucita Azaro has caused deep unease among the officers of House Azaro serving on the Zille front. " +
-            "Several regimental commanders are reported to have asked the general staff, in writing, who now speaks for the war " +
-            "council in Porte Drazon.",
+            "The arrest of Duchess Lucita Azaro has caused deep unease among the officers of House Azaro who served on the Zille front. " +
+            "Several regimental commanders are reported to have asked the general staff, in writing, who now speaks for " +
+            (atWar ? "the war council in Porte Drazon." : "the Zille garrison."),
             "In Montaklar, Azaro retainers gathered outside the family's townhouse through the night. \"The Duchess sent our sons " +
-            "north,\" one of them told reporters. \"Now the Crown has sent her to a cell. Who is running this war?\"",
-            "General Carlos Robles Azaro has assumed day-to-day command of operations in the north and has called on all officers " +
-            "to \"serve the Crown, whatever their family's grievances.\""));
+            "north,\" one of them told reporters. \"Now the Crown has sent her to a cell. Who is running this " + (atWar ? "war?\"" : "army?\""),
+            (atWar ? "General Carlos Robles Azaro has assumed day-to-day command of operations in the north"
+                : ZilleCampaign.Liberated ? "General Carlos Robles Azaro has taken over the army holding Zille"
+                : "General Carlos Robles Azaro has taken over the army on the armistice line") +
+            " and has called on all officers to \"serve the Crown, whatever their family's grievances.\""));
     }
 
     private static string P(params string[] paragraphs) => string.Join("\n\n", paragraphs);

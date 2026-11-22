@@ -22,8 +22,6 @@ internal static class EarlyT4
     private const string Elena = "Elena Werner";
     private const string Alphonso = "Ewald Alphonso (R)";
 
-    /// <summary>The King promised the Valenqiris nobles a reunited Rizia "by this time next year" (vanilla [179]/[187]).</summary>
-    public const string VarToastReunited = "ZilleWar.E4_ToastReunited";
     /// <summary>The King raised the first glass of Romus the Red to the soldiers marching on Zille.</summary>
     public const string VarToastSoldiers = "ZilleWar.E4_ToastSoldiers";
     /// <summary>At the drinking game the King confessed he wished for "a big, bloody war" (and the war came).</summary>
@@ -38,19 +36,18 @@ internal static class EarlyT4
 
     public static void Register()
     {
-        foreach (string v in new[] { VarToastReunited, VarToastSoldiers, VarConfessedWar, VarReportsFiled, VarMartialLaw, VarWineryNews,
+        foreach (string v in new[] { VarToastSoldiers, VarConfessedWar, VarReportsFiled, VarMartialLaw, VarWineryNews,
                                      VarSordlandWithdrawn })
         {
             Variables.Register(v);
         }
 
-        // A royal trip to Holsord to buy Sordish bonds, two days into a war: Sordland withdraws the invitation instead.
+        // A royal trip to Holsord to buy Sordish bonds, in the middle of a war: the offer is shelved (the news below says so).
         Vanilla.Gate("Turn04_Decision_SordlandOffersInvestment", WarFlags.XPeace);
         Vanilla.Gate("Turn04_FPnT_SordlandBondPurchase", WarFlags.XPeace);
 
         RegisterWinery();
         RegisterDrinkingGame();
-        RegisterSordland();
 
         // "Rumburg denounces Wehlen's decision to continue occupying the Zille region": written for an occupation, not a
         // war Rizia started. The declaration news already carries Rumburg's reaction (NewsWire "GRACE Monarchies Close Ranks").
@@ -70,8 +67,8 @@ internal static class EarlyT4
         var t = new Talk(Winery, "ZilleWar.E4.Winery.");
 
         t.Variant("Opening", 20, new[] { 6 }, War, Narrator,
-            "Only days earlier, I had declared war on Wehlen from the floor of the Alliance of Nations. Reservists were boarding the " +
-            "night trains north, and the country could talk of nothing else.", new[] { "#7" });
+            "That same afternoon, I had declared war on Wehlen from the floor of the Alliance of Nations. Reservists were already " +
+            "boarding the night trains north, and the country could talk of nothing else.", new[] { "#7" });
         // [57] Vina -> [64] Hugo -> the King's replies. In wartime both lines change, and the King's [66] ("Shouldn't I make it my
         // priority to talk to Smolak?" -> "Mr. Esquibel has already set up the meeting") becomes a question about the war.
         t.Variant("Vina", 57, new[] { 55, 56, 61, 62, 63 }, War, Vina,
@@ -99,12 +96,9 @@ internal static class EarlyT4
         t.Choice("ToastSoldiers", "\"Tonight our soldiers are marching north to bring Zille home. The first glass of this vintage is theirs.\"",
             new[] { "ToastSoldiers2" }, condition: War, script: Set(VarToastSoldiers, "true"), hooks: From(253));
         t.Line("ToastSoldiers2", Narrator,
-            "For a moment the tent was silent. Then, one by one, the barons and viscounts rose to their feet with their glasses raised. " +
-            "At the back of the tent, an old man in a veteran's ribbon began to sing the anthem.", new[] { "#239" });
+            "For a moment the tent was silent. Then, one by one, the barons and viscounts rose to their feet with their glasses raised, " +
+            "and they drank to the soldiers in a silence that lasted longer than the toast.", new[] { "#239" });
 
-        // Promises the press will remember.
-        Vanilla.AppendScript(Winery, 179, Set(VarToastReunited, "true"));
-        Vanilla.AppendScript(Winery, 187, Set(VarToastReunited, "true"));
         t.Register();
     }
 
@@ -123,47 +117,6 @@ internal static class EarlyT4
             "\"Your Majesty, I've just had word from the north. Wehlen intelligence traffic. May I come in?\"", new[] { "#540", "#541", "#542" });
         t.Variant("Pretense", 567, new[] { 619 }, War, Lucita,
             "\"Um. The front is quiet tonight, Your Majesty. That was the message.\"", new[] { "#652", "#659", "#571", "#620" });
-        t.Register();
-    }
-
-    // ------------------------------------------------------------------ Holsord: the Sordland bond
-
-    private static void RegisterSordland()
-    {
-        var t = new Talk(Sordland, "ZilleWar.E4.Sordland.");
-
-        t.Variant("Business", 788, new[] { 791 }, War, Alphonso,
-            "\"Ah, yes. The war. Sordland shares a long border with Wehlen, Your Majesty. We are watching Zille very closely.\"", new[] { "#321" });
-        t.Variant("BusinessPales", 792, new[] { 790 }, War, Alphonso,
-            "\"Ah, yes. The war with Wehlen. And the business with Pales.\"", new[] { "#793" });
-
-        t.Variant("ElenaSmall", 865, new[] { 863 }, War, Elena,
-            "\"Even a small investment ties up 3 billion guilder for four years, Your Majesty. In the middle of a war, I would want " +
-            "every guilder where I can reach it.\"", new[] { "#883" });
-        t.Variant("ElenaLarge", 866, new[] { 864 }, War, Elena,
-            "\"12 billion guilder tied up for four years, while we are paying for a war. I advise against it in the strongest terms.\"",
-            new[] { "#883" });
-
-        t.Variant("CostArbitration", 875, new[] { 873 }, War, Esquibel,
-            "\"Yes. Fighting a war over *Zill*, while defending our claim to half of the Aureus field, has the potential to cost us " +
-            "considerably.\"", new[] { "#878" });
-        t.Variant("Cost", 876, new[] { 874 }, War, Esquibel,
-            "\"Yes. Fighting a war over *Zill* has the potential to cost us considerably. Wars are not paid for with speeches.\"", new[] { "#878" });
-
-        t.Variant("FundsSmall", 881, new[] { 879 }, War, Esquibel,
-            "\"Even with a small investment, 3 billion guilder is a lot of funds to have tied up while our army is in the field.\"",
-            new[] { "#877", "Front", "#900" });
-        t.Variant("FundsLarge", 882, new[] { 880 }, War, Esquibel,
-            "\"12 billion guilder is a lot of funds to have tied up while our army is in the field.\"", new[] { "Front", "#900" });
-        // [897] "We shouldn't have to spend any money to get Zille back" makes no sense once the army is paying for it.
-        Vanilla.Require(Sordland, 897, $"not ({War})");
-        t.Choice("Front", "\"Every guilder tied up in Holsord is a guilder that never reaches the front.\"", new[] { "FrontReply" }, condition: War);
-        t.Line("FrontReply", Alphonso,
-            "\"Wars are expensive, Your Majesty. Bonds are how republics pay for them. Perhaps kingdoms should learn.\"", new[] { "#899" });
-
-        t.Variant("Squeeze", 902, new[] { 901 }, War, Alphonso,
-            "\"If Rizia and Sordland strengthen our bond, Wehlen will feel the squeeze from both sides. Our customs officers on the " +
-            "Wehzek border can be very thorough with freight bound for the south. Quite literally.\"", new[] { "#861" });
         t.Register();
     }
 
@@ -186,10 +139,10 @@ internal static class EarlyT4
         if (step >= 8 && !Variables.GetBool(VarSordlandWithdrawn))
         {
             Variables.Set(VarSordlandWithdrawn, true);
-            NewsWire.Report("E4_SordlandBonds", SuzerainTokenName.RiziaCountrySordland, "Sordland Withdraws Its Bond Offer", P(
-                "The Sordish finance ministry has quietly withdrawn its invitation to discuss a sale of government bonds in Holsord. " +
-                "A royal delegation, it explained in a short note to our embassy, \"would not be appropriate while the Kingdom is engaged " +
-                "in hostilities,\" and the offer will be \"revisited when the region is calmer.\"",
+            NewsWire.Report("E4_SordlandBonds", SuzerainTokenName.RiziaCountrySordland, "Sordland Puts Its Bond Sale on Hold", P(
+                "The Sordish finance ministry has told our embassy, through diplomatic channels, that talks on a sale of government " +
+                "bonds will not go ahead while the Kingdom is engaged in hostilities. The offer, it added, \"will be revisited when " +
+                "the region is calmer.\"",
                 "Our ambassador reads the note as Holsord keeping its distance. Sordland is calling for talks between Rizia and Wehlen, " +
                 "and its government does not want photographs of the King in Holsord while Wehzek towns are being shelled. Sordish " +
                 "bankers, he adds, are still very interested in Rizian money. Just not this month."));
@@ -198,20 +151,13 @@ internal static class EarlyT4
         if (step >= 8 && !Variables.GetBool(VarMartialLaw))
         {
             Variables.Set(VarMartialLaw, true);
-            // By the end of the turn the opening phase has been fought: Zille city may already be ours.
-            bool city = Variables.GetBool(ZilleOperation.CapturedVar("Zille"));
-            NewsWire.Report("E4_MartialLaw", SuzerainTokenName.RiziaEventZille, "Martial Law Declared in Zille", city
-                ? P("Driven out of Zille city, the Wehzek military governor has set up his headquarters in Nanta and placed the rest of " +
-                    "the region under martial law. A curfew from dusk to dawn is in force in every town Wehlen still holds, public gatherings " +
-                    "are banned outright, and Rizian-language newspapers have been closed \"for the duration of hostilities.\"",
-                    "Residents describe armored cars at the harbor gates of Nanta and long queues outside bakeries before the curfew falls. " +
-                    "Wehzek radio has told the population that the loss of Zille city is temporary and that \"the aggressor will be " +
-                    "driven back into the sea.\"")
-                : P("The Wehzek military governor of Zille has placed the region under martial law. A curfew from dusk to dawn is in force " +
-                    "in Zille city and Nanta, public gatherings are banned outright, and Rizian-language newspapers have been closed " +
-                    "\"for the duration of hostilities.\"",
-                    "Residents describe armored cars at the harbor gates and long queues outside bakeries before the curfew falls. Wehzek " +
-                    "radio has told the population that the measures are temporary and that \"the aggressor will be driven back into the sea.\""));
+            // Phase I is fought at the war table after this step runs, so the report speaks of the whole region, true either way.
+            NewsWire.Report("E4_MartialLaw", SuzerainTokenName.RiziaEventZille, "Martial Law Declared in Zille", P(
+                "The Wehzek military governor of Zille has placed the region under martial law. A curfew from dusk to dawn is in force in " +
+                "every town Wehlen holds, public gatherings are banned outright, and Rizian-language newspapers have been closed " +
+                "\"for the duration of hostilities.\"",
+                "Residents describe armored cars at the harbor gates and long queues outside bakeries before the curfew falls. Wehzek " +
+                "radio has told the population that the measures are temporary and that \"the aggressor will be driven back into the sea.\""));
         }
 
         // Right after the winery evening (Turn04_P_PabelLucitaRomance), not a step later.

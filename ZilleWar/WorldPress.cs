@@ -59,6 +59,10 @@ internal static class WorldPress
 
         // "now that Zille is returned to Rizia" (Turn 10 birthday); the Turn 9 one is LateState's
         Vanilla.HideNews("Turn10_RH_Birthday_ZilleBrenasChange", NotLiberated);
+        // A promise of Zille to House Sazon cannot be kept when the war left Zille city Wehzek: the birthday handover
+        // (ownership flags, map tokens, journal) is skipped, as if no promise had been made.
+        Vanilla.AppendScript("Rizia/Turn 10/Birthday_Gathering", 169,
+            $"if Variable[\"{LateState.VarZilleLost}\"] == true then Variable[\"RiziaDLC.Zille_PromisedToHouseSazon\"] = false end");
 
         foreach ((string ci, string row) in OccupationRows)
         {
@@ -92,12 +96,13 @@ internal static class WorldPress
             "one particular outburst directed at Palesian Grand Duke Axel Reinhart.\n\n" +
             "By the end of the day, his interruptions were the least of the session's scandals. After King Romus Toras declared war " +
             "on Wehlen from the podium, the Chancellor was among the first to leave the hall, telling reporters that Valgsland " +
-            "\"will be watching very closely.\"");
+            "\"will not forget who spoke for the King tonight.\"");
         Rewrite("news", "Turn08_G_LespiaEvidenceReleased", declared, null,
             "Rizia's Toras government has leveled serious allegations against Lespia in connection with the 1950 Friendship Day " +
             "bombing in Zille. Newly released evidence hints at links between the Alvarez administration and certain individuals and " +
-            "companies proven to be connected to the tragic incident, which claimed the lives of three Wehzeks, led Wehlen to " +
-            "postpone the return of Zille indefinitely, and so, in the end, to war.\n\n" +
+            "companies proven to be connected to the tragic incident, which claimed the lives of three Wehzeks and which Smolak " +
+            "cited when he refused to hand Zille back at the lease's expiry, a refusal that led in the end to a war that has since cost " +
+            "thousands of lives.\n\n" +
             (WorldSystems.LespiaHelps
                 ? "The allegations are all the more remarkable because Lespian warships patrolled the Strait of Kreleck on Rizia's behalf " +
                   "during the war. Prime Minister Alvarez's office has thus far chosen not to comment. "
@@ -115,7 +120,9 @@ internal static class WorldPress
             "In a very vague communique issued by the Palace, plans were unveiled for new funds to be allocated to Rizia's " +
             "intelligence services. Mentions were made of a new base of operations, although the government withheld the exact " +
             "details due to national security considerations.\n\n" +
-            "It was highlighted that the most important mission of the administration remains the liberation of Zille, and that the " +
+            (WorldSystems.Liberated
+                ? "It was highlighted that the most important mission of the administration is now the defence of Zille, and that the "
+                : "It was highlighted that the Zille question remains the most important matter of the administration, and that the ") +
             "expanded intelligence operations will save the lives of our soldiers at the front.\n\n" +
             "We at the Royal Herald are incredibly excited for all the spy thriller stories that surely will be written about the " +
             "exploits of Rizian operatives many years from now.");

@@ -116,6 +116,12 @@ internal static class AuditT8
         t.Line("NoShareL", Lucita, noShare, new[] { "#1085" }, condition: shared, hooks: Talk.From(1057));
         t.Line("NoShareTa", Taddeus, noShare, new[] { "#1086" }, condition: shared, hooks: Talk.From(1076));
         t.Line("NoShareTi", Titus, noShare, new[] { "#1087" }, condition: shared, hooks: Talk.From(1079));
+        // the vanilla sharing branch (publish at once, "he'll have to return Zille", the reunification ceremony) cannot play in a war;
+        // its dead-end parents go too, so the no-sharing lines above are the only way forward
+        foreach (int id in new[] { 1058, 1077, 1080, 1082, 1083, 1084 })
+        {
+            Vanilla.Require(Brief, id, $"not ({shared})");
+        }
 
         // after "Wehlen will know we were mistaken / lying" (the arrested scapegoat)
         Swap(t, Brief, "Bag1138", 1138, new[] { 1321, 1362 }, R, new S(
@@ -154,6 +160,17 @@ internal static class AuditT8
             Part: "\"Do me a favor, at least. Take a picture of old Smolak's face when he looks at that armistice line.\"",
             Lost: "\"Do me a favor, at least. Don't let old Smolak keep the pen when he's done with you.\""), new[] { "#486" });
 
+        // Smolak and Zille are no longer the King's daily fight once the war is over
+        Swap(t, Rusty, "Focus434", 434, new[] { 433 }, R, S.All(
+            "\"I need all my focus on Zille's future and on what Smolak does next, and you come whining to me about a seat in government? You should feel ashamed of yourself.\""),
+            new[] { "#479" });
+        Swap(t, Rusty, "Focus463", 463, new[] { 462 }, R, S.All(
+            "\"I need all my focus on Zille's future and on what Smolak does next, and you come whining to me about your expectations? You should be ashamed of yourself.\""),
+            new[] { "#482" });
+        Swap(t, Rusty, "Incident930", 930, new[] { 928 }, Montoro, S.All(
+            "\"And one such set of transactions proves a definitive link between the country of Lespia and the little incident that started the war over Zille.\""),
+            new[] { "#932", "#933", "#939" });
+
         // Rusty's evidence against Lespia, in a Rizia that already fought the war the bomb started
         Swap(t, Rusty, "Hands606", 606, new[] { 595, 602 }, Montoro, S.All(
             "\"Because it'd prove Lespia's bomb started your war. Try telling the Alliance you're the villain after that.\""), new[] { "#633" });
@@ -182,8 +199,10 @@ internal static class AuditT8
 
         // Mave Nortus held by Wehlen after the armistice: the train stops short of it
         string maveHeld = WarFlags.L(WarFlags.Occupied("Mave Nortus"));
-        Swap(t, Rusty, "Train3", 3, new[] { 719, 720 }, Talk.Narrator, S.All(
-            "The greenery of Brenas whizzed past the windows of the royal train as we chugged toward the border. Mave Nortus, where the royal train used to stop, was on the Wehzek side of the armistice line now."),
+        Swap(t, Rusty, "Train3", 3, new[] { 719, 720 }, Talk.Narrator, new S(
+            Lib: "The greenery of Brenas whizzed past the windows of the royal train as we chugged toward the border. Mave Nortus, where the royal train used to stop, was still in Wehzek hands, and nobody in Wraclawitz had said when they would leave.",
+            Part: "The greenery of Brenas whizzed past the windows of the royal train as we chugged toward the border. Mave Nortus, where the royal train used to stop, was on the Wehzek side of the armistice line now.",
+            Lost: "The greenery of Brenas whizzed past the windows of the royal train as we chugged toward the border. Mave Nortus, where the royal train used to stop, was on the Wehzek side of the armistice line now."),
             new[] { "#8" }, when: maveHeld);
         Swap(t, Rusty, "Pabel23", 23, new[] { 19 }, "Pabel Adria", S.All(
             "\"You'll have to make it quick, I'm afraid. We're reaching the border shortly.\""), new[] { "#36" }, when: maveHeld);
@@ -201,6 +220,12 @@ internal static class AuditT8
         var t = new Talk(Hod, "ZilleWar.A8.Hod.");
 
         // Hugo on the way in (LateT8 has his first line): the King's answers
+        // the vanilla openings "acknowledging the imminent return" (LateT8 welcomes Zille home in a liberated game)
+        foreach (int id in new[] { 140, 215, 620 })
+        {
+            Vanilla.Require(Hod, id, WarFlags.LNot(WarFlags.Liberated));
+        }
+
         Swap(t, Hod, "Sugar46", 46, new[] { 40 }, R, new S(
             Part: "\"Don't try to sugarcoat it, Uncle. We lost half of Zille, and now we're losing Pales.\"",
             Lost: "\"Don't try to sugarcoat it, Uncle. We lost Zille, and now we're losing Pales.\""), new[] { "#69" });
@@ -258,24 +283,25 @@ internal static class AuditT8
                      ("Gov773", 773, 772, "Thank you, Mr. Sazon, but I am not finished speaking. ", "", "#713"),
                  })
         {
-            Swap(t, Hod, name + "D", entry, new[] { parent }, Daria, new S(Part: $"\"{lead}{decided}{tail}\""), new[] { next }, when: AdminDecided);
+            Swap(t, Hod, name + "D", entry, new[] { parent }, Daria, new S(Part: $"\"{lead}{decided}{tail}\"", Lost: $"\"{lead}{decided}{tail}\""), new[] { next }, when: AdminDecided);
             Swap(t, Hod, name, entry, new[] { parent }, Daria, new S(
                 Part: $"\"{lead}Zille city is ours again, but the future governance of Zille remains undecided.{tail}\"",
                 Lost: $"\"{lead}Zille is lost for now, not forever, and its future governance remains undecided.{tail}\""),
-                new[] { next }, when: $"not ({AdminDecided}) or ({Lost})");
+                new[] { next }, when: $"not ({AdminDecided})");
         }
 
         Swap(t, Hod, "Gov954", 954, new[] { 957 }, Daria, new S(Lib: "\"His Majesty has decided who will govern Zille. Not everyone here has made peace with that.\""),
             new[] { "#959" }, when: AdminDecided);
-        Swap(t, Hod, "Gov955D", 955, new[] { 958 }, Daria, new S(Part: "\"His Majesty has decided who will govern Zille. Not everyone here has made peace with that.\""),
+        Swap(t, Hod, "Gov955D", 955, new[] { 958 }, Daria, new S(Part: "\"His Majesty has decided who will govern Zille. Not everyone here has made peace with that.\"", Lost: "\"His Majesty has decided who will govern Zille. Not everyone here has made peace with that.\""),
             new[] { "#959" }, when: AdminDecided);
         Swap(t, Hod, "Gov955", 955, new[] { 958 }, Daria, new S(
             Part: "\"With Zille city back in our hands, its governance must be decided upon.\"",
             Lost: "\"Zille will be ours again one day, and its governance must be decided upon.\""),
-            new[] { "#959" }, when: $"not ({AdminDecided}) or ({Lost})");
+            new[] { "#959" }, when: $"not ({AdminDecided})");
         Swap(t, Hod, "Mind964", 964, new[] { 961 }, R, new S(
             Lib: "\"Thank you, Baroness de Rava, but I have already made up my mind on Zille. This House will not make it up again for me.\"",
-            Part: "\"Thank you, Baroness de Rava, but I have already made up my mind on Zille. This House will not make it up again for me.\""),
+            Part: "\"Thank you, Baroness de Rava, but I have already made up my mind on Zille. This House will not make it up again for me.\"",
+            Lost: "\"Thank you, Baroness de Rava, but I have already made up my mind on Zille. This House will not make it up again for me.\""),
             new[] { "#970" }, when: AdminDecided);
 
         Swap(t, Hod, "Scars530", 530, new[] { 514, 515, 522, 523, 524, 525 }, Daria, new S(
@@ -329,9 +355,9 @@ internal static class AuditT8
                      ("Citizens761", 761, 759, Manus, "#765", true), ("Citizens762", 762, 760, Manus, "#765", false),
                  })
         {
-            string pal = pales ? " -- to say nothing of Pales --" : string.Empty;
+            string pal = pales ? " Pales will bring more when it is ours." : string.Empty;
             Swap(t, Hod, name, entry, new[] { parent }, speaker, new S(
-                Part: $"\"With Zille city back in the realm{pal} we have gained hundreds of thousands of new citizens, many of Wehzek origin. It is up to us to make sure none of them get left behind.\"",
+                Part: $"\"With Zille city back in the realm we have gained hundreds of thousands of new citizens, many of Wehzek origin.{pal} It is up to us to make sure none of them get left behind.\"",
                 Lost: $"\"Whenever Zille does return{(pales ? ", to say nothing of Pales," : ",")} it will bring millions of new citizens, many of Wehzek origin. It is up to us to make sure none of them get left behind.\""),
                 new[] { next });
         }

@@ -81,9 +81,5 @@ internal static class SweepEarlyT5Diplomacy
             "and he is said to have returned with a list of what can be delivered before the next offensive, and at what price. His " +
             "report for His Majesty is expected shortly."),
             when: s => s == StActive);
-
-        AppendReport("Turn05_Valgsland_AidSent", _ =>
-            "The Chancellor's note adds, pointedly, that the submarines are meant \"for the defense of the Antacean Sea,\" and that " +
-            "Valgsland takes no side in the war over Zille.", s => s == StActive);
     }
 }

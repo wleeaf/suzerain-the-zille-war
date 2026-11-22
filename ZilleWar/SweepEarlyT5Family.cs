@@ -34,8 +34,6 @@ internal static class SweepEarlyT5Family
     private const string YachtDecision = "Turn05_Decision_RoyalYachtRestoration";
     private const string HospitalOption = "Hand the Rizania to the navy as a hospital ship (-1 Budget)";
 
-    /// <summary>Vina passed on Chancellor Hegel's letter about Zille on the royal yacht (a Valgsland warning, delivered privately).</summary>
-    public const string VarHegelLetter = "ZilleWar.SE_Fam_HegelLetter";
     /// <summary>The royal yacht Rizania was handed to the navy as a hospital ship for the Zille front (instead of restored or scrapped).</summary>
     public const string VarYachtHospital = "ZilleWar.SE_Fam_YachtHospital";
 
@@ -44,7 +42,7 @@ internal static class SweepEarlyT5Family
 
     public static void Register()
     {
-        foreach (string v in new[] { VarHegelLetter, VarYachtHospital })
+        foreach (string v in new[] { VarYachtHospital })
         {
             Variables.Register(v);
         }
@@ -72,7 +70,7 @@ internal static class SweepEarlyT5Family
         // [584] Hubertus: "...we don't take your appearance for granted. You've been very busy lately."
         t.Variant("Hubertus", 584, new[] { 577 }, War, Hubertus,
             "\"Nonetheless, we don't take your appearance for granted. Not with the country at war. I saw our reservists off at the " +
-            "Qalus station this week, Your Majesty. Half of them had been picking these very grapes.\"", new[] { "#590" });
+            "station tonight, Your Majesty. Half of them had been picking these very grapes.\"", new[] { "#590" });
 
         // [371]/[427] "I slept more soundly than I had in months." on the night the trains went north.
         const string sleep = "I slept more soundly than I had in months. It only struck me in the morning that, somewhere in the north, " +
@@ -101,8 +99,8 @@ internal static class SweepEarlyT5Family
             "it, now that we're at war.\"", new[] { "#692" });
 
         t.Variant("Sleep527", 527, new[] { 526, 535, 573, 691 }, War, Narrator,
-            "I slept more soundly than I had in months. It only struck me in the morning that, somewhere in the north, my soldiers " +
-            "had not.", new[] { "#2" });
+            "I fell asleep at last, though not as soundly as I would have liked. Somewhere in the north, my soldiers were still awake.",
+            new[] { "#2" });
         t.Register();
     }
 
@@ -137,9 +135,9 @@ internal static class SweepEarlyT5Family
 
         // Vina's correspondence with Hegel ([806]/[807] -> [809]): the Chancellor's latest letter.
         t.Line("Hegel", Vina,
-            "\"He wrote again after Konstantium. He said Valgsland would not stand by while two governments spent their workers' " +
+            "\"Konstantium changed nothing. He wrote again, and said Valgsland would not stand by while two governments spent their workers' " +
             "lives over an expired lease. I think he meant for me to show you.\"", new[] { "#809" },
-            condition: Active, script: Set(VarHegelLetter, "true"), hooks: From(806, 807));
+            condition: Active, hooks: From(806, 807));
 
         // [990] "Cheer up. It's not like anyone died." -> [1014] -> [1015] "Please, Father. You're making it worse."
         t.Variant("Died", 1015, new[] { 1014 }, Active, Vina,
@@ -232,7 +230,7 @@ internal static class SweepEarlyT5Family
         Report("Turn05_Montaklar_CarlosVisitsMemorial", (_, _) => P(
                 "General Carlos Robles Azaro paid a brief visit to the mausoleum near the southern border to honor the fallen soldiers " +
                 "of the Reclamation War, before returning to the general staff and the war in Zille. As the sole surviving officer of " +
-                "the encircled brigade, the moment carried deep personal significance.",
+                "the encircled brigade at Ziqes, the moment carried deep personal significance.",
                 "The royal band played a mournful hymn as he placed a wreath at the memorial. Officers who accompanied him say the General " +
                 "stood in silence before the names of his fallen comrades for a long time, and that on the drive back to the airfield he " +
                 "asked only for the latest casualty lists from the north."),
