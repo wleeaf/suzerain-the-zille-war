@@ -72,6 +72,7 @@ internal static class LateT8
         }
 
         ConversationRegistry.RegisterConversation(SmolakConv);
+        ZilleTreaty.Register();
         RegisterAnSession();
         RegisterSanctions();
         RegisterHeljiland();
@@ -86,6 +87,7 @@ internal static class LateT8
 
     public static void OnStep()
     {
+        ZilleTreaty.OnStep();
         if (LateState.Turn != 8 || LateState.Step < 11 || !LateState.Declared || Variables.GetBool(VarSmolakT8))
         {
             return;
@@ -97,15 +99,17 @@ internal static class LateT8
             return;
         }
 
+        // After the war every outcome goes to the treaty table (ZilleTreaty); the old back-channel meeting only for a war still on.
+        string conv = WarFlow.AtWar ? SmolakConv : ZilleTreaty.Conv;
         (string title, string sub) = WarFlow.AtWar ? ("A Line to Wraclawitz", "Railway siding, Mave Nortus")
-            : LateState.Liberated ? ("The Kreleck Ferry", "Strait of Kreleck")
-            : LateState.Partial ? ("The Armistice Commission", Variables.GetBool(WarFlags.Occupied("Mave Nortus")) ? "Schoolhouse on the armistice line" : "Schoolhouse north of Mave Nortus")
-            : ("Summoned to Wraclawitz", "Presidential Palace, Wraclawitz");
+            : LateState.Liberated ? ("The Treaty of Kreleck", "A Wehzek ferry, Strait of Kreleck")
+            : LateState.Partial ? ("The Mave Nortus Treaty", Variables.GetBool(WarFlags.Occupied("Mave Nortus")) ? "Schoolhouse on the armistice line" : "Schoolhouse north of Mave Nortus")
+            : ("The Terms of Wraclawitz", "Presidential Palace, Wraclawitz");
         try
         {
-            GameState.AddCustomConversation(SmolakConv);
+            GameState.AddCustomConversation(conv);
             GameState.AddCustomStoryFragment(new CustomConversationFragment(frag, SuzerainStoryPackInfo.Rizia, "Rizia_Country_Wehlen", title, sub,
-                Il2Cpp.ConversationData.ConversationType.ForeignPolicyAndTrade, SmolakConv));
+                Il2Cpp.ConversationData.ConversationType.ForeignPolicyAndTrade, conv));
             Variables.Set(VarSmolakT8, true);
         }
         catch (Exception ex)
@@ -168,27 +172,45 @@ internal static class LateT8
         t.Line("On4", Smolak, "\"Wehlen asks this Alliance for an immediate ceasefire on the line where our armies stand tonight, and for observers to keep it. I am a man who respects the rule of law. Let us see whether the King of Rizia is one too.\"", new[] { "Reply" });
 
         t.Line("Lib1", Narr, "President Smolak walked to the podium slowly, like a man attending a funeral he had paid for.", new[] { "Lib2" }, condition: Lib);
-        t.Line("Lib2", Smolak, "\"Dear fellow leaders. You know me. I am not a man who complains.\"", new[] { "Lib3" });
-        t.Line("Lib3", Smolak, "\"But a province of Wehlen has been taken by tanks, its Wehzek families driven from their homes, and this Alliance has said nothing. Nothing! What is this building for, if not for this?\"", new[] { "Lib4" });
-        t.Line("Lib4", Smolak, "\"Wehlen asks the Alliance to condemn the Rizian occupation of Zille, and to restore the lawful administration until a fair settlement is found.\"", new[] { "Reply" });
+        t.Line("Lib2", Smolak, "\"Dear fellow leaders. You know me. I am not a man who complains.\"", new[] { "Lib3", "Lib3T" });
+        t.Line("Lib3", Smolak, "\"But a province of Wehlen has been taken by tanks, its Wehzek families driven from their homes, and this Alliance has said nothing. Nothing! What is this building for, if not for this?\"", new[] { "Lib4" },
+            condition: $"{V(ZilleTreaty.VarPeace)} ~= true");
+        t.Line("Lib3T", Smolak, "\"But a province that was Wehzek for twenty-five years was taken by tanks, and this Alliance said nothing. Nothing! Now it has a treaty to read instead.\"", new[] { "Lib4T", "Lib4G", "Lib4Gas" },
+            condition: $"{V(ZilleTreaty.VarPeace)} == true");
+        t.Line("Lib4", Smolak, "\"Wehlen asks the Alliance to condemn the Rizian occupation of Zille, and to restore the lawful administration until a fair settlement is found.\"", new[] { "Reply" },
+            condition: $"{V(ZilleTreaty.VarPeace)} ~= true");
+        // a treaty was signed on the Kreleck ferry before this session (ZilleTreaty): Wehlen keeps its word, and asks for a record
+        t.Line("Lib4T", Smolak, "\"Wehlen has signed a treaty, and Wehlen keeps its word. I ask the Alliance only to condemn the war that made that treaty necessary, so that no other small country learns from it.\"", new[] { "Reply" },
+            condition: $"{V(ZilleTreaty.VarPeace)} == true and {V(ZilleTreaty.VarThreat)} ~= \"gas\" and {V(ZilleTreaty.VarThreat)} ~= \"missiles\"");
+        t.Line("Lib4G", Smolak, "\"Wehlen has signed a treaty, and Wehlen keeps its word. But I will tell this Alliance how it was signed. Across a table, with the King of Rizia promising to drop " +
+            "Derdian missiles on Wraclawitz. I ask you to condemn that, if you condemn anything.\"", new[] { "Reply" },
+            condition: $"{V(ZilleTreaty.VarPeace)} == true and {V(ZilleTreaty.VarThreat)} == \"missiles\"");
+        t.Line("Lib4Gas", Smolak, "\"Wehlen has signed a treaty, and Wehlen keeps its word. But I will tell this Alliance how it was signed. The King of Rizia sat across a table from me and promised " +
+            "Rumburgian nerve agent, in Derdian missiles, over Wraclawitz. Eight hundred thousand people. Condemn that, if this building condemns anything.\"", new[] { "Reply" },
+            condition: $"{V(ZilleTreaty.VarPeace)} == true and {V(ZilleTreaty.VarThreat)} == \"gas\"");
 
         t.Line("Part1", Narr, "President Smolak took the podium with a map of Zille under his arm. Someone had drawn the ceasefire line on it in red pencil.", new[] { "Part2" }, condition: Part);
-        t.Line("Part2", Smolak, "\"The King of Rizia sits in Zille city behind a line of trenches and calls it a homecoming. Everything north of that line is Wehzek, and it will stay Wehzek.\"", new[] { "Part3" });
-        t.Line("Part3", Smolak, "\"Wehlen asks this Alliance to place observers on the line, and to declare that no border in South Merkopa has been changed by force. Not one.\"", new[] { "Reply" });
+        t.Line("Part2", Smolak, "\"The King of Rizia sits in Zille city behind a line of trenches and calls it a homecoming. Everything north of that line is Wehzek, and it will stay Wehzek.\"", new[] { "Part3", "Part3T" });
+        t.Line("Part3", Smolak, "\"Wehlen asks this Alliance to place observers on the line, and to declare that no border in South Merkopa has been changed by force. Not one.\"", new[] { "Reply" },
+            condition: $"{V(ZilleTreaty.VarPeace)} ~= true");
+        t.Line("Part3T", Smolak, "\"We have signed a treaty, he and I, and drawn a border through Zille. Wehlen asks this Alliance only to place observers on it, so that nobody moves it again by force. Including him.\"", new[] { "Reply" },
+            condition: $"{V(ZilleTreaty.VarPeace)} == true");
 
         t.Line("Lost1", Narr, "President Smolak climbed to the podium to applause from the Wehzek benches. He let it run for a while before he raised his hand.", new[] { "Lost2", "Lost2C" }, condition: Lost);
         string paid = $"{V(VarTerms)} == \"paid\"";
         string unpaid = $"{V(VarTerms)} ~= \"paid\"";
-        t.Line("Lost2", Smolak, "\"Dear fellow leaders! I once said I would have to drag King Romus to the bargaining table. In the end I had to drag him to the battlefield. But it was all worth it.\"", new[] { "Lost3", "Lost3Paid" },
+        t.Line("Lost2", Smolak, "\"Dear fellow leaders! I once said I would have to drag King Romus to the bargaining table. In the end I had to drag him to the battlefield. But it was all worth it.\"", new[] { "Lost3", "Lost3Paid", "Lost3Rec" },
             condition: $"not ({Ceasefire})");
         // the King sought the ceasefire himself: nobody dragged him anywhere
-        t.Line("Lost2C", Smolak, "\"Dear fellow leaders! I once said I would have to drag King Romus to the bargaining table. In the end he came to it himself, with his hat in his hand. Zille is Wehzek, and I think we can all agree it was worth it.\"", new[] { "Lost3", "Lost3Paid" },
+        t.Line("Lost2C", Smolak, "\"Dear fellow leaders! I once said I would have to drag King Romus to the bargaining table. In the end he came to it himself, with his hat in his hand. Zille is Wehzek, and I think we can all agree it was worth it.\"", new[] { "Lost3", "Lost3Paid", "Lost3Rec" },
             condition: Ceasefire);
         t.Line("Lost3", Smolak, "\"Wehlen asks this Alliance to confirm what our soldiers already have. Zille is Wehzek. And it asks that Rizia pay for the war it started.\"", new[] { "Reply" },
-            condition: unpaid);
+            condition: $"{unpaid} and {V(ZilleTreaty.VarKind)} ~= \"recognized\"");
         // the King paid Smolak's bill in Wraclawitz (the Turn 8 meeting, before this session)
+        t.Line("Lost3Rec", Smolak, "\"Wehlen asks this Alliance only to register what the King of Rizia has already signed in Wraclawitz. Zille is Wehzek, and Rizia says so in writing. I have the pen he used. I am thinking of having it framed.\"",
+            new[] { "Reply" }, condition: $"{V(ZilleTreaty.VarKind)} == \"recognized\"");
         t.Line("Lost3Paid", Smolak, "\"Wehlen asks this Alliance only to confirm what our soldiers already have. Zille is Wehzek. As for the bill, His Majesty has already settled it, and I thank him for his promptness.\"",
-            new[] { "Reply" }, condition: paid);
+            new[] { "Reply" }, condition: $"{paid} and {V(ZilleTreaty.VarKind)} ~= \"recognized\"");
 
         // the King's reply
         t.Logic("Reply", new[] { "Rep1", "Rep2", "Rep3", "Rep4", "Rep5", "Rep5C", "Rep6" });
@@ -317,7 +339,7 @@ internal static class LateT8
         // hostile Valgsland; the Lespian one needs the Pales war).
         Vanilla.AppendScript(AN, 24,
             $"if {War} and not {Rel("Valgsland", "Friendly", "Allied")} " +
-            $"and not {SupplyWar.LuaHegelServed} then " +
+            $"and not {SupplyWar.LuaHegelServed} or {V(ZilleTreaty.VarThreat)} == \"gas\" then " +
             "Variable[\"RiziaDLCIsolated.ANSanctionAccusation_Valgsland_GlobalImage\"] = true end");
 
         var t = new Talk(Sanctions, "ZilleWar.Late.Sanctions.");

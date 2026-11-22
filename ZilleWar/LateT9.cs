@@ -252,7 +252,15 @@ internal static class LateT9
         t.Line("Phone", Narr, "I was on the balcony of Palas Toras, watching the sun go down over the port of Monqiz, when an aide came out with the blue telephone and an apologetic face. President Smolak was on the line. He said it was personal.",
             new[] { "Hello" }, script: "AddConversant(\"Wiktor Smolak (R)\");");
         t.Line("Hello", Smolak, "\"Your Majesty! I hope I'm not interrupting. I can hear the sea. How lovely. All I can hear here is my cabinet.\"", new[] { "Pipe" });
-        t.Line("Pipe", Narr, "There was a long, wet puff on the line. The khisha pipe, I assumed. I hoped.", new[] { "OnRefusedBefore", "On1", "On1b", "Lost1", "Lib1", "Part1", "Part1Gold" });
+        t.Line("Pipe", Narr, "There was a long, wet puff on the line. The khisha pipe, I assumed. I hoped.", new[] { "OnRefusedBefore", "On1", "On1b", "TreatyLost", "TreatyPart", "Lost1", "Lib1T", "Lib1", "Part1", "Part1Gold" });
+        // the Zille treaty (Turn 8, ZilleTreaty) already settled what these calls used to offer
+        string signed = $"{V(ZilleTreaty.VarKind)} == ";
+        t.Line("TreatyLost", Smolak, "\"I'm calling to be magnanimous. It's a new hobby. Our treaty is three weeks old and you have not broken it yet. In Wraclawitz they are calling it a miracle.\"",
+            new[] { "TreatyLost2" }, condition: And(Lost, $"{signed}\"recognized\""));
+        t.Line("TreatyLost2", Smolak, "\"No, I want nothing. That is the beauty of winning. Good night, Your Majesty. Give my regards to the house in Zille. Oh, wait.\"", new[] { "Bye" });
+        t.Line("TreatyPart", Smolak, "\"Our border is three weeks old, Your Majesty, and already my customs men have confiscated a goat. A Rizian goat. I'm calling to ask for instructions.\"",
+            new[] { "TreatyPart2" }, condition: And(Part, $"{signed}\"border\""));
+        t.Line("TreatyPart2", Smolak, "\"I'm joking. I called to hear whether you regret it. You don't have to answer. Nobody ever does.\"", new[] { "Bye" });
         // the ceasefire he offered during the war (SupplyVoices) and was refused
         t.Line("OnRefusedBefore", Smolak, "\"You have turned down every offer I ever made you, Your Majesty. I told a whole square in Wraclawitz that you preferred funerals, and still I call. You see what this war has done to my pride.\"",
             new[] { "On1", "On1b" }, condition: And(Ongoing, $"{V(SupplyWar.VarSmolakAnswer)} == \"refused\""));
@@ -285,8 +293,10 @@ internal static class LateT9
         t.Line("LostNo3", Smolak, "\"Then we will talk again next year. I am a patient man. I had Zille for twenty-five years.\"", new[] { "Bye" }, condition: $"not ({PalesWar})");
 
         // liberated
+        t.Line("Lib1T", Smolak, "\"I signed your treaty, Your Majesty. Every word. It says Wehlen gives up Zille. It says nothing about what the Wehzeks in Nanta think of you, and I have a very good memory for what people think.\"",
+            new[] { "Lib2" }, condition: And(Lib, $"{V(ZilleTreaty.VarSigned)} == true"));
         t.Line("Lib1", Smolak, "\"I lost a province and you gained a headache. Every Wehzek in Nanta is a vote against you, Your Majesty, and I have a very good memory for votes.\"",
-            new[] { "Lib2" }, condition: Lib);
+            new[] { "Lib2" }, condition: And(Lib, $"{V(ZilleTreaty.VarSigned)} ~= true"));
         t.Line("Lib2", Smolak, "\"It would be a shame if those poor people felt abandoned by their motherland. A shame for you, I mean.\"", new[] { "LibDeal", "LibThreat", "LibHang" });
         t.Choice("LibDeal", "\"Keep your agents out of Nanta, and the last of your prisoners go home.\"", new[] { "LibDeal2" },
             condition: $"{V(LateT8.VarPrisoners)} == \"held\" or {V(LateT8.VarPrisoners)} == \"ransomed\"",

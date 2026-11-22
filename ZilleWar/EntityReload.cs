@@ -19,6 +19,7 @@ internal static class EntityReload
         WorldCodex.ResetAdded();
         SupplyModifiers.ResetAdded();
         WarDecrees.ResetAdded();
+        ZilleTreaty.ResetAdded();
         Core.Log.Msg("Entity data reloaded: the mod's cards, lines and codex entries will be added again.");
     }
 }

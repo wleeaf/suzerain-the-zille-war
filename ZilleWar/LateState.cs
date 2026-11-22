@@ -36,7 +36,17 @@ internal static class LateState
         "RiziaDLC.CountryRelation_Wehlen_Unfriendly = false;\n" +
         "RiziaDLC.CountryRelation_Wehlen_Hostile = true;";
 
-    private static readonly string OverCondition = WarFlags.X(WarFlags.Over);
+    private const string UnfriendlyInstruction =
+        "UpdateCountryRelationship(\"Rizia_Country_Wehlen\", \"Unfriendly\");\n" +
+        "RiziaDLC.CountryRelation_Wehlen_Allied = false;\n" +
+        "RiziaDLC.CountryRelation_Wehlen_Friendly = false;\n" +
+        "RiziaDLC.CountryRelation_Wehlen_Neutral = false;\n" +
+        "RiziaDLC.CountryRelation_Wehlen_Unfriendly = true;\n" +
+        "RiziaDLC.CountryRelation_Wehlen_Hostile = false;";
+
+    // After the war Wehlen is Hostile, unless a treaty settled Zille (ZilleTreaty): then Unfriendly.
+    private static readonly string OverCondition = $"{WarFlags.X(WarFlags.Over)} && {ZilleTreaty.VarPeace} == false";
+    private static readonly string PeaceCondition = $"{WarFlags.X(WarFlags.Over)} && {ZilleTreaty.VarPeace} == true";
 
     public static bool Declared => Variables.GetBool(WarFlags.Declared);
     public static bool Over => Declared && !WarFlow.AtWar;
@@ -167,6 +177,21 @@ internal static class LateState
 
     private static void KeepWehlenHostile()
     {
+        if (Variables.GetBool(ZilleTreaty.VarPeace))
+        {
+            float np = Variables.GetFloat("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower");
+            if (np > -1f || np < -4f)
+            {
+                Variables.Set("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower", -3);
+            }
+
+            Lua("Variable[\"RiziaDLC.CountryRelation_Wehlen_Allied\"] = false; Variable[\"RiziaDLC.CountryRelation_Wehlen_Friendly\"] = false; " +
+                "Variable[\"RiziaDLC.CountryRelation_Wehlen_Neutral\"] = false; Variable[\"RiziaDLC.CountryRelation_Wehlen_Unfriendly\"] = true; " +
+                "Variable[\"RiziaDLC.CountryRelation_Wehlen_Hostile\"] = false; " +
+                "UpdateCountryRelationship(\"Rizia_Country_Wehlen\", \"Unfriendly\");");
+            return;
+        }
+
         if (Variables.GetFloat("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower") > -6f)
         {
             Variables.Set("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower", -6);
@@ -205,7 +230,9 @@ internal static class LateState
                 if (!patched)
                 {
                     rows.Insert(0, new ConditionalInstruction { Condition = OverCondition, Instruction = HostileInstruction });
+                    rows.Insert(0, new ConditionalInstruction { Condition = PeaceCondition, Instruction = UnfriendlyInstruction });
                     rows.Add(new ConditionalInstruction { Condition = OverCondition, Instruction = HostileInstruction });
+                    rows.Add(new ConditionalInstruction { Condition = PeaceCondition, Instruction = UnfriendlyInstruction });
                 }
             }
         }

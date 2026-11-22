@@ -32,7 +32,8 @@ internal static class WorldModifiers
     public const string StraitClosed = "ZilleWar.World_StraitClosed";
 
     private static readonly string[] External =
-        { RumburgCredit, RumburgRepayment, RumburgGas, LespiaEscort, LespiaGas, LespiaGasBudget, BffContracts, WehlenReparations, CaleqabizRent };
+        { RumburgCredit, RumburgRepayment, RumburgGas, LespiaEscort, LespiaGas, LespiaGasBudget, BffContracts, WehlenReparations, CaleqabizRent,
+          ZilleTreaty.ModReparations, ZilleTreaty.ModOil, ZilleTreaty.ModStrait };
 
     // ---- values computed here
     private const string WarExpenditures = "ZilleWar.Mod_WarExpenditures";
@@ -94,6 +95,8 @@ internal static class WorldModifiers
         new("Rizia_Budget_Modifier_CaleqabizLease", Budget, CaleqabizRent, Pos(CaleqabizRent), "{0} per turn from the Lespian Lease of Caleqabiz"),
         new("Rizia_Budget_Modifier_BFFContracts", Budget, BffContracts, Neg(BffContracts), "{0} per turn from Bludish Freedom Front Contracts"),
         new("Rizia_Budget_Modifier_WehlenReparations", Budget, WehlenReparations, Neg(WehlenReparations), "{0} per turn from Reparations to Wehlen"),
+        new("Rizia_Budget_Modifier_WehzekReparations", Budget, ZilleTreaty.ModReparations, Pos(ZilleTreaty.ModReparations), "{0} per turn from Wehzek War Reparations"),
+        new("Rizia_Budget_Modifier_KreleckPassage", Budget, ZilleTreaty.ModStrait, Pos(ZilleTreaty.ModStrait), "{0} per turn from Free Passage through the Strait of Kreleck"),
         // the vanilla variable Turn 9 MITZ already moves, never shown in vanilla; only in a war playthrough
         new("Rizia_Budget_Modifier_LespiaSanctions", Budget, "RiziaDLC.Budget_Modifier_LespiaSanctions",
             "RiziaDLC.Situation_Diplomacy_Lespia_SanctionsRizia == true && ZilleWar.War_Declared == true", "{0} per turn from Lespian Sanctions"),
@@ -102,6 +105,7 @@ internal static class WorldModifiers
         new("Rizia_Energy_Modifier_LesPowerDiscountGas", Energy, LespiaGas, Neg(LespiaGas), "{0} per turn from Discounted Gas Sales to LesPower"),
         new("Rizia_Energy_Modifier_RumburgWarGas", Energy, RumburgGas, Neg(RumburgGas), "{0} per turn from Gas Shipments to Rumburg"),
         new("Rizia_Energy_Modifier_ZillePowerStations", Energy, ZilleEnergy, Pos(ZilleEnergy), "{0} per turn from Zille Power Stations"),
+        new("Rizia_Energy_Modifier_TreatyOil", Energy, ZilleTreaty.ModOil, Pos(ZilleTreaty.ModOil), "{0} per turn from Wehzek Oil under the Treaty"),
         // authority
         new("Rizia_Authority_Modifier_ZilleWarFervor", Authority, Fervor, Pos(Fervor), "{0} per turn from Zille War Fervor"),
         new("Rizia_Authority_Modifier_ZilleVictory", Authority, Victory, Pos(Victory), "{0} per turn from Victory in Zille"),

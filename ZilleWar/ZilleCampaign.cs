@@ -263,6 +263,26 @@ internal static class ZilleCampaign
     public static bool IsEnemy(Dictionary<string, bool> owners, string tile) =>
         tile != null && owners.TryGetValue(tile, out bool p) && !p;
 
+    /// <summary>A treaty moves a town across the line: its tile changes hands (and, for a Wehzek city, its captured flag).</summary>
+    public static void CedeTown(string town, bool toRizia)
+    {
+        string tile = TownTile(town);
+        if (tile == null)
+        {
+            return;
+        }
+
+        Dictionary<string, bool> owners = CurrentOwners();
+        owners[tile] = toRizia;
+        SaveOwners(owners);
+        if (ZilleData.Towns.Any(t => t.Name == town && t.Side == "zille" && t.Role == "city"))
+        {
+            Variables.Set(ZilleOperation.CapturedVar(town), toRizia);
+        }
+
+        Core.Log.Msg($"Treaty: {town} passes to {(toRizia ? "Rizia" : "Wehlen")}.");
+    }
+
     public static string TownTile(string town) => ZilleData.Towns.FirstOrDefault(t => t.Name == town)?.Tile;
 
     public static void Reset()

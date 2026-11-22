@@ -15,7 +15,7 @@ internal static class WorldEmbargo
 {
     private const string Line = "Rizia_Budget_Modifier_EastTradeReduced";
     private const string WarCondition =
-        "ZilleWar.War_Declared == true && (ZilleWar.War_Active == true || ZilleWar.ZilleCity_Held == true || ZilleWar.War_Zille_Liberated == true) && RiziaDLC.Policy_Diplomacy_Caleqabiz_ValgslandCSP == false && RiziaDLC.Trait_CommieKing == false";
+        "ZilleWar.War_Declared == true && (ZilleWar.War_Active == true || ZilleWar.ZilleCity_Held == true || ZilleWar.War_Zille_Liberated == true) && ZilleWar.Treaty_Peace == false && RiziaDLC.Policy_Diplomacy_Caleqabiz_ValgslandCSP == false && RiziaDLC.Trait_CommieKing == false";
     private const string VarAnnounced = "ZilleWar.World_EmbargoAnnounced";
     private const string VarLifted = "ZilleWar.World_EmbargoLifted";
     private static string _originalDescription;
@@ -30,7 +30,8 @@ internal static class WorldEmbargo
 
     /// <summary>Rizian troops hold some of Zille: the war is on, or Zille city is held, or the province is liberated.</summary>
     private static bool Holding() =>
-        Variables.GetBool(WarFlags.Declared) && (WorldSystems.Active || WorldSystems.ZilleCityHeld || WorldSystems.Liberated);
+        Variables.GetBool(WarFlags.Declared) && (WorldSystems.Active || WorldSystems.ZilleCityHeld || WorldSystems.Liberated) &&
+        !Variables.GetBool(ZilleTreaty.VarPeace);
 
     private static bool Applies() =>
         Holding() && !Variables.GetBool("RiziaDLC.Policy_Diplomacy_Caleqabiz_ValgslandCSP") &&
@@ -84,6 +85,18 @@ internal static class WorldEmbargo
         if (Variables.GetBool(VarAnnounced) && !Variables.GetBool(VarLifted) && WorldSystems.WarEnded && !Holding())
         {
             Variables.Set(VarLifted, true);
+            bool treaty = Variables.GetBool(ZilleTreaty.VarPeace);
+            if (treaty)
+            {
+                NewsWire.Publish("EmbargoLifted", "G", "Contana Ends Its Embargo after the Zille Treaty", NewsWire.P(
+                    "With Wehlen's signature on a treaty settling Zille, Valgsland and its partners in the Contanan Security Pact have " +
+                    "let their embargo on Rizia lapse. \"Wraclawitz has spoken for itself,\" a Contanan spokesman said. \"We will not be " +
+                    "more Wehzek than the Wehzeks.\"",
+                    "Chancellor Hegel's office issued no statement at all. Bankers in Konstantium expect credit to Rizian firms to return " +
+                    "slowly, and Valgslandian credit not at all."));
+                return;
+            }
+
             NewsWire.Publish("EmbargoLifted", "G", "Contana Lifts the Embargo on Rizia", NewsWire.P(
                 "With no Rizian soldier left in Zille, Valgsland and its partners in the Contanan Security Pact have let the embargo on " +
                 "trade with Rizia lapse. Contanan freighters are expected back in Rizian ports within the week.",
