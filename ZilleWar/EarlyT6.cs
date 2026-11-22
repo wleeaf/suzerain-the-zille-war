@@ -215,9 +215,9 @@ internal static class EarlyT6
             "\"I watched what your army did in Zille, Your Majesty. Believe me, I watched. But I am not Smolak, and Pales is not a lease.\"",
             after257);
         t.Variant("StandLost", 257, new[] { 239 }, AuditT6.Lost, Axel,
-            "\"Your army could not even take Zille from Smolak, Your Majesty. Spare me the threats.\"", after257);
+            "\"Your army has only just come home from Zille without it, Your Majesty. I would not be in a hurry to start another war, in your place.\"", after257);
         t.Variant("StandPart", 257, new[] { 239 }, AuditT6.Part, Axel,
-            "\"Your army could not finish Smolak, Your Majesty. He still holds half of Zille behind his armistice line. Spare me the threats.\"",
+            "\"Half of Zille is still behind Smolak's line, Your Majesty. Your army has a long border to watch already. I would think twice before adding the Alca to it.\"",
             after257);
 
         // The suspects.
@@ -234,8 +234,18 @@ internal static class EarlyT6
         t.Choice("Suspect2", "\"Every division I send south is one he no longer has to face. Think about who that serves.\"", new[] { "Suspect4" });
         t.Choice("Suspect3", "\"Smolak has been trying to divide this region since the day he decided Zille's lease was his to keep.\"", new[] { "Suspect4" });
         t.Line("Suspect4", Axel,
-            "\"There are no reports or traces of any Wehzek activity. If you cannot show me any proof -- this will only sound like a conspiracy theory.\"",
+            "\"My people have found no trace of Wehzek agents on the Alca, Your Majesty. If you have proof, I will look at it gladly. Without it, I cannot act on a suspicion.\"",
             new[] { "#779" });
+
+        // Lespia, with proof: the consulate files from Zille named a Lespian officer behind the Friendship Day bombing.
+        string files = "((Variable[\"ZilleWar.Ramiro_Found\"] == true and Variable[\"ZilleWar.Ramiro_Choice\"] ~= \"bury\") or " +
+                       "Variable[\"RiziaDLC.Zille_Discovered_LespianInvolvement\"] == true or Variable[\"RiziaDLC.Zille_Publicized_LespianInvolvement\"] == true)";
+        t.Choice("LespiaProof", "\"He has done it before. The files from his own consulate in Zille name a Lespian officer behind the Friendship Day bombing. I can have copies on your desk tonight.\"",
+            new[] { "LespiaProof2" }, condition: $"{Declared} and {files}", hooks: From(793));
+        t.Line("LespiaProof2", Narrator, "Reinhart was silent for a long moment. When he spoke again, the irony had gone out of his voice.", new[] { "LespiaProof3" });
+        t.Line("LespiaProof3", Axel,
+            "\"The bombing in Zille. I had heard rumors, but I took them for Smolak's. If your files are what you say, Your Majesty, send them. Quietly. I would rather Perla did not know I have read them.\"",
+            new[] { "#798" }, script: "Variable[\"RiziaDLC.Diplomacy_Pales_NegotiatingPower\"] = (Variable[\"RiziaDLC.Diplomacy_Pales_NegotiatingPower\"] or 0) + 1; ");
         t.Register();
     }
 
