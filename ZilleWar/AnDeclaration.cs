@@ -324,6 +324,11 @@ internal static class AnDeclaration
             luaScript: "PlayCustomMapMusic(\"Rizia_Map_Music_Tense\");",
             nextNodes: new ConversationNodeSelector[] { new ConversationNodeArticyIDSelector(VanillaProtocolAndEnd) }));
 
+        foreach (ConversationNode n in inj.Nodes)
+        {
+            LuaLint.Record(n.Name, n.LuaCondition, n.LuaScript);
+        }
+
         inj.Register();
         Core.Log.Msg("Registered the AN declaration-of-war branch (Turn 4, Konstantium).");
     }
