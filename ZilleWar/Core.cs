@@ -28,6 +28,7 @@ internal sealed class Core : MelonMod
         });
         Step("war flags", WarFlags.Register);
         Step("army carry-over", ArmyCarry.Register);
+        Step("strategic map", StrategicMap.Register);
         Step("war events", WarEvents.Hook);
         Step("AN declaration", AnDeclaration.Register);
         Step("war flow", WarFlow.Register);
