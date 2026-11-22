@@ -33,12 +33,17 @@ internal static class SupplyNews
                      "Credit1", "Credit2", "Dossier", "RumburgNo", "LespiaGas", "ValgslandLespia", "LespiaMitz", "PalesArms", "PalesArmsStopped",
                      "RamiroPublish", "RamiroRecalled", "RamiroComp", "LespiaGone", "StraitThin", "Gift", "Aureus", "Defector",
                      "Hegel1", "Hegel2", "SmolakRefused", "SmolakAccepted", "Saltana",
+                     "Bluds", "PhotoRaid", "PhotoExpelled", "PhotoCaught", "SaltanaDowned",
                  })
         {
             Keys.Add(k);
             Variables.Register(Flag(k));
         }
+
+        Variables.Register(VarSaltanaTurn);
     }
+
+    private const string VarSaltanaTurn = "ZilleWar.SupNews_SaltanaTurn";
 
     private static void Once(string key, bool when, Action publish)
     {
@@ -64,6 +69,87 @@ internal static class SupplyNews
         Lespia();
         Navy();
         Others();
+        Surprises();
+    }
+
+    // ------------------------------------------------------------------ the surprises of the war room, and Saltana's planes
+
+    private static void Surprises()
+    {
+        string bluds = Str(SupplyWar.VarBludsIncident);
+        Once("Bluds", bluds.Length > 0, () =>
+        {
+            Paper("Bluds", "G", "Villagers Killed Near Zille; Bludish Fighters in Rizian Service Accused",
+                "Eleven Wehzek villagers, among them two women and a boy of fourteen, were killed in a night raid on a hamlet in the hills " +
+                "above Zille, according to a correspondent for this newspaper who reached the village the following morning. Survivors " +
+                "named the attackers as Bludish fighters serving with the Royal Army of Rizia.",
+                bluds switch
+                {
+                    "trial" => "Porte Drazon has announced that the men responsible will be tried by court-martial in Zille, in public. Wehzek " +
+                               "radio calls the trial \"theater.\" Foreign correspondents have nonetheless been promised seats.",
+                    "home" => "The Bludish companies have since been withdrawn from the front. The Rizian General Staff says only that their " +
+                              "contracts have ended, and declined to answer questions about the village.",
+                    _ => "The Rizian General Staff says the incident is under investigation. The Bludish companies remain at the front.",
+                });
+            Paper("Bluds", "V", bluds == "trial" ? "A Trial, at Least" : "Whose War Is This?",
+                bluds == "trial"
+                    ? "The King hired Bludish gunmen and they behaved like Bludish gunmen. To his credit, he has not pretended otherwise. A " +
+                      "court-martial will not bring eleven people back, but it may yet save the name of every Rizian soldier in Zille."
+                    : "Eleven villagers are dead in the hills above Zille, killed by men the Crown paid to fight for it. The Voice of Rizia " +
+                      "asks the palace a question it will not answer: who will stand trial for this, and in whose name were they fighting?");
+            if (bluds == "trial")
+            {
+                Rep("BludsRumburg", SuzerainTokenName.RiziaCountryRumburg, "Thornbourgh Is Not Amused",
+                    "The Rumburgian Foreign Office has asked, through our ambassador, why Rizia found it necessary to try Bludish fighters " +
+                    "\"in front of the entire foreign press.\" The Bluds were Rumburg's recommendation, and Rumburg feels recommended against.",
+                    "Our ambassador expects the Queen to raise it herself, at the time of her choosing.");
+            }
+        });
+
+        string photo = Str(SupplyWar.VarPhotoPayoff);
+        Once("PhotoRaid", photo is "raid" or "expelled" or "silent", () =>
+            Paper("PhotoRaid", "RH", "Wehzek Raiders Strike Fort Ales",
+                "Wehzek aircraft attacked the naval base at Fort Ales at dawn, setting fire to a fuel depot and part of the shell stores " +
+                "before the base's guns drove them off. Sailors and dockworkers fought the fires side by side until noon.",
+                "The Admiralty praises the garrison's courage. It has not explained how the raiders found their targets so easily on their " +
+                "first pass. Axa Victoria!"));
+        Once("PhotoExpelled", photo == "expelled", () =>
+            Paper("PhotoExpelled", "G", "Rizia Expels Lespian Naval Attaché",
+                "The Kingdom of Rizia has declared the Lespian naval attaché in Porte Drazon persona non grata and given him forty-eight " +
+                "hours to leave, days after a Wehzek air raid on the Rizian naval base at Fort Ales. Neither government will say whether " +
+                "the two events are connected.",
+                "In Perla, a spokesman for Prime Minister Alvarez regretted \"a misunderstanding between friends.\" Lespian patrols in " +
+                "the Strait of Kreleck were seen thinning out the same week."));
+        Once("PhotoCaught", photo is "returned" or "kept", () =>
+            Rep("PhotoCaught", SuzerainTokenName.RiziaCitySallabes, "Forty Rolls of Film",
+                "Our destroyers have stopped a Wehzek trawler off the Isor banks with forty rolls of film aboard, all of them photographs of " +
+                "Rizian harbors taken from Lespian patrol boats. Whether Perla sold them or merely mislaid them, nobody will ever prove.",
+                photo == "returned"
+                    ? "The film has gone back to Perla in a diplomatic bag, with the King's compliments. No reply has been received."
+                    : "The film is in the Admiralty's safe, and the trawler's skipper is in Sallabes, talking freely about the convoy routes out of Isor."));
+
+        // Saltana's grey fighters: the turn after they arrive, one of them comes down on the wrong side of the line.
+        if (B(SupplyWar.VarMorellaAircraft) && Variables.GetInt(VarSaltanaTurn) == 0)
+        {
+            Variables.Set(VarSaltanaTurn, WorldSystems.Turn);
+        }
+
+        int bought = Variables.GetInt(VarSaltanaTurn);
+        Once("SaltanaDowned", bought > 0 && WorldSystems.Turn > bought && WarFlow.AtWar, () =>
+        {
+            Paper("SaltanaDowned", "G", "Grey Fighter Downed Over Zille",
+                "Wehzek anti-aircraft gunners have shot down one of the unmarked grey fighters that have flown over the Zille front for " +
+                "weeks. Wehzek newsreels show the wreck and its pilot, a young Rizian lieutenant, alive and in handcuffs. The engine plates, " +
+                "Wehlen says, were stamped in Cavette.",
+                "\"Morella sells engines to half of Merkopa,\" a spokesman for Prime Minister Saltana said. \"We have never heard of this " +
+                "aircraft.\" President Smolak has asked the Alliance to name the country that built it. The Alliance has not.");
+            Rep("SaltanaDowned", SuzerainTokenName.RiziaCountryMorella, "Cavette Keeps Its Word",
+                "Prime Minister Saltana has done exactly what she promised: Morella has never heard of the aircraft. Through her ambassador, " +
+                "she asks that the pilot's family be told nothing that would embarrass anyone, and that the next squadron, should there be " +
+                "one, will cost more.",
+                "The lieutenant is held in Wraclawitz. Wehzek radio interviews him every evening, and every evening he gives his name, his " +
+                "rank and nothing else.");
+        });
     }
 
     // ------------------------------------------------------------------ Rumburg
@@ -82,7 +168,7 @@ internal static class SupplyNews
             Rep("Credit1", SuzerainTokenName.RiziaCountryRumburg, "The Exchequer's Terms",
                 "The first tranche of the Rumburgian war credit has reached the Royal Treasury. Repayments begin at once, a little " +
                 "every month, until the debt is cleared.",
-                "Minister Werner has read the small print twice. She reports that the terms are generous, and that Rumburg will be in " +
+                "Councilor Werner has read the small print twice. She reports that the terms are generous, and that Rumburg will be in " +
                 "a position to remind us of that generosity for years to come.");
         });
         Once("Credit2", credits >= 2, () =>
@@ -118,8 +204,11 @@ internal static class SupplyNews
                 "Rumburg will send no further military aid to Rizia \"for the time being,\" a spokesman for Queen Beatrice told " +
                 "reporters in Thornbourgh, adding that the Kingdom \"remains a loyal friend of the Rizian Crown and a firm believer " +
                 "in a negotiated peace.\"",
-                "Diplomats read the statement as a message to Porte Drazon as much as to Wraclawitz. Rumburg's existing commitments, " +
-                "including its embargo on Wehzek oil, are understood to remain in force.");
+                SupplyWar.RumburgEmbargo
+                    ? "Diplomats read the statement as a message to Porte Drazon as much as to Wraclawitz. Rumburg's existing commitments, " +
+                      "including its embargo on Wehzek oil, are understood to remain in force."
+                    : "Diplomats read the statement as a message to Porte Drazon as much as to Wraclawitz. Rumburgian tankers, they note, " +
+                      "have never stopped loading Wehzek oil.");
             Rep("RumburgNo", SuzerainTokenName.RiziaCountryRumburg, "Thornbourgh Closes Its Purse",
                 "Queen Beatrice has told the King herself that Rumburg's help with the war in Zille has reached its end. Her ministers " +
                 "have added up the cost, and Sordland's restlessness on Rumburg's own border has done the rest.",
@@ -192,7 +281,7 @@ internal static class SupplyNews
                 "Documents recovered by the Royal Army in Zille prove that the Friendship Day bombing in Smolak Square was organized by " +
                 "Héctor Ramiro, a Lespian intelligence officer posing as a diplomat at the Lespian consulate in Zille. The components " +
                 "were supplied through CircuitRise Systems, a firm in Pales.",
-                "For years, Wehlen used that bomb to accuse innocent Rizians and to cling to Zille. The Royal Herald demands an apology " +
+                "For more than a year, Wehlen used that bomb to accuse innocent Rizians and to cling to Zille. The Royal Herald demands an apology " +
                 "from Perla, and from Wraclawitz, which knew the truth and buried it.");
             Paper("RamiroPublish", "G", "Rizia Accuses Lespian Diplomat over Zille Bombing",
                 "The Rizian government has published files, reportedly seized from the Wehzek police headquarters in Zille, naming " +
@@ -241,7 +330,8 @@ internal static class SupplyNews
                 "The Lespian navy has withdrawn its ships from the Strait of Kreleck, ending the patrols that had kept Wehzek shipping " +
                 "out of Zille's harbors. Neither Perla nor Porte Drazon has explained the decision.",
                 "Shipping agents in Wraclawitz report that Wehzek convoys began loading for Zille within hours of the news."));
-        Once("StraitThin", Str("ZilleWar.Alvarez_GasTopic") == "refused", () =>
+        Once("StraitThin", Str("ZilleWar.Alvarez_GasTopic") == "refused" ||
+                           (Str(EarlyT6.VarAlvarezGasPrice) == "refused" && B(SupplyWar.VarLespiaStrait)), () =>
             Rep("StraitThin", SuzerainTokenName.RiziaCountryLespia, "Thinner Patrols in the Strait",
                 "The Lespian navy has pulled several patrol boats out of the Strait of Kreleck \"for refueling,\" according to Perla. " +
                 "Our naval attaché counts fewer Lespian ships on station than at any time since the closure began.",
@@ -314,7 +404,19 @@ internal static class SupplyNews
         string call = Str(SupplyWar.VarValgslandCall);
         Once("Hegel2", call.Length > 0, () =>
         {
-            if (call == "defied")
+            bool embargo = Variables.GetBool(AnDeclaration.VarDeclared) && !Variables.GetBool("RiziaDLC.Policy_Diplomacy_Caleqabiz_ValgslandCSP") &&
+                           !Variables.GetBool("RiziaDLC.Trait_CommieKing");
+            if (call == "defied" && embargo)
+            {
+                Paper("Hegel2", "G", "Valgsland Tightens Its Embargo on Rizia",
+                    "Valgslandian ports will now refuse any ship that has called at a Rizian port, Chancellor Hegel announced, closing the " +
+                    "Agnolian and Sordish back door through which Rizian goods had kept moving since the embargo began. Valgslandian " +
+                    "destroyers continue their exercises in the Markian Sea.",
+                    "Shipping agents in Porte Drazon expect freight rates to rise again within the month. In Konstantium, Valgsland's " +
+                    "delegation has begun circulating a draft sanctions motion, though diplomats doubt it can find a majority while Rumburg " +
+                    "and Lespia oppose it.");
+            }
+            else if (call == "defied")
             {
                 Paper("Hegel2", "G", "Valgsland Closes Its Ports to Rizian Cargo",
                     "Valgsland has closed its ports to ships carrying Rizian cargo \"until the Kingdom of Rizia returns to the path of " +

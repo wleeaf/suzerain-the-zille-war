@@ -260,7 +260,7 @@ internal static class LateState
             "Zille past the end of the lease, and King Romus his reason to go to war for it. Prime Minister Alvarez called the evidence " +
             "\"a Wehzek fairy tale told by a Rizian king,\" but did not say which part of it was untrue."),
         new(true, "Turn09_RH_ZilleReturnSpeech_Negociations", () => Liberated, "Zille Reunites with Rizia: A Triumph of Arms",
-            "After twenty-eight years under a foreign flag, Zille has formally rejoined the Kingdom. The ceremony in the city's main " +
+            "After twenty-five years under a foreign flag, Zille has formally rejoined the Kingdom. The ceremony in the city's main " +
             "square, its Wehzek name already gone from the street signs, sealed what the Royal Army won in the field.\n\nHis Majesty " +
             "honored the soldiers who fell between the river and the sea, and thousands of Zilleans cheered the King who would not " +
             "wait for Wehlen's permission to bring them home."),
@@ -366,7 +366,7 @@ internal static class LateState
         string o = ours.ToString("N0"), t = theirs.ToString("N0");
         var lines = new (string cond, string text)[]
         {
-            (SummaryLib, $"Zille returned to Rizia by force of arms after twenty-eight years of Wehzek rule. {o} Rizian and {t} Wehzek soldiers were killed, wounded or went missing in the Zille War."),
+            (SummaryLib, $"Zille returned to Rizia by force of arms after twenty-five years of Wehzek rule. {o} Rizian and {t} Wehzek soldiers were killed, wounded or went missing in the Zille War."),
             (SummaryPart, $"The Zille War left the region divided along a ceasefire line, with Zille city in Rizian hands. {o} Rizian and {t} Wehzek soldiers were killed, wounded or went missing."),
             (SummaryLost, $"{o} Rizian soldiers were killed, wounded or went missing in the failed war for Zille, and Wehlen tightened its hold on the region."),
             (SummaryOngoing, $"The Zille War was still being fought. {o} Rizian and {t} Wehzek soldiers had already been killed, wounded or gone missing."),

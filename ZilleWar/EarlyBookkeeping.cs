@@ -259,7 +259,7 @@ internal static class EarlyBookkeeping
         if (ata)
         {
             NewsWire.Report($"E_ATAShelters_T{turn}", SuzerainTokenName.RiziaEventZille, "Ariana Toras Association Opens Shelters in Zille",
-                "Volunteers of the Ariana Toras Association have opened cellars, church halls and school basements across the Zille " +
+                "Volunteers of the Ariana Toras Association have opened cellars, sanctuary halls and school basements across the Zille " +
                 "region to families caught near the fighting. Association members are also guiding Royal Army patrols along back roads " +
                 "and passing on what they see of Wehzek movements. \"We are not soldiers,\" one volunteer said. \"But we know every " +
                 "lane and every family here, and that is worth something.\"");

@@ -14,10 +14,12 @@ namespace ZilleWar;
 internal static partial class SupplyWar
 {
     private const string VarLespiaMarkup = "ZilleWar.Lespia_Markup";
+    private const string VarAlvarezPhotoSaid = "ZilleWar.Alvarez_PhotoSaid";
 
     private static void RegisterAlvarez()
     {
         SuzerainModdingKit.Variables.Register(VarLespiaMarkup);
+        SuzerainModdingKit.Variables.Register(VarAlvarezPhotoSaid);
         var d = new Dlg(AlvarezConv, "ZilleWar.Alvarez.");
         string calls = N(VarAlvarezCalls);
         string deal = $"({N(Count(Lever.Lespia))} > 0)";
@@ -47,7 +49,7 @@ internal static partial class SupplyWar
             "Laurento brought in the blue telephone and set it down as if it might bite. \"Prime Minister Alvarez again, Your Majesty. " +
             "He sounds pleased with himself, which is never good news.\"", enter, "Open");
 
-        d.Branch("Open", "ConfrontOpen", "HelloKept", "HelloBurned", "HelloAgain", "InvOpen");
+        d.Branch("Open", "ConfrontOpen", "HelloKept", "HelloBurned", "HelloAgain", "InvExpelled", "InvOpen");
         d.SayIf("HelloKept", $"{calls} == 1 and {noDeal} and {kept}", Alvarez,
             "\"Your Majesty. I hope my little note didn't get lost in all the excitement in Konstantium. It was a very exciting day.\"", "Jab");
         d.SayIf("HelloBurned", $"{calls} == 1 and {noDeal}", Alvarez,
@@ -167,6 +169,11 @@ internal static partial class SupplyWar
             "\"Your Majesty. My admirals send their regards from the strait. Wehzek captains have discovered the joys of Lespian " +
             "paperwork, and some of them have taken up fishing instead.\"", "Inv");
         d.Branch("Inv", "InvPales", "InvGas", "InvGift", "InvNothing");
+        // the attaché expelled over the Fort Ales photographs (SupplyWarRoom): he denies everything, smiling
+        d.SayIfDo("InvExpelled", $"{Eq(VarPhotoPayoff, "expelled")} and {Not(VarAlvarezPhotoSaid)}", Alvarez,
+            "\"Your Majesty. I'm told you expelled my naval attaché. A keen amateur photographer, Captain Olmedo. Harbors, lighthouses, " +
+            "that sort of thing. Whatever he photographed, I assure you he kept it to himself, and I tell you so with a perfectly straight " +
+            "face. Now. My admirals send their regards from the strait, a few less of them than last month.\"", T(VarAlvarezPhotoSaid), "Inv");
 
         // the other war: Lespian shipyards selling to Pales
         d.SayIf("InvPales", $"{Is(PalesWar)} and {N(LespianPalesSupport)} > 0 and {V(VarAlvarezPalesDone)} == \"\"", Alvarez,

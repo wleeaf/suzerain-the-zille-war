@@ -796,8 +796,12 @@ internal static class WarCouncil
             "\"Then there is the fleet. Half our destroyers are still sitting on the Aureus field, babysitting a Palesian drillship. Bring them north, " +
             "and the Wehzek navy loses the gulf. Leave them where they are, and the Duke's drillship stays idle.\"",
             new[] { "FleetNorth", "FleetStay" }, And(FleetSplit, $"{Num("RiziaDLC.Army_Unit_Ship_Total")} >= 1"));
-        t.Choice("FleetNorth", "\"Bring the squadron north. Zille comes first.\"", new[] { "FleetNorth2" },
-            script: Set(VarFleetRecalled, "true") + Set("RiziaDLC.Diplomacy_Pales_Military_BlockDrillship", "false"));
+        // Same order as the war room's (SupplyWarRoom "AureusPull"): same cost, same consequences, same news.
+        t.Choice("FleetNorth", "\"Bring the squadron north. Zille comes first.\"", new[] { "FleetNorth2" }, cost: "-1 Authority",
+            script: Set(VarFleetRecalled, "true") + Set("RiziaDLC.Diplomacy_Pales_Military_BlockDrillship", "false") +
+                    Set("RiziaDLCSupport.Journal_Turn04_Pales_NavalWithdrawal", "true") + Set(SupplyWar.VarAureusRecalled, "true") +
+                    $"{V("RiziaDLC.Resources_Authority")} = {Num("RiziaDLC.Resources_Authority")} - 1; " +
+                    $"{V(SupplyWar.NpPales)} = {Num(SupplyWar.NpPales)} + 1; {V(SupplyWar.NpLespia)} = {Num(SupplyWar.NpLespia)} + 1; ");
         Intel("FleetNorth2", "\"I'll send the signal tonight. Reinhart will have his drillship working by the end of the week, and he'll thank no one for it.\"",
             new[] { "Barrage" });
         t.Choice("FleetStay", "\"The blockade stays. We fight Wehlen with what we have.\"", new[] { "FleetStay2" });

@@ -168,27 +168,41 @@ internal static class LateT10
 
     private static void RegisterEndings()
     {
+        // Turn 9's call with Smolak (LateT9): a line made permanent, or Wehzek Zille recognized on paper, is remembered here.
+        string permanent = WarFlags.L(LateT9.VarLinePermanent);
+        string recognized = WarFlags.L(LateT9.VarRecognized);
         var cr = new Talk(Continued, "ZilleWar.Late.Continued.");
         Swap(cr, Continued, "Border", 453, new[] { 447 }, Narr, new S(
-            Ongoing: "The war in Zille had settled into a long, grinding stalemate, and the people of Brenas had stopped reading the casualty lists.\nYour advice was to...",
+            Ongoing: "The war in Zille had settled into a long, grinding stalemate, and the people of Brenas had stopped reading the casualty lists.\nYour advice was to..."),
+            new[] { "#200", "#199", "#201" });
+        Swap(cr, Continued, "BorderLine", 453, new[] { 447 }, Narr, new S(
             Part: "The ceasefire line in Zille had held, barely. Wehzek patrols probed it every month, and President Smolak demanded Zille city back at every session of the Alliance.\nYour advice was to...",
             Lost: "Since the failed war, the Wehzek border guards in Zille had grown bold. Shells had landed on the Rizian side of the river twice that spring.\nYour advice was to..."),
-            new[] { "#200", "#199", "#201" });
+            new[] { "#200", "#199", "#201" }, when: $"not ({permanent}) and not ({recognized})");
+        Swap(cr, Continued, "BorderSigned", 453, new[] { 447 }, Narr, new S(
+            Part: "The line through Zille was a border now, signed in Monqiz over a telephone and drawn up by the Alliance. Smolak had put up his sign, in both languages. The Sazons spat when they passed it.\nYour advice was to...",
+            Lost: "Zille was Wehzek on paper now, signed away for a hundred years in exchange for the accounts Wehlen had frozen. The border was quiet. Brenas was not, and never forgave it.\nYour advice was to..."),
+            new[] { "#200", "#199", "#201" }, when: $"({permanent}) or ({recognized})");
         cr.Register();
 
+        string homeTaken = WarFlags.L(LateT8.VarEstelaHome);
         var pt = new Talk(Peaceful, "ZilleWar.Late.Peaceful.");
         Swap(pt, Peaceful, "Mother", 468, new[] { 466 }, Narr, new S(
             Ongoing: "Your mother, feeling homesick, asked every month whether the war in Zille was over yet. One day she stopped asking.\nYour focus turned to...",
             Part: "Your mother, feeling homesick, went back to her old house in the harbor district of Zille, a few miles from the ceasefire line. You saw her off, promising to visit as often as you could.\nYour focus turned to...",
-            Lost: "Your mother, feeling homesick, petitioned the Wehzek government to let her spend her remaining years in her old village in Zille. The answer took four months and was one line long. She did not ask again.\nYour focus turned to..."),
-            new[] { "#280", "#281", "#282", "#396" });
+            Lost: "Your mother, feeling homesick, petitioned the Wehzek government to let her spend her remaining years in her old house in the harbor district of Zille. The answer took four months and was one line long. She did not ask again.\nYour focus turned to..."),
+            new[] { "#280", "#281", "#282", "#396" }, when: $"not ({homeTaken})");
+        // the house Smolak asked for in Wraclawitz (LateT8), and got
+        Swap(pt, Peaceful, "MotherHouse", 468, new[] { 466 }, Narr, new S(
+            Lost: "Your mother, feeling homesick, asked the Wehzek government only to let her see her old garden in Zille once more. Smolak's son lived in the house now; you had signed it over in Wraclawitz. The answer took four months and was one line long. She did not ask again.\nYour focus turned to..."),
+            new[] { "#280", "#281", "#282", "#396" }, when: homeTaken);
         pt.Register();
 
         var ex = new Talk(Exile, "ZilleWar.Late.Exile.");
         Swap(ex, Exile, "Mother", 544, new[] { 537 }, Narr, new S(
             Ongoing: "Even when she was surrounded by loving family and friends, you could tell that Estela never truly felt at ease in her new home.\nShe followed the war in Zille in the newspapers every morning, and told you, the last time you saw her, that she hoped you'd find peace. You...",
             Part: "Even when she was surrounded by loving family and friends, you could tell that Estela never truly felt at ease in her new home.\nWith her health beginning to fail, she went back to her old house in the harbor district of Zille, on the Rizian side of the ceasefire line. As she boarded the boat to leave, she told you she hoped you'd find peace. You...",
-            Lost: "Even when she was surrounded by loving family and friends, you could tell that Estela never truly felt at ease in her new home.\nWith her health beginning to fail, she petitioned Wehlen to let her live out her last days in the Zille village where she grew up. Wehlen refused the mother of the king who had invaded it, in a single line. She read the letter twice, and told you she hoped you'd find peace. You..."),
+            Lost: "Even when she was surrounded by loving family and friends, you could tell that Estela never truly felt at ease in her new home.\nWith her health beginning to fail, she petitioned Wehlen to let her live out her last days in the harbor district of Zille, where she grew up. Wehlen refused the mother of the king who had invaded it, in a single line. She read the letter twice, and told you she hoped you'd find peace. You..."),
             new[] { "#545", "#546", "#604" });
         ex.Register();
 

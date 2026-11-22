@@ -325,7 +325,7 @@ internal static class NewsWire
             "several Monqiz trading houses with Wehzek partners have closed their doors."));
 
         Report("Mobilization_Iza", SuzerainTokenName.RiziaCityIza, "Iza Celebrates, and Volunteers", P(
-            "In Iza, the news from Konstantium was greeted with church bells and fireworks. Su Omina banners, rarely seen in public, " +
+            "In Iza, the news from Konstantium was greeted with sanctuary bells and fireworks. Su Omina banners, rarely seen in public, " +
             "hung openly from balconies on the main square, and hundreds of young men queued outside the recruiting office before " +
             "it opened.",
             "Across town, the Wehzek quarter of Little Wraclawitz kept its shutters down. Police have been posted at its entrances " +
@@ -501,7 +501,7 @@ internal static class NewsWire
             Publish(key, "RH", $"Victory in Zille: {info.Target ?? "The Last Positions"} Taken", P(
                 $"{info.Codename} has achieved its objective. {a.Headline} The General Staff reports {a.EnemyDeadMen} enemy " +
                 $"soldiers killed, wounded or captured. {a.CitiesTakenSentence}",
-                "Church bells rang across Brenas when the news arrived. In Porte Drazon, the crowds outside the palace have not gone home."));
+                "Sanctuary bells rang across Brenas when the news arrived. In Porte Drazon, the crowds outside the palace have not gone home."));
             Publish(key + "_Farus", "RH", $"Mark Farus' From The Frontlines: {info.Target ?? "The Last Stand"}", P(
                 $"I write this from {target}, which this morning was Wehzek and this evening is Rizian. The streets still smell " +
                 "of smoke. An old woman pressed a loaf of bread into the hands of the first soldier she saw and would not let go of him.",
@@ -564,7 +564,7 @@ internal static class NewsWire
             Report(key + "_MaveNortus", SuzerainTokenName.RiziaCityMaveNortus, "The Wounded Come Home Through Mave Nortus", P(
                 $"Hospital trains from the {target} front pass through Mave Nortus day and night. Townswomen meet every train with " +
                 "water, bread and clean bandages.",
-                "The schoolhouse has become a field hospital, and the church a mortuary."));
+                "The schoolhouse has become a field hospital, and the sanctuary a mortuary."));
         }
 
         if (a.CitiesLost.Contains("Jales"))
@@ -699,7 +699,7 @@ internal static class NewsWire
                     "The Royal Herald salutes the sailors who gave their lives. Their sacrifice means fewer Wehzek guns at the front."));
                 Report(k, SuzerainTokenName.RiziaCitySallabes, "The Fleet Returns to Sallabes", P(
                     "The squadron that went into the strait has come back to Sallabes one ship short. The town turned out to meet it in " +
-                    "silence, and the harbor church rang its bell once for every man lost.",
+                    "silence, and the harbor sanctuary rang its bell once for every man lost.",
                     "The Admiralty reports that Wehzek convoys now cross only on moonless nights, and fewer of them reach Zille."));
                 break;
             case SupplyWar.Lever.Submarines:
@@ -711,7 +711,7 @@ internal static class NewsWire
                 {
                     Publish(k, "RH", "A Submarine Fails to Return", P(
                         "The Admiralty regrets to announce that one of His Majesty's submarines has not returned from patrol in the " +
-                        "Strait of Kreleck and must be presumed lost with all hands. The names of her crew will be read in every church in Sallabes."));
+                        "Strait of Kreleck and must be presumed lost with all hands. The names of her crew will be read in every sanctuary in Sallabes."));
                 }
 
                 break;
@@ -761,11 +761,24 @@ internal static class NewsWire
                 "Now comes the difficult part. Winning Zille was a war. Keeping it will be politics, and you have never been as good " +
                 "at politics as you think. Come to Thornbourgh when it's over and I'll teach you.",
                 "Beatrice\"")
-            : P("\"Romus,",
-                "I'm sorry. I mean that, which you'll know is rare. Rumburg will say all the proper things at the Alliance, and I will " +
-                "say some improper things in private about the generals who lost it for you.",
-                "Don't do anything rash for a while. Thrones survive lost wars. They rarely survive the second one.",
-                "Beatrice\""));
+            : kind == "defeat"
+                ? P("\"Romus,",
+                    "I'm sorry. I mean that, which you'll know is rare. Rumburg will say all the proper things at the Alliance, and I will " +
+                    "say some improper things in private about the generals who lost it for you.",
+                    "Don't do anything rash for a while. Thrones survive lost wars. They rarely survive the second one.",
+                    "Beatrice\"")
+                : Variables.GetBool(SupplyWar.VarRumburgWantsCeasefire)
+                    ? P("\"Romus,",
+                        "An end date. You did listen, after all. My ministers have stopped adding things up, which is the nearest they " +
+                        "come to applause.",
+                        "Half a province is not what you promised the crowds in Porte Drazon. It is, however, half a province more than " +
+                        "your father managed. I would stop there, if I were you, and I am very glad I am not.",
+                        "Beatrice\"")
+                    : P("\"Romus,",
+                        "A ceasefire. Not a defeat, and not quite anything else either. Rumburg will say at the Alliance that it was " +
+                        "statesmanship, and I shall say it with a straight face.",
+                        "Don't do anything rash for a while. A line on a map can be lived with. A second war over it rarely can.",
+                        "Beatrice\""));
 
         Report("End_Arcasia", "Rizia_Faction_Event_ATO", won ? "Arcasia Accepts the New Map" : "Arcasia Welcomes the Ceasefire", P(
             won
@@ -782,8 +795,11 @@ internal static class NewsWire
             won
                 ? "United Contana says it will never recognize the annexation of Zille by the Rizian monarchy, and the Contanan Security " +
                   "Pact has promised to raise the question at every session of the Alliance of Nations \"until justice is done.\""
-                : "The Central Committee in Kyow has called our defeat in Zille \"a victory for every free people,\" and promised that " +
-                  "the Contanan Security Pact will go on standing with Wehlen.",
+                : kind == "defeat"
+                    ? "The Central Committee in Kyow has called our defeat in Zille \"a victory for every free people,\" and promised that " +
+                      "the Contanan Security Pact will go on standing with Wehlen."
+                    : "The Central Committee in Kyow has called the ceasefire \"the first retreat of a crowned head in South Merkopa in a " +
+                      "generation,\" and promised that the Contanan Security Pact will go on standing with Wehlen until the line is gone.",
             won
                 ? "Words, for now. Contana has lost its investment in Zille and is unlikely to send good money after it."
                 : "Contanan advisers are now openly visible in Zille. Wehlen's patron has been paid back in prestige."));
@@ -799,7 +815,7 @@ internal static class NewsWire
                     "After twenty-five years under a foreign flag, the region of Zille has been returned to the Kingdom of Rizia by the " +
                     "Royal Army. The last Wehzek garrisons laid down their arms this morning, and Wehzek ships have been seen leaving " +
                     "Nanta for the mainland.",
-                    "Church bells are ringing in every town in Brenas. The King is expected in Zille within days."));
+                    "Sanctuary bells are ringing in every town in Brenas. The King is expected in Zille within days."));
                 Publish("End", "G", "Wehlen Concedes Zille as Garrison Surrenders", P(
                     "Wehlen's forces in Zille have surrendered to the Rizian army. President Smolak called the defeat \"a temporary " +
                     "injustice,\" but his government has asked the Alliance of Nations to supervise the evacuation of Wehzek civilians.",
@@ -844,13 +860,29 @@ internal static class NewsWire
                           "soldier will ever set foot here again.\" Wehzek reinforcements continue to cross the strait."));
                 break;
             default:
+                // A ceasefire agreed on Smolak's telephone call (SupplyVoices) has its terms covered by SupplyNews ("The Price of
+                // Quiet in Zille", "What Did the King Give Away?"): here only the Herald's version and the report.
+                string smolakAnswer = Variables.GetString(SupplyWar.VarSmolakAnswer);
+                bool byPhone = smolakAnswer is "accepted" or "countered";
                 Publish("End", "RH", "The Guns Fall Silent in Zille", P(
-                    "At His Majesty's request, the Alliance of Nations has brokered a ceasefire in Zille. Our soldiers hold every " +
-                    "position they have won, and not one of them will be given up at the negotiating table.",
+                    byPhone
+                        ? "President Smolak has asked for a ceasefire, and His Majesty, unwilling to spend one more Rizian life than " +
+                          "victory required, has granted it. Our soldiers hold every position they have won."
+                        : "At His Majesty's request, the Alliance of Nations has brokered a ceasefire in Zille. Our soldiers hold every " +
+                          "position they have won, and not one of them will be given up at the negotiating table.",
                     WorldSystems.ZilleCityHeld
                         ? "The Golden Banner flies over the city of Zille. The Royal Herald is confident that the rest of the region will " +
                           "follow it home, by the pen if not by the sword."
                         : "The Royal Herald is confident that the King's patience will achieve what our soldiers began."));
+                if (byPhone)
+                {
+                    Report("End_Ceasefire", SuzerainTokenName.RiziaCityPorteDrazon, "A Divided Zille", P(
+                        "The guns in Zille fell silent at midnight, as the King and President Smolak agreed. The ceasefire line runs " +
+                        "through the region, and Alliance observers are on their way to watch it. Families on either side of it cannot cross.",
+                        "Neither government calls this peace."));
+                    break;
+                }
+
                 Publish("End", "V", "A Line on a Map", P(
                     "The war is over, or at least it has stopped. The King asked for a ceasefire, and the Alliance he declared war in " +
                     "front of was kind enough to give him one.",

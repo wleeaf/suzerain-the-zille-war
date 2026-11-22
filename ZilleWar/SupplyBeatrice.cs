@@ -124,7 +124,15 @@ internal static partial class SupplyWar
         d.Say("Hangup", Narrator, "The line went dead. Beatrice never said goodbye on the telephone. She considered it common.", "End");
 
         // ---- the call where she says no
-        d.SayIf("NoMore", $"{pat} <= 0", Beatrice, "\"Romus. Before you ask, the answer is no.\"", "NoWhy");
+        d.SayIf("NoMore", $"{pat} <= 0", Beatrice, "\"Romus. Before you ask, the answer is no.\"", "NoRecall");
+        // What the King promised her in Thornbourgh (EarlyT7Diplomacy) is remembered.
+        d.Branch("NoRecall", "NoQuick", "NoRepay", "NoWhy");
+        d.SayIf("NoQuick", Eq(VarRumburgPromise, "quick"), Beatrice,
+            "\"You flew all the way to Thornbourgh to promise me the next offensive would end it. I wrote the date in my diary, Romus. I've " +
+            "had to turn the page twice since.\"", "NoWhy");
+        d.SayIf("NoRepay", Eq(VarRumburgPromise, "repay"), Beatrice,
+            "\"You gave me your word you'd repay every crate. My quartermasters have started counting them, and they are very good at " +
+            "counting.\"", "NoWhy");
         d.Branch("NoWhy", "NoPales", "NoDossier", "NoTwoWars", "NoTired");
         d.SayIf("NoPales", Eq(VarRumburgPriority, "pales"), Beatrice,
             "\"You told me to send my rifles south, to the Pales front. I took you at your word. There's nothing left over for Zille.\"",
@@ -142,7 +150,7 @@ internal static partial class SupplyWar
             "No1", "No2", "No3");
         d.Opt("No1", null, "\"Then I'll finish it without Rumburg.\"", null, T(VarRumburgSaidNo), "No1a");
         d.Say("No1a", Beatrice, "\"I expect you'll try. You always were a stubborn boy.\"", "Hangup");
-        d.Opt("No2", null, "\"Lena would never have left me to fight alone.\"", null, T(VarRumburgSaidNo) + Inc(NpRumburg, -1), "No2a");
+        d.Opt("No2", null, "\"Lena would never leave me to fight alone.\"", null, T(VarRumburgSaidNo) + Inc(NpRumburg, -1), "No2a");
         d.Say("No2a", Beatrice,
             "\"Don't you dare bring my sister into this over a telephone line.\" A long pause. \"Goodbye, Romus.\"", "Hangup");
         d.Opt("No3", null, "\"What would change your mind?\"", null, T(VarRumburgSaidNo) + T(VarRumburgWantsCeasefire), "No3a");

@@ -118,7 +118,12 @@ internal static class EarlyT5
         t.Choice("AN_R2", "\"And United Contana?\"", new[] { "AN_R2a" });
         t.Line("AN_R2a", Esquibel,
             "\"Silent, which worries me more than any speech. Their ambassador spent the night at the Wehzek embassy.\"", new[] { "Money1" });
-        t.Choice("AN_R3", "\"You disapprove, Laurento. Say it.\"", new[] { "AN_R3a" });
+        t.Choice("AN_R3", "\"You disapprove, Laurento. Say it.\"", new[] { "AN_R3w", "AN_R3a" });
+        // the King's confession in the Turn 4 drinking game ("a big, bloody war, just so I can prove myself")
+        t.Line("AN_R3w", Esquibel,
+            "\"At the winery you told us you wished for a big, bloody war, Your Majesty, so that you could prove yourself. Between the " +
+            "second bottle and the third. I decided it was the lie.\" He straightened his cuffs. \"Forgive me. That is not what you asked.\"",
+            new[] { "AN_R3a" }, condition: WarFlags.L(EarlyT4.VarConfessedWar));
         t.Line("AN_R3a", Esquibel,
             "\"I am a son of Brenas, Your Majesty. The Esquibels have estates in Zille, and so do the Sazons. I have wanted that land " +
             "back for as long as you have. I only wish we were taking it back with a pen.\"", new[] { "Money1" });
@@ -271,9 +276,16 @@ internal static class EarlyT5
         const string ask = "\"Our navy is fighting Wehlen as we speak. Could your ships arrive before the Zille campaign is over?\"";
         const string answer = "\"Ships, yes. Sailors, no. Valgsland sells equipment, Mr. Toras. It does not go to war against a friend of " +
                               "Contana. What you do with the hulls once they are yours is your own sin.\"";
-        t.Choice("Navy1", ask, new[] { "Navy1a" }, condition: Active, hooks: From(282));
+        // Valgsland has embargoed Rizia since the declaration (WorldEmbargo): the upgrade would have to come in by the back door.
+        const string answerEmbargo =
+            "\"Ships, yes. Our embargo is on Rizian trade, Mr. Toras, not on Valgslandian interests, and the Meftiem is a Valgslandian " +
+            "interest. The hulls would reach you from an Agnolian yard, on Agnolian paper. Sailors, no. Valgsland does not go to war " +
+            "against a friend of Contana. What you do with the hulls once they are yours is your own sin.\"";
+        t.Choice("Navy1", ask, new[] { "Navy1e", "Navy1a" }, condition: Active, hooks: From(282));
+        t.Line("Navy1e", Hegel, answerEmbargo, new[] { "#287" }, condition: SupplyWar.EmbargoOn);
         t.Line("Navy1a", Hegel, answer, new[] { "#287" });
-        t.Choice("Navy2", ask, new[] { "Navy2a" }, condition: Active, hooks: From(519));
+        t.Choice("Navy2", ask, new[] { "Navy2e", "Navy2a" }, condition: Active, hooks: From(519));
+        t.Line("Navy2e", Hegel, answerEmbargo, new[] { "#523" }, condition: SupplyWar.EmbargoOn);
         t.Line("Navy2a", Hegel, answer, new[] { "#523" });
         t.Register();
     }
@@ -441,7 +453,8 @@ internal static class EarlyT5
             ReplayWehlenTalksBookkeeping();
         }
 
-        if (!Variables.GetBool(VarCouncilOffered) && !GameState.StoryFragmentExistsInCurrentStep(CouncilFragment))
+        // A war already lost (or stopped) at the first operation has no council to hold about bonds, fronts and a season's costs.
+        if (!Variables.GetBool(VarCouncilOffered) && WarFlow.AtWar && !GameState.StoryFragmentExistsInCurrentStep(CouncilFragment))
         {
             try
             {

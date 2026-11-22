@@ -155,7 +155,7 @@ internal static class LateT8
         // Smolak's speech, one per outcome
         t.Line("On1", Narr, "President Smolak was at the podium before Nines had finished. He had brought no notes.", new[] { "On2" }, condition: Ongoing);
         t.Line("On2", Smolak, "\"Dear fellow leaders! Last year, in this very hall, the King of Rizia stood where I am standing and declared war. On a stage built for peace!\"", new[] { "On3" });
-        t.Line("On3", Smolak, "\"Since that day, Wehzek boys have been dying in Zille. A province Wehlen protected for twenty-eight years, while Rizia could not even protect its own King at a parade.\"", new[] { "On4" });
+        t.Line("On3", Smolak, "\"Since that day, Wehzek boys have been dying in Zille. A province Wehlen protected for twenty-five years, while Rizia could not even protect its own King at a parade.\"", new[] { "On4" });
         t.Line("On4", Smolak, "\"Wehlen asks this Alliance for an immediate ceasefire on the line where our armies stand tonight, and for observers to keep it. I am a man who respects the rule of law. Let us see whether the King of Rizia is one too.\"", new[] { "Reply" });
 
         t.Line("Lib1", Narr, "President Smolak walked to the podium slowly, like a man attending a funeral he had paid for.", new[] { "Lib2" }, condition: Lib);
@@ -298,7 +298,7 @@ internal static class LateT8
             new[] { "Smolak2On", "Smolak2Lib", "Smolak2Part", "Smolak2Lost" }, condition: War, script: "AddConversant(\"Wiktor Smolak (R)\");", hooks: Talk.From(269));
         t.Line("Smolak2On", Smolak, "\"Guilty of invading a peaceful province. Guilty of shelling a city full of people who never asked to be liberated. I second every word the Chancellor is about to say.\"",
             new[] { "Smolak3", "Smolak3Skip" }, condition: Ongoing);
-        t.Line("Smolak2Lib", Smolak, "\"Guilty of occupation. Guilty of driving Wehzek families out of homes they lived in for twenty-eight years. I second every word the Chancellor is about to say.\"",
+        t.Line("Smolak2Lib", Smolak, "\"Guilty of occupation. Guilty of driving Wehzek families out of homes they lived in for twenty-five years. I second every word the Chancellor is about to say.\"",
             new[] { "Smolak3", "Smolak3Skip" }, condition: Lib);
         t.Line("Smolak2Part", Smolak, "\"Guilty of starting a war it could not finish, and of sitting in Zille city as if it had. I second every word the Chancellor is about to say.\"",
             new[] { "Smolak3", "Smolak3Skip" }, condition: Part);
@@ -358,10 +358,14 @@ internal static class LateT8
             new[] { "BastardsR1", "BastardsR2" }, condition: And(CouncilLucita, Ongoing));
         t.Choice("BastardsR1", "\"I never joke about artillery.\"", new[] { "BastardsR3" });
         t.Choice("BastardsR2", "\"So did I, for a while.\"", new[] { "BastardsR3" });
-        t.Logic("BastardsR3", new[] { "Evidence", "Consulate", "State" });
+        t.Logic("BastardsR3", new[] { "Buried", "Evidence", "Consulate", "State" });
 
         // the Lespia evidence, if found and not yet published
         string found = "Variable[\"RiziaDLC.Zille_Discovered_LespianInvolvement\"] == true and Variable[\"RiziaDLC.Zille_Publicized_LespianInvolvement\"] ~= true";
+        // the consulate files the King had burned during the war (SupplyVoices "Bury"): the truth comes back by another road
+        t.Logic("Buried", new[] { "Bur_L", "Bur_Ta", "Bur_Ti" }, condition: And(found, "Variable[\"ZilleWar.Ramiro_Choice\"] == \"bury\""));
+        Councilor(t, "Bur", "\"Your Majesty had the consulate files burned in Zille. The name did not burn with them. Our own investigation has reached Héctor Ramiro by another road, and this time the evidence is ours, not Smolak's.\"",
+            new[] { "Evidence" });
         t.Logic("Evidence", new[] { "Ev_L", "Ev_Ta", "Ev_Ti" }, condition: found);
         Councilor(t, "Ev", "\"There is still the matter of the bombing. We know now who planted that device under the grandstand. If we publish, the world learns who started this war, and Smolak loses his best speech.\"",
             new[] { "EvPublish", "EvKeep", "EvLater" });
@@ -648,7 +652,10 @@ internal static class LateT8
         t.Line("On4", Smolak, "\"I'll be brief, because every hour we sit here, your boys and mine are lying in the same mud.\"", new[] { "On5" });
         t.Line("On5", Narr, "He slid a paper napkin across the table. On it, in his looping hand, were three words: line, observers, prisoners.", new[] { "On6" });
         t.Line("On6", Smolak, "\"A ceasefire on the line where our armies stand tonight. Alliance observers on both sides. Prisoners home by winter. Nobody wins, nobody loses, and we both go home and tell our people how brave we were.\"",
-            new[] { "OnTwo", "OnHub" });
+            new[] { "OnAgain", "OnTwo", "OnHub" });
+        // the same offer he made on the telephone during the war (SupplyVoices), refused then
+        t.Line("OnAgain", Smolak, "\"You will recognize it. It is the offer I made you on the telephone, the night you told me Zille was not for sale. The mud has not improved since. Neither has the offer, but neither has your army.\"",
+            new[] { "OnTwo", "OnHub" }, condition: $"{V(SupplyWar.VarSmolakAnswer)} == \"refused\"");
         t.Line("OnTwo", Smolak, "\"And forgive me, but two wars at once? Even I only fight one war at a time, and I have eight wives.\"", new[] { "OnHub" }, condition: PalesWar);
         t.Logic("OnHub", new[] { "OnCease", "OnRefuse", "OnPrisoners" });
         t.Choice("OnCease", "\"Freeze the line. Let the Alliance count the shells instead of us.\"", new[] { "OnCease2" }, script: Set(WarFlow.VarCeasefire, "true"));
@@ -675,7 +682,7 @@ internal static class LateT8
         t.Line("LibFree2", Smolak, "\"How very regal of you. I will tell their mothers it was my idea.\"", new[] { "Lib6" });
         t.Choice("LibRansom", "\"Your officers stay until Wehlen pays for what its garrison did to Zille.\"", new[] { "LibRansom2" }, cost: "+2 Budget",
             script: Set(VarPrisoners, "\"ransomed\"") + Add("RiziaDLC.Resources_Budget", 2) + Add("RiziaDLC.Diplomacy_Valgsland_NegotiatingPower", -1));
-        t.Line("LibRansom2", Smolak, "\"Ransom! From a king! Fine. Wehlen will pay for its officers. Think of it as rent for the last three years.\"", new[] { "Lib6" });
+        t.Line("LibRansom2", Smolak, "\"Ransom! From a king! Fine. Wehlen will pay for its officers. Think of it as the rent your father was too polite to charge.\"", new[] { "Lib6" });
         t.Choice("LibHold", "\"Your prisoners go home when Wehlen recognizes the border at the strait.\"", new[] { "LibHold2" }, script: Set(VarPrisoners, "\"held\""));
         t.Line("LibHold2", Smolak, "\"Then they will grow old in Rizia. I hope your cooks are patient.\"", new[] { "Lib6" });
         t.Line("Lib6", Smolak, "\"One more thing. In Konstantium, I will ask the Alliance to condemn you. It is nothing personal. A man must be seen to try.\"", new[] { "Lib7" });
@@ -688,7 +695,10 @@ internal static class LateT8
         t.Line("Part2", Narr, "President Smolak had come in person. So had I. Neither of us had planned to, and neither of us would admit it.",
             new[] { "Part3" }, script: "AddConversant(\"Wiktor Smolak (R)\");");
         t.Line("Part3", Smolak, "\"Your Majesty. Look at us. Two grown men and a schoolroom. If my teachers could see me now.\"", new[] { "Part4" });
-        t.Line("Part4", Smolak, "\"Here is the problem. You sit in Zille city. I sit in the hills above it. My men can watch your men shaving in the morning. This cannot go on forever.\"", new[] { "Part5" });
+        t.Line("Part4", Smolak, "\"Here is the problem. You sit in Zille city. I sit in the hills above it. My men can watch your men shaving in the morning. This cannot go on forever.\"", new[] { "Part4b", "Part5" });
+        // the King himself floated a vote in the House of Delegates (EarlyT7)
+        t.Line("Part4b", Smolak, "\"And I read in your own newspapers that the King of Rizia told his House of Delegates a vote might be the only way this ends. You see? We agree already. Only you said it first.\"",
+            new[] { "Part5" }, condition: WarFlags.L(EarlyT7.VarReferendumFloated));
         t.Line("Part5", Smolak, "\"So, my offer. You hand Zille city to the Alliance's observers, I keep the hills and the ports, and in five years the Zilleans vote. Very democratic. Very modern.\"", new[] { "PartHub" });
         t.Logic("PartHub", new[] { "PartLine", "PartRebuild", "PartSwap" });
         t.Choice("PartLine", "\"Zille city stays Rizian. Draw the line where it stands.\"", new[] { "PartLine2" }, script: Set(VarTerms, "\"line\""));

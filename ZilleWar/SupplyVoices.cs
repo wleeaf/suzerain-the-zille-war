@@ -20,6 +20,10 @@ internal static partial class SupplyWar
     private const string Discovered = "RiziaDLC.Zille_Discovered_LespianInvolvement";
     private const string Publicized = "RiziaDLC.Zille_Publicized_LespianInvolvement";
 
+    /// <summary>The Valgslandian and CSP embargo of WorldEmbargo is in force (same exclusions as its HUD line).</summary>
+    internal static readonly string EmbargoOn =
+        $"({Is(AnDeclaration.VarDeclared)} and {Not("RiziaDLC.Policy_Diplomacy_Caleqabiz_ValgslandCSP")} and {Not("RiziaDLC.Trait_CommieKing")})";
+
     // ------------------------------------------------------------------ Valgsland
 
     private static void RegisterHegel()
@@ -39,7 +43,12 @@ internal static partial class SupplyWar
             "\"From Chancellor Hegel, Your Majesty. His ambassador delivered it in person, with the face of a man reading out a will.\"", "Cable2");
         d.Say("Cable2", Esquibel,
             "\"'The Federal Republic of Valgsland notes with grave concern the war waged by the Kingdom of Rizia against a fraternal " +
-            "people.' He goes on like that for a page. Then he gets to the point. Three points, in fact.\"", "Cable3");
+            "people.' He goes on like that for a page. Then he gets to the point. Three points, in fact.\"", "Cable2b");
+        // The Valgslandian and CSP embargo (WorldEmbargo) has been in force since the declaration; the cable builds on it.
+        d.Branch("Cable2b", "Cable2E", "Cable3");
+        d.SayIf("Cable2E", EmbargoOn, Esquibel,
+            "\"He begins by reminding us that his embargo stays in force until the last Rizian soldier has left Wehzek soil. As if " +
+            "Councilor Werner would let us forget it. Then he moves on to what Valgsland might do next.\"", "Cable3");
         d.Say("Cable3", Esquibel,
             "\"First, the Wehzek miners around Isor. Valgslandian unions count hundreds of them as brothers, he says, and if any harm " +
             "comes to them, Valgsland will raise it at the Alliance of Nations and move for sanctions.\"", "Cable4");
@@ -83,7 +92,10 @@ internal static partial class SupplyWar
             "An assistant brought in the blue telephone. The operator announced Valgsland, and the line went so quiet I could hear " +
             "the Chancellor breathing before he spoke.", null, Music + $"AddConversant(\"{Hegel}\");", "Call1");
         d.Say("Call1", Hegel, "\"Mr. Toras. I will be brief, since you are busy.\"", "Why");
-        d.Branch("Why", "WhyCaleqabiz", "WhyLespia", "WhyBff", "WhySubs", "WhyCable");
+        d.Branch("Why", "WhyVillage", "WhyCaleqabiz", "WhyLespia", "WhyBff", "WhySubs", "WhyCable");
+        d.SayIf("WhyVillage", Eq(VarBludsIncident, "kept"), Hegel,
+            "\"Your Bludish mercenaries shot eleven villagers in the hills above Zille, and you kept them at the front. The photographs " +
+            "are pinned to the wall of my cabinet room, Mr. Toras. I have asked my ministers to look at them every morning.\"", "Demand");
         d.SayIf("WhyCaleqabiz", Is(VarLespiaCaleqabiz), Hegel,
             "\"Lespian warships now refuel at Caleqabiz. You have invited ATO into the Antacean, Mr. Toras. Do not be surprised when " +
             "the Contanan Security Pact answers.\"", "Demand");
@@ -96,7 +108,13 @@ internal static partial class SupplyWar
         d.SayIf("WhySubs", $"{N(Count(Lever.Submarines))} >= 2", Hegel,
             "\"Your submarines have been sighted twice near our patrol lines in the Markian approaches. Twice is not an accident.\"", "Demand");
         d.Say("WhyCable", Hegel, "\"My ambassador's cable received an answer in no language I recognize.\"", "Demand");
-        d.Say("Demand", Hegel,
+        d.Branch("Demand", "DemandE", "DemandPlain");
+        d.SayIf("DemandE", EmbargoOn, Hegel,
+            "\"Valgslandian destroyers are in the Markian Sea, and they will stay there. Here is how this ends quietly: your submarines " +
+            "stay south of the strait. Otherwise Valgsland will move for sanctions at the Alliance. And our embargo, which has so far " +
+            "let your cargo reach you through Agnolian and Sordish holds, will close that door as well. Any ship that has called at a " +
+            "Rizian port will be turned away from ours.\"", "Yield", "RefuseE");
+        d.Say("DemandPlain", Hegel,
             "\"Valgslandian destroyers are in the Markian Sea, and they will stay there. Here is how this ends quietly: your submarines " +
             "stay south of the strait. Otherwise Valgsland will move for sanctions at the Alliance, and in the meantime our ports will " +
             "be closed to Rizian cargo.\"", "Yield", "Refuse");
@@ -105,9 +123,10 @@ internal static partial class SupplyWar
             $"{V(VarValgslandStage)} = 2; " + stageDone, "Yield2");
         d.Say("Yield2", Hegel,
             "\"Good. You see, Mr. Toras, socialists and kings can agree on one thing at least. Fewer funerals.\"", "CallEnd");
-        d.Opt("Refuse", null, "\"Close your ports, then. Rizia will manage without Valgslandian cargo.\"", "-1 Budget Per Turn",
-            T(VarValgslandPorts) + $"{V(ModValgsland)} = -1; " + Inc(NpValgsland, -2) + S(VarValgslandCall, "defied") +
-            $"{V(VarValgslandStage)} = 2; " + stageDone, "Refuse2");
+        string refuse = T(VarValgslandPorts) + $"{V(ModValgsland)} = -1; " + Inc(NpValgsland, -2) + S(VarValgslandCall, "defied") +
+                        $"{V(VarValgslandStage)} = 2; " + stageDone;
+        d.Opt("Refuse", null, "\"Close your ports, then. Rizia will manage without Valgslandian cargo.\"", "-1 Budget Per Turn", refuse, "Refuse2");
+        d.Opt("RefuseE", null, "\"Tighten your embargo, then. Rizia has managed so far.\"", "-1 Budget Per Turn", refuse, "Refuse2");
         d.Say("Refuse2", Hegel, "\"Then we will see how well. Good day, Mr. Toras.\"", "CallEnd");
         d.Say("CallEnd", Narrator, "The line clicked and went dead. Hegel had never once called me Your Majesty.", "End");
         d.Finish();
@@ -129,7 +148,10 @@ internal static partial class SupplyWar
         d.SayDo("Phone", Esquibel,
             "\"President Smolak, Your Majesty. Through the Kyrutian embassy. He asked for you by name, and then by several other names.\"",
             $"AddConversant(\"{Esquibel}\"); AddConversant(\"{Smolak}\");", "Open");
-        d.Branch("Open", "OpenAgain", "OpenHeld", "OpenStrong", "OpenPlain");
+        d.Branch("Open", "OpenAgain", "OpenHeldFedo", "OpenHeld", "OpenStrong", "OpenPlain");
+        d.SayIf("OpenHeldFedo", $"{held} and {Is(CityEvents.Flag("Zille_BannerRaised"))}", Smolak,
+            "\"Your Majesty. Your soldiers are sleeping in my harbor, in my hotels, and in the square that had my name on it until they " +
+            "unscrewed it. Fedo Square. How very old-fashioned. I hope the beds are comfortable.\"", "Offer");
         d.SayIf("OpenAgain", $"{calls} >= 2", Smolak,
             "\"Your Majesty. I will be shorter this time. My offer has improved, because my situation has not.\"", "Offer");
         d.SayIf("OpenHeld", held, Smolak,
@@ -269,7 +291,15 @@ internal static partial class SupplyWar
             "firm, CircuitRise Systems, and went to a man named Héctor Ramiro.\"", "F3");
         d.Say("F3", Esquibel,
             "\"Ramiro is a political officer at the Lespian consulate in Zille, Your Majesty. In the diplomatic quarter, everyone knows " +
-            "what that title means. He's a spy, and he has diplomatic immunity.\"", "F4");
+            "what that title means. He's a spy, and he has diplomatic immunity.\"", "F3b");
+        d.Branch("F3b", "F3Kept", "F3Burned", "F4");
+        d.SayIf("F3Kept", Eq(AnDeclaration.VarLespianNote, "kept"), Esquibel,
+            "He touched his breast pocket, where I knew he still kept Alvarez's note from Konstantium. \"'Practical arrangements. " +
+            "Discreetly.' He must have had it written before you stood up to speak, Your Majesty. I wondered at the time how he could be " +
+            "so well prepared.\"", "F4");
+        d.SayIf("F3Burned", Eq(AnDeclaration.VarLespianNote, "burned"), Esquibel,
+            "\"You burned his note in Konstantium so that Lespia's fingerprints would not be on this war, Your Majesty. It seems " +
+            "they were on it before it began.\"", "F4");
         d.Branch("F4", "F4Deal", "F4NoDeal");
         d.SayIf("F4Deal", $"{N(Count(Lever.Lespia))} > 0", Esquibel,
             "\"If this is true, Prime Minister Alvarez lit the fuse that started this war, and now he is selling us the bucket of water.\"", "F5");

@@ -39,8 +39,15 @@ internal static class EarlyT7Diplomacy
         Vanilla.Require(conv, 1048, Peace);
         Vanilla.Require(conv, 1099, Peace);   // "If Smolak found out, he'd hold on to Zille forever."
 
-        t.Variant("Pry868", 868, new[] { 867 }, Act, Beatrice,
+        // Rumburg is only starving Smolak of oil money if it stopped buying Wehzek oil (Turn 3 deal, or the embargo on the telephone).
+        const string rumburgEmbargo =
+            "(Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_HighEnergyExport\"] == true or Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_AverageEnergyExport\"] == true " +
+            "or (Variable[\"ZilleWar.Lever_Embargo\"] or 0) > 0)";
+        t.Variant("Pry868", 868, new[] { 867 }, $"({Act}) and {rumburgEmbargo}", Beatrice,
             "\"And what of Rumburg's help against Smolak? Whose oil embargo do you imagine is starving his garrison in Zille?\"",
+            new[] { "#897", "#882", "#885", "#886", "#888" });
+        t.Variant("Pry868b", 868, new[] { 867 }, $"({Act}) and not {rumburgEmbargo}", Beatrice,
+            "\"And what of Rumburg's help against Smolak? Who do you imagine has been standing beside you at the Alliance while Valgsland howls?\"",
             new[] { "#897", "#882", "#885", "#886", "#888" });
         t.Variant("Contacts933", 933, new[] { 886, 934 }, Act, Beatrice,
             "\"We have certain contacts within Wehlen who could make your war in Zille a great deal shorter.\"", new[] { "#935" });
@@ -91,9 +98,14 @@ internal static class EarlyT7Diplomacy
             "profit from the winning.\"", new[] { "BffMenu" });
         t.Logic("BffMenu", new[] { "Bff1", "Bff2" });
 
-        t.Line("Fat", Beatrice,
+        t.Logic("Fat", new[] { "FatEmb", "FatPlain" });
+        t.Line("FatEmb", Beatrice,
             "\"I'll be frank with you. My oil embargo, my rifles, my Bluds. Rumburg has been fighting your war in Zille at a discount, and " +
             "my ministers have begun to notice. There is a limit to Rumburg's generosity.\"",
+            new[] { "Fat1", "Fat2", "Fat3" }, condition: rumburgEmbargo, script: Set(VarRumburgWarned, "true"));
+        t.Line("FatPlain", Beatrice,
+            "\"I'll be frank with you. My voice at the Alliance, my rifles, my Bluds. Rumburg has been fighting your war in Zille at a " +
+            "discount, and my ministers have begun to notice. There is a limit to Rumburg's generosity.\"",
             new[] { "Fat1", "Fat2", "Fat3" }, script: Set(VarRumburgWarned, "true"));
         t.Choice("Fat1", "\"The next offensive will end it. You'll have your gas and your gold before winter.\"", new[] { "Fat1r" },
             script: Str(VarRumburgPromise, "quick"));

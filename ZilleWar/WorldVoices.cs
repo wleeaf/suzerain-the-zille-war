@@ -13,7 +13,7 @@ namespace ZilleWar;
 internal static class WorldVoices
 {
     private const string VarZilleHeldTurn = "ZilleWar.World_ZilleHeldTurn";
-    private const string VarDefector = "ZilleWar.World_Defector";
+    internal const string VarDefector = "ZilleWar.World_Defector";
 
     public static void Register()
     {
@@ -128,7 +128,7 @@ internal static class WorldVoices
                     "shipping. For now, most people grumble and pay. \"It is for Zille,\" one woman told a reporter, counting her coins."));
                 Dispatch($"Refugees_T{Turn}", SuzerainTokenName.RiziaCityMaveNortus, "Refugees on the Road to Dapalle", P(
                     "Families from the Zille border villages, Rizian and Wehzek alike, have been arriving in Mave Nortus on foot and by cart. " +
-                    "The army has opened relief stations in the grain warehouses by the station, and the churches of Brenas are collecting " +
+                    "The army has opened relief stations in the grain warehouses by the station, and the sanctuaries of Brenas are collecting " +
                     "blankets.",
                     "Relief officials say the money set aside for the refugees will be spent within weeks, and they have asked the Crown " +
                     "for more."));
@@ -147,7 +147,7 @@ internal static class WorldVoices
                 break;
             default:
                 Dispatch(key, SuzerainTokenName.RiziaCityIza, "A Nation Tired of War", P(
-                    "In Iza, where the declaration was greeted with church bells, the recruiting office now closes at noon for lack of " +
+                    "In Iza, where the declaration was greeted with sanctuary bells, the recruiting office now closes at noon for lack of " +
                     "volunteers. Black armbands are a common sight in the market, and the Su Omina banners have quietly come down from " +
                     "the balconies.",
                     "Police informants report that the war is now discussed openly in the cafes, and not kindly. The word most often " +
@@ -184,7 +184,7 @@ internal static class WorldVoices
             News(key, "RH", "Rizia Answers the Call", P(
                 "From the mountain villages of Montaklar to the fishing ports of Valenqiris, the sons of Rizia have answered their " +
                 "King's call. Recruiting offices report more volunteers than they can equip, and in Iza the queue stretched around the " +
-                "cathedral twice.",
+                "Grandsanctuary twice.",
                 strained
                     ? "At the front, the news is good. Wehzek prisoners speak of half rations and empty magazines, and our officers say " +
                       "the garrison will not hold out much longer."
@@ -314,11 +314,20 @@ internal static class WorldVoices
     {
         if (w == 2)
         {
+            // The Turn 5 council may or may not have issued war bonds (EarlyT5.VarWarBonds).
+            bool bonds = Variables.GetBool(EarlyT5.VarWarBonds);
             Dispatch("WarBonds", SuzerainTokenName.RiziaCityPorteDrazon, "The Diaspora Sends Its Savings", P(
-                "Families who left Zille during the lease and the Wehlen Civil War, now settled in Thornbourgh, Ventrie City and the " +
-                "ports of Agnolia, have been buying Rizian war bonds in numbers that surprised the treasury. Some of the letters that " +
-                "come with the money are addressed simply to \"the King, for Zille.\"",
-                "Councilor Werner's office expects the bonds to bring in a modest but welcome sum for as long as the war lasts."));
+                bonds
+                    ? "Families who left Zille during the lease and the Wehlen Civil War, now settled in Thornbourgh, Ventrie City and the " +
+                      "ports of Agnolia, have been buying Rizian war bonds in numbers that surprised the treasury. Some of the letters that " +
+                      "come with the money are addressed simply to \"the King, for Zille.\""
+                    : "Families who left Zille during the lease and the Wehlen Civil War, now settled in Thornbourgh, Ventrie City and the " +
+                      "ports of Agnolia, have been sending money to the palace in plain envelopes, addressed simply to \"the King, for Zille.\" " +
+                      "The Crown issued no war bonds, so the treasury has had to open a special account for gifts.",
+                bonds
+                    ? "Councilor Werner's office expects the bonds to bring in a modest but welcome sum for as long as the war lasts. It has " +
+                      "not forgotten that every one of them must one day be paid back."
+                    : "Councilor Werner's office calls the sums modest, and the letters the best news it has had since the declaration."));
             News("Volunteers", "RH", "They Came Home to Fight", P(
                 "Among the volunteers at the Mave Nortus depot this week were forty young men who had never set foot in Rizia. Born " +
                 "in Thornbourgh and Perla to families who fled Zille, they paid their own passage to enlist.",
@@ -352,6 +361,14 @@ internal static class WorldVoices
         if (WorldSystems.ZilleCityHeld && heldTurn == 0)
         {
             Variables.Set(VarZilleHeldTurn, Turn);
+            // Foreshadows the consulate files (SupplyVoices "The Consulate Files", or the Turn 8 security brief).
+            Dispatch("DiplomaticQuarter", WorldSystems.ZilleToken, "The Diplomatic Quarter", P(
+                "The consulates on Zille's harbor front came through the fighting with little more than broken windows. Most of their " +
+                "staff left on the last ferries before our columns arrived. The Lespian consulate is the exception: its people stayed, " +
+                "kept their shutters closed, and burned paper in the courtyard for two days.",
+                "Next door, the Wehzek police headquarters was set alight by its own officers as they withdrew. The fire went out in the " +
+                "rain before it reached the basement archives. Our engineers have been told to box up whatever is left and send it to " +
+                "Porte Drazon unread."));
         }
         else if (WorldSystems.ZilleCityHeld && Turn > heldTurn)
         {
@@ -400,12 +417,18 @@ internal static class WorldVoices
             "every fuel train and every ship committed to one front is now argued over by the officers of the other.",
             "The staff's first assessment is blunt: the army can attack on one front and hold on the other, but not attack on both " +
             "at once for long."));
+        // Beatrice may already have told him on the telephone that Rumburg is done paying for Zille (SupplyBeatrice).
+        bool saidNo = Variables.GetBool(SupplyWar.VarRumburgSaidNo);
         Dispatch("TwoFronts_Rumburg", SuzerainTokenName.RiziaCountryRumburg, "A Letter from Queen Beatrice", P(
             "\"Romus,",
             "Two wars. My ministers asked me this morning whether my brother-in-law had a plan, and for once I had nothing clever to " +
             "say to them.",
-            "Rumburg will stand by you in Pales, as it has in Zille. But I am not made of money, whatever they say in Wraclawitz, and " +
-            "I am not going to pay for both of your adventures twice over. Finish one of them. Soon.",
+            saidNo
+                ? "I told you on the telephone that Rumburg could do no more for Zille. I did not imagine you would take it as an " +
+                  "invitation to start a second war. Rumburg will honor what it owes GRACE in Pales, and not one crate more. Finish one " +
+                  "of them. Soon."
+                : "Rumburg will stand by you in Pales, as it has in Zille. But I am not made of money, whatever they say in Wraclawitz, and " +
+                  "I am not going to pay for both of your adventures twice over. Finish one of them. Soon.",
             "Beatrice\""));
         Dispatch("TwoFronts_Wehlen", SuzerainTokenName.RiziaCountryWehlen, "Smolak Salutes Pales", P(
             "President Smolak has sent a public message of solidarity to Grand Duke Axel Reinhart, calling Pales and Wehlen \"two " +
@@ -469,6 +492,48 @@ internal static class WorldVoices
                     "their property, their schools and their right to worship. Most of them were born in the region during the lease.",
                     "The administration has promised an answer from Porte Drazon. Su Omina has promised an answer of its own, and the " +
                     "delegation took the second promise more seriously than the first."));
+            }
+
+            return;
+        }
+
+        // Elena Werner's warning at the Turn 5 council: patriotism is the cheapest money there is, until the war goes badly.
+        if ((WorldSystems.Defeated || WorldSystems.Ceasefire) && since == 1 && Variables.GetBool(EarlyT5.VarWarBonds) &&
+            WorldSystems.Once("R_WarBondsDue"))
+        {
+            Il2CppPixelCrushers.DialogueSystem.Lua.Run(
+                "Variable[\"RiziaDLC.Resources_Budget\"] = (Variable[\"RiziaDLC.Resources_Budget\"] or 0) - 1");
+            Report("W_WarBondsDue", SuzerainTokenName.RiziaCityPorteDrazon, "The War Bonds Fall Due", P(
+                WorldSystems.Defeated
+                    ? "The war bonds issued after Konstantium now change hands on the Porte Drazon exchange at a third of their face value. " +
+                      "Since the news from Zille, small holders have queued outside the Royal Treasury every morning to sell them back."
+                    : "The war bonds issued after Konstantium were sold on the promise of a Rizian Zille. With a ceasefire line through the " +
+                      "province, they now change hands at half their face value, and small holders have begun queueing at the Royal Treasury.",
+                "Councilor Werner has bought back the first of them to stop the panic, at a cost of one unit of budget. Her covering note " +
+                "to the palace is a single line: \"I said patriotism would become the most expensive money there is. I take no pleasure in " +
+                "being right.\""));
+        }
+
+        // A lost war that still holds Zille city (the "divided" outcome): the army falls back on the city, not across the river.
+        if (WorldSystems.Defeated && WorldSystems.ZilleCityHeld)
+        {
+            if (since == 1)
+            {
+                Dispatch("ArmyHolds", WorldSystems.ZilleToken, "Back to the City Walls", P(
+                    "The Royal Army has fallen back from the hills to a ring of trenches around Zille city. The harbor and the old town are " +
+                    "still ours. Everything beyond the last tram stop is Wehzek again, and Wehzek artillery spotters can see our sentries " +
+                    "change the guard.",
+                    "Refugees from the hill villages, who cheered our columns a few weeks ago, now crowd the warehouses on the waterfront. " +
+                    "Most of them say they cannot go back."));
+                Dispatch("ReprisalsHills", WorldSystems.ZilleToken, "Reprisals in the Hills", P(
+                    "Our sources behind the Wehzek lines report arrests in every village that welcomed our troops. The Ariana Toras " +
+                    "Association's former organizers are being sought by name, and the families of Su Omina members have been ordered to leave.",
+                    "In Zille city itself, people have begun asking our officers, quietly, what will happen to them if the army leaves."));
+                News("DefeatHeld", "V", "Half a Victory, Whole Graves", P(
+                    "The King still holds Zille city, and the palace would like us to call that a success. It is a city surrounded on three " +
+                    "sides, supplied by sea, and claimed by the army that just beat ours in the hills.",
+                    "The King owes the nation an explanation. He also owes the people of the hill villages, who hung out our flag and are " +
+                    "now paying for it, something better than silence."));
             }
 
             return;

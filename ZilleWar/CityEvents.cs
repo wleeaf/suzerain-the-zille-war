@@ -125,7 +125,7 @@ internal static class CityEvents
                     Add(Valgsland, 1);
                     Add(Rumburg, 1);
                     News("ZilleRestraint", "G", "Rizian Troops Guard Wehzek Quarter in Zille",
-                        "Foreign correspondents in Zille report that Rizian soldiers have been posted outside Wehzek homes and churches in the " +
+                        "Foreign correspondents in Zille report that Rizian soldiers have been posted outside Wehzek homes and sanctuaries in the " +
                         "harbor district, on the King's orders. Looting has been rare, and the military police have made arrests among " +
                         "Rizian civilians as well.",
                         "Even Valgish radio, which had promised its listeners a massacre, conceded that the city was calm.");

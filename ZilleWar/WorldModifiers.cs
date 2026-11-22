@@ -133,7 +133,7 @@ internal static class WorldModifiers
             "\n\nOrder holds, but it is held by soldiers, and the city's Wehzek residents are waiting to see what kind of masters they have."),
         new("ZilleWar_Order_ZilleRefugees", "Order", "Medium", SitRefugees, "Refugees from Zille",
             "Families fleeing the fighting in Zille, Rizian and Wehzek alike, crowd the roads into Mave Nortus, Dapalle and Jales. " +
-            "Relief stations run by the army and the churches struggle to cope. \n\nOld resentments travel with the refugees, and " +
+            "Relief stations run by the army and the sanctuaries struggle to cope. \n\nOld resentments travel with the refugees, and " +
             "the Wehzek quarters of Brenas feel them first."),
         new("ZilleWar_Economy_ZilleReconstruction", "Economy", "Medium", SitReconstruction, "Reconstruction of Zille",
             "The harbor, the rail line to Nanta and the power stations that serve the mines were damaged in the fighting. Engineers " +

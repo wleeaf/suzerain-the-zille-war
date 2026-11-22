@@ -142,9 +142,9 @@ internal static partial class SupplyWar
     private const string VarSubPatrols = "ZilleWar.Call_SubPatrolsSinceLoss";
     private const string VarPatienceSet = "ZilleWar.Rumburg_PatienceSet";
     private const string VarTwoWarsPenaltyTurn = "ZilleWar.Rumburg_TwoWarsTurn";
-    private const string VarDebtTurn = "ZilleWar.Rumburg_DebtTurn";
     private const string VarLespiaDealTurn = "ZilleWar.Lespia_DealTurn";
     private const string VarStraitThin = "ZilleWar.Lespia_StraitThin";
+    private const string VarGrudgeApplied = "ZilleWar.Lespia_GasGrudgeApplied";
     private const string VarStraitTurns = "ZilleWar.Lespia_StraitTurns";
     private const string VarRamiroConfronted = "ZilleWar.Ramiro_Confronted";
     private const string VarRamiroOutcome = "ZilleWar.Ramiro_ConfrontOutcome";   // "recalled" | "compensated" | "sentaway" | "free"
@@ -158,6 +158,10 @@ internal static partial class SupplyWar
     private const string VarSaltanaGulf = "ZilleWar.Saltana_GulfFavour";
     private const string VarPhotoBoats = "ZilleWar.WarRoom_PhotoBoats";            // "shadow" | "ignore"
     private const string VarDefector = "ZilleWar.WarRoom_Defector";
+    /// <summary>The Bludish companies' massacre near Zille: "trial" | "home" | "kept" ("" before it happens).</summary>
+    public const string VarBludsIncident = "ZilleWar.WarRoom_BludsIncident";
+    /// <summary>What came of the Lespian photographs: "raid" | "expelled" | "silent" | "returned" | "kept".</summary>
+    public const string VarPhotoPayoff = "ZilleWar.WarRoom_PhotoPayoff";
     private const string VarBffFirstTurn = "ZilleWar.Rumburg_BffFirstTurn";
     private const string VarPriorityApplied = "ZilleWar.Rumburg_PriorityApplied";
     private const string VarWarnedApplied = "ZilleWar.Rumburg_WarnedApplied";
@@ -165,6 +169,7 @@ internal static partial class SupplyWar
     // ---- read from the Turns 4-7 module
     private const string VarRumburgPriority = "ZilleWar.E7_RumburgPriority";   // "zille" | "pales" | "both"
     private const string VarRumburgWarned = "ZilleWar.E7_RumburgWarned";
+    private const string VarRumburgPromise = EarlyT7.VarRumburgPromise;   // "quick" | "repay" | "none"
     private const string VarLespiaBetrayedT5 = "ZilleWar.E5_LespiaBetrayed";
     private const string VarAlvarezGasPriceT6 = "ZilleWar.E6_AlvarezGasPrice"; // "paid" | "refused" | "caleqabiz"
 
@@ -179,7 +184,7 @@ internal static partial class SupplyWar
     private static readonly string[] IntVars =
     {
         VarRumburgDebt, VarRumburgCredits, ModRumburgCredit, VarRumburgPatience, ModValgsland, VarValgslandStage,
-        VarBeatriceCalls, VarAlvarezCalls, VarWarRoomMeetings, VarSubPatrols, VarTwoWarsPenaltyTurn, VarDebtTurn,
+        VarBeatriceCalls, VarAlvarezCalls, VarWarRoomMeetings, VarSubPatrols, VarTwoWarsPenaltyTurn,
         VarLespiaDealTurn, VarStraitTurns, VarValgslandStageTurn, VarSmolakCalls, VarSmolakTurn, VarLastOfferTurn,
         VarUpkeepTurn, VarBffFirstTurn,
     };
@@ -189,13 +194,13 @@ internal static partial class SupplyWar
         VarEmbargoCounted, VarPatienceSet, VarRumburgSaidNo, VarRumburgWantsCeasefire, VarDossier, VarLespiaStrait,
         VarLespiaCaleqabiz, VarLespiaGasDeal, VarLespiaMitz, VarLespiaPaid, VarLespiaWithdrawn, VarRamiroFound,
         VarRamiroConfronted, VarStraitThin, VarAlvarezGiftDone, VarValgslandPorts, VarSubsGrounded, VarAureusRecalled,
-        VarMorellaAircraft, VarSaltanaCalled, VarSaltanaGulf, VarDefector, VarPriorityApplied, VarWarnedApplied,
+        VarMorellaAircraft, VarSaltanaCalled, VarSaltanaGulf, VarDefector, VarPriorityApplied, VarWarnedApplied, VarGrudgeApplied,
     };
 
     private static readonly string[] StringVars =
     {
         VarRamiro, VarRamiroOutcome, VarAlvarezPalesDone, VarAlvarezGasDone, VarValgslandCable, VarValgslandCall,
-        VarSmolakAnswer, VarCeasefireTerms, VarPhotoBoats,
+        VarSmolakAnswer, VarCeasefireTerms, VarPhotoBoats, VarBludsIncident, VarPhotoPayoff,
     };
 
     /// <summary>Vanilla numbers our scripts do arithmetic on.</summary>
@@ -299,7 +304,7 @@ internal static partial class SupplyWar
 
         foreach ((string what, Action step) in new (string, Action)[]
                  {
-                     ("numbers", EnsureNumbers), ("upkeep", Upkeep), ("gas contract", GasContract), ("modifiers", SupplyModifiers.Install), ("calls", Offer),
+                     ("numbers", EnsureNumbers), ("grudges", Grudges), ("upkeep", Upkeep), ("gas contract", GasContract), ("modifiers", SupplyModifiers.Install), ("calls", Offer),
                      ("levers", ReportNewLevers), ("news", SupplyNews.OnStep),
                  })
         {
@@ -315,6 +320,19 @@ internal static partial class SupplyWar
     }
 
     // ------------------------------------------------------------------ per turn
+
+    /// <summary>
+    /// Alvarez's "my admirals do get bored at Kreleck" when the King refused his gas price at the Turn 6 ceremony (EarlyT6):
+    /// the next turn his patrols in the strait are thinner, exactly as he warned.
+    /// </summary>
+    private static void Grudges()
+    {
+        if (Str(VarAlvarezGasPriceT6) == "refused" && !Variables.GetBool(VarGrudgeApplied) && Variables.GetBool(VarLespiaStrait))
+        {
+            Variables.Set(VarGrudgeApplied, true);
+            Variables.Set(VarStraitThin, true);
+        }
+    }
 
     /// <summary>
     /// Lespia's price for the strait: six units of Aureus gas to LesPower every turn for the price of two, from the turn the gas
@@ -500,7 +518,8 @@ internal static partial class SupplyWar
         bool palesTopic = Variables.GetBool(PalesWar) && Variables.GetInt(LespianPalesSupport) > 0 &&
                           Str(VarAlvarezPalesDone).Length == 0;
         const bool gasTopic = false;   // the gas is a standing per-turn contract
-        return palesTopic || gasTopic || !Variables.GetBool(VarAlvarezGiftDone);
+        bool photoTopic = Str(VarPhotoPayoff) == "expelled" && !Variables.GetBool(VarAlvarezPhotoSaid);
+        return palesTopic || gasTopic || photoTopic || !Variables.GetBool(VarAlvarezGiftDone);
     }
 
     private static bool ConsulateReady(int w) =>
@@ -529,7 +548,7 @@ internal static partial class SupplyWar
 
         string cable = Variables.GetString(VarValgslandCable);
         return cable is "defied" or "stalled" || Variables.GetInt(Count(Lever.BffRaids)) > 0 || Variables.GetBool(VarLespiaCaleqabiz) ||
-               Variables.GetInt(Count(Lever.Submarines)) >= 2;
+               Variables.GetInt(Count(Lever.Submarines)) >= 2 || Str(VarBludsIncident) == "kept";
     }
 
     // The vanilla Morella negotiations already bring Saltana to the table in Turn 5.

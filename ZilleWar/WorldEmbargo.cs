@@ -71,7 +71,7 @@ internal static class WorldEmbargo
             NewsWire.Report("Embargo", SuzerainTokenName.RiziaCountryValgsland, "A Contanan Embargo", NewsWire.P(
                 "Chancellor Hegel's government has announced, with the support of United Contana, that trade with Rizia is suspended " +
                 "until the war in Zille ends. Shipments already at sea will be turned back; contracts in force are frozen.",
-                "Minister Werner estimates the loss at two units of budget every turn. Our embassy notes that the measure was drafted " +
+                "Councilor Werner estimates the loss at two units of budget every turn. Our embassy notes that the measure was drafted " +
                 "before the King had finished his speech in Konstantium. Valgsland, it seems, had been waiting for a reason."));
         }
     }

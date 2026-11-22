@@ -48,8 +48,78 @@ internal static partial class SupplyWar
         d.Staff("BriefLater", "\"The convoys still come, Your Majesty. Fewer than before, but they come.\"",
             "\"The convoys still come, Your Majesty. Fewer than before, but they come.\"", "Surprise");
 
-        // ---- one surprise per meeting at most
-        d.Branch("Surprise", "SurPhoto", "SurDefector", "Hub");
+        // ---- one surprise per meeting at most. The Bludish companies and the Lespian cameras pay off what was set up earlier
+        //      (Beatrice's "they bite", the photographs of our harbors).
+        d.Branch("Surprise", "SurBluds", "SurRaid", "SurCaught", "SurPhoto", "SurDefectorTwo", "SurDefector", "Hub");
+
+        string bluds = $"{N(Count(Lever.BffFighters))} > 0 and {N(VarBffFirstTurn)} > 0 and {N(VarBffFirstTurn)} < {TurnLua} and " +
+                       $"{N(ZilleCampaign.VarOpsDone)} >= 1 and {V(VarBludsIncident)} == \"\"";
+        string dropMercs = $"if {N(Mercs)} >= 2 then {V(Mercs)} = {N(Mercs)} - 2 else {V(Mercs)} = 0 end; ";
+        d.StaffIf("SurBluds", bluds,
+            "\"Before we start, Your Majesty. The Bludish companies. A Wehzek sniper killed two of them near a village in the hills above " +
+            "Zille, and that night they went back to find him. They found the village instead. Eleven dead, and not one of them a " +
+            "soldier. A Geopolitico stringer was in the next valley. He has photographs.\"",
+            "\"Your Majesty, before anything else. The Bludish companies. A Wehzek sniper killed two of their men near a village above " +
+            "Zille, and that night they went back for him. They found the village instead. Eleven dead, none of them soldiers. A " +
+            "foreign reporter was close enough to take photographs.\"", "BludsMenu");
+        d.Branch("BludsMenu", "BludsTrial", "BludsHome", "BludsKeep");
+        d.Opt("BludsTrial", null, "\"Court-martial the men who did it. In Zille, in public, with that reporter in the front row.\"",
+            "Loses the Bludish Companies",
+            dropMercs + S(VarBludsIncident, "trial") + Inc(NpValgsland, 1) + Inc(NpRumburg, -1) + Inc(VarRumburgPatience, -1), "BludsTrial2");
+        d.Staff("BludsTrial2",
+            "\"The rest of them will desert before the verdict. Good riddance. Queen Beatrice will take it personally, of course. They " +
+            "were her Bluds before they were ours.\"",
+            "\"The rest of them will be gone before the verdict, Your Majesty. And the Queen of Rumburg will take it personally.\"", "Hub");
+        d.Opt("BludsHome", null, "\"Put them on a train to the border tonight. Quietly.\"", "Loses the Bludish Companies",
+            dropMercs + S(VarBludsIncident, "home"), "BludsHome2");
+        d.Staff("BludsHome2",
+            "\"Quietly. The photographs won't be quiet, Your Majesty, but the trains will be.\"",
+            "\"The trains will be quiet, Your Majesty. I can't promise the same of the photographs.\"", "Hub");
+        d.Opt("BludsKeep", null, "\"They stay at the front. Wehlen has shot more Bluds than that in a single winter.\"", "+1 Authority",
+            S(VarBludsIncident, "kept") + Inc(Authority, 1) + Inc(NpValgsland, -2) + Inc(NpSordland, -1), "BludsKeep2");
+        d.Staff("BludsKeep2",
+            "\"As you wish. I'll keep them where the reporters aren't. That is the best I can do.\"",
+            "\"As you wish, Your Majesty. I'll keep them away from the villages. That is the best I can promise.\"", "Hub");
+
+        // the photographs of our harbors, one meeting after the Lespian cameras were reported
+        string photoOpen = $"{meetings} >= 3 and {V(VarPhotoPayoff)} == \"\"";
+        d.StaffIf("SurRaid", $"{photoOpen} and {Eq(VarPhotoBoats, "ignore")}",
+            "\"Wehzek aircraft came over Fort Ales at first light. Six of them. They went straight for the fuel depot and the shell stores, " +
+            "and they never once circled to look. They knew exactly where to go, Your Majesty. Somebody gave them a map, and I can think " +
+            "of only one navy that has photographed every berth in that harbor.\"",
+            "\"Wehzek aircraft hit Fort Ales at first light, Your Majesty. The fuel depot and the shell stores, and nothing else. They " +
+            "knew where to go. Someone gave them the pictures, and only the Lespians have been taking them.\"",
+            "RaidMenu");
+        d.Do("RaidMenu", S(VarPhotoPayoff, "raid") + $"if {N("RiziaDLC.Resources_Military_Equipment")} >= 1 then " +
+                         Inc("RiziaDLC.Resources_Military_Equipment", -1) + "end; ", "RaidExpel", "RaidSilent");
+        d.Opt("RaidExpel", null, "\"Expel the Lespian naval attaché. Today.\"", "+1 Authority",
+            S(VarPhotoPayoff, "expelled") + Inc(Authority, 1) + Inc(NpLespia, -2) + T(VarStraitThin), "RaidExpel2");
+        d.Staff("RaidExpel2",
+            "\"With pleasure. Alvarez will thin out his patrols to show us he's offended. Let him. At least the next photographs will be " +
+            "taken from farther away.\"",
+            "\"I'll see to it, Your Majesty. Expect fewer Lespian ships in the strait for a while. Alvarez will want us to notice.\"", "Hub");
+        d.Opt("RaidSilent", null, "\"Say nothing. Let Alvarez think we haven't noticed.\"", null, S(VarPhotoPayoff, "silent"), "RaidSilent2");
+        d.Staff("RaidSilent2",
+            "\"Then I'll move the ships every night, and his cameras can photograph empty water.\"",
+            "\"Then the ships move every night, Your Majesty, and the cameras get empty water.\"", "Hub");
+
+        d.StaffIf("SurCaught", $"{photoOpen} and {Eq(VarPhotoBoats, "shadow")}",
+            "\"Our destroyers followed one of the Lespian patrol boats to the Isor banks at dawn, as you asked. Politely. It met a Wehzek " +
+            "trawler there and handed over a canvas bag. We stopped the trawler on her way home. The bag held forty rolls of film, every " +
+            "one of them of our harbors.\"",
+            "\"Our destroyers followed a Lespian patrol boat to the Isor banks at dawn, Your Majesty. It handed a canvas bag to a Wehzek " +
+            "trawler. We stopped the trawler. Forty rolls of film, every one of them of our harbors.\"", "CaughtMenu");
+        d.Branch("CaughtMenu", "CaughtReturn", "CaughtKeep");
+        d.Opt("CaughtReturn", null, "\"Send the film back to Perla, with my compliments.\"", null,
+            S(VarPhotoPayoff, "returned") + Inc(NpLespia, -1), "CaughtReturn2");
+        d.Staff("CaughtReturn2", "\"With a ribbon on it, if you like. He'll understand the ribbon.\"",
+            "\"It goes to Perla tonight, Your Majesty. He will understand the message.\"", "Hub");
+        d.Opt("CaughtKeep", null, "\"Keep the film, and the trawler's crew. Find out what else they carry.\"", null,
+            S(VarPhotoPayoff, "kept") + Talk.Weaken(1), "CaughtKeep2");
+        d.Staff("CaughtKeep2",
+            "\"The skipper is already talking. He knows the night rendezvous of every convoy out of Isor this month, and he would " +
+            "rather tell us than a Wehzek court.\"",
+            "\"The skipper is talking already, Your Majesty. He knows this month's convoy rendezvous off Isor.\"", "Hub");
         d.StaffIf("SurPhoto", $"{strait} and {meetings} >= 2 and {V(VarPhotoBoats)} == \"\"",
             "\"One more thing. The Lespian patrol boats in the strait carry cameras. Long lenses, pointed south. They have " +
             "photographed every ship we have at Fort Ales and Sallabes, twice.\"",
@@ -62,6 +132,12 @@ internal static partial class SupplyWar
         d.Staff("PhotoIgnore2", "\"As you wish. I'll make sure they photograph the right ships.\"",
             "\"As you wish, Your Majesty. I'll make sure they photograph the right ones.\"", "Hub");
 
+        d.StaffIf("SurDefectorTwo", $"{s} <= 5 and {meetings} >= 2 and {Not(VarDefector)} and {Is(WorldVoices.VarDefector)}",
+            "\"Good news, for a change. A second deserter, after the major at Mave Nortus. A Wehzek transport captain sailed into Sallabes " +
+            "last night with his lights on and his flag down. He has asked for asylum, and he brought eleven hundred tons of artillery " +
+            "shells with him. Wehzek officers seem to have started reading the same newspapers.\"",
+            "\"Good news, Your Majesty, for once. Another one, after the major at Mave Nortus. A Wehzek transport captain sailed into " +
+            "Sallabes last night with his flag down. He wants asylum, and he brought eleven hundred tons of artillery shells.\"", "Defector");
         d.StaffIf("SurDefector", $"{s} <= 5 and {meetings} >= 2 and {Not(VarDefector)}",
             "\"Good news, for a change. A Wehzek transport captain sailed into Sallabes last night with his lights on and his flag " +
             "down. He has asked for asylum, and he brought eleven hundred tons of artillery shells with him.\"",
@@ -81,7 +157,8 @@ internal static partial class SupplyWar
             "\"Half the fleet is still off Caleqabiz, watching a Palesian drillship. Either we bring it north, Your Majesty, or the " +
             "strait gets what's left.\"", "AureusPull", "AureusKeep");
         d.Opt("AureusPull", null, "\"Bring the squadron north. Zille matters more than a drillship.\"", "-1 Authority",
-            F(BlockDrillship) + T("RiziaDLCSupport.Journal_Turn04_Pales_NavalWithdrawal") + T(VarAureusRecalled) + Inc(Authority, -1) +
+            F(BlockDrillship) + T("RiziaDLCSupport.Journal_Turn04_Pales_NavalWithdrawal") + T(VarAureusRecalled) + T(WarCouncil.VarFleetRecalled) +
+            Inc(Authority, -1) +
             Inc(NpPales, 1) + Inc(NpLespia, 1), "AureusPull2");
         d.Staff("AureusPull2",
             "\"Reinhart will call it a victory. Let him. The squadron will be off Zille by Thursday.\"",
