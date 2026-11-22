@@ -39,6 +39,7 @@ internal static class SweepEarlyT6War
         Balcony();
         Decisions();
         Press();
+        PalesIncidentPress.Register();
     }
 
     // ================================================================== c357 The general staff briefing
