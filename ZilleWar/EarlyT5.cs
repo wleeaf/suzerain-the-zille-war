@@ -281,21 +281,64 @@ internal static class EarlyT5
         t.Variant("Uninvolved1", 230, new[] { 222 }, Active, Hegel, retort, new[] { "#233" });
         t.Variant("Uninvolved2", 436, new[] { 432 }, Active, Hegel, retort, new[] { "#438" });
 
-        // The naval offer during a war against a friend of Contana.
-        const string ask = "\"Our navy is fighting Wehlen as we speak. Could your ships arrive before the Zille campaign is over?\"";
-        const string answer = "\"Ships, yes. Sailors, no. Valgsland sells equipment, Mr. Toras. It does not go to war against a friend of " +
-                              "Contana. What you do with the hulls once they are yours is your own sin.\"";
-        // Valgsland has embargoed Rizia since the declaration (WorldEmbargo): the upgrade would have to come in by the back door.
-        const string answerEmbargo =
-            "\"Ships, yes. Our embargo is on Rizian trade, Mr. Toras, not on Valgslandian interests, and the Meftiem is a Valgslandian " +
-            "interest. The hulls would reach you from an Agnolian yard, on Agnolian paper. Sailors, no. Valgsland does not go to war " +
-            "against a friend of Contana. What you do with the hulls once they are yours is your own sin.\"";
-        t.Choice("Navy1", ask, new[] { "Navy1e", "Navy1a" }, condition: Active, hooks: From(282));
-        t.Line("Navy1e", Hegel, answerEmbargo, new[] { "#287" }, condition: SupplyWar.EmbargoOn);
-        t.Line("Navy1a", Hegel, answer, new[] { "#287" });
-        t.Choice("Navy2", ask, new[] { "Navy2e", "Navy2a" }, condition: Active, hooks: From(519));
-        t.Line("Navy2e", Hegel, answerEmbargo, new[] { "#523" }, condition: SupplyWar.EmbargoOn);
-        t.Line("Navy2a", Hegel, answer, new[] { "#523" });
+        // In a war game Valgsland sells Rizia nothing: no naval upgrade (vanilla Military_Valgsland_AcceptNavalAid, which would
+        // bring Valgslandian submarines after Cavette). Hegel still wants Lespia out of the Meftiem, and his price is a threat:
+        // deliver, and Valgsland keeps its name off the sanctions motion at the Alliance (LateT8 reads LuaHegelServed).
+        const string embargo =
+            "\"Valgsland will not sell so much as a rivet to a kingdom making war on a friend of Contana, Mr. Toras. Our embargo " +
+            "stands until your soldiers come home, and do not mistake this call for friendship.\"";
+        const string stick =
+            "\"But a war can be made cheaper or dearer. Make sure Lespia walks away from the Meftiem with nothing, and Valgsland " +
+            "will keep its name off the motion against you at the Alliance of Nations. Refuse, and I will draft it myself.\"";
+        void Stick(string k, string intro, string introNoEmbargo, int vanilla, int[] parents, string ask)
+        {
+            t.Variant(k, vanilla, parents, $"{War} and {SupplyWar.EmbargoOn}", Hegel, intro, new[] { k + "S" });
+            t.Variant(k + "N", vanilla, parents, $"{War} and not {SupplyWar.EmbargoOn}", Hegel, introNoEmbargo, new[] { k + "S" });
+            t.Line(k + "S", Hegel, stick, new[] { k + "1", k + "2", k + "3" });
+            t.Choice(k + "1", "\"You are threatening a king in the middle of the night, Mr. Hegel?\"", new[] { k + "1a" });
+            t.Line(k + "1a", Hegel, "\"I am describing the weather, Mr. Toras. You chose the season when your army crossed the border.\"",
+                new[] { ask });
+            t.Choice(k + "2", "\"Lespian ships are keeping Wehzek convoys out of my war. You ask me to knife my only friend at sea.\"",
+                new[] { k + "2a" }, condition: $"Variable[\"{SupplyWar.VarLespiaStrait}\"] == true");
+            t.Line(k + "2a", Hegel,
+                "\"A friend who bills you by the hour. Mr. Alvarez would sell your strait to Wraclawitz the day the price was right, " +
+                "and you know it.\"", new[] { ask });
+            t.Choice(k + "3", "\"And if Lespia gets nothing, Valgsland simply looks away from Zille?\"", new[] { k + "3a" });
+            t.Line(k + "3a", Hegel,
+                "\"Valgsland never looks away, Mr. Toras. It decides what is worth a vote. Lespia's share of the Meftiem is worth " +
+                "one. Your war is not.\"", new[] { ask });
+        }
+
+        Stick("StickA", embargo,
+            "\"Valgsland will not sell so much as a rivet to a kingdom making war on a friend of Contana, Mr. Toras. Do not mistake " +
+            "this call for friendship.\"", 282, new[] { 276, 277, 278, 279, 281 }, "#412");
+        Stick("StickB",
+            "\"Valgsland cannot sell anything to a kingdom at war with a friend of Contana, Mr. Toras, and would not if it could. Our " +
+            "embargo stands until your soldiers come home.\"",
+            "\"Valgsland cannot sell anything to a kingdom at war with a friend of Contana, Mr. Toras, and would not if it could.\"", 517, new[] { 515, 587 }, "#550");
+
+        // Agreeing: the promise without the aid (vanilla 386 sets PromiseITZTakeover and its journal entry).
+        string promise = Set("RiziaDLC.Diplomacy_Valgsland_PromiseITZTakeover", "true") +
+                         Set("RiziaDLCSupport.Journal_Turn05_Valgsland_PromiseLespiaOutofMITZ", "true");
+        t.Variant("Yes1", 334, new[] { 315, 326, 412, 413, 414 }, War, Romus,
+            "\"Lespia will walk away from the Meftiem with nothing. See that Valgsland remembers it at the Alliance.\"", new[] { "Yes1a" });
+        t.Line("Yes1a", Hegel, "\"Valgsland remembers everything, Mr. Toras. I will be watching Cavette.\"", new[] { "#386" });
+        Vanilla.Require(HegelCall, 335, $"({War}) ~= true");
+        t.Variant("Yes2", 611, new[] { 549, 550, 559, 610 }, War, Romus,
+            "\"You can. Lespia will walk away from the Meftiem with nothing.\"", new[] { "Yes2a" });
+        t.Logic("Yes2a", new[] { "#621" }, script: promise);
+
+        // His support in the Pales arbitration is a principle, not a kindness, and he means to quote it back over Zille.
+        const string arbitration =
+            "\"I will, however, support Rizia in your arbitration case against Pales. Not for your sake. I want it on the record " +
+            "that borders are not redrawn by whoever has the bigger guns, and I will be quoting that record to you over Zille.\"";
+        const string arbitrationAlso =
+            "\"And Valgsland will vote for Rizia in your arbitration case against Pales. Do not thank me. I want it on the record " +
+            "that borders are not redrawn by force, and I will be quoting that record to you over Zille.\"";
+        t.Variant("Arb1", 649, new[] { 647 }, War, Hegel, arbitration, new[] { "#651", "#652", "#654" });
+        t.Variant("Arb2", 659, new[] { 657 }, War, Hegel, arbitrationAlso, new[] { "#661", "#662", "#663" });
+        t.Variant("Arb3", 669, new[] { 667 }, War, Hegel, arbitrationAlso, new[] { "#671", "#672", "#673" });
+        t.Variant("Arb4", 679, new[] { 677 }, War, Hegel, arbitration, new[] { "#681", "#682", "#684" });
         t.Register();
     }
 

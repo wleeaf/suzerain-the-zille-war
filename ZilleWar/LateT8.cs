@@ -200,10 +200,12 @@ internal static class LateT8
         t.Line("AfterReply", Laurento, "\"Whatever happens now, Your Majesty, they will vote on the war, not on the speech.\"", new[] { "Tally" });
 
         // the roll call
-        string hegel = $"if {Rel("Valgsland", "Friendly", "Allied")} then {V(Vote("Hegel"))} = 0 else {V(Vote("Hegel"))} = 1 end; ";
+        // Hegel keeps Valgsland's name off the motion only if the King delivered what he promised him: Lespia out of the Meftiem.
+        string hegel = $"if {Rel("Valgsland", "Friendly", "Allied")} or {SupplyWar.LuaHegelServed} then {V(Vote("Hegel"))} = 0 else {V(Vote("Hegel"))} = 1 end; ";
         string angry = $"(Variable[\"RiziaDLC.Zille_Publicized_LespianInvolvement\"] == true or Variable[\"RiziaDLC.Zille_Publicized_LespianInvolvement_Rusty\"] == true " +
                        $"or {V(VarLespiaAccused)} == true or {V(VarRamiro)} == \"seized\" or Variable[\"ZilleWar.Ramiro_Choice\"] == \"publish\" " +
-                       $"or Variable[\"ZilleWar.Lespia_Withdrawn\"] == true or {Rel("Lespia", "Hostile", "Unfriendly")})";
+                       $"or Variable[\"ZilleWar.Lespia_Withdrawn\"] == true or Variable[\"{SupplyWar.VarLespiaGrievance}\"] == true " +
+                       $"or {Rel("Lespia", "Hostile", "Unfriendly")})";
         string helped = $"((Variable[\"ZilleWar.Lever_Lespia\"] or 0) > 0 or Variable[\"ZilleWar.Lespia_AllianceVote\"] == true or {Rel("Lespia", "Friendly", "Allied")})";
         string lespia = $"if {angry} then {V(Vote("Alvarez"))} = 1; {V(Vote("Walker"))} = 0 elseif {helped} then {V(Vote("Alvarez"))} = -1; {V(Vote("Walker"))} = -1 " +
                         $"else {V(Vote("Alvarez"))} = 0; {V(Vote("Walker"))} = 0 end; ";
@@ -309,7 +311,8 @@ internal static class LateT8
         // In a war game the Valgsland accusation also stands on the war alone (vanilla needs a bad image and a
         // hostile Valgsland; the Lespian one needs the Pales war).
         Vanilla.AppendScript(AN, 24,
-            $"if {War} and ({Ongoing} or {Lib} or {WarFlags.L(WarFlags.ZilleCityHeld)}) and not {Rel("Valgsland", "Friendly", "Allied")} then " +
+            $"if {War} and ({Ongoing} or {Lib} or {WarFlags.L(WarFlags.ZilleCityHeld)}) and not {Rel("Valgsland", "Friendly", "Allied")} " +
+            $"and not {SupplyWar.LuaHegelServed} then " +
             "Variable[\"RiziaDLCIsolated.ANSanctionAccusation_Valgsland_GlobalImage\"] = true end");
 
         var t = new Talk(Sanctions, "ZilleWar.Late.Sanctions.");

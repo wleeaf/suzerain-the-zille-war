@@ -33,7 +33,7 @@ internal static class SupplyNews
                      "Credit1", "Credit2", "Dossier", "RumburgNo", "LespiaGas", "ValgslandLespia", "LespiaMitz", "PalesArms", "PalesArmsStopped",
                      "RamiroPublish", "RamiroRecalled", "RamiroComp", "LespiaGone", "StraitThin", "Gift", "Aureus", "Defector",
                      "Hegel1", "Hegel2", "SmolakRefused", "SmolakAccepted", "Saltana",
-                     "Bluds", "PhotoRaid", "PhotoExpelled", "PhotoCaught", "SaltanaDowned",
+                     "Bluds", "PhotoRaid", "PhotoExpelled", "PhotoCaught", "SaltanaDowned", "LespiaFuel", "LespiaLax",
                  })
         {
             Keys.Add(k);
@@ -285,6 +285,36 @@ internal static class SupplyNews
                 "Our embassy reads the protest as aimed at Lespia more than at us. Still, every Lespian favour now carries a Valgslandian " +
                 "price, and Hegel has a long memory for both.");
         });
+
+        // Lespia's grievance: fuel for the Wehzek convoys in Perla, or lax patrols in the strait it was paid to close.
+        Once("LespiaFuel", B(SupplyWar.VarLespiaFuel), () =>
+        {
+            bool betrayed = B("RiziaDLC.MITZ_ScrewedOverLespia") || B(EarlyT5.VarLespiaBetrayed);
+            Paper("LespiaFuel", "G", "Wehzek Tankers Refuel in Perla",
+                "Wehzek tankers bound for the Strait of Kreleck have begun taking on fuel in Perla, port records show, and Lespian " +
+                "harbor officials have stopped asking where they are headed. Prime Minister Alvarez's office calls it \"ordinary " +
+                "commerce with a neighbor.\"",
+                betrayed
+                    ? "Diplomats in Konstantium link the change to the Meftiem, where Rizia left Lespia empty-handed. \"Perla does not " +
+                      "get angry,\" one said. \"It sends an invoice.\""
+                    : "Diplomats in Konstantium say Lespia offered Rizia its navy more than once this war and was turned down every " +
+                      "time. \"Lespia sells to whoever buys,\" one said. \"Rizia declined to be a customer.\"");
+            Paper("LespiaFuel", "V", "Our Enemies Fill Up in Perla",
+                "The fuel that carries Wehzek reinforcements to Nanta now comes, in part, from Lespian depots. This paper has never " +
+                "trusted Patricio Alvarez, but it is fair to ask what the palace did to turn a merchant into a supplier of our enemy.",
+                "Somewhere in Zille, a Rizian soldier will face a Wehzek battalion that crossed the strait on Lespian fuel. He will not " +
+                "be told why.");
+            Rep("LespiaFuel", SuzerainTokenName.RiziaCountryLespia, "Lespian Ports Serve Wehzek Convoys",
+                "Our naval attaché in Perla reports Wehzek tankers loading fuel at the commercial docks, unhindered and in daylight.",
+                "Admiralty staff estimate the convoys to Nanta will run more often for it, and the garrison in Zille will feel the " +
+                "difference before the month is out.");
+        });
+        Once("LespiaLax", B(SupplyWar.VarLespiaGrievance) && B("ZilleWar.Call_Alvarez_GrievanceSaid") && B(SupplyWar.VarLespiaStrait), () =>
+            Rep("LespiaLax", SuzerainTokenName.RiziaCountryLespia, "Lespian Patrols Grow Lax",
+                "The Lespian warships in the Strait of Kreleck are still on station, but their inspections have become strangely " +
+                "brief. Our attaché watched a Wehzek freighter pass a Lespian destroyer at noon without being boarded.",
+                "Perla insists its navy honors every agreement with Rizia. It does, to the letter. The Admiralty notes that the " +
+                "letter never said how closely to look."));
 
         Once("LespiaMitz", B(SupplyWar.VarLespiaMitz), () =>
         {

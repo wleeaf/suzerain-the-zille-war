@@ -290,6 +290,7 @@ internal static partial class SupplyWar
             ConversationRegistry.RegisterConversation(c);
         }
 
+        RegisterGrudges();
         RegisterBeatrice();
         RegisterAlvarez();
         RegisterWarRoom();
@@ -378,6 +379,8 @@ internal static partial class SupplyWar
             Variables.Set(VarGrudgeApplied, true);
             Variables.Set(VarStraitThin, true);
         }
+
+        ForeignGrudges();
     }
 
     /// <summary>
@@ -592,6 +595,12 @@ internal static partial class SupplyWar
             return true;
         }
 
+        // Rizia broke faith at the Meftiem since his last call: he rings to say what it will cost.
+        if (GrievanceUnsaid)
+        {
+            return true;
+        }
+
         if (Variables.GetInt(Count(Lever.Lespia)) == 0)
         {
             return w >= 1 || Variables.GetString(AnDeclaration.VarLespianNote) == "kept";
@@ -599,8 +608,8 @@ internal static partial class SupplyWar
 
         // The strait is bought; the Meftiem is a separate bargain he still wants to make (until the board's last vote).
         bool voted = Variables.GetBool(VoteNationalization) || Variables.GetBool(VoteRenegotiation) || Variables.GetBool(VoteStatusQuo);
-        bool mitzOpen = !Variables.GetBool(VarLespiaMitz) && !Variables.GetBool(MitzPromiseLate) && !(Variables.GetBool(MitzPromise) && !voted) &&
-                        !Variables.GetBool(ValgslandMitz) && Turn <= 8;
+        bool bound = (Variables.GetBool(VarLespiaMitz) || (Variables.GetBool(MitzPromise) && !voted)) && !Variables.GetBool(MitzScrewed);
+        bool mitzOpen = !bound && !Variables.GetBool(MitzPromiseLate) && !Variables.GetBool(ValgslandMitz) && Turn <= 8;
         if (mitzOpen)
         {
             return true;
