@@ -61,6 +61,8 @@ internal sealed class Talk
             script = $"AddConversant(\"{speaker}\"); " + script;
         }
 
+        LuaLint.Record(_prefix + name, condition, script);
+
         _inj.AddNode(new ConversationNode(
             name: _prefix + name,
             text: text,
@@ -85,6 +87,8 @@ internal sealed class Talk
             menu = $"{menu ?? text} ({cost})";
         }
 
+        LuaLint.Record(_prefix + name, condition, script);
+
         _inj.AddNode(new ConversationNode(
             name: _prefix + name,
             text: text,
@@ -100,6 +104,7 @@ internal sealed class Talk
     /// <summary>An empty logic node: runs a script and/or branches on conditions of its children.</summary>
     public Talk Logic(string name, string[] next, string condition = null, string script = null, ConversationNodeHook[] hooks = null)
     {
+        LuaLint.Record(_prefix + name, condition, script);
         _inj.AddNode(new ConversationNode(
             name: _prefix + name,
             speakerSelector: new CharacterNameSelector(Technical),

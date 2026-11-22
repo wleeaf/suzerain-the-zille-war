@@ -61,6 +61,7 @@ internal static class Vanilla
     /// <summary>The vanilla conversation/decision/bill only plays when <paramref name="expressoCondition"/> also holds.</summary>
     public static void Gate(string fragmentName, string expressoCondition)
     {
+        LuaLint.RecordExpresso($"Gate {fragmentName}", expressoCondition);
         if (!FragmentGates.TryGetValue(fragmentName, out var list))
         {
             FragmentGates[fragmentName] = list = new List<string>();
@@ -126,8 +127,11 @@ internal static class Vanilla
 
     /// <summary>Rows of conditional instruction <paramref name="ciName"/> whose instruction contains <paramref name="contains"/>
     /// (or every row when null) only run when <paramref name="expressoCondition"/> also holds.</summary>
-    public static void GateInstruction(string ciName, string contains, string expressoCondition) =>
+    public static void GateInstruction(string ciName, string contains, string expressoCondition)
+    {
+        LuaLint.RecordExpresso($"GateInstruction {ciName}", expressoCondition);
         InstructionGates.Add((ciName, contains, expressoCondition));
+    }
 
     // ------------------------------------------------------------------ dialogue entries
 
@@ -135,12 +139,18 @@ internal static class Vanilla
     private static readonly List<(string conv, int entry, string lua)> ScriptAppends = new();
 
     /// <summary>The vanilla dialogue entry only shows when the Lua condition also holds.</summary>
-    public static void Require(string conversationTitle, int entryId, string luaCondition) =>
+    public static void Require(string conversationTitle, int entryId, string luaCondition)
+    {
+        LuaLint.Record($"Require {conversationTitle} #{entryId}", luaCondition, null);
         Requirements.Add((conversationTitle, entryId, luaCondition));
+    }
 
     /// <summary>Run extra Lua when a vanilla dialogue entry plays (appended to its script).</summary>
-    public static void AppendScript(string conversationTitle, int entryId, string lua) =>
+    public static void AppendScript(string conversationTitle, int entryId, string lua)
+    {
+        LuaLint.Record($"AppendScript {conversationTitle} #{entryId}", null, lua);
         ScriptAppends.Add((conversationTitle, entryId, lua));
+    }
 
     internal static void PatchDialogue(DialogueConversation conv)
     {

@@ -31,6 +31,7 @@ internal static class AnDeclaration
     public const string VarLespianNote = "ZilleWar.AN_LespianNote";          // "kept" | "burned"
     public const string VarEstelaCall = "ZilleWar.AN_EstelaCall";
     public const string VarRumburgCable = "ZilleWar.AN_RumburgCable";      // "grateful" | "careful"
+    public const string VarAlvarezStance = "ZilleWar.AN_AlvarezStance";    // "backs" (he had called Zille an illegal occupation) | "restraint"
 
     private const string Smolak = "Wiktor Smolak (R)";
     private const string Esquibel = "Laurento Esquibel";
@@ -41,12 +42,13 @@ internal static class AnDeclaration
     private const string Reinhart = "Axel Reinhart";
     private const string Narrator = "Narrator";
     private const string Estela = "Estela Toras";
+    private const string Saltana = "Alma Saltana";
     private const string Romus = "Player_Romus";             // spoken choices
     private const string RomusAction = "Player_Romus_Italic"; // action choices ("Say nothing.")
 
     public static void Register()
     {
-        foreach (string v in new[] { VarDeclared, VarEntryAN, VarDeclaredTurn, VarPressStatement, VarLespianNote, VarEstelaCall, VarRumburgCable, WarState.VarActive })
+        foreach (string v in new[] { VarDeclared, VarEntryAN, VarDeclaredTurn, VarPressStatement, VarLespianNote, VarEstelaCall, VarRumburgCable, VarAlvarezStance, WarState.VarActive })
         {
             SuzerainModdingKit.Variables.Register(v);
         }
@@ -90,7 +92,7 @@ internal static class AnDeclaration
                 "Variable[\"RiziaDLC.CountryRelation_Wehlen_Neutral\"] = false; Variable[\"RiziaDLC.CountryRelation_Wehlen_Unfriendly\"] = false; " +
                 "Variable[\"RiziaDLC.CountryRelation_Wehlen_Friendly\"] = false; Variable[\"RiziaDLC.CountryRelation_Wehlen_Allied\"] = false; " +
                 "Variable[\"RiziaDLC.CountryRelation_Wehlen_Hostile\"] = true; Variable[\"RiziaDLC.CountryRelation_Wehlen_AtWar\"] = true; " +
-                "UpdateCountryRelationship(\"Rizia_Country_Wehlen\", \"AtWar\");",
+                "UpdateCountryRelationship(\"Rizia_Country_Wehlen\", \"AtWar\"); " + EarlyBookkeeping.DeclarationLua,
             sequence: Wait(new ConversationNodeSequenceBuilder().PlaySceneMusic("Critical").ToString()),
             nextNodes: Next("Silence")));
 
@@ -113,7 +115,25 @@ internal static class AnDeclaration
             "Wiktor Smolak rose slowly from his seat. For the first time that day, the grin was gone from his face.", Next("Smolak1")));
         inj.AddNode(Line("Smolak1", Smolak,
             "\"President Nines, I ask that the Alliance record this moment. The Kingdom of Rizia has declared war on a member state, from this very podium.\"",
-            Next("Smolak2"), conversant: true));
+            Next("JabScapegoats", "JabApology", "JabDenounce", "JabCooperate", "Smolak2"), conversant: true));
+        // Smolak throws the King's own Turn 3 and 4 choices back at him (first matching line plays).
+        const string scapegoats = "Variable[\"RiziaDLC.Diplomacy_Wehlen_Scapegoats\"] == true";
+        const string apology = "Variable[\"RiziaDLC.Decision_Turn03_ZilleBombApology\"] == true";
+        const string denounce = "Variable[\"RiziaDLC.Decision_Turn03_ZilleIncidentResponse_DenounceSO\"] == true";
+        const string cooperate = "Variable[\"RiziaDLC.Decision_Turn04_WehlenInvestigation_Cooperate\"] == true";
+        inj.AddNode(Line("JabScapegoats", Smolak,
+            "\"A month ago, His Majesty sent us two of his countrymen in chains and called them the bombers of Smolak Square. We accepted " +
+            "them in good faith. Now we see what his good faith was worth.\"", Next("Smolak2"), condition: scapegoats));
+        inj.AddNode(Line("JabApology", Smolak,
+            "\"Only weeks ago, His Majesty apologized to me for the words he spoke in Zille. I see now what the apology was for. He was " +
+            "sorry I had heard them too early.\"", Next("Smolak2"), condition: $"not ({scapegoats}) and {apology}"));
+        inj.AddNode(Line("JabDenounce", Smolak,
+            "\"His Majesty condemned his own nationalists after the bombing. Today he marches with them. The Alliance may decide which of " +
+            "his two faces it prefers.\"", Next("Smolak2"), condition: $"not ({scapegoats}) and not ({apology}) and {denounce}"));
+        inj.AddNode(Line("JabCooperate", Smolak,
+            "\"Last week his security men sat across the table from mine and swore we were partners in finding the bombers. I wonder now " +
+            "how many of their questions were about the bombing, and how many were about our barracks.\"", Next("Smolak2"),
+            condition: $"not ({scapegoats}) and not ({apology}) and not ({denounce}) and {cooperate}"));
         inj.AddNode(Line("Smolak2", Smolak,
             "\"Wehlen did not seek this war. But Wehlen will defend every inch of Zille, and every Wehzek who calls it home.\"", Next("Smolak3")));
         inj.AddNode(Line("Smolak3", Smolak,
@@ -126,29 +146,50 @@ internal static class AnDeclaration
             "out of the hall, leaving their flag standing beside a row of empty chairs.", Next("Delegations")));
 
         // --- the delegations ---
-        inj.AddNode(Line("Delegations", Narrator,
-            "The other delegations were already turning to each other, and to their aides, and to the telephones at the back of the hall.",
-            Next("Alvarez1")));
+        // If Alvarez already called Zille an illegal occupation in his own speech ([221]), he cannot call for restraint now.
+        const string lespiaSpoke = "Variable[\"RiziaDLC.Diplomacy_Lespia_WehlenHelp\"] == true";
+        inj.AddNode(new ConversationNode(
+            name: P + "Delegations",
+            text: "The other delegations were already turning to each other, and to their aides, and to the telephones at the back of the hall.",
+            speakerSelector: new CharacterNameSelector(Narrator),
+            sequence: Wait(null),
+            nextNodes: Next("AlvarezBacks", "Alvarez1")));
+        inj.AddNode(Line("AlvarezBacks", Alvarez,
+            "\"Lespia has already told this assembly what it thinks of Wehlen's occupation of Zille. What Rizia chooses to do about it is " +
+            "Rizia's business.\"", Next("AlvarezBacks2"), conversant: true, condition: lespiaSpoke,
+            script: $"Variable[\"{VarAlvarezStance}\"] = \"backs\";"));
+        inj.AddNode(Line("AlvarezBacks2", Narrator,
+            "He sat back down without looking at Smolak. Somewhere behind him, a Wehzek aide was writing down every word.", Next("Hegel1")));
         inj.AddNode(Line("Alvarez1", Alvarez,
-            "\"Lespia calls on both parties to show restraint.\"", Next("Alvarez2"), conversant: true));
+            "\"Lespia calls on both parties to show restraint.\"", Next("Alvarez2"), conversant: true, condition: $"not ({lespiaSpoke})",
+            script: $"Variable[\"{VarAlvarezStance}\"] = \"restraint\";"));
         inj.AddNode(Line("Alvarez2", Narrator,
             "Alvarez's lips twitched as he sat back down. I could not tell whether he was hiding a frown or a smile.", Next("Hegel1")));
         inj.AddNode(Line("Hegel1", Hegel,
             "\"Valgsland will be watching this very closely, Your Majesty. Very closely indeed.\"", Next("Azmal1"), conversant: true));
         inj.AddNode(Line("Azmal1", Azmal,
-            "\"Derdia has long said that the occupation of Zille was a wound that would not close on its own.\"", Next("ReinhartFriendly", "Reinhart1"), conversant: true));
+            "\"Derdia has long said that the occupation of Zille was a wound that would not close on its own.\"", Next("ReinhartBlockade", "ReinhartFriendly", "Reinhart1"), conversant: true));
         // Reinhart's tone follows Rizia's dealings with Pales: a gas deal or good relations soften him.
         const string palesFriendly =
             "(Variable[\"RiziaDLC.Diplomacy_Pales_GasField_Buy\"] == true and Variable[\"RiziaDLC.Diplomacy_Pales_GasField_BuyCancelled\"] ~= true) or " +
             "(Variable[\"RiziaDLC.Diplomacy_Pales_GasField_Cede\"] == true and Variable[\"RiziaDLC.Diplomacy_Pales_GasField_CedeCancelled\"] ~= true) or " +
             "Variable[\"RiziaDLC.CountryRelation_Pales_Friendly\"] == true or Variable[\"RiziaDLC.CountryRelation_Pales_Allied\"] == true";
+        const string blockade = "Variable[\"RiziaDLC.Diplomacy_Pales_Military_BlockDrillship\"] == true";
+        inj.AddNode(Line("ReinhartBlockade", Reinhart,
+            "\"Your warships are sitting around my drillship as we speak, King Romus. Forgive me if I don't take your word on where this " +
+            "war of yours stops.\"", Next("R1", "R1Blockade", "R2", "R3"), conversant: true, condition: blockade));
         inj.AddNode(Line("ReinhartFriendly", Reinhart,
             "\"Pales has made its peace with Rizia, King Romus, and I intend to keep it. I only ask that this war stays where it " +
-            "belongs. In Zille, and nowhere near my border.\"", Next("R1", "R2", "R3"), conversant: true, condition: palesFriendly));
+            "belongs. In Zille, and nowhere near my border.\"", Next("R1", "R2", "R3"), conversant: true, condition: $"not ({blockade}) and ({palesFriendly})"));
         inj.AddNode(Line("Reinhart1", Reinhart,
             "\"And when Rizia is finished with Zille, King Romus? Should Pales start counting its days as well?\"", Next("R1", "R2", "R3"),
-            conversant: true, condition: $"not ({palesFriendly})"));
-        inj.AddNode(Choice("R1", "\"Pales has nothing to fear from us, Duke Reinhart.\"", Next("Suspend")));
+            conversant: true, condition: $"not ({blockade}) and not ({palesFriendly})"));
+        inj.AddNode(Choice("R1", "\"Pales has nothing to fear from us, Duke Reinhart.\"", Next("Suspend"), condition: $"not ({blockade})"));
+        inj.AddNode(Choice("R1Blockade", "\"Our ships are guarding a lawful claim, Duke Reinhart. They are not an army of invasion.\"", Next("R1Blockade2"),
+            condition: blockade));
+        inj.AddNode(Line("R1Blockade2", Narrator,
+            "Reinhart gave a short, joyless laugh. Beside me, Laurento studied the ceiling as if the dome had suddenly become very interesting.",
+            Next("Suspend")));
         inj.AddNode(Choice("R2", "\"That depends entirely on you.\"", Next("Suspend")));
         inj.AddNode(Choice("R3", "I ignored him.", Next("Suspend"), menu: "Ignore him."));
 
@@ -158,13 +199,53 @@ internal static class AnDeclaration
             Next("SideDoor")));
         inj.AddNode(Line("SideDoor", Narrator,
             "Guards were already moving through the aisles. Laurento took me by the arm and steered me toward a side door before anyone could reach me.",
-            Next("Note"), sequence: new ConversationNodeSequenceBuilder().PlaySceneMusic("Suspense").ToString()));
+            Next("Saltana0", "Note"), sequence: new ConversationNodeSequenceBuilder().PlaySceneMusic("Suspense").ToString()));
+        // If the King's speech never reached the Trade Zone, Saltana asks him in the corridor, so Turn 5's MITZ board has its answer.
+        const string mitzUnspoken = "Variable[\"RiziaDLCIsolated.Turn04_ANSpeech_Morella\"] ~= true and Variable[\"RiziaDLC.Diplomacy_Morella_ANSpeech_SideWith\"] ~= true " +
+                                    "and Variable[\"RiziaDLC.Diplomacy_Morella_ANSpeech_SideAgainst\"] ~= true";
+        inj.AddNode(Line("Saltana0", Narrator,
+            "Someone had reached the side door before us. Alma Saltana stood in the corridor with her arms folded, a single aide at her shoulder.",
+            Next("Saltana1"), condition: mitzUnspoken));
+        inj.AddNode(Line("Saltana1", Saltana,
+            "\"I won't keep you. I imagine you have a great deal to do now.\"", Next("Saltana2"), conversant: true));
+        inj.AddNode(Line("Saltana2", Saltana,
+            "\"But I came here to ask the Alliance about the Meftiem, and you never answered me. Your war hasn't made my question go away. " +
+            "Where does Rizia stand on the Trade Zone?\"", Next("M1", "M2", "M3")));
+        inj.AddNode(Choice("M1", "\"With Morella. The Meftiem's wealth belongs to the people who dig it out of the ground.\"", Next("M1a"),
+            script: "Variable[\"RiziaDLC.Diplomacy_Morella_ANSpeech_SideWith\"] = true; " +
+                    "Variable[\"RiziaDLC.Diplomacy_Morella_NegotiatingPower\"] = (Variable[\"RiziaDLC.Diplomacy_Morella_NegotiatingPower\"] or 0) + 2; " +
+                    "Variable[\"RiziaDLCIsolated.Turn04_ANSpeech_Morella\"] = true;"));
+        inj.AddNode(Line("M1a", Saltana,
+            "\"Then perhaps you are more than a king who settles his borders with tanks. We shall see at the Meftiem.\"", Next("SaltanaGone")));
+        inj.AddNode(Choice("M2", "\"Rizia will not tear up the Trade Zone, Prime Minister. Not for Morella, and not for anyone.\"", Next("M2a"),
+            script: "Variable[\"RiziaDLC.Diplomacy_Morella_ANSpeech_SideAgainst\"] = true; " +
+                    "Variable[\"RiziaDLC.Diplomacy_Lespia_NegotiatingPower\"] = (Variable[\"RiziaDLC.Diplomacy_Lespia_NegotiatingPower\"] or 0) + 1; " +
+                    "Variable[\"RiziaDLCIsolated.Turn04_ANSpeech_Morella\"] = true;"));
+        inj.AddNode(Line("M2a", Saltana,
+            "\"So you will take back your land by force and keep a hand in ours. At least you are consistent.\"", Next("SaltanaGone")));
+        inj.AddNode(Choice("M3", "\"Ask me again when the guns have stopped.\"", Next("M3a"),
+            script: "Variable[\"RiziaDLCIsolated.Turn04_ANSpeech_Morella\"] = true;"));
+        inj.AddNode(Line("M3a", Saltana,
+            "\"The board meets next month, war or no war. I'll expect an answer by then.\"", Next("SaltanaGone")));
+        inj.AddNode(Line("SaltanaGone", Narrator,
+            "She stepped aside to let us pass. Her aide was already scribbling in a notebook.", Next("Note")));
         inj.AddNode(Line("Note", Narrator,
             "In the corridor, a young Lespian aide brushed past us. When he was gone, Laurento was holding a folded slip of paper.",
             Next("NoteRead")));
         inj.AddNode(Line("NoteRead", Esquibel,
             "\"From Prime Minister Alvarez.\" He read it twice before handing it to me. \"'Lespia stands ready to discuss practical " +
-            "arrangements. Discreetly.' That man never does anything for free, Your Majesty.\"", Next("N1", "N2")));
+            "arrangements. Discreetly.' That man never does anything for free, Your Majesty.\"", Next("NoteGas", "NoteMitz", "NoteFavor")));
+        const string ownsAureus = "Variable[\"RiziaDLC.Diplomacy_Pales_GasField_Buy\"] == true and Variable[\"RiziaDLC.Diplomacy_Pales_GasField_BuyCancelled\"] ~= true";
+        const string noItzPromise = "Variable[\"RiziaDLC.Diplomacy_Lespia_PromiseITZSupport\"] ~= true";
+        inj.AddNode(Line("NoteGas", Esquibel,
+            "\"And I can guess the price. We outbid LesPower for the Aureus field. He has wanted that gas ever since the Duke came to us.\"",
+            Next("N1", "N2"), condition: ownsAureus));
+        inj.AddNode(Line("NoteMitz", Esquibel,
+            "\"I can guess the price. Lespia still has no promise from us on the Meftiem, and the board meets next month.\"",
+            Next("N1", "N2"), condition: $"not ({ownsAureus}) and {noItzPromise}"));
+        inj.AddNode(Line("NoteFavor", Esquibel,
+            "\"He already has his share of the gas and your word on the Meftiem. Whatever he asks for next, he hasn't thought of it yet.\"",
+            Next("N1", "N2"), condition: $"not ({ownsAureus}) and not ({noItzPromise})"));
         inj.AddNode(Choice("N1", "\"Burn it. I won't have Lespia's fingerprints on this war.\"", Next("PressWarning"),
             script: $"Variable[\"{VarLespianNote}\"] = \"burned\";"));
         inj.AddNode(Choice("N2", "\"Keep it. We may need friends we don't trust.\"", Next("PressWarning"),
@@ -189,12 +270,19 @@ internal static class AnDeclaration
             "In the car, Laurento was already on the telephone. I caught only fragments. \"Mobilization.\" \"The border.\" \"Mave Nortus.\"",
             Next("GeneralStaff")));
         inj.AddNode(Line("GeneralStaff", Esquibel,
-            "\"The General Staff will be waiting for you in Porte Drazon, Your Majesty. They're already drawing up plans.\"", Next("Receiver")));
+            "\"The General Staff will be waiting for you in Porte Drazon, Your Majesty. They're already drawing up plans.\"", Next("Envoys", "Receiver")));
+        inj.AddNode(Line("Envoys", Esquibel,
+            "He lowered the receiver for a moment. \"My people in Wraclawitz, Your Majesty. The mission we sent this winter. They were " +
+            "still at the Foreign Ministry when you spoke. I'm told they are being driven to the border as we speak.\"", Next("Receiver"),
+            condition: "Variable[\"RiziaDLC.Decision_Turn03_DiplomaticEnvoy_Wehlen\"] == true"));
         inj.AddNode(Line("Receiver", Narrator,
             "The telephone rang again. Laurento listened for a moment, then held the receiver out to me. \"The Queen Mother, Your Majesty.\"",
             Next("Estela1")));
         inj.AddNode(Line("Estela1", Estela,
-            "\"I heard it on the radio, darling. The whole palace heard it. The maids are crying in the kitchens.\"", Next("Estela2"), conversant: true));
+            "\"I heard it on the radio, darling. The whole palace heard it. The maids are crying in the kitchens.\"", Next("EstelaStab", "Estela2"), conversant: true));
+        inj.AddNode(Line("EstelaStab", Estela,
+            "\"I told you to smile, preach unity and stab them in the back. I didn't mean in front of the entire Alliance. But I won't " +
+            "pretend I'm not glad.\"", Next("Estela2"), condition: "Variable[\"RiziaDLCIsolated.Turn04_EstelaTalk_Wehlen\"] == true"));
         inj.AddNode(Line("Estela2", Estela,
             "\"Your father never dared. Twenty-five years, and he never once dared.\"", Next("Estela3")));
         inj.AddNode(Line("Estela3", Estela,
@@ -230,10 +318,10 @@ internal static class AnDeclaration
             text: "Outside, the rain had started again. By the time we reached the airfield, it was pouring.",
             speakerSelector: new CharacterNameSelector(Narrator),
             // Skip vanilla [755]: it switches on the peacetime AN news ("Wehlen Refuses to Relinquish Zille"...).
-            // Keep the rest of the vanilla ending: the Zille protest reports ([805]-[812]) and the protocol flag ([815]).
-            luaScript: "PlayCustomMapMusic(\"Rizia_Map_Music_Tense\"); " +
-                       "if Variable[\"RiziaDLC.Situation_Diplomacy_Zille_ATAActive\"] == true then Variable[\"RiziaDLCSupport.Reports_Turn04_Zille_ATAProtest\"] = true end; " +
-                       "if Variable[\"RiziaDLC.Situation_Diplomacy_Zille_SuOminaActive\"] == true then Variable[\"RiziaDLCSupport.Reports_Turn04_Zille_SOProtest\"] = true end;",
+            // Keep the protocol flag ([815]) and vanilla's End().
+            // The vanilla protest reports ([805]-[812], "in the weeks since Smolak's AN announcement") are stale on the day war is
+            // declared; EarlyT4 files wartime reports on the ATA and Su Omina in Zille instead.
+            luaScript: "PlayCustomMapMusic(\"Rizia_Map_Music_Tense\");",
             nextNodes: new ConversationNodeSelector[] { new ConversationNodeArticyIDSelector(VanillaProtocolAndEnd) }));
 
         inj.Register();
@@ -250,13 +338,13 @@ internal static class AnDeclaration
         names.Select(n => (ConversationNodeSelector)new ConversationNodeModdedNameSelector(P + n)).ToArray();
 
     private static ConversationNode Line(string name, string speaker, string text, ConversationNodeSelector[] next,
-        bool conversant = false, string sequence = null, string condition = null) =>
+        bool conversant = false, string sequence = null, string condition = null, string script = null) =>
         new(
             name: P + name,
             text: text,
             speakerSelector: new CharacterNameSelector(speaker),
             sequence: Wait(sequence),
-            luaScript: conversant ? $"AddConversant(\"{speaker}\");" : null,   // vanilla Rizia adds conversants in Lua, quoted
+            luaScript: (conversant ? $"AddConversant(\"{speaker}\"); " : string.Empty) + script,   // vanilla Rizia adds conversants in Lua, quoted
             luaCondition: condition,
             nextNodes: next);
 
@@ -267,7 +355,8 @@ internal static class AnDeclaration
 
     // The conversation's default actor here is a technical actor, not the King, so choices must name him
     // explicitly or the game plays them as ordinary lines. Action choices use the italic narration actor.
-    private static ConversationNode Choice(string name, string text, ConversationNodeSelector[] next, string menu = null, string script = null) =>
-        new(name: P + name, text: text, menuText: menu, luaScript: script, nextNodes: next,
+    private static ConversationNode Choice(string name, string text, ConversationNodeSelector[] next, string menu = null, string script = null,
+        string condition = null) =>
+        new(name: P + name, text: text, menuText: menu, luaScript: script, nextNodes: next, luaCondition: condition,
             speakerSelector: new CharacterNameSelector(menu != null && !text.StartsWith("\"") ? RomusAction : Romus));
 }

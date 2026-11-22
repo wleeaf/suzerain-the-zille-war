@@ -3,7 +3,7 @@ using SuzerainModdingKit;
 
 namespace ZilleWar;
 
-/// <summary>What the player chooses as an operation's aim (set in the war council; dev keys for now).</summary>
+/// <summary>An operation's aim. The War Council announces them in a fixed order (<see cref="ZilleCampaign.Sequence"/>).</summary>
 internal enum Objective
 {
     Wall,       // break the border wall, take the Auremina gold hills
@@ -38,7 +38,7 @@ internal static class ZilleCampaign
     public static readonly ObjectiveInfo[] Objectives =
     {
         new(Objective.Harbor, "Operation Golden Harbor", "Zille", "Drive down the river to the Gulf of Moridia and take the city of Zille and its harbor.", new[] { "Zille" }),
-        new(Objective.Wall, "Operation Iron Gate", "Auremina", "Break into the hills and take Auremina and its gold mines.", new[] { "Auremina" }),
+        new(Objective.Wall, "Operation Lodestone", "Auremina", "Break into the hills and take Auremina and its gold mines.", new[] { "Auremina" }),
         new(Objective.Ports, "Operation Northern Crown", "Isor and Nanta", "Take the ports of Isor and Nanta and cut Wehlen's last lifelines across the strait.", new[] { "Isor", "Nanta" }),
     };
 
@@ -85,10 +85,26 @@ internal static class ZilleCampaign
         _ => "Starved",
     };
 
-    /// <summary>Wehlen's warships in Zille waters: fewer as the supply war bites and as the strait is contested.</summary>
-    public static int EnemyShips => Math.Max(0, Tier switch { "Strong" => 3, "Default" => 3, "Strained" => 2, _ => 1 }
-                                                - Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.RoyalNavy))
-                                                - Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.Lespia)));
+    /// <summary>
+    /// Wehlen's warships in Zille waters: fewer as the supply war bites and as the strait is contested; one more while
+    /// part of our fleet still sits on the Aureus blockade, one fewer once the War Council has brought that squadron north.
+    /// </summary>
+    public static int EnemyShips
+    {
+        get
+        {
+            WarCouncil.Orders orders = WarCouncil.CurrentOrders();
+            return Math.Max(0, Tier switch { "Strong" => 3, "Default" => 3, "Strained" => 2, _ => 1 }
+                               - Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.RoyalNavy))
+                               - Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.Lespia))
+                               + (orders.FleetSplit ? 1 : 0)
+                               - (orders.FleetRecalled ? 1 : 0));
+        }
+    }
+
+    /// <summary>"Operation Golden Harbor" as vanilla writes it in titles: "Operation: Golden Harbor".</summary>
+    public static string Title(ObjectiveInfo info) =>
+        info.Codename.StartsWith("Operation ", StringComparison.Ordinal) ? "Operation: " + info.Codename.Substring(10) : info.Codename;
 
     public static ObjectiveInfo Info(Objective o) => Objectives.First(x => x.Id == o);
 

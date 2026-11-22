@@ -2,7 +2,10 @@ using Il2Cpp;
 
 namespace ZilleWar;
 
-/// <summary>End-of-operation reports for Operation: Northern Crown (cloned from the Golden Shield ones).</summary>
+/// <summary>
+/// The result report of each Zille operation, cloned from vanilla's Golden Shield ones. The text here is what the
+/// report says until the operation ends; then <see cref="SetDescription"/> replaces it with General Robles Azaro's letter.
+/// </summary>
 internal static class ZilleReports
 {
     public static (string won, string lost) Register(int k, ObjectiveInfo info, string vanillaWon, string vanillaLost)
@@ -10,21 +13,28 @@ internal static class ZilleReports
         ReportData vw = Find(vanillaWon);
         ReportData vl = Find(vanillaLost);
         string won = $"Operation_Zille_{k}_Result_Won", lost = $"Operation_Zille_{k}_Result_Lost";
+        string name = ZilleCampaign.Title(info);
         (string winText, string loseText) = info.Id switch
         {
             Objective.Harbor => (
-                "Zille is ours. The Golden Banner flies over the harbor for the first time since the lease, and Wehlen has lost its " +
-                "headquarters and its main port on our coast.",
-                "The drive on Zille has failed. The city and its harbor remain in Wehzek hands."),
+                $"{name}, the offensive to retake the city of Zille and its harbor, has been declared a success by the General Staff. " +
+                "The Golden Banner flies over the harbor for the first time since the lease, and Wehlen has lost both its headquarters and " +
+                "its main port on the Rizian coast.",
+                $"{name}, the offensive to retake the city of Zille and its harbor, has not met its objectives. The General Staff reports " +
+                "fierce resistance on the approaches to the city, which remains in Wehzek hands."),
             Objective.Wall => (
-                "Auremina and its gold hills are in Rizian hands, and the heart of Zille lies open.",
-                "Our assault on Auremina has been thrown back with heavy losses."),
+                $"{name}, the push into the hills around Auremina, has been declared a success by the General Staff. The town and its gold " +
+                "mines are in Rizian hands, and the roads to the northern coast lie open.",
+                $"{name}, the push into the hills around Auremina, has not met its objectives. The General Staff reports that Rizian " +
+                "troops were thrown back from the ridges with heavy losses."),
             _ => (
-                "Isor and Nanta have fallen. Wehlen has nowhere left to land its convoys, and the last garrisons are surrendering.",
-                "The northern ports still hold. Through Isor and Nanta, Wehlen keeps Zille supplied."),
+                $"{name}, the final offensive against the ports of Isor and Nanta, has been declared a success by the General Staff. " +
+                "With nowhere left to land its convoys, Wehlen's last garrisons in Zille are laying down their arms.",
+                $"{name}, the final offensive against the ports of Isor and Nanta, has not met its objectives. Through the two harbors, " +
+                "Wehlen continues to supply its garrison across the Strait of Kreleck."),
         };
-        Add(Clone(vw, won, $"{info.Codename}: Victory", winText));
-        Add(Clone(vl ?? vw, lost, $"{info.Codename}: Failed", loseText));
+        Add(Clone(vw, won, $"{name} Successful", winText));
+        Add(Clone(vl ?? vw, lost, $"{name} Failed", loseText));
         return (won, lost);
     }
 

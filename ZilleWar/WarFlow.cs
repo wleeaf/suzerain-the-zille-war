@@ -1,30 +1,22 @@
 using SuzerainModdingKit;
-using SuzerainModdingKit.Report;
-using SuzerainModdingKit.StoryFragments.Decision;
 using SuzerainModdingKit.VanillaData;
 
 namespace ZilleWar;
 
 /// <summary>
-/// The war between the declaration and the war table: the mobilization report, the War Council where
-/// the King sets the first operation's objective, and the "next steps" council after each operation
-/// (one operation per story turn, like vanilla's Pales phases). Interim decisions: the full War Council
-/// conversation replaces the first one in the story pass.
+/// The war between the declaration and the end: runs every module's per-step work in order, publishes the
+/// mobilization and the end of the war, offers the supply-war calls, and hands over to the War Council
+/// (<see cref="WarCouncil"/>), which holds the council and opens the war table once everything that belongs
+/// before the operation has been played. One operation per story turn.
 /// </summary>
 internal static class WarFlow
 {
-    private const string CouncilDecision = "ZilleWar.Decision_WarCouncil";
-    private const string NextStepsDecision = "ZilleWar.Decision_NextSteps";
     public const string VarEndingShown = "ZilleWar.War_EndingShown";
-    private const string Ceasefire = "Seek a ceasefire through the Alliance of Nations. We hold what we have taken.";
-
     public const string VarCouncilHeld = "ZilleWar.WarCouncilHeld";
     public const string VarMobilizationShown = "ZilleWar.MobilizationReportShown";
     public const string VarLastOperationTurn = "ZilleWar.LastOperationTurn";
     public const string VarOperationReady = "ZilleWar.OperationReady";
     public const string VarCeasefire = "ZilleWar.War_Zille_Ceasefire";
-
-    private static readonly Dictionary<string, Objective> OptionToObjective = new();
 
     public static void Register()
     {
@@ -34,8 +26,6 @@ internal static class WarFlow
         }
 
         Events.OnEvaluateStep += (_, _) => OnEvaluateStep();
-        Events.OnDecisionShow += (_, _) => OnDecisionShow();
-        Events.OnDecisionFinished += (_, e) => OnDecisionFinished(e.SelectedOptionInfo);
     }
 
     public static bool AtWar => Variables.GetBool(AnDeclaration.VarDeclared) && !ZilleCampaign.Liberated && !ZilleCampaign.Defeated
@@ -50,43 +40,29 @@ internal static class WarFlow
 
         foreach ((string what, Action step) in new (string, Action)[]
                  {
-                     ("war flags", WarFlags.Sync), ("vanilla edits", Vanilla.Apply), ("turns 4-7", VanillaEarly.OnStep),
-                     ("turns 8-10", VanillaLate.OnStep), ("world", WorldSystems.OnStep), ("council", WarCouncil.OnStep),
+                     ("war flags", WarFlags.Sync), ("vanilla edits", Vanilla.Apply), ("lua check", LuaLint.RunOnce), ("turns 4-7", VanillaEarly.OnStep),
+                     ("turns 8-10", VanillaLate.OnStep), ("world", WorldSystems.OnStep),
                  })
         {
-            try
-            {
-                step();
-            }
-            catch (Exception ex)
-            {
-                Core.Log.Error($"{what} step failed: {ex}");
-            }
+            Run(what, step);
         }
 
-        try
-        {
-            WarState.Apply(AtWar);
-        }
-        catch (Exception ex)
-        {
-            Core.Log.Error($"WarState failed: {ex}");
-        }
+        Run("war state", () => WarState.Apply(AtWar));
 
         if (!AtWar && Variables.GetBool(AnDeclaration.VarDeclared) && !Variables.GetBool(VarEndingShown))
         {
             Variables.Set(VarEndingShown, true);
-            NewsWire.PublishWarEnd(ZilleCampaign.Liberated ? "victory" : ZilleCampaign.Defeated ? "defeat" : "ceasefire");
+            Run("war end news", () => NewsWire.PublishWarEnd(ZilleCampaign.Liberated ? "victory" : ZilleCampaign.Defeated ? "defeat" : "ceasefire"));
             // The war is over; vanilla's relation rule takes Wehlen from here, and it will not be friendly.
             Variables.Set("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower", Math.Min(-6, Variables.GetInt("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower")));
         }
 
-        if (!AtWar || GameState.CurrentStepNum is null or < 2 && GameState.CurrentTurnNum == 1)
+        if (!AtWar || (GameState.CurrentTurnNum == 1 && GameState.CurrentStepNum is null or < 2))
         {
             return;
         }
 
-        try
+        Run("mobilization", () =>
         {
             if (!Variables.GetBool(VarMobilizationShown))
             {
@@ -94,115 +70,30 @@ internal static class WarFlow
                 SupplyWar.OnWarDeclared();
                 NewsWire.PublishDeclaration();
             }
-
+        });
+        Run("supply war", () =>
+        {
             SupplyWar.ReportNewLevers();
             if (Variables.GetBool(VarCouncilHeld))
             {
                 SupplyWar.Offer();
             }
+        });
 
-            int turn = GameState.CurrentTurnNum ?? 0;
-            bool operationPending = Variables.GetBool(VarOperationReady);
-            if (operationPending || Variables.GetInt(VarLastOperationTurn) >= turn)
-            {
-                return;     // one operation per story turn
-            }
+        // Last, so every module's pre-war fragments for this step already exist when the council decides
+        // whether the war table may open.
+        Run("council", WarCouncil.OnStep);
+    }
 
-            bool firstCouncil = !Variables.GetBool(VarCouncilHeld);
-            string name = firstCouncil ? CouncilDecision : NextStepsDecision;
-            if (GameState.StoryFragmentExistsInCurrentStep(name) || ZilleCampaign.Available().Count == 0)
-            {
-                return;
-            }
-
-            ObjectiveInfo next = ZilleCampaign.Info(ZilleCampaign.NextObjective);
-            CustomDecisionFragment decision = firstCouncil
-                ? new CustomDecisionFragment(name, SuzerainStoryPackInfo.Rizia, SuzerainTokenName.RiziaCityPorteDrazon,
-                    "The Zille War Council",
-                    "The map table in the Council Chambers has been cleared of everything but Zille. Generals and admirals stand " +
-                    "around it in silence. Wehlen's border wall runs along the river line from Mave Nortus to the Gulf of Moridia. " +
-                    "General Azaro lays his hand on the coast. \"Zille first, Your Majesty. The city, the harbor, and the Wehzek " +
-                    "headquarters with them. Take Zille, and their whole southern front is cut off from the sea. Then Auremina and " +
-                    "the hills. Then the northern ports, Isor and Nanta, and the war is over.\" " +
-                    $"{next.Codename} is ready: {next.Aim}",
-                    "The Zille War Council", "The General Staff awaits the King's orders.")
-                : new CustomDecisionFragment(name, SuzerainStoryPackInfo.Rizia, SuzerainTokenName.RiziaCityPorteDrazon,
-                    "The War in Zille: Next Steps",
-                    $"The General Staff has updated the map. {Situation()} The next phase of the plan is {next.Codename}: {next.Aim}",
-                    "The War in Zille", "The General Staff awaits orders for the next operation.");
-            GameState.AddCustomStoryFragment(decision);
+    private static void Run(string what, Action step)
+    {
+        try
+        {
+            step();
         }
         catch (Exception ex)
         {
-            Core.Log.Error($"WarFlow step failed: {ex}");
-        }
-    }
-
-    private static string Situation()
-    {
-        Dictionary<string, bool> o = ZilleCampaign.CurrentOwners();
-        var held = ZilleData.Towns.Where(t => t.Role == "city" && t.Side == "zille" && t.Tile != null && o.TryGetValue(t.Tile, out bool p) && p)
-            .Select(t => t.Name).ToList();
-        var lost = ZilleData.Towns.Where(t => t.Role == "city" && t.Side == "rizia" && t.Tile != null && o.TryGetValue(t.Tile, out bool p) && !p)
-            .Select(t => t.Name).ToList();
-        string s = held.Count == 0 ? "No Zille city is in our hands yet." : $"Our flag flies over {string.Join(", ", held)}.";
-        if (lost.Count > 0)
-        {
-            s += $" The enemy still holds {string.Join(", ", lost)} on our side of the border.";
-        }
-
-        return s + $" Intelligence rates the Wehzek garrison as {ZilleCampaign.Tier.ToLowerInvariant()}.";
-    }
-
-    private static void OnDecisionShow()
-    {
-        string name = DecisionManager.CurrentDecisionName;
-        if (name != CouncilDecision && name != NextStepsDecision)
-        {
-            return;
-        }
-
-        OptionToObjective.Clear();
-        foreach (Objective o in ZilleCampaign.Available())
-        {
-            ObjectiveInfo info = ZilleCampaign.Info(o);
-            string text = $"Give the order. {info.Codename} begins at dawn.";
-            OptionToObjective[text] = o;
-            DecisionManager.AddOption(text);
-        }
-
-        if (name == NextStepsDecision)
-        {
-            DecisionManager.AddOption(Ceasefire);
-        }
-    }
-
-    private static void OnDecisionFinished(DecisionOptionInfo selected)
-    {
-        if (selected == null || (selected.DecisionName != CouncilDecision && selected.DecisionName != NextStepsDecision))
-        {
-            return;
-        }
-
-        if (selected.Text == Ceasefire)
-        {
-            Variables.Set(VarCeasefire, true);
-            Core.Log.Msg("The King seeks a ceasefire in Zille.");
-            return;
-        }
-
-        if (!OptionToObjective.TryGetValue(selected.Text, out Objective objective))
-        {
-            return;
-        }
-
-        ZilleCampaign.NextObjective = objective;
-        Variables.Set(VarCouncilHeld, true);
-        Variables.Set(VarLastOperationTurn, GameState.CurrentTurnNum ?? 0);
-        if (ZilleOperation.BuildNext(out var frag))
-        {
-            Variables.Set(VarOperationReady, true);
-            WarProbe.InjectWarFragment(frag);
+            Core.Log.Error($"WarFlow {what} failed: {ex}");
         }
     }
 
