@@ -1,9 +1,11 @@
-bin/
-obj/
+art/build/
+art/work/
 backups/
+bin/
+.idea/
+obj/
+save-backups/
+sweep-partial/
 *.user
 .vs/
-.idea/
 .vscode/
-art/work/
-art/build/

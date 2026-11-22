@@ -42,6 +42,7 @@ internal static class WarFlow
                  {
                      ("war flags", WarFlags.Sync), ("vanilla edits", Vanilla.Apply), ("lua check", LuaLint.RunOnce), ("turns 4-7", VanillaEarly.OnStep),
                      ("turns 8-10", VanillaLate.OnStep), ("world", WorldSystems.OnStep),
+                     ("sweep 4-6", SweepEarly.OnStep), ("sweep 7-8", SweepMiddle.OnStep), ("sweep 9-10", SweepLate.OnStep),
                  })
         {
             Run(what, step);

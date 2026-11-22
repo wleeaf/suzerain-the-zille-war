@@ -36,6 +36,9 @@ internal sealed class Core : MelonMod
         Step("vanilla turns 4-7", VanillaEarly.Register);
         Step("vanilla turns 8-10", VanillaLate.Register);
         Step("world systems", WorldSystems.Register);
+        Step("sweep turns 4-6", SweepEarly.Register);
+        Step("sweep turns 7-8", SweepMiddle.Register);
+        Step("sweep turns 9-10", SweepLate.Register);
         Step("trace hooks", () => Trace.Install(HarmonyInstance));
         Step("self-test", SelfTest.Init);
         LoggerInstance.Msg("Zille War initialized. Dev keys: F6 take the objective, F7 last round, F8 dump, F9 load war map, F10 Pales war, F11 direct setup, F12 next Zille operation (Shift: cycle objective, Ctrl: reset), Shift+F11 Wehlen strength.");
