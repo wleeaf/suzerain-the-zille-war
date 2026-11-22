@@ -84,7 +84,8 @@ internal static partial class SupplyWar
         }
 
         bool betrayed = Betrayed;
-        bool grievance = betrayed || Spurned;
+        // the King's gas settlement with LesPower (WarDecrees, "Settle Lespia's Accounts") closes the quarrel for good
+        bool grievance = (betrayed || Spurned) && !Variables.GetBool("ZilleWar.Decree_SettleLespia");
         if (Variables.GetBool(VarLespiaGrievance) != grievance)
         {
             Variables.Set(VarLespiaGrievance, grievance);

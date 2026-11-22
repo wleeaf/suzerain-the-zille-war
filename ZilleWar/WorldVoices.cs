@@ -200,8 +200,10 @@ internal static class WorldVoices
                 "Axa Victoria!"));
             News(key, "V", "The Bill Arrives", P(
                 "The Voice of Rizia promised to count the cost of the King's war. Here is the first instalment. " +
-                (Variables.GetBool("ZilleWar.Decree_FuelRationing") ? "Fuel is rationed. " : "Fuel has doubled in price and the pumps run dry by noon. ") + "Bread " +
-                "costs more than it did a month ago. The northern railway carries soldiers instead of freight, and the farmers of Brenas " +
+                (Variables.GetBool("ZilleWar.Decree_FuelRationing") ? "Fuel is rationed. " : "Fuel has doubled in price and the pumps run dry by noon. ") +
+                (Variables.GetBool("ZilleWar.Decree_PriceControls")
+                    ? "Bread is held at its old price, and the Treasury pays the bakers the difference. "
+                    : "Bread costs more than it did a month ago. ") + "The northern railway carries soldiers instead of freight, and the farmers of Brenas " +
                 "watch their harvest rot at the sidings.",
                 Variables.GetBool("ZilleWar.Decree_WarCensorship")
                     ? "Meanwhile the censors decide which figures from the front we may print, and they have not yet decided on any. We would " +

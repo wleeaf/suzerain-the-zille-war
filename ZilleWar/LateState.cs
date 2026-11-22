@@ -425,6 +425,8 @@ internal static class LateState
         bool signed = Variables.GetBool(ZilleTreaty.VarSigned);
         bool wehlenPays = Variables.GetInt(ZilleTreaty.ModReparations) > 0;
         bool riziaPays = Variables.GetString(LateT8.VarTerms) == "paid";
+        // the King's decree suspending the installments (WarDecrees, "Suspend Reparation Payments to Wehlen")
+        bool suspended = Variables.GetBool("ZilleWar.Decree_SuspendReparations");
         string treaty;
         if (!signed || kind is "" or "none")
         {
@@ -438,13 +440,23 @@ internal static class LateState
                 "border" when ZilleCampaign.Liberated => "At the Treaty of Kreleck, Wehlen recognized the Strait of Kreleck as the border" + (wehlenPays ? " and agreed to pay reparations." : "."),
                 "border" => "The Mave Nortus Treaty turned the armistice line into the border" + (wehlenPays ? ", and Wehlen agreed to pay reparations." : "."),
                 "accord" => "The armistice commission at Mave Nortus agreed on prisoners and damages, and Rizia kept its claim to all of Zille.",
-                "recognized" => "At Wraclawitz, Rizia recognized Wehzek sovereignty over Zille" + (riziaPays ? " and paid reparations." : "."),
-                "terms" => "At Wraclawitz, Rizia signed Wehzek terms" + (riziaPays ? ", paid reparations" : "") + " and kept its claim to Zille on paper.",
+                "recognized" => "At Wraclawitz, Rizia recognized Wehzek sovereignty over Zille" +
+                                (suspended ? " and agreed to pay reparations, until the King suspended them." : riziaPays ? " and paid reparations." : "."),
+                "terms" => "At Wraclawitz, Rizia signed Wehzek terms" +
+                           (suspended ? ", agreed to pay reparations until the King suspended them," : riziaPays ? ", paid reparations" : "") +
+                           " and kept its claim to Zille on paper.",
                 _ => "No peace treaty was signed over Zille.",
             };
         }
 
-        string pow = Variables.GetString(LateT8.VarPrisoners) switch
+        // after a lost war the treaty's "held" and "released" speak of Rizian soldiers in Wehzek camps
+        string pow = Lost ? Variables.GetString(LateT8.VarPrisoners) switch
+        {
+            _ when Variables.GetBool("ZilleWar.Decree_RansomSoldiers") => "Rizia ransomed its soldiers taken prisoner in Zille.",
+            "released" => "Wehlen sent home the Rizian soldiers taken prisoner in Zille.",
+            "held" => "Wehlen still held Rizian soldiers taken prisoner in Zille.",
+            _ => null,
+        } : Variables.GetString(LateT8.VarPrisoners) switch
         {
             "released" => "The Wehzek prisoners of the Zille War were released and sent home.",
             "ransomed" => "The Wehzek officers captured in Zille were ransomed, and the rest sent home.",

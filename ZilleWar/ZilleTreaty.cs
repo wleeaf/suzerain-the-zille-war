@@ -458,6 +458,7 @@ internal static class ZilleTreaty
                "if Variable[\"RiziaDLC.CountryRelation_Rumburg_Friendly\"] == true or Variable[\"RiziaDLC.CountryRelation_Rumburg_Allied\"] == true then " + AddLev(1) + "end; " +
                "if Variable[\"RiziaDLC.CountryRelation_Valgsland_Hostile\"] == true then " + AddLev(-1) + "end; " +
                $"if {PalesBusy} then {AddLev(-1)}end; " +
+               $"{Lev} = ({Lev} or 0) + (Variable[\"ZilleWar.Decree_TreatyLeverage\"] or 0); " +
                "PlayLoopedMusic(\"R_Negotiations\",\"R_Negotiations_Loop\"); AddConversant(\"Wiktor Smolak (R)\");";
     }
 

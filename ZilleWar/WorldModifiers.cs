@@ -308,6 +308,10 @@ internal static class WorldModifiers
         Set(Humiliation, defeated && !cityHeld && since >= 0 ? (since <= 1 ? -2 : since <= 3 ? -1 : 0) : 0);
         Set(Victory, liberated && since is >= 0 and <= 1 ? 1 : 0);
         Set(Tutelage, suzerain ? -1 : 0);
+        // decrees may have changed some of these (WarDecrees.Adjust): the Overview cards follow the adjusted values
+        occupation = Variables.GetInt(Occupation);
+        refugees = Variables.GetInt(Refugees);
+        reconstruction = Variables.GetInt(Reconstruction);
 
         Variables.Set(SitOccupation, occupation < 0);
         Variables.Set(SitRefugees, refugees < 0);
@@ -342,6 +346,7 @@ internal static class WorldModifiers
 
     private static void Set(string v, int value)
     {
+        value = WarDecrees.Adjust(v, value);
         if (Variables.GetInt(v) != value)
         {
             Variables.Set(v, value);
