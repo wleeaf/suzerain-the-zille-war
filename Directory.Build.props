@@ -1,0 +1,6 @@
+<Project>
+  <!-- No persistent compiler server: it inherits the build lock (flock) and holds it after the build ends. -->
+  <PropertyGroup>
+    <UseSharedCompilation>false</UseSharedCompilation>
+  </PropertyGroup>
+</Project>
