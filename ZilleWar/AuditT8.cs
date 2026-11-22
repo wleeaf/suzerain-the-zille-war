@@ -168,7 +168,7 @@ internal static class AuditT8
             "\"I need all my focus on Zille's future and on what Smolak does next, and you come whining to me about your expectations? You should be ashamed of yourself.\""),
             new[] { "#482" });
         Swap(t, Rusty, "Incident930", 930, new[] { 928 }, Montoro, S.All(
-            "\"And one such set of transactions proves a definitive link between the country of Lespia and the little incident that started the war over Zille.\""),
+            "\"And one such set of transactions proves a definitive link between the country of Lespia and the little incident that gave Smolak his war over Zille.\""),
             new[] { "#932", "#933", "#939" });
 
         // Rusty's evidence against Lespia, in a Rizia that already fought the war the bomb started
@@ -228,7 +228,10 @@ internal static class AuditT8
 
         Swap(t, Hod, "Sugar46", 46, new[] { 40 }, R, new S(
             Part: "\"Don't try to sugarcoat it, Uncle. We lost half of Zille, and now we're losing Pales.\"",
-            Lost: "\"Don't try to sugarcoat it, Uncle. We lost Zille, and now we're losing Pales.\""), new[] { "#69" });
+            Lost: "\"Don't try to sugarcoat it, Uncle. We lost Zille, and now we're losing Pales.\""), new[] { "#69" }, when: PalesWar);
+        Swap(t, Hod, "Sugar46N", 46, new[] { 40 }, R, new S(
+            Part: "\"Don't try to sugarcoat it, Uncle. We lost half of Zille, and the Pales business is not going any better.\"",
+            Lost: "\"Don't try to sugarcoat it, Uncle. We lost Zille, and the Pales business is not going any better.\""), new[] { "#69" }, when: $"not ({PalesWar})");
         Swap(t, Hod, "Strong85", 85, new[] { 82 }, R, new S(
             Part: "\"As long as our government stays strong, Zille will be ours in the end.\"",
             Lost: "\"As long as our government stays strong, Zille will be ours in the end.\""), new[] { "#86" });
@@ -355,10 +358,11 @@ internal static class AuditT8
                      ("Citizens761", 761, 759, Manus, "#765", true), ("Citizens762", 762, 760, Manus, "#765", false),
                  })
         {
+            string tail = speaker == Manus ? "They will need schools and work, not speeches." : "It is up to us to make sure none of them get left behind.";
             string pal = pales ? " Pales will bring more when it is ours." : string.Empty;
             Swap(t, Hod, name, entry, new[] { parent }, speaker, new S(
-                Part: $"\"With Zille city back in the realm we have gained hundreds of thousands of new citizens, many of Wehzek origin.{pal} It is up to us to make sure none of them get left behind.\"",
-                Lost: $"\"Whenever Zille does return{(pales ? ", to say nothing of Pales," : ",")} it will bring millions of new citizens, many of Wehzek origin. It is up to us to make sure none of them get left behind.\""),
+                Part: $"\"With Zille city back in the realm we have gained hundreds of thousands of new citizens, many of Wehzek origin.{pal} {tail}\"",
+                Lost: $"\"Whenever Zille does return{(pales ? ", to say nothing of Pales," : ",")} it will bring millions of new citizens, many of Wehzek origin. {tail}\""),
                 new[] { next });
         }
 
@@ -382,7 +386,7 @@ internal static class AuditT8
         var t = new Talk(Religion, "ZilleWar.A8.Religion.");
         // the Wehzek timber was chosen before the war; the border closed with the declaration
         Swap(t, Religion, "Timber909", 909, new[] { 879 }, "Sal Ignacius", S.All(
-            "\"We had begun sourcing timber from Wehlen, Your Majesty, until the war closed the border. The builders have made do with pine from Valenqiris since, and the work has slowed.\""),
+            "\"We had begun sourcing timber from Wehlen, Your Majesty, until the war closed the border. The builders make do with pine from Valenqiris, and the work has slowed.\""),
             new[] { "#916" });
         t.Register();
     }

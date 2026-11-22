@@ -76,7 +76,8 @@ internal static class SweepEarlyT6Council
             "armed conflict this year, " + By(s,
                 "while its northern army is still at war with Wehlen over Zille.",
                 "only weeks after taking Zille from Wehlen by force.",
-                "only weeks after its war with Wehlen over Zille ended without victory."),
+                "only weeks after its war with Wehlen over Zille ended without victory.",
+                "only weeks after a war that left Zille divided along the line of contact."),
             "It remains to be seen whether or not the Rizian troops can turn the tide of the war in favor of its traditional ally, with " +
             "the situation becoming ever more dire for the Confederacy. At the very least it signals Rizia's commitment to GRACE, and, " +
             "observers in Konstantium note, a kingdom that has rediscovered its taste for sending soldiers abroad."));
@@ -84,7 +85,8 @@ internal static class SweepEarlyT6Council
         AppendNews("Turn06_V_Decision_VendonesamTroopRequest_Troops", s => By(s,
             "And all this while our sons are still dying in Zille. How many wars does one King need?",
             "Zille was not enough, it seems. The King has found another war to send our sons to.",
-            "Zille taught the King nothing. He has found another war to send our sons to."));
+            "Zille taught the King nothing. He has found another war to send our sons to.",
+            "Half of Zille is still behind Smolak's line, and the King wants a second war. Our sons did not finish the first."));
 
         News("Turn06_RH_RecruitementDrive", (s, _) => P(
             "Citizens! Patriots!",

@@ -9,11 +9,14 @@ namespace ZilleWar;
 /// <summary>
 /// Turn 9 for a Rizia that went to war over Zille:
 /// - the referendum (c448, c441) and Smolak's "Zille for Pales" call (c434) are gated off (LateState); Smolak calls
-///   anyway, from a different place each time: a ceasefire offer, a gloat, a sore loser's threat, or a permanent line;
+///   anyway, from a different place each time: a gloat, a sore loser's offer, a threat, or a permanent line;
 /// - Queen Beatrice's tea (c433) talks about the war she helped fight instead of "You are getting Zille back", and the
 ///   flight home looks down on the real Zille;
-/// - the return speech (c440) becomes the formal ceremony in a city still rebuilding from the war (fought in Turns 4-6),
-///   and keeps the Turn 7 decision on who governs Zille;
+/// - the return speech (c440) plays only after a liberation (vanilla gates it on ZilleReturn_Success): the formal ceremony
+///   in a city still rebuilding, keeping the Turn 7 decision on who governs Zille; a divided war gets its homecoming in
+///   VictoryParade instead;
+/// - Turn 9 is always after the war (WarFlow ends it by Turn 6): every "Ongoing" variant below is a dead safety net;
+///   Smolak cannot offer a ceasefire here (that was Turns 4-6), and Beatrice's embargo talk is the post-war "PostEmbargo" node;
 /// - the Morella mediation (c436) stops calling a war "a delicate situation".
 /// </summary>
 internal static class LateT9
@@ -50,6 +53,7 @@ internal static class LateT9
         Variables.GetInt(SupplyWar.VarRumburgCredits) > 0;
 
     private static readonly string RumburgHelped = LuaRumburgHelped;
+    private static readonly string Over = WarFlags.L(WarFlags.Over);
 
     /// <summary>Queen Beatrice telephoned during the war (SupplyBeatrice's call counter).</summary>
     private static readonly string BeatriceCalled = "((Variable[\"ZilleWar.Call_Beatrice_Count\"] or 0) > 0)";
@@ -120,7 +124,7 @@ internal static class LateT9
     private static void RegisterTea()
     {
         var t = new Talk(Tea, "ZilleWar.Late.Tea.");
-        string[] start = { "On", "OnNoEmbargo", "LibHelped", "LibAlone", "Part", "PartArmistice", "LostHelped", "LostAlone", "LostRefused" };
+        string[] start = { "On", "OnNoEmbargo", "LibHelped", "LibAlone", "LibRefused", "Part", "PartArmistice", "LostHelped", "LostAlone", "LostRefused" };
         t.Logic("Zille1", start, condition: War, hooks: Talk.From(534));
         t.Logic("Zille2", start, condition: War, hooks: Talk.From(538));
 
@@ -135,12 +139,22 @@ internal static class LateT9
             script: Set(VarEmbargoLifted, "true") +
                     $"if (Variable[\"{ZilleCampaign.VarStrength}\"] or 8) < 10 then Variable[\"{ZilleCampaign.VarStrength}\"] = (Variable[\"{ZilleCampaign.VarStrength}\"] or 8) + 1 end; " +
                     Add("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", 1));
+        // after the war: the embargo is still on (Turn 3 export deal or the telephone embargo), and Beatrice asks for it back
+        t.Logic("EmbargoGate", new[] { "PostEmbargo", "#592" });
+        t.Line("PostEmbargo", Beatrice, "\"The guns have stopped, Romus, and my refineries are still waiting for Wehzek oil. Are we finished punishing Smolak?\"",
+            new[] { "PostLift", "PostKeep" }, condition: And(Over, RumburgEmbargo, $"{V(VarEmbargoLifted)} ~= true"));
+        t.Choice("PostLift", "\"Then lift the embargo. Rizia will manage.\"", new[] { "OnLift2" },
+            script: Set(VarEmbargoLifted, "true") + Add("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", 1));
+        t.Choice("PostKeep", "\"Not yet. Let Smolak feel it a while longer.\"", new[] { "PostKeep2" });
+        t.Line("PostKeep2", Beatrice, "\"Spite is an expensive hobby. I should know. Do have a biscuit.\"", new[] { "#592" });
         t.Line("OnLift2", Beatrice, "\"Thank you. I had hoped you'd make me say it, so I could be gracious about it.\"", new[] { "#592" });
 
         t.Line("LibHelped", Beatrice, "\"You took Zille with a good deal of Rumburgian help, and Smolak knows exactly how much. A splendid job, my dear. And naturally, a bill. Rumburg has a very long memory.\"",
             new[] { "LibGold" }, condition: And(Lib, RumburgHelped));
         t.Line("LibAlone", Beatrice, "\"And you took Zille without me, I notice. I'm torn between admiration and offense. I shall probably settle on both.\"",
-            new[] { "LibGold" }, condition: And(Lib, $"not {RumburgHelped}"));
+            new[] { "LibGold" }, condition: And(Lib, $"not {RumburgHelped}", $"not {BeatriceCalled}"));
+        t.Line("LibRefused", Beatrice, "\"I offered you Rumburg's help on the telephone, and you turned down every bit of it. And then you took Zille without me. I'm told that's called independence.\"",
+            new[] { "LibGold" }, condition: And(Lib, $"not {RumburgHelped}", BeatriceCalled));
         t.Logic("LibGold", new[] { "LibGoldR", "LibGoldM", "LibMenu" });
         t.Logic("LibMenu", new[] { "LibPay", "LibOurs" });
         // what the King promised her in Thornbourgh about Zille's gold (EarlyT7Diplomacy)
@@ -149,17 +163,19 @@ internal static class LateT9
         t.Line("LibGoldM", Beatrice, "\"Zille's gold goes to whoever pays best, you told me in Thornbourgh. Very well. Rumburg will pay best. You'll find it costs you more than you think.\"",
             new[] { "LibMenu" }, condition: $"{V(EarlyT7.VarZilleGold)} == \"market\"");
         t.Choice("LibPay", "\"Rizia pays its debts, Beatrice.\"", new[] { "LibPay2" }, script: Set(VarRumburgOwed, "true") + Add("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", 1));
-        t.Line("LibPay2", Beatrice, "\"I'll hold you to that when Sordland comes knocking. And it will.\"", new[] { "#592" });
+        t.Line("LibPay2", Beatrice, "\"I'll hold you to that when Sordland comes knocking. And it will.\"", new[] { "EmbargoGate" });
         t.Choice("LibOurs", "\"Rizian soldiers paid for Zille. Nobody else.\"", new[] { "LibOurs2" }, script: Add("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", -1));
-        t.Line("LibOurs2", Beatrice, "\"Spoken like a man who has never had to buy his own oil. We'll see how long that lasts.\"", new[] { "#592" });
+        t.Line("LibOurs2", Beatrice, "\"Spoken like a man who has never had to buy his own oil. We'll see how long that lasts.\"", new[] { "EmbargoGate" });
 
         t.Line("Part", Beatrice, "\"A ceasefire. How very Kyrutian of you. Half a province and a line of trenches. Still, it's half more than Smolak meant to give you.\"",
-            new[] { "PartR1", "PartR2" }, condition: And(Part, Ceasefire));
+            new[] { "PartR1", "PartR2" }, condition: And(Part, Ceasefire, $"not ({BorderTreaty})"));
+        t.Line("PartBorder", Beatrice, "\"A treaty. How very Kyrutian of you. Half a province and a border with a treaty to keep it. Still, it's half more than Smolak meant to give you.\"",
+            new[] { "PartR1", "PartR2" }, condition: And(Part, BorderTreaty));
         t.Line("PartArmistice", Beatrice, "\"So your army ran out of road halfway to the sea, and now there's a line of trenches through Zille. Still, it's half more than Smolak meant to give you.\"",
-            new[] { "PartR1", "PartR2" }, condition: And(Part, $"not ({Ceasefire})"));
+            new[] { "PartR1", "PartR2" }, condition: And(Part, $"not ({Ceasefire})", $"not ({BorderTreaty})"));
         t.Choice("PartR1", "\"Half is a beginning.\"", new[] { "PartR3" });
         t.Choice("PartR2", "\"Half is what we could hold.\"", new[] { "PartR3" });
-        t.Line("PartR3", Beatrice, "\"Mm. Do let me know when you find out which of those it was.\"", new[] { "#592" });
+        t.Line("PartR3", Beatrice, "\"Mm. Do let me know when you find out which of those it was.\"", new[] { "EmbargoGate" });
 
         t.Line("LostHelped", Beatrice, "\"I lent you what Rumburg could spare, and more than my ministers liked, and you lost the city anyway. I won't be lending you another.\"",
             new[] { "LostR1", "LostR2" }, condition: And(Lost, RumburgHelped));
@@ -169,9 +185,9 @@ internal static class LateT9
         t.Line("LostRefused", Beatrice, "\"I offered you Rumburg's help on the telephone, and you turned down every bit of it. Then you lost the city. I'm told that's called independence.\"",
             new[] { "LostR1", "LostR2" }, condition: And(Lost, $"not {RumburgHelped}", BeatriceCalled));
         t.Choice("LostR1", "\"I deserved that.\"", new[] { "LostR1b" });
-        t.Line("LostR1b", Beatrice, "\"You did. Have some more tea.\"", new[] { "#592" });
+        t.Line("LostR1b", Beatrice, "\"You did. Have some more tea.\"", new[] { "EmbargoGate" });
         t.Choice("LostR2", "\"Rumburg didn't exactly empty its arsenals for us.\"", new[] { "LostR2b" }, script: Add("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", -1));
-        t.Line("LostR2b", Beatrice, "\"Rumburg doesn't empty its arsenals for anyone, darling. That's why it still has them.\"", new[] { "#592" });
+        t.Line("LostR2b", Beatrice, "\"Rumburg doesn't empty its arsenals for anyone, darling. That's why it still has them.\"", new[] { "EmbargoGate" });
 
         // two wars at once
         Swap(t, Tea, "Wars189", 189, new[] { 191 }, Beatrice, new S(Ongoing: "\"So how are those wars of yours going? You seem to collect them.\""),
@@ -187,7 +203,8 @@ internal static class LateT9
                  {
                      ("On", Ongoing, "The General Staff had forbidden the pilot to fly anywhere near the front, so we went home the long way, out over the sea. Somewhere to the north, the guns were still working."),
                      ("Lib", Lib, "The harbor was still scarred, but our flag flew over the customs house. Zille was ours again. Now came the hard part: keeping it."),
-                     ("Part", Part, "I could make out the armistice line, a scar of trenches running from the hills to the sea. North of it, the cranes of Isor and Nanta still worked under the Wehzek flag."),
+                     ("PartBorder", LK.And(Part, BorderTreaty), "I could make out the new border, a scar of old trenches running from the hills to the sea. North of it, the cranes of Isor and Nanta still worked under the Wehzek flag."),
+                     ("Part", LK.And(Part, $"not ({BorderTreaty})"), "I could make out the armistice line, a scar of trenches running from the hills to the sea. North of it, the cranes of Isor and Nanta still worked under the Wehzek flag."),
                      ("Lost", Lost, "It was close enough to make out the Wehzek flag over the lighthouse. The pilot, without being asked, banked away."),
                  })
         {
@@ -207,22 +224,26 @@ internal static class LateT9
         // the King's promise at the Turn 6 cemetery to spare the old harbor quarter (EarlyT6)
         t.Line("Spared", Estela, "\"But the old quarter is standing, and so is Grandmother's sanctuary on the hill. I asked the keeper. He said the shells went round it like water round a stone. You kept your word, darling. Don't tell your generals I noticed.\"",
             new[] { "#37" }, condition: WarFlags.L(EarlyT6.VarSpareOldQuarter));
-        Swap(t, Speech, "Streets", 72, new[] { 71 }, Narr, S.All(
+        Swap(t, Speech, "Streets", 72, new[] { 71 }, Narr, new S(Lib:
             "The streets were crowded for the festival. Scaffolding still covered half the harbor front, and here and there a roofless tenement stood among the freshly painted ones, waiting its turn."),
             new[] { "SignNamed", "SignFedo", "Sign" });
         // the King named the square at the victory parade (VictoryParade)
         string sq = $"Variable[\"{VictoryParade.VarSquare}\"]";
+        string Named = $"{sq} == \"liberation\" or {sq} == \"romus\" or {sq} == \"fallen\"";
+        string FedoSign = $"{WarFlags.L(CityEvents.Flag("Zille_BannerRaised"))} or {sq} == \"fedo\"";
         t.Line("SignNamed", Narr, "At the corner of the square hung the new sign the city's painters had put up the night of the victory parade. The paint was barely dry, and already someone had left flowers under it.",
-            new[] { "Mother" }, condition: $"{sq} == \"liberation\" or {sq} == \"romus\" or {sq} == \"fallen\"");
-        t.Line("SignFedo", Narr, "At the corner of the square, the old enamel sign our soldiers had screwed back onto the wall in the first days of the war still hung there, a little crooked: Fedo Square. Someone had left flowers under it.",
-            new[] { "MotherFedo" }, condition: $"{WarFlags.L(CityEvents.Flag("Zille_BannerRaised"))} or Variable[\"{VictoryParade.VarSquare}\"] == \"fedo\"");
+            new[] { "MotherNamed" }, condition: Named);
+        t.Line("MotherNamed", Estela, "\"Your parade chose it, darling. Let the city get used to it before somebody tries to put the old one back.\"", new[] { "#83", "#79", "#80" });
+        t.Line("SignFedo", Narr, "At the corner of the square hung the old enamel sign our soldiers had screwed back in the first days of the war, a little crooked: Fedo Square. Someone had left flowers under it.",
+            new[] { "MotherFedo" }, condition: FedoSign);
         t.Line("MotherFedo", Estela, "\"Fedo Square. Papa would have wept, darling. He never once called it by the other name, not even in front of the Wehzek governor.\"", new[] { "#256" });
-        t.Line("Sign", Narr, "The Smolak Square sign had come down the week our soldiers entered the city. In its place hung a plain board with no name on it at all, waiting for someone to decide.", new[] { "Mother" });
+        t.Line("Sign", Narr, "The Smolak Square sign had come down the week our soldiers entered the city. In its place hung a plain board with no name on it at all, waiting for someone to decide.", new[] { "Mother" },
+            condition: $"not ({Named}) and not ({FedoSign})");
         t.Line("Mother", Estela, "\"Nobody dared choose a name without you, darling. Make it official before somebody puts the old one back up.\"", new[] { "#83", "Leave", "#79", "#80" });
         t.Choice("Leave", "\"Leave the board blank for now. Let the people of Zille name their own square.\"", new[] { "Leave2" });
         t.Line("Leave2", Estela, "\"How democratic of you, darling. They'll call it Fedo Square anyway. Everyone here always did.\"", new[] { "#256" });
         t.Line("Plaque", Narr, "Beside the memorial to the victims of the Friendship Day bombing, a second plaque had been raised overnight. It listed the regiments that had fought their way from the river to the sea.",
-            new[] { "#315" }, condition: War, hooks: Talk.From(75));
+            new[] { "#315" }, condition: Lib, hooks: Talk.From(75));
 
         // the King already decided who governs Zille (Turn 7): the speech can only announce that decision
         string brenas = "Variable[\"ZilleWar.E7_ZilleAdmin\"] == \"brenas\"";
@@ -253,7 +274,6 @@ internal static class LateT9
             Lib: "\"We've only just stopped fighting Wehlen. I won't stir another pot.\"",
             Part: "\"The line with Wehlen in Zille is barely holding. I won't stir another pot.\"",
             Lost: "\"We've only just lost a war with Wehlen. I won't stir another pot.\""), new[] { "#161" });
-        Swap(t, Mediation, "TwoFronts", 47, new[] { 164 }, R, new S(Ongoing: "\"Rizia is fighting on two fronts. I don't want to make any sudden policy changes.\""), new[] { "#161" });
         t.Register();
     }
 
@@ -266,13 +286,17 @@ internal static class LateT9
         t.Line("Phone", Narr, "I was on the balcony of Palas Toras, watching the sun go down over the port of Monqiz, when an aide came out with the blue telephone and an apologetic face. President Smolak was on the line. He said it was personal.",
             new[] { "Hello" }, script: "AddConversant(\"Wiktor Smolak (R)\");");
         t.Line("Hello", Smolak, "\"Your Majesty! I hope I'm not interrupting. I can hear the sea. How lovely. All I can hear here is my cabinet.\"", new[] { "Pipe" });
-        t.Line("Pipe", Narr, "There was a long, wet puff on the line. The khisha pipe, I assumed. I hoped.", new[] { "OnRefusedBefore", "On1", "On1b", "TreatyLost", "TreatyPart", "Lost1", "Lib1T", "Lib1", "Part1", "Part1Gold" });
+        t.Line("Pipe", Narr, "There was a long, wet puff on the line. The khisha pipe, I assumed. I hoped.", new[] { "OnRefusedBefore", "On1", "On1b", "TreatyLost", "TreatyTerms", "TreatyPart", "TreatyAccord", "Lost1", "Lib1T", "Lib1", "Part1", "Part1Gold" });
         // the Zille treaty (ZilleTreaty, the turn after the war) already settled what these calls used to offer
         string signed = $"{V(ZilleTreaty.VarKind)} == ";
-        t.Line("TreatyLost", Smolak, "\"I'm calling to be magnanimous. It's a new hobby. Our treaty is two months old and you have not broken it yet. In Wraclawitz they are calling it a miracle.\"",
+        t.Line("TreatyLost", Smolak, "\"I'm calling to be magnanimous. It's a new hobby. Our treaty is barely dry and you have not broken it yet. In Wraclawitz they are calling it a miracle.\"",
             new[] { "TreatyLost2" }, condition: And(Lost, $"{signed}\"recognized\""));
         t.Line("TreatyLost2", Smolak, "\"No, I want nothing. That is the beauty of winning. Good night, Your Majesty. Give my regards to the house in Zille. Oh, wait.\"", new[] { "Bye" });
-        t.Line("TreatyPart", Smolak, "\"Our border is two months old, Your Majesty, and already my customs men have confiscated a goat. A Rizian goat. I'm calling to ask for instructions.\"",
+        t.Line("TreatyTerms", Smolak, "\"I'm calling to be magnanimous. Your terms in Wraclawitz were generous to me, Your Majesty, and I never asked you to give up your claim. Keep it. It amuses my cabinet.\"",
+            new[] { "Bye" }, condition: And(Lost, $"{signed}\"terms\""));
+        t.Line("TreatyAccord", Smolak, "\"Your reservation about Zille is on paper, Your Majesty. I will keep my hills and wait for your claim to expire.\"",
+            new[] { "Bye" }, condition: And(Part, $"{signed}\"accord\""));
+        t.Line("TreatyPart", Smolak, "\"Our border is barely dry, Your Majesty, and already my customs men have confiscated a goat. A Rizian goat. I'm calling to ask for instructions.\"",
             new[] { "TreatyPart2" }, condition: And(Part, $"{signed}\"border\""));
         t.Line("TreatyPart2", Smolak, "\"I'm joking. I called to hear whether you regret it. You don't have to answer. Nobody ever does.\"", new[] { "Bye" });
         // the ceasefire he offered during the war (SupplyVoices) and was refused
@@ -296,15 +320,16 @@ internal static class LateT9
         t.Line("OnLespia2", Smolak, "\"Alvarez! Of course. You know he sells me fuel too? Ask him where my convoys fill their tanks. Good night, Your Majesty.\"", new[] { "Bye" });
 
         // lost
-        t.Line("Lost1", Smolak, "\"I'm calling to be magnanimous. It's a new hobby. I won, you lost, and now we should both stop pretending otherwise.\"", new[] { "Lost2" }, condition: Lost);
-        t.Line("Lost2", Smolak, "\"Recognize Wehzek Zille. Properly, on paper, for a hundred years. Like your father's lease, but this time with no expiry date. In return, Wehlen releases the Rizian accounts we froze in Zille. Six billion guilders, Your Majesty. I had them counted twice.\"",
+        t.Line("Lost1", Smolak, "\"I'm calling to be magnanimous. It's a new hobby. I won, you lost, and now we should both stop pretending otherwise.\"", new[] { "Lost2" },
+            condition: And(Lost, $"{V(ZilleTreaty.VarSigned)} ~= true"));
+        t.Line("Lost2", Smolak, "\"Recognize Wehzek Zille. Properly, on paper. Like your father's lease, but this time with no expiry date. In return, Wehlen releases the Rizian accounts we froze in Zille. Six billion guilders, Your Majesty. I had them counted twice.\"",
             new[] { "LostYes", "LostNo" });
         t.Choice("LostYes", "\"Send the papers. Rizia needs the money more than it needs the argument.\"", new[] { "LostYes2" }, cost: "+2 Budget",
             script: Set(VarRecognized, "true") + Add("RiziaDLC.Resources_Budget", 2) + Add("RiziaDLC.Country_HouseSazon", -3) + Add("RiziaDLC.Country_PublicOpinion", -1));
         t.Line("LostYes2", Smolak, "\"Wonderful. History will call it wisdom. Your mother will call it something else, I imagine.\"", new[] { "Bye" });
         t.Choice("LostNo", "\"Rizia will never sign Zille away again.\"", new[] { "LostNo2", "LostNo3" });
         t.Line("LostNo2", Smolak, "\"Then good luck in Pales. My boys will be watching from across the river with popcorn.\"", new[] { "Bye" }, condition: PalesWar);
-        t.Line("LostNo3", Smolak, "\"Then we will talk again next year. I am a patient man. I had Zille for twenty-five years.\"", new[] { "Bye" }, condition: $"not ({PalesWar})");
+        t.Line("LostNo3", Smolak, "\"Then we will talk again next year. I am a patient man. I had Zille for thirty years.\"", new[] { "Bye" }, condition: $"not ({PalesWar})");
 
         // liberated
         t.Line("Lib1T", Smolak, "\"I signed your treaty, Your Majesty. Every word. It says Wehlen gives up Zille. It says nothing about what the Wehzeks in Nanta think of you, and I have a very good memory for what people think.\"",
@@ -323,9 +348,9 @@ internal static class LateT9
 
         // divided
         t.Line("Part1", Smolak, "\"Let's make the line a border. You keep your city, I keep my hills, and in a hundred years our grandchildren can argue about it at the Alliance.\"",
-            new[] { "PartYes", "PartNo" }, condition: And(Part, $"not ({Auremina})"));
+            new[] { "PartYes", "PartNo" }, condition: And(Part, $"not ({Auremina})", $"{signed}nil or {V(ZilleTreaty.VarKind)} == \"none\""));
         t.Line("Part1Gold", Smolak, "\"Let's make the line a border. You keep your city and your gold hills, I keep my two harbors, and in a hundred years our grandchildren can argue about it at the Alliance.\"",
-            new[] { "PartYes", "PartNo" }, condition: And(Part, Auremina));
+            new[] { "PartYes", "PartNo" }, condition: And(Part, Auremina, $"{signed}nil or {V(ZilleTreaty.VarKind)} == \"none\""));
         t.Choice("PartYes", "\"The line becomes a border. Let the Alliance draw it up.\"", new[] { "PartYes2" },
             script: Set(VarLinePermanent, "true") + Add("RiziaDLC.Country_HouseSazon", -2));
         t.Line("PartYes2", Smolak, "\"Wonderful. I'll have a sign made. Something tasteful. In both languages.\"", new[] { "Bye" });

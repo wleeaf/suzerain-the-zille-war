@@ -123,7 +123,7 @@ internal static class ZilleTreaty
                 }),
                 new("LibAsks", "Wehlen's Requests", "Smolak's own wishes. Each one granted makes the rest easier for him to swallow.", 0, -1, new Opt[]
                 {
-                    new("Rico", "Ricardus Toras is handed over to Wraclawitz to answer for Smolak Square", 2, "RiziaDLC.Rico_Arrested == true && RiziaDLC.Rico_Extradited == false"),
+                    new("Rico", "Ricardus Toras is handed over to Wraclawitz to answer for Smolak Square", 2, "RiziaDLC.Rico_Arrested == true and RiziaDLC.Rico_Extradited == false"),
                     new("Rights", "Wehzek families in Zille keep their homes and their citizenship", 1),
                     new("Ban", "Rizia's border is closed to the Bludish Freedom Front", 1, $"{BludishBan} == false"),
                     new("Villa", "President Smolak's villa in Zille is returned to him", 1),
@@ -151,6 +151,7 @@ internal static class ZilleTreaty
                     new("Passage", "Rizian ships pass the Strait of Kreleck free of Wehzek tolls [+1 Budget Per Turn]", -2),
                     new("Oil", "Wehzek oil is sold to Rizia again [+1 Energy Per Turn]", -1),
                     new("Families", "Zilleans may cross the line to visit their families [+1 Public Opinion]", -1),
+                    new("MaveBack", "Wehzek troops leave Mave Nortus, the Rizian city behind the line", -2, "ZilleWar.MaveNortus_Occupied == true"),
                 }),
                 new("PartPow", "Prisoners of War", "Both sides hold prisoners from the last offensive.", 1, 1, new Opt[]
                 {
@@ -159,7 +160,7 @@ internal static class ZilleTreaty
                 }),
                 new("PartAsks", "Wehlen's Requests", "Smolak's own wishes. Each one granted makes the rest easier for him to swallow.", 0, -1, new Opt[]
                 {
-                    new("Rico", "Ricardus Toras is handed over to Wraclawitz to answer for Smolak Square", 2, "RiziaDLC.Rico_Arrested == true && RiziaDLC.Rico_Extradited == false"),
+                    new("Rico", "Ricardus Toras is handed over to Wraclawitz to answer for Smolak Square", 2, "RiziaDLC.Rico_Arrested == true and RiziaDLC.Rico_Extradited == false"),
                     new("Rights", "Wehzeks in Zille city keep their homes and their citizenship", 1),
                     new("Ban", "Rizia's border is closed to the Bludish Freedom Front", 1, $"{BludishBan} == false"),
                     new("Dmz", "No soldier of either side within twenty kilometers of the line [-1 Authority]", 2),
@@ -190,7 +191,7 @@ internal static class ZilleTreaty
                 new("LostAsks", "Wehlen's Demands", "Smolak's further demands. Each one granted makes the rest easier for him to swallow.", 0, -1, new Opt[]
                 {
                     new("House", "The Queen Mother's old house in Zille goes to Smolak's son", 1),
-                    new("Rico", "Ricardus Toras is handed over to Wraclawitz to answer for Smolak Square", 2, "RiziaDLC.Rico_Arrested == true && RiziaDLC.Rico_Extradited == false"),
+                    new("Rico", "Ricardus Toras is handed over to Wraclawitz to answer for Smolak Square", 2, "RiziaDLC.Rico_Arrested == true and RiziaDLC.Rico_Extradited == false"),
                     new("Ban", "Rizia's border is closed to the Bludish Freedom Front", 1, $"{BludishBan} == false"),
                     new("Rights", "Every Wehzek living in Rizia has the same rights as a Rizian", 1, $"{WehzekRights} == false"),
                     new("Dmz", "No Rizian gun within twenty kilometers of the border [-1 Authority]", 2),
@@ -200,9 +201,9 @@ internal static class ZilleTreaty
 
     /// <summary>The order in which the King strikes his own demands when Smolak refuses: dearest first.</summary>
     private static readonly (string Key, int Refund)[] TrimLib =
-        { ("Rep2", 4), ("Demil", 2), ("Oil", 2), ("Rep1", 2), ("PowRansom", 1), ("Gold", 1), ("Assets", 1), ("Renounce", 1) };
+        { ("Rep2", 4), ("Demil", 2), ("Oil", 2), ("Rep1", 2), ("PowRansom", 1), ("Gold", 1), ("Assets", 1), ("Renounce", 2) };
     private static readonly (string Key, int Refund)[] TrimPart =
-        { ("Aure", 4), ("DamThem", 3), ("Passage", 2), ("Oil", 1), ("Families", 1), ("Hold", 1), ("Border", 1) };
+        { ("Aure", 4), ("DamThem", 3), ("Passage", 2), ("Oil", 1), ("Families", 1), ("Hold", 1), ("Border", 1), ("MaveBack", 2) };
     private static readonly (string Key, int Refund)[] TrimLost = { ("Mave", 3), ("Pow", 1), ("Leave", 1), ("PayNone", 1) };
 
     private static bool _added;
@@ -353,7 +354,6 @@ internal static class ZilleTreaty
         RegisterTalk();
     }
 
-    /// <summary>Every step after the treaty: the towns it moves change hands on the map, once.</summary>
     /// <summary>
     /// The treaty table opens the turn after the war ends, once that turn's Derdian talks and Rumburg meeting are behind
     /// (step 9 on: missiles and nerve agent may be in hand by then), or at once on any later turn.
@@ -424,7 +424,7 @@ internal static class ZilleTreaty
             ZilleCampaign.CedeTown("Auremina", toRizia: true);
         }
 
-        if (Variables.GetBool(Term("Mave")) && Variables.GetString(VarKind) is "recognized" or "terms")
+        if ((Variables.GetBool(Term("Mave")) && Variables.GetString(VarKind) is "recognized" or "terms") || Variables.GetBool(Term("MaveBack")))
         {
             ZilleCampaign.CedeTown("Mave Nortus", toRizia: true);
         }
@@ -469,29 +469,31 @@ internal static class ZilleTreaty
             new[] { "Lib2" }, condition: Lib);
         t.Line("Lib2", Narr, "President Smolak was waiting in the passenger lounge, beneath a portrait of himself that someone had forgotten to take down. He did not get up. Laurento laid the draft treaty on the table between us.",
             new[] { "Lib3" });
-        t.Line("Lib3", Smolak, "\"Your Majesty. You took my villa in Zill-a. I would like my khisha pipes back. They were a present from my son.\"", new[] { "Lib4" });
+        t.Line("Lib3", Smolak, "\"Your Majesty. You took my villa in Zille. I would like my khisha pipes back. They were a present from my son.\"", new[] { "Lib4" });
         t.Line("Lib4", Smolak, "\"I am not here to beg. Wehlen does not beg. I am here because my soldiers are in your camps, eating your bread and learning your songs, and their mothers write to me every day.\"", new[] { "Lib5" });
         t.Line("Lib5", Smolak, "\"So. You have a treaty. I have a pen. Tell me what you want, and I will tell you what it costs.\"", new[] { "Hub" });
 
         // ---- armistice: the schoolhouse commission
         const string commission = "under an Alliance of Nations flag that had been ironed for the occasion. An observer from President Nines' office sat between the two delegations with a stopwatch.";
         t.Line("Part1", Narr, "The armistice commission met in a village schoolhouse north of Mave Nortus, " + commission, new[] { "Part2" }, condition: LK.And(Part, maveOurs));
-        t.Line("Part1H", Narr, "The armistice commission met in a village schoolhouse on the armistice line, within sight of Wehzek-held Mave Nortus, " + commission,
+        t.Line("Part1H", Narr, "The armistice commission met in a village schoolhouse on the armistice line, within sight of Wehzek-held Mave Nortus. " + commission.Replace("under an Alliance of Nations flag that had been ironed for the occasion.", "An Alliance of Nations flag, ironed for the occasion, hung over the door."),
             new[] { "Part2" }, condition: LK.And(Part, maveHeld));
         t.Line("Part2", Narr, "President Smolak had come in person. So had I. Neither of us had planned to, and neither of us would admit it.", new[] { "Part3" });
-        t.Line("Part3", Smolak, "\"Your Majesty. Look at us. Two grown men and a schoolroom. If my teachers could see me now.\"", new[] { "Part4", "Part4A" });
+        t.Line("Part3", Smolak, "\"Your Majesty. Look at us. Two grown men and a schoolroom.\"", new[] { "Part4", "Part4A" });
         t.Line("Part4", Smolak, "\"You sit in Zille city. I sit in the hills above it. My men watch your men shaving in the morning. Either we make that line a border, or we keep paying for it.\"",
             new[] { "Part5" }, condition: $"not ({LK.Auremina})");
-        t.Line("Part4A", Smolak, "\"You sit in Zille city and in my gold hills. I sit in Isor and Nanta, and my gunboats watch your men shaving on the beach. Either we make that line a border, or we keep paying for it.\"",
+        t.Line("Part4A", Smolak, "\"You sit in Zille city and in my gold hills. I sit in Isor and Nanta, and my gunboats watch your men on the beach. Either that line becomes a border, or we keep paying for it.\"",
             new[] { "Part5" }, condition: LK.Auremina);
-        t.Line("Part5", Smolak, "\"I came with a list. You came with a list. Let us see whose list is longer.\"", new[] { "Hub" });
+        t.Line("Part5", Smolak, "\"I came with a list. You came with a list. Let us see whose list is longer.\"", new[] { "CeaseL", "PalesL", "Hub" });
+        t.Line("CeaseL", Smolak, "\"You asked for a ceasefire before the guns were quiet. We remember who asked.\"", new[] { "PalesL", "Hub" }, condition: Cease);
+        t.Line("PalesL", Smolak, "\"And half your army is in Pales. I read the newspapers too.\"", new[] { "Hub" }, condition: PalesBusy);
 
         // ---- defeat: summoned to Wraclawitz
         t.Line("Lost1", Narr, "The message from Wraclawitz had been phrased as an invitation. Laurento advised me to treat it as one, and to go anyway.", new[] { "Lost2" }, condition: Lost);
         t.Line("Lost2", Narr, "Smolak received me in the presidential palace, in a room hung with photographs of his army in Zille. He had chosen the chairs himself. Mine was lower.", new[] { "Lost3" });
         t.Line("Lost3", Smolak, "\"Your Majesty! Welcome to Wehlen. I wanted you to see it for yourself. You were once so eager to visit.\"", new[] { "Lost4" });
         t.Line("Lost4", Smolak, "\"I have written the terms myself. Recognition, reparations, a few small kindnesses. Sign what I need, and perhaps there will be room for what you need. That is how peace works, when one side has won.\"",
-            new[] { "Hub" });
+            new[] { "CeaseL", "PalesL", "Hub" });
 
         // ---- the hub: what the King brings to the table before the draft
         t.Logic("Hub", new[] { "AskWon", "AskHeld", "AskFiles", "ThreatMenu", "Draft" });
@@ -510,11 +512,11 @@ internal static class ZilleTreaty
         t.Choice("ThreatMenu", "\"Let me explain what happens if there is no treaty.\"", new[] { "Th" }, condition: $"{V(VarThreat)} == \"\" and not ({Lost} and not ({Missiles}))");
         t.Logic("Th", new[] { "ThInvade", "ThMissile", "ThGas", "ThBack" });
         t.Choice("ThInvade", "\"My army is a day's sail from your coast. The next landing will be on your beaches, not mine.\"", new[] { "ThInvadeBusy", "ThInvade2" },
-            condition: $"not ({Lost})", script: Set(VarThreat, "\"invasion\""));
+            condition: $"not ({Lost})");
         t.Line("ThInvadeBusy", Smolak, "\"With what army, Your Majesty? Half of it is in Pales, and the other half is guarding the half that is in Pales. Try again.\"", new[] { "Hub" },
             condition: PalesBusy);
         t.Line("ThInvade2", Smolak, "\"Beaches. He threatens me with beaches.\" He drummed his fingers on the table. \"My coast is long and my navy is short. You know it, and I know you know it. Fine.\"", new[] { "Hub" },
-            script: $"if {Lib} then {AddLev(2)}else {AddLev(1)}end; " + Add(GlobalImage, -1));
+            script: Set(VarThreat, "\"invasion\"") + $"if {Lib} then {AddLev(2)}else {AddLev(1)}end; " + Add(GlobalImage, -1));
         t.Choice("ThMissile", "\"Rizia has Derdian missiles now. From our side of the border they reach Wraclawitz. I would rather not find out how accurately.\"", new[] { "ThMissile2" },
             condition: Missiles, script: Set(VarThreat, "\"missiles\"") + $"if {Lib} then {AddLev(3)}else {AddLev(2)}end; " + Add(GlobalImage, -1));
         t.Line("ThMissile2", Narr, "For a moment Smolak said nothing at all. Then he laughed, too loudly, and the laugh did not reach his eyes.", new[] { "ThMissile3" });
@@ -525,7 +527,7 @@ internal static class ZilleTreaty
                     Add("RiziaDLC.LeaningValue_Democratic", -1) + Add("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", -1));
         t.Line("ThGas2", Narr, "The observer's pen stopped moving. Laurento looked at me as though he had never seen me before.", new[] { "ThGas3" });
         t.Line("ThGas3", Smolak, "\"You would gas my capital.\" It was not a question. \"Eight hundred thousand people. My wives. My son.\"", new[] { "ThGas4" });
-        t.Line("ThGas4", Smolak, "\"I believe you, Your Majesty. That is the worst thing I have ever said to a king. Name your terms.\"", new[] { "ThGas5" });
+        t.Line("ThGas4", Smolak, "\"I believe you, Your Majesty. I have never said worse to a king. Name your terms.\"", new[] { "ThGas5" });
         t.Line("ThGas5", Laurento, "Laurento leaned close, his voice barely a breath. \"Whatever he signs today, Your Majesty, the whole world will know by Sunday how it was signed.\"", new[] { "Hub" });
         t.Choice("ThBack", "\"On second thought, let us keep this civil.\"", new[] { "Hub" }, script: Set(VarThreat, "\"\""));
 
@@ -534,7 +536,9 @@ internal static class ZilleTreaty
         t.Choice("Draft", "\"Let us go through the draft.\"", new[] { "Draft2" });
         t.Line("Draft2", Narr, "Laurento uncapped his pen and turned the draft toward me. We went through it clause by clause.", new[] { "Panel" });
         t.Logic("Panel", new[] { "Read" }, script: panelFor);
-        t.Line("Read", Narr, "Laurento noted each decision in the margin. When we had finished, he slid the draft across the table, and Smolak read it slowly, moving his lips.", new[] { "Verdict" });
+        t.Line("Read", Narr, "Laurento noted each decision in the margin. When we had finished, he slid the draft across the table, and Smolak read it slowly, moving his lips.", new[] { "ReadRico", "Verdict" });
+        t.Line("ReadRico", Smolak, "\"Keep your files. I want the man who spoke for the bombers.\"", new[] { "Verdict" },
+            condition: $"{Is(Term("Rico"))} and {Is(VarAskedFiles)}");
 
         // ---- the verdict
         t.Logic("Verdict", new[] { "Accept", "Refuse" });
@@ -551,7 +555,7 @@ internal static class ZilleTreaty
         t.Choice("Th2Invade", "\"If you won't sign, my army will make the case on your coast.\"", new[] { "ThInvade2b" },
             condition: $"not ({Lost}) and not ({PalesBusy})",
             script: Set(VarThreat, "\"invasion\"") + $"if {Lib} then {AddLev(2)}else {AddLev(1)}end; " + Add(GlobalImage, -1));
-        t.Line("ThInvade2b", Smolak, "\"On my coast.\" He drummed his fingers on the table. \"My coast is long and my navy is short. Let me read it again.\"", new[] { "Verdict2" });
+        t.Line("ThInvade2b", Smolak, "\"On my coast.\" He looked at the map, not at me. \"Let me read it again.\"", new[] { "Verdict2" });
         t.Choice("Th2Missile", "\"Derdian missiles reach Wraclawitz from our side of the line. Sign.\"", new[] { "ThMissile2b" }, condition: Missiles,
             script: Set(VarThreat, "\"missiles\"") + $"if {Lib} then {AddLev(3)}else {AddLev(2)}end; " + Add(GlobalImage, -1));
         t.Line("ThMissile2b", Smolak, "\"Azmal's toys.\" He was quiet for a long moment. \"Very well. Let me read it again.\"", new[] { "Verdict2" });
@@ -559,8 +563,9 @@ internal static class ZilleTreaty
             script: Set(VarThreat, "\"gas\"") + $"if {Lib} then {AddLev(5)}else {AddLev(4)}end; " + Add(GlobalImage, -3) +
                     Add("RiziaDLC.LeaningValue_Democratic", -1) + Add("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", -1));
         t.Line("ThGas2b", Narr, "Smolak went white. The observer set down his stopwatch. Laurento closed his eyes.", new[] { "ThGas3b" });
-        t.Line("ThGas3b", Smolak, "\"You would gas my capital. I believe you. God help us both, I believe you.\"", new[] { "Verdict2" });
-        t.Logic("Verdict2", new[] { "Sign", "Refuse2" });
+        t.Line("ThGas3b", Smolak, "\"You would really do it. God help us both.\"", new[] { "Verdict2" });
+        t.Logic("Verdict2", new[] { "Sign2", "Refuse2" });
+        t.Logic("Sign2", new[] { "Sign" }, condition: $"({Lev} or 0) >= 0");
         t.Line("Refuse2", Smolak, "\"Threaten all you like. A man cannot sign what his country cannot pay.\"", new[] { "R1", "R3" }, condition: $"({Lev} or 0) < 0");
         t.Choice("R3", "\"Then there is no treaty.\"", new[] { "NoDeal" });
 
@@ -582,14 +587,14 @@ internal static class ZilleTreaty
         t.Line("SignLib", Smolak, "\"Signed. I do this for my soldiers, not for you. Tell your mother I kept the garden. Mostly.\"", new[] { "SignNote" }, condition: Lib);
         t.Line("SignPart", Smolak, "\"Signed. A border through the middle of a province. Our grandfathers would have called it a war. We call it a treaty. That is progress, I suppose.\"",
             new[] { "SignNote" }, condition: Part);
-        t.Line("SignLost", Smolak, "\"Signed. You see? We can still do business, you and I. It is only that I do it better.\"", new[] { "SignNote" });
+        t.Line("SignLost", Smolak, "\"Signed. You see? We can still do business, you and I. It is only that I do it better.\"", new[] { "SignNote" }, condition: Lost);
         t.Line("SignNote", Laurento, "\"It is done, Your Majesty.\" Laurento blotted the signatures carefully. \"Whatever it cost, there is a treaty.\"",
             new[] { "ByeLib", "ByePart", "ByeLost" });
 
         // ---- goodbyes
         t.Line("ByeLib", Narr, "The ferry's horn sounded twice. By the time I reached the deck, his launch was already halfway to the Wehzek shore.", new[] { "End" }, condition: Lib);
         t.Line("ByePart", Narr, "The observer stopped his watch and wrote down the time. Outside, a child was selling apples to the soldiers of both armies.", new[] { "End" }, condition: Part);
-        t.Line("ByeLost", Narr, "On the drive to the airfield, Wraclawitz was hung with Wehzek flags. On the wall of the railway station, someone had painted a donkey wearing a crown.", new[] { "End" });
+        t.Line("ByeLost", Narr, "On the drive to the airfield, Wraclawitz was hung with Wehzek flags. On the wall of the railway station, someone had chalked the names of the men who did not come home from Zille.", new[] { "End" });
         t.End();
         t.Register();
     }
@@ -631,6 +636,8 @@ internal static class ZilleTreaty
             On("Oil") ? "Wehzek oil will flow south again, at a price Wraclawitz did not choose." : null,
             On("Demil") ? "No Wehzek warship may enter the Strait of Kreleck." : null,
             On("Rico") ? "Ricardus Toras, the King's cousin, is to be handed over to Wehzek justice." : null,
+            On("Villa") ? "President Smolak's villa in Zille is returned to him." : null,
+            On("Rights") && !LateState.Lost ? "Wehzek families in Zille keep their homes and their citizenship." : null,
         }.Where(x => x != null));
 
         switch (kind)
@@ -644,7 +651,7 @@ internal static class ZilleTreaty
                             ? "Wehlen renounces every claim to Zille, now and forever, and the province is Rizian by law as well as by arms."
                             : "Wehlen recognizes the strait as the border between the two countries, and Zille is Rizian by law as well as by arms.") + repText,
                         extras.Length > 0 ? extras : "His Majesty's terms were firm, and they were met.",
-                        "A quarter of a century after a lease that should never have been signed, the last word on Zille was written by a Rizian King."));
+                        "Thirty years after a lease that should never have been signed, the last word on Zille was written by a Rizian King."));
                 NewsWire.Publish("Treaty", "G", "Wehlen Signs the Treaty of Kreleck", NewsWire.P(
                     "Wehlen and Rizia have signed a treaty ending the war over Zille. Wraclawitz gives up the province" + (rep > 0 ? " and pays reparations" : string.Empty) +
                     "; prisoners of war are to go home " + (On("PowFree") ? "at once." : On("PowRansom") ? "once Wehlen ransoms its officers." : "as the treaty is honored."),
@@ -655,11 +662,11 @@ internal static class ZilleTreaty
                 NewsWire.Publish("Treaty", "RH", "A Border at Last Through Zille", NewsWire.P(
                     "In a schoolhouse near Mave Nortus, under the flag of the Alliance of Nations, His Majesty and President Smolak have signed " +
                     "the Mave Nortus Treaty. The armistice line through Zille becomes the border of the Kingdom" +
-                    (On("Aure") ? ", and Wehzek troops are to leave Auremina and the gold hills." : ".") + repText,
+                    (On("Aure") ? ", and Wehzek troops are to leave Auremina and the gold hills." : ".") + (On("MaveBack") ? " Wehzek troops also leave Mave Nortus." : string.Empty) + repText,
                     (WehzekTowns().Length > 0 ? "It is not all of Zille. " : "It is nearly all of Zille. ") + "It is Zille city, its harbor and its people, home for good, and a border no Wehzek general may cross again."));
                 NewsWire.Publish("Treaty", "V", "Half a Province, Signed and Sealed", NewsWire.P(
-                    "The line our soldiers held when the guns stopped is a border now. On one side of it, families who were Rizian for a generation " +
-                    "in name only will be Rizian in law. On the other, families who wanted the same thing will not be." +
+                    "The line our soldiers held when the guns stopped is a border now. On one side of it, families who have been Rizian for a generation " +
+                    "will be Rizian in law. On the other, families who wanted the same thing will live under Wehzek law." +
                     (On("Families") ? " At least the treaty lets them cross to see each other." : string.Empty),
                     "Treaties are written for maps. This one will be read in kitchens on both sides of a schoolhouse."));
                 NewsWire.Publish("Treaty", "G", "Rizia and Wehlen Turn the Armistice Line into a Border", NewsWire.P(
@@ -677,7 +684,7 @@ internal static class ZilleTreaty
                 NewsWire.Publish("Treaty", "RH", "The King Signs for Peace", NewsWire.P(
                     "In Wraclawitz, His Majesty has signed the treaty that ends the war with Wehlen. Rizia recognizes Wehzek sovereignty over Zille, " +
                     "and in return the Kingdom has peace on its northern border" + (On("Mave") ? " and Mave Nortus back from Wehzek hands." : "."),
-                    "It is a hard peace. It is also the end of the funerals, and the Royal Herald will not apologize for being glad of that."));
+                    "It is a hard peace. It is also the end of the funerals, and the Herald is glad of that, and makes no apology for it."));
                 NewsWire.Publish("Treaty", "V", "The Price of Wraclawitz", NewsWire.P(
                     "Zille is Wehzek, and the King has said so in writing. " + (On("PayNow") ? "Nine billion guilders went with the signature. " :
                         On("PayLater") ? "The bill will arrive every month for years. " : string.Empty) +
@@ -692,7 +699,7 @@ internal static class ZilleTreaty
                     (On("PayNone")
                         ? "Rizia has signed Wehzek terms in Wraclawitz but refused to pay a guilder in reparations, and refused to recognize Wehzek sovereignty over Zille. "
                         : "Rizia has accepted Wehzek terms on prisoners and reparations in Wraclawitz, but refused to recognize Wehzek sovereignty over Zille. ") +
-                    "President Smolak called the claim \"a king's hobby, like stamps.\""));
+                    "President Smolak called the claim \"a king's hobby, like stamps.\"" + (On("Mave") ? " Wehzek troops leave Mave Nortus." : string.Empty)));
                 break;
             default:
                 NewsWire.Publish("Treaty", "G", "Talks on Zille Collapse", NewsWire.P(
@@ -720,7 +727,7 @@ internal static class ZilleTreaty
         {
             NewsWire.Publish("TreatyThreat", "G", "Derdian Missiles at the Negotiating Table", NewsWire.P(
                 "Rizia's negotiators reminded Wehlen during the Zille talks that Derdian missiles in Rizian hands can reach Wraclawitz, " +
-                "diplomats say. President Azmal of Derdia called it \"a fine advertisement.\""));
+                "diplomats say. Supreme Wiseman Jorga Azmal of Derdia called it \"a fine advertisement.\""));
         }
     }
 
@@ -749,6 +756,7 @@ internal static class ZilleTreaty
                $"if {on("PowFree")} then {V(LateT8.VarPrisoners)} = \"released\" elseif {on("PowPaid")} then {V(LateT8.VarPrisoners)} = \"held\" " +
                $"elseif {on("PowRansom")} then {V(LateT8.VarPrisoners)} = \"ransomed\" elseif {on("Exchange")} then {V(LateT8.VarPrisoners)} = \"exchanged\" " +
                $"elseif {on("Hold")} then {V(LateT8.VarPrisoners)} = \"held\" end; " +
+               $"if {Lost} then if {on("Pow")} then {V(LateT8.VarPrisoners)} = \"released\" else {V(LateT8.VarPrisoners)} = \"held\" end end; " +
                $"if {on("PayNow")} or {on("PayLater")} then {V(LateT8.VarTerms)} = \"paid\" elseif {on("PayNone")} then {V(LateT8.VarTerms)} = \"refused\" " +
                $"elseif {Part} then {V(LateT8.VarTerms)} = \"line\" end; " +
                $"if {on("House")} then {V(LateT8.VarEstelaHome)} = true end; " +

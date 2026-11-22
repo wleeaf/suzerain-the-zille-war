@@ -29,6 +29,7 @@ internal static class VictoryParade
 
     private const string Opinion = "RiziaDLC.Country_PublicOpinion";
     private const string Estela = "Estela Toras";
+    private const string Carlos = "Carlos Robles Azaro";
 
     public static void Register()
     {
@@ -68,7 +69,7 @@ internal static class VictoryParade
         Core.Log.Msg($"The end of the war moves public opinion by {delta:+0;-0}.");
     }
 
-    /// <summary>A phase reached its aim (or missed it): the country feels it.</summary>
+    /// <summary>A phase that reached its aim lifts the country by one point.</summary>
     public static void OnPhaseResult(bool won) => Variables.Set(Opinion, Variables.GetInt(Opinion) + (won ? 1 : 0));
 
     /// <summary>Every step: offer the parade on the turn after a liberation (or the homecoming after a divided war).</summary>
@@ -120,10 +121,11 @@ internal static class VictoryParade
         t.Logic("Start", new[] { "Lib1", "Part1" }, hooks: AtStart(Conv));
 
         // ---------------------------------------------------------------- the parade
-        t.Line("Lib1", Narr, "Zille had been dressed for the day as if for a wedding. The Wehzek street signs were gone, the shutters along the harbor front had been painted in the Crown's colors overnight, and every balcony on the way from the station flew a flag that had spent twenty-five years at the bottom of a drawer.",
+        t.Line("Lib1", Narr, "Zille had been dressed for the day as if for a wedding. The Wehzek street signs were gone, and the harbor shutters had been painted in the Crown's colors overnight. Every balcony on the way from the station flew a flag that had spent years at the bottom of a drawer.",
             new[] { "Lib2" }, condition: lib, script: march);
         t.Line("Lib2", Narr, "I rode at the head of the column with General Carlos a length behind me. The men who had taken the city marched after us in their field uniforms, as I had ordered. Their boots were still the boots of the Zille front.",
-            new[] { "Lib3" });
+            new[] { "Lib2C" });
+        t.Line("Lib2C", Carlos, "\"Your Majesty, the men are asking whether they may take their boots off at last.\"", new[] { "Lib3" });
         t.Line("Lib3", Narr, "The crowd was thicker than the band was loud. Old women held up photographs of the city from before the lease. A boy on his father's shoulders saluted every company that passed, one after another, until his arm gave out.",
             new[] { "Lib4E", "Lib4" });
         t.Line("Lib4E", Narr, "My mother rode in the open car behind the guard of honor. She did not wave. She looked up at every window of the harbor district, one by one, as though counting them.",
@@ -135,7 +137,7 @@ internal static class VictoryParade
             new[] { "Speech" }, condition: fedoUp, script: Set(VarSquare, "\"fedo\""));
         t.Logic("NameMenu", new[] { "Name1", "Name2", "Name3", "Name4" }, condition: $"not ({fedoUp})");
         t.Choice("Name1", "\"Give it back its old name. Fedo Square, as it was before the lease.\"", new[] { "Named" }, script: Set(VarSquare, "\"fedo\"") + Add("RiziaDLC.Country_HouseSazon", 1));
-        t.Choice("Name2", "\"Liberation Square. Let every Wehzek who walks through it remember why.\"", new[] { "Named" }, script: Set(VarSquare, "\"liberation\"") + Add(Opinion, 1));
+        t.Choice("Name2", "\"Liberation Square. Let every Wehzek who walks through it remember why.\"", new[] { "Named" }, condition: lib, script: Set(VarSquare, "\"liberation\"") + Add(Opinion, 1));
         t.Choice("Name3", "\"Romus Square. A king should not be shy about the things he gets right.\"", new[] { "NamedRomus" },
             script: Set(VarSquare, "\"romus\"") + Add("RiziaDLC.Resources_Authority", 1) + Add("RiziaDLC.LeaningValue_Democratic", -1));
         t.Choice("Name4", "\"The Square of the Fallen. It belongs to the men who didn't march in today.\"", new[] { "Named" }, script: Set(VarSquare, "\"fallen\""));
@@ -158,14 +160,15 @@ internal static class VictoryParade
         t.Line("CloseE", Estela, "\"You kept your word, darling. Now go back to Porte Drazon and keep the rest of them.\"", new[] { "End" }, condition: $"{Not(LateT8.VarEstelaHome)}");
 
         // ---------------------------------------------------------------- the homecoming (divided)
-        t.Line("Part1", Narr, "There was no parade. There were not enough streets left in Zille city for one, and the armistice line ran along the hills above the harbor, close enough to see the Wehzek flags on the far ridge.",
+        t.Line("Part1", Narr, "There was no parade. There were not enough streets left in Zille city for one, and the armistice line ran along the hills above the harbor.",
             new[] { "Part2" }, condition: part, script: "PlayLoopedMusic(\"R_Sunrise\",\"R_Sunrise_Loop\"); ");
-        t.Line("Part2", Narr, "So I walked. From the station to the harbor, with the Golden Guard and a handful of officers, through crowds that did not cheer so much as press closer, to touch a sleeve or hold up a child.",
-            new[] { "Part3" });
+        t.Line("Part2", Narr, "So I walked, from the station to the harbor, with the Golden Guard and a few officers. The crowds did not cheer so much as press closer, to touch a sleeve or hold up a child.",
+            new[] { "Part2C" });
+        t.Line("Part2C", Carlos, "\"Your Majesty, their field glasses can see this street. I would not stay long.\"", new[] { "Part3" });
         t.Line("Part3", Narr, "In the great square, the Wehzek plaque had been pried off the wall. The square was waiting for a name.", new[] { "NameFedoP", "NameMenu" });
         t.Line("NameFedoP", Narr, "Someone had already screwed the old enamel sign back onto the wall: Fedo Square. An old man stood under it with his hat in his hands, as if at a grave.",
             new[] { "PartEnd" }, condition: fedoUp, script: Set(VarSquare, "\"fedo\""));
-        t.Line("PartEnd", Narr, "I stayed until dark. On the ridge across the line, someone was watching us through field glasses. Half of Zille was home. The other half was close enough to wave.",
+        t.Line("PartEnd", Narr, "I stayed until dark. On the ridge across the line, someone was watching us through field glasses, and did not look away.",
             new[] { "End" }, condition: part);
         t.End();
         t.Register();

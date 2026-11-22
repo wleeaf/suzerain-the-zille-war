@@ -33,6 +33,10 @@ internal static class WorldEmbargo
         Variables.GetBool(WarFlags.Declared) && (WorldSystems.Active || WorldSystems.ZilleCityHeld || WorldSystems.Liberated) &&
         !Variables.GetBool(ZilleTreaty.VarPeace);
 
+    /// <summary>The peace talks have been held (a treaty signed or turned down): the embargo is not lifted before them.</summary>
+    private static bool TalksConcluded() =>
+        Variables.GetBool(ZilleTreaty.VarPeace) || Variables.GetString(ZilleTreaty.VarKind) is { Length: > 0 } kind && kind != "nil";
+
     private static bool Applies() =>
         Holding() && !Variables.GetBool("RiziaDLC.Policy_Diplomacy_Caleqabiz_ValgslandCSP") &&
         !Variables.GetBool("RiziaDLC.Trait_CommieKing");
@@ -74,18 +78,19 @@ internal static class WorldEmbargo
                 "Rizian troops leave Zille.\" Contanan freighters have been ordered not to call at Rizian " +
                 "ports, and Valgslandian banks have frozen new credit to Rizian firms.",
                 "The embargo stops short of a blockade, and goods still reach Rizia through third countries, late and at a premium. " +
-                "Economists in Konstantium estimate the cost to the Rizian treasury at several billion guilders a quarter."));
+                "Economists in Porte Drazon estimate the cost to the Rizian treasury at about six billion guilders a quarter."));
             NewsWire.Report("Embargo", SuzerainTokenName.RiziaCountryValgsland, "A Contanan Embargo", NewsWire.P(
-                "Chancellor Hegel's government has announced, with the support of United Contana, that trade with Rizia is suspended " +
+                "Chancellor Hegel's government has announced, for the Contanan Security Pact, that trade with Rizia is suspended " +
                 "until Rizian troops leave Zille. Shipments already at sea will be turned back; contracts in force are frozen.",
                 "Councilor Werner puts the loss at six billion guilders a quarter, for as long as the embargo lasts. Our embassy notes that the measure was drafted " +
                 "before the King had finished his speech in Konstantium. Valgsland, it seems, had been waiting for a reason."));
         }
 
-        if (Variables.GetBool(VarAnnounced) && !Variables.GetBool(VarLifted) && WorldSystems.WarEnded && !Holding())
+        if (Variables.GetBool(VarAnnounced) && !Variables.GetBool(VarLifted) && WorldSystems.WarEnded && !Holding() && TalksConcluded())
         {
             Variables.Set(VarLifted, true);
             bool treaty = Variables.GetBool(ZilleTreaty.VarPeace);
+            bool terms = !treaty && Variables.GetBool(ZilleTreaty.VarSigned);
             if (treaty)
             {
                 NewsWire.Publish("EmbargoLifted", "G", "Contana Ends Its Embargo after the Zille Treaty", NewsWire.P(
@@ -98,7 +103,7 @@ internal static class WorldEmbargo
             }
 
             NewsWire.Publish("EmbargoLifted", "G", "Contana Lifts the Embargo on Rizia", NewsWire.P(
-                "With no Rizian soldier left in Zille, Valgsland and its partners in the Contanan Security Pact have let the embargo on " +
+                (terms ? "With the Wraclawitz treaty signed and no Rizian soldier left in Zille," : "With no Rizian soldier left in Zille,") + " Valgsland and its partners in the Contanan Security Pact have let the embargo on " +
                 "trade with Rizia lapse. Contanan freighters are expected back in Rizian ports within the week.",
                 "Chancellor Hegel's office called the decision \"a recognition of facts on the ground.\" Bankers in Konstantium were less " +
                 "formal, and said credit to Rizian firms would return slowly, if it returned at all."));

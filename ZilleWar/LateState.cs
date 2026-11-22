@@ -13,7 +13,7 @@ namespace ZilleWar;
 ///   protocol and the Zille lease cleared, every referendum flag false, the world map switched (MapChange_Zille).
 /// - Lost / ceasefire: ZilleReturn_Success stays false; the handover talks, the referendum and Smolak's "Zille for Pales"
 ///   call are gated off for every war game (see Register), so the vanilla "Zille lost" lines play with war wording.
-/// - After any outcome Wehlen stays Hostile: its negotiating power is held at -6 or lower, vanilla's relation rule gets a
+/// - After any outcome Wehlen stays Hostile: its negotiating power is held at -6 or lower until a treaty settles Zille, then at -3 (Unfriendly), vanilla's relation rule gets a
 ///   Hostile row, and relation updates to anything friendlier are turned into Hostile. Wehlen never sits at the
 ///   Intermerkopum table.
 /// - The end summary gets a Zille War line with casualty figures, and the epilogue a war title.
@@ -57,9 +57,14 @@ internal static class LateState
 
     public static void Register()
     {
-        foreach (string v in new[] { VarOutcomeApplied, VarByForce, VarZilleLost, VarDivided, VarTitleRestorer })
+        foreach (string v in new[] { VarOutcomeApplied, VarByForce, VarZilleLost, VarDivided, VarTitleRestorer }.Concat(SumVars))
         {
             Variables.Register(v);
+        }
+
+        foreach (string v in SumVars)
+        {
+            Vanilla.Expose(v);
         }
 
         foreach (string v in new[] { VarByForce, VarZilleLost, VarDivided, VarTitleRestorer })
@@ -282,7 +287,7 @@ internal static class LateState
     {
         // Turn08_G_LespiaEvidenceReleased is rewritten by WorldPress (one owner, so the text never flips).
         new(true, "Turn09_RH_ZilleReturnSpeech_Negociations", () => Liberated, "Zille Reunites with Rizia: A Triumph of Arms",
-            "After twenty-five years under a foreign flag, Zille has formally rejoined the Kingdom. The ceremony in the city's main " +
+            "After thirty years under a foreign flag, Zille has formally rejoined the Kingdom. The ceremony in the city's main " +
             "square, its Wehzek name already gone from the street signs, sealed what the Royal Army won in the field.\n\nHis Majesty " +
             "honored the soldiers who fell between the river and the sea, and thousands of Zilleans cheered the King who would not " +
             "wait for Wehlen's permission to bring them home."),
@@ -366,7 +371,6 @@ internal static class LateState
     private const string SummaryLib = "ZilleWar.War_Zille_Liberated == true";
     private static readonly string SummaryPart = $"{WarFlags.X(WarFlags.Over)} && {WarFlags.X(WarFlags.Liberated, false)} && {WarFlags.X(WarFlags.ZilleCityHeld)}";
     private static readonly string SummaryLost = $"{WarFlags.X(WarFlags.Over)} && {WarFlags.X(WarFlags.Liberated, false)} && {WarFlags.X(WarFlags.ZilleCityHeld, false)}";
-    private static readonly string SummaryOngoing = WarFlags.X(WarFlags.Active);
 
     /// <summary>Estimated men killed, wounded or missing over all operations (same estimate as the after-action reports).</summary>
     public static (int ours, int theirs) Casualties()
@@ -379,20 +383,100 @@ internal static class LateState
             theirs += e <= 0 ? 0 : e * 850 + (e * 137 + 13 * 31) % 300;
         }
 
-        return (Math.Max(ours, 312), Math.Max(theirs, 287));
+        return (ours, theirs);
     }
 
+    private static readonly string[] SumVars = Enumerable.Range(1, 7).Select(i => $"ZilleWar.Sum_Row{i}").ToArray();
+
+    private static string Cities(int n) => n switch { 0 => "none", 1 => "one", 2 => "two", 3 => "three", _ => "all four" };
+
+    /// <summary>The ending screen's Zille statistics: one sentence per fact, each with its own boolean row condition, written at runtime
+    /// from the real numbers (casualties scaled like the after-action reports). Only in a war game that has ended.</summary>
     private static void UpdateSummary()
     {
+        bool over = Over;
         (int ours, int theirs) = Casualties();
         string o = ours.ToString("N0"), t = theirs.ToString("N0");
-        var lines = new (string cond, string text)[]
+
+        string casualties = null;
+        if (ours > 0 && theirs > 0)
         {
-            (SummaryLib, $"Zille returned to Rizia by force of arms after twenty-five years of Wehzek rule. {o} Rizian and {t} Wehzek soldiers were killed, wounded or went missing in the Zille War."),
-            (SummaryPart, $"The Zille War left the region divided along a ceasefire line, with Zille city in Rizian hands. {o} Rizian and {t} Wehzek soldiers were killed, wounded or went missing."),
-            (SummaryLost, $"{o} Rizian soldiers were killed, wounded or went missing in the failed war for Zille, and Wehlen tightened its hold on the region."),
-            (SummaryOngoing, $"The Zille War was still being fought. {o} Rizian and {t} Wehzek soldiers had already been killed, wounded or gone missing."),
+            casualties = $"During the Zille War, {o} Rizian and {t} Wehzek soldiers were killed, wounded or went missing.";
+        }
+        else if (ours > 0)
+        {
+            casualties = $"During the Zille War, {o} Rizian soldiers were killed, wounded or went missing.";
+        }
+
+        int phases = Variables.GetInt(ZilleCampaign.VarPhase);
+        int taken = new[] { "Zille", "Auremina", "Isor", "Nanta" }.Count(c => Variables.GetBool(ZilleOperation.CapturedVar(c)));
+        string operation = phases <= 0 ? null
+            : $"Operation Northern Crown was fought in {(phases == 1 ? "one phase" : phases == 2 ? "two phases" : "three phases")}, and Rizian forces took {Cities(taken)} of the four cities of the Zille province.";
+
+        string ceasefire = Variables.GetBool(WarFlags.Ceasefire) ? "The King sought a ceasefire, and the guns fell silent on the line of contact." : null;
+
+        string kind = Variables.GetString(ZilleTreaty.VarKind) ?? string.Empty;
+        bool signed = Variables.GetBool(ZilleTreaty.VarSigned);
+        bool wehlenPays = Variables.GetInt(ZilleTreaty.ModReparations) > 0;
+        bool riziaPays = Variables.GetString(LateT8.VarTerms) == "paid";
+        string treaty;
+        if (!signed || kind is "" or "none")
+        {
+            treaty = "No peace treaty was signed over Zille.";
+        }
+        else
+        {
+            treaty = kind switch
+            {
+                "renounced" => "At the Treaty of Kreleck, Wehlen renounced every claim to Zille" + (wehlenPays ? " and agreed to pay reparations." : "."),
+                "border" when ZilleCampaign.Liberated => "At the Treaty of Kreleck, Wehlen recognized the Strait of Kreleck as the border" + (wehlenPays ? " and agreed to pay reparations." : "."),
+                "border" => "The Mave Nortus Treaty turned the armistice line into the border" + (wehlenPays ? ", and Wehlen agreed to pay reparations." : "."),
+                "accord" => "The armistice commission at Mave Nortus agreed on prisoners and damages, and Rizia kept its claim to all of Zille.",
+                "recognized" => "At Wraclawitz, Rizia recognized Wehzek sovereignty over Zille" + (riziaPays ? " and paid reparations." : "."),
+                "terms" => "At Wraclawitz, Rizia signed Wehzek terms" + (riziaPays ? ", paid reparations" : "") + " and kept its claim to Zille on paper.",
+                _ => "No peace treaty was signed over Zille.",
+            };
+        }
+
+        string pow = Variables.GetString(LateT8.VarPrisoners) switch
+        {
+            "released" => "The Wehzek prisoners of the Zille War were released and sent home.",
+            "ransomed" => "The Wehzek officers captured in Zille were ransomed, and the rest sent home.",
+            "exchanged" => "Prisoners of the Zille War were exchanged man for man.",
+            "held" => "Rizia still held its Wehzek prisoners of war.",
+            _ => null,
         };
+
+        string embargo = Variables.GetBool(LateT9.VarEmbargoLifted) ? "Rumburg lifted its embargo on Wehzek oil after the war, at Queen Beatrice's request."
+            : SupplyWar.RumburgOilCut ? "Rumburg bought no Wehzek oil for the length of the war."
+            : SupplyWar.RumburgOilHalved ? "Rumburg halved its purchases of Wehzek oil for the length of the war."
+            : null;
+
+        string square = Variables.GetString(VictoryParade.VarSquare) switch
+        {
+            "fedo" => "The square in Zille city that Wehlen had named for Smolak got its old name back: Fedo Square.",
+            "liberation" => "The square in Zille city that Wehlen had named for Smolak was renamed Liberation Square.",
+            "romus" => "The square in Zille city that Wehlen had named for Smolak was renamed Romus Square.",
+            "fallen" => "The square in Zille city that Wehlen had named for Smolak was renamed the Square of the Fallen.",
+            _ => null,
+        };
+
+        string[] sums = { casualties, operation, ceasefire, treaty, pow, embargo, square };
+        for (int i = 0; i < sums.Length; i++)
+        {
+            Variables.Set(SumVars[i], over && sums[i] != null);
+        }
+
+        var lines = new List<(string cond, string text)>
+        {
+            (SummaryLib, "Zille was taken by force of arms after thirty years of Wehzek rule."),
+            (SummaryPart, "The Zille War ended along the armistice line, with Zille city in Rizian hands and the rest of the province Wehzek."),
+            (SummaryLost, "The war for Zille was lost, and Wehlen tightened its hold on the region."),
+        };
+        for (int i = 0; i < sums.Length; i++)
+        {
+            lines.Add((WarFlags.X(SumVars[i]), sums[i] ?? string.Empty));
+        }
 
         foreach (var list in new[] { EntityDataManager.summarySegmentData, EntityDataManager.SummarySegmentData })
         {
@@ -409,7 +493,7 @@ internal static class LateState
                     continue;
                 }
 
-                for (int i = lines.Length - 1; i >= 0; i--)
+                for (int i = lines.Count - 1; i >= 0; i--)
                 {
                     SummarySegmentProperties.SummarySegmentCondition row = null;
                     foreach (SummarySegmentProperties.SummarySegmentCondition r in rows)
@@ -504,7 +588,8 @@ internal static class Patch_WehlenStaysHostile
         if (countryNameInDatabase == "Rizia_Country_Wehlen" && relationship is "Allied" or "Friendly" or "Neutral" or "Unfriendly"
             && Variables.GetBool(WarFlags.Declared) && !WarState.Active && !Variables.GetBool(WarState.VarActive))
         {
-            relationship = "Hostile";
+            // a treaty that settled Zille (ZilleTreaty.VarPeace) leaves Wehlen Unfriendly, not Hostile
+            relationship = Variables.GetBool(ZilleTreaty.VarPeace) ? "Unfriendly" : "Hostile";
         }
     }
 }

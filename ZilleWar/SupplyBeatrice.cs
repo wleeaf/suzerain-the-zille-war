@@ -4,8 +4,8 @@ namespace ZilleWar;
 /// Queen Beatrice on the blue telephone, once per war turn until she says no. A greeting, then the King's requests, each
 /// with a short exchange and a clearly priced answer:
 /// - The oil embargo, priced in Rizian gas exactly like her Turn 3 offer; never offered if Turn 3 already cut Wehlen off.
-/// - One Rumburgian war credit: +6 Budget now, 8 Budget repaid over the turns left (-1 for 8 turns when there is time,
-///   -2 for 4, -3 for 3 or -4 for 2 later in the reign; none in the last turns). Shown through WorldModifiers' repayment line.
+/// - One Rumburgian war credit: +6 Budget now, 8 Budget repaid over the turns left (-2 Budget per turn for 4 turns).
+///   Shown through WorldModifiers' repayment line.
 /// - Bludish Freedom Front raids and fighters (vanilla Diplomacy_Wehlen_FundBFF, BFF mercenaries).
 /// Every favour costs patience (VarRumburgPatience); Wehlen's "Thornbourgh dossier" and a second war cost more.
 /// At zero she refuses and asks for an end date.
@@ -58,8 +58,8 @@ internal static partial class SupplyWar
             "let it ring.", null, $"AddConversant(\"{Beatrice}\");", "Open");
 
         // ---- openings: the first call, then whatever the front did since the last one
-        d.Branch("Open", "NoMore", "Hello1", "HelloHeld", "HelloExtra", "HelloZilleLate", "HelloZille", "HelloAuremina", "HelloMissedZ2",
-            "HelloMissedZ", "HelloMissedA", "HelloMissed", "HelloDossier", "HelloTwoWars", "HelloLater");
+        d.Branch("Open", "NoMore", "Hello1", "HelloHeld", "HelloExtra", "HelloZilleLate", "HelloZille", "HelloAuremina", "HelloDossier", "HelloMissedZ2",
+            "HelloMissedZ", "HelloMissedA", "HelloMissed", "HelloTwoWars", "HelloLater");
         d.SayIf("Hello1", first, Beatrice,
             "\"Romus. I was beginning to think you'd lost my number. Then I remembered you've started a war, and I forgave you.\"",
             "Greet1", "Greet2", "Greet3");
@@ -86,14 +86,14 @@ internal static partial class SupplyWar
             "\"Zille, at the second attempt. The Thornbourgh Gazette printed your flag over the harbor this morning, and my ministers " +
             "have stopped calling the whole thing a gamble. They call it an investment now. It's how they apologize.\"", "GreetWon");
         d.SayIf("HelloZille", $"{won} and {aim("Harbor")}", Beatrice,
-            "\"Well, well. Zille. Twenty-five years of your father's lease undone in a single month. I had the Gazette's photograph of " +
+            "\"Well, well. Zille. Your father's lease on the harbor, and Smolak sitting on it. I had the Gazette's photograph of " +
             "your flag over the harbor cut out for my desk. Don't let it go to your head.\"", "GreetWon");
         d.SayIf("HelloAuremina", $"{won} and {aim("Wall")}", Beatrice,
             "\"Auremina, Romus. The gold hills. My Exchequer sent me a note this morning asking whether Rizia's credit had just improved. " +
             "I told them it depends entirely on whether you keep them.\"", "GreetWon");
         d.SayIf("HelloMissedZ2", $"{missed} and {aim("Harbor")} and {again}", Beatrice,
-            "\"Twice, Romus. Twice your army has gone down that river, and Zille is still flying Smolak's flag. My ministers have " +
-            "stopped asking me when it will fall. They've started asking whether.\"", "GreetMissed");
+            "\"Twice, Romus. Twice your army has gone down that river, and Zille still flies Smolak's flag. My ministers have " +
+            "stopped asking when it will fall. They ask whether.\"", "GreetMissed");
         d.SayIf("HelloMissedZ", $"{missed} and {aim("Harbor")}", Beatrice,
             "\"Romus. I read that Zille is still flying Smolak's flag. The papers here call it a setback. My ministers call it " +
             "something shorter.\"", "GreetMissed");
@@ -104,7 +104,7 @@ internal static partial class SupplyWar
         d.SayIfDo("HelloDossier", $"{dossier} and {Not(VarBeaToldDossier)}", Beatrice,
             "\"I assume you've read Wraclawitz's little pamphlet. Every newspaper in GRACE has. Twice.\"", T(VarBeaToldDossier), "GreetL");
         d.SayIf("HelloTwoWars", twoWars, Beatrice,
-            "\"Two wars, Romus. My ministers have started calling you the Lion of the Antacean, and they don't mean it kindly.\"", "GreetL");
+            "\"Two wars, Romus. My ministers have started asking which one you mean to finish first, and they've stopped being sure it's the one you're winning.\"", "GreetL");
         d.Say("HelloLater", Beatrice, "\"Romus. Still at war, I see.\"", "GreetL");
 
         // The King's answer to whatever she opened with.
@@ -131,13 +131,16 @@ internal static partial class SupplyWar
         d.Say("GreetL2a", Beatrice, "\"Counting. They're always counting. Lately, they count Rizia.\"", "Recall");
 
         // What came of the last call: a promise the King made, or the favour she granted.
-        d.Branch("Recall", "RecZilleKept", "RecZilleBroken", "RecEnd", "RecBludsTrial", "RecBludsKept", "RecBludsHome", "RecEmbargo",
+        d.Branch("Recall", "RecZilleKept", "RecZilleForgiven", "RecZilleBroken", "RecEnd", "RecBludsTrial", "RecBludsKept", "RecBludsHome", "RecEmbargo",
             "RecCredit", "RecRaids", "RecFighters", "RecNone", "AskL");
-        d.SayIf("RecZilleKept", $"{promised("zille")} and {zille}", Beatrice,
+        d.SayIf("RecZilleKept", $"{promised("zille")} and {zille} and {calls} == 2", Beatrice,
             "\"You promised to ring me yourself the day Zille was yours. I notice it was I who rang you. I'll let it pass, this once.\"",
             "AskL");
-        d.SayIf("RecZilleBroken", promised("zille"), Beatrice,
-            "\"You told me you'd ring the day Zille was yours. The telephone has been remarkably quiet, Romus.\"", "AskL");
+        d.SayIf("RecZilleForgiven", $"{promised("zille")} and {zille}", Beatrice,
+            "\"You promised to ring me the day Zille was yours. Now I hear it from the Gazette. I'll let it pass, this once.\"",
+            "AskL");
+        d.SayIf("RecZilleBroken", $"{promised("zille")} and not {zille}", Beatrice,
+            "\"You told me you'd ring the day Zille was yours. It still isn't, Romus. I'll hold you to it.\"", "AskL");
         d.SayIf("RecEnd", promised("end"), Beatrice,
             "\"And you promised me the end of it last time. This doesn't sound like the end of it. It sounds like the middle.\"", "AskL");
         d.SayIfDo("RecBludsTrial", $"{Eq(VarBludsIncident, "trial")} and {Not(VarBeaToldBluds)}", Beatrice,
@@ -201,13 +204,13 @@ internal static partial class SupplyWar
             Inc(VarRumburgPatience, -1) + S(VarBeaGave, "embargo"), "Emb2");
         d.Say("Emb2", Beatrice, "\"Settled. Smolak's treasury will be lighter by spring.\"", "Emb3");
         d.Say("Emb3", Beatrice, "\"And my ministers louder. Don't make me regret it.\"", "Back");
-        d.Opt("EmbNo", null, "\"Not at that price.\"", null, T(VarBeaNoEmbargo), "EmbNo2");
+        d.Opt("EmbNo", null, "\"Not at that price.\"", null, T(VarBeaNoEmbargo) + Inc(VarBeaNoEmbargoCount, 1), "EmbNo2");
         d.Branch("EmbNo2", "EmbNoAgain", "EmbNoFirst");
-        d.SayIf("EmbNoAgain", $"{calls} >= 2", Beatrice, "\"Twice now. I'll stop offering, Romus. Eventually.\"", "Hub");
+        d.SayIf("EmbNoAgain", $"{N(VarBeaNoEmbargoCount)} >= 2", Beatrice, "\"Twice now. I'll stop offering, Romus. Eventually.\"", "Hub");
         d.Say("EmbNoFirst", Beatrice, "\"Sensible. Dull, but sensible.\"", "Hub");
 
         // 2. one war credit: +6 Budget now, 8 repaid over the turns that are left
-        d.Opt("AskCredit", $"{credits} == 0 and {turn} <= 8 and {pat} > 0 and {Not(Q(2))}",
+        d.Opt("AskCredit", $"{credits} == 0 and {turn} <= 6 and {pat} > 0 and {Not(Q(2))}",
             "\"The treasury is bleeding, Beatrice. Could Rumburg lend us money?\"", null, T(Q(2)), "CreditAgain", "Credit");
         d.SayIf("CreditAgain", Is(VarBeaNoCredit), Beatrice,
             "\"Changed your mind about the money? My Exchequer said you would. They're insufferable when they're right. Eighteen billion " +
@@ -263,7 +266,7 @@ internal static partial class SupplyWar
         d.Say("RaidNo2", Beatrice, "\"Scruples. How very Rizian of you.\"", "Hub");
 
         // 4. Bludish fighters for the Royal Army
-        d.Opt("AskFighters", $"{fighters} < 1 and {pat} > 0 and {Not(Q(4))}",
+        d.Opt("AskFighters", $"{fighters} < 1 and not {dossier} and {pat} > 0 and {Not(Q(4))}",
             "\"I could use more men. Would the Bluds fight for Rizia?\"", null, T(Q(4)), "FigAgain", "Fig1");
         d.SayIf("FigAgain", Is(VarBeaNoFighters), Beatrice,
             "\"The Bluds again? They're still for hire. They always are. Two companies, gold up front, and your officers will still " +
@@ -337,7 +340,7 @@ internal static partial class SupplyWar
             "\"You are fighting two wars, and Rumburg is paying for a share of both.\"", "NoTwoWars2");
         d.Say("NoTwoWars2", Beatrice, "\"GRACE has asked me to stop. For once, GRACE is right.\"", "NoFavour");
         d.Say("NoTired", Beatrice,
-            "\"My ministers have added up what your war has cost us, and I can't find a reason to tell them no.\"", "NoTired2");
+            "\"My ministers have added up what your war has cost us, and I can't find a reason to tell them yes.\"", "NoTired2");
         d.Say("NoTired2", Beatrice, "\"Rumburg has its own worries, Romus. Sordland is one of them.\"", "NoFavour");
         d.Say("NoFavour", Beatrice,
             "\"I'll keep saying the proper things at the Alliance. That's the last favour Rumburg can do you for now.\"",

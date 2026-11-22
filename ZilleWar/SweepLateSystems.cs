@@ -125,7 +125,7 @@ internal static class SweepLateSystems
             "holdouts in Isor and Nanta.\n\nSome in Porte Drazon worry about armed men who answer to their own captains before they " +
             "answer to the King.");
 
-        // war over, Zille city ours, the rest behind a armistice line
+        // war over, Zille city ours, the rest behind an armistice line
         Card(small, () => Part, "Divided Zille, Divided Loyalties",
             "Zille city flies the Rizian flag again, but beyond the armistice line few Zilleans dare to show where they stand. The " +
             "Wehzek authorities in the occupied towns watch for anyone who looks south.\n\nEven in Zille city, many wait to see " +
@@ -185,7 +185,7 @@ internal static class SweepLateSystems
             "decided, the loss continues to weigh on strategic positioning and the allocation of resources.");
         SLK.Situation(lost, () => Part, null,
             "The country faces a significant setback with the loss of its ancestral lands of Pales and much of the territory of " +
-            "Zille. Zille city flies the Rizian flag again, but the rest of the region lies beyond a armistice line, in Wehzek hands." +
+            "Zille. Zille city flies the Rizian flag again, but the rest of the region lies beyond an armistice line, in Wehzek hands." +
             "\n\nA border drawn by the guns satisfies no one, and the unfinished war weighs on national pride and on the treasury.");
         SLK.Situation(lost, () => Lost, null,
             "The country faces a significant setback with the loss of its ancestral lands of Pales and the vital territory of Zille. " +
@@ -331,7 +331,7 @@ internal static class SweepLateSystems
         SLK.Append("decision", "Turn09_Decision_StockExchangeResults", () => Lib,
             "Brokers expect the gold of liberated Zille to lift mining shares, and RRG's prospectors are already talking about Auremina.");
         SLK.Append("decision", "Turn09_Decision_StockExchangeResults", () => Part,
-            "Investors are wary of a kingdom whose border in Zille is a armistice line, and the brokers know it.");
+            "Investors are wary of a kingdom whose border in Zille is an armistice line, and the brokers know it.");
         SLK.Append("decision", "Turn09_Decision_StockExchangeResults", () => Lost,
             "The defeat in Zille has made foreign investors nervous, and the brokers fear they will keep their money at home.");
         SLK.Append("decision", "Turn09_Decision_StockExchangeResults", () => Ongoing,

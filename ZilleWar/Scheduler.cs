@@ -9,7 +9,8 @@ namespace ZilleWar;
 /// Every fragment added through SMK passes through here. A fragment with a tier waits (queued, invisible) while a
 /// fragment of a lower tier, or a vanilla fragment of the same step, is still pending, and is added the moment they
 /// are done. The queue is flushed right before the game evaluates the step, so a waiting scene keeps the step open.
-/// Order within a step: vanilla scenes; the post-Konstantium council and the consulate files; Beatrice, Alvarez and
+/// Order within a step: the post-Konstantium council and the consulate files (tier 0, added as soon as they are
+/// offered); then, after the step's vanilla scenes, Beatrice, Alvarez and
 /// Saltana; the war room, Hegel and Smolak (they react to the calls); the War Council (it briefs on all of it);
 /// then the war table (WarCouncil waits for every queued or pending "ZilleWar.Pre_" fragment).
 /// </summary>
@@ -233,5 +234,9 @@ internal static class Patch_FlushOnFragmentStart
 [HarmonyPatch(typeof(PersistenceManager), nameof(PersistenceManager.LoadSaveFile))]
 internal static class Patch_ClearScheduleOnLoad
 {
-    private static void Prefix() => Scheduler.Clear();
+    private static void Prefix()
+    {
+        Scheduler.Clear();
+        WarCouncil.ForgetInjections();
+    }
 }

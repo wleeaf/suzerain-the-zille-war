@@ -132,7 +132,7 @@ internal static class WorldSystems
         : LespiaCaleqabiz ? "in exchange for naval rights at the Rizian island of Caleqabiz"
         : Variables.GetBool("ZilleWar.Lespia_GasDeal") && Variables.GetBool("RiziaDLC.Policy_Economy_AureusField_Extractions") ? "in exchange for Aureus gas sold to LesPower at a discount"
         : Variables.GetBool("ZilleWar.Lespia_PaidBudget") ? "for a fee of several billion guilders paid by the Rizian treasury"
-        : Variables.GetString("ZilleWar.Ramiro_ConfrontOutcome") == "free" ? "for nothing at all, which in Lespia's case is its own kind of price"
+        : Variables.GetString("ZilleWar.Ramiro_ConfrontOutcome") == "free" ? "free of charge, by the Lespian government's own account"
         : "at a price neither government has made public";
 
     /// <summary>Rizia has made Lespia's part in the Friendship Day bombing public.</summary>

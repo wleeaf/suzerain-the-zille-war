@@ -136,7 +136,7 @@ internal static class EarlyT7
             "\"It is difficult for the RPP to support an all-out attack on the Grand Duchy. We have barely finished counting the dead from Zille.\"",
             new[] { "#54" });
         t.Variant("Tax41", 41, new[] { 33 }, Act, "Manus Sazon",
-            "\"In the name of equity, the RPP is proposing an excess profits tax on the businesses and industries that stand to generate the most revenue from the campaigns in Pales and Zille.\"",
+            "\"In the name of equity, the RPP proposes an excess profits tax on the industries that profit most from the campaigns in Pales and Zille.\"",
             new[] { "#34" });
         t.Register();
     }
@@ -163,7 +163,7 @@ internal static class EarlyT7
             "before 1927. They ask this House two questions. When will this war end, and who will govern Zille once it does?\"",
             new[] { "ActM2" }, condition: Rpp);
         t.Line("ActM2", daria,
-            "\"The Rizian National Coalition stands behind every soldier in Zille, Mr. Speaker. We ask only that the Crown not give away " +
+            "\"The Rizian National Coalition stands behind every soldier in Zille, Madame Speaker. We ask only that the Crown not give away " +
             "at a negotiating table what our army is winning in the field.\"", new[] { "ActSO" });
         t.Line("ActD", daria,
             "\"The Rizian National Coalition stands behind every soldier in Zille, Your Majesty. Our only request is that the Crown not " +
@@ -196,7 +196,7 @@ internal static class EarlyT7
             "\"One more matter, Your Majesty. War is a source of suffering for many and of enormous windfalls for a few. The RPP proposes " +
             "an excess profits tax on the industries that stand to gain the most from the Zille campaign.\"", new[] { "Tax2" }, condition: taxOpen);
         t.Line("Tax2", daria,
-            "\"These are the same factories that are arming our soldiers, Mr. Sazon. They should be thanked, not punished.\"", new[] { "Tax3" });
+            "\"These are the same factories that armed our soldiers, Mr. Sazon. They should be thanked, not punished.\"", new[] { "Tax3" });
         t.Line("Tax3", hugo,
             "\"Your Majesty, a tax like that would fall hardest on House Azaro, and on the de Ravas themselves. Tread carefully.\"",
             new[] { "TaxYes", "TaxDesk", "TaxNo" });
@@ -211,7 +211,8 @@ internal static class EarlyT7
         t.Line("TaxNoR", daria, "\"Thank you, Your Majesty. The House will make a note of it.\"", new[] { "Admin" });
 
         // --- who governs Zille (the whole region, or the part that is ours): vanilla's Brenas or Rizia Imperii argument
-        t.Logic("Admin", new[] { "Adm1Lib", "Adm1Part", "Adm1Act" });
+        t.Logic("Admin", new[] { "Adm1Lib", "Adm1Part", "Adm1Act", "AdmLost" });
+        t.Logic("AdmLost", new[] { "#191" }, condition: Lost);
         t.Line("Adm1Act", daria,
             "\"Which brings us to what comes after. Once Zille is liberated, it should be administered from Porte Drazon, the way the " +
             "Pales Administrative District is. Stability first.\"", new[] { "Adm2" }, condition: Act);
@@ -231,7 +232,7 @@ internal static class EarlyT7
             "sons. Brenas should govern what they won back.\"", new[] { "Adm3" });
         t.Line("Adm3", Narrator, "The volume in the room grew as the Delegates began arguing among themselves. I turned to Hugo.", new[] { "Adm4" });
         t.Line("Adm4", hugo,
-            "\"You have empowered the Sazons enough without handing them a liberated city, Your Majesty. Whatever you decide, decide it " +
+            "\"You have empowered the Sazons enough without handing them a city, Your Majesty. Whatever you decide, decide it " +
             "before the generals decide it for you.\"", new[] { "AdmB", "AdmBPart", "AdmI", "AdmIPart", "AdmW", "AdmWLib", "AdmWPart" });
         string notPart = $"not ({Part})";
         t.Choice("AdmBPart", "\"The city of Zille and the land we hold will return to Brenas, as before 1927.\"", new[] { "AdmBR" },
@@ -258,7 +259,7 @@ internal static class EarlyT7
         t.Line("LibM", manus,
             "\"The first matter on our agenda is a happy one. On behalf of the people of Brenas, this House congratulates His Majesty and " +
             "the Royal Army. After a quarter of a century, Zille is Rizian again.\"", new[] { "LibM2" }, condition: Rpp);
-        t.Line("LibM2", daria, "\"The RNC never doubted it for a moment, Mr. Speaker.\"", new[] { "LibQ" });
+        t.Line("LibM2", daria, "\"The RNC never doubted it for a moment, Madame Speaker.\"", new[] { "LibQ" });
         t.Line("LibD", daria,
             "\"The first matter on our agenda is a happy one. This House congratulates His Majesty and the Royal Army on the liberation " +
             "of Zille. The RNC never doubted it for a moment.\"", new[] { "LibD2" }, condition: NotRpp);
@@ -272,9 +273,9 @@ internal static class EarlyT7
             "their opinion.\"", new[] { "LibA1", "LibA2" });
         t.Choice("LibA1", "\"Every Wehzek in Zille who lays down his arms is a subject of the Crown. You have my word.\"", new[] { "LibA1r" },
             script: Inc("RiziaDLC.LeaningValue_Democratic", 1));
-        t.Line("LibA1r", Narrator, "Manus inclined his head. Daria's smile thinned.", new[] { "Admin" });
+        t.Line("LibA1r", Narrator, "Manus inclined his head. Daria's smile thinned.", new[] { "Tax" });
         t.Choice("LibA2", "\"Those who served Smolak will answer for it. The rest have nothing to fear.\"", new[] { "LibA2r" });
-        t.Line("LibA2r", Narrator, "Applause rose from the RNC benches. Manus wrote something down.", new[] { "Admin" });
+        t.Line("LibA2r", Narrator, "Applause rose from the RNC benches. Manus wrote something down.", new[] { "Tax" });
 
         // --- divided: Zille city is ours, Isor and Nanta (and perhaps Auremina) are not
         t.Logic("Part", new[] { "PartCfM", "PartCfD", "PartArmM", "PartArmD" }, condition: Part);
@@ -283,10 +284,10 @@ internal static class EarlyT7
             "line across the region. Isor and Nanta are still Wehzek, and our constituents have cousins on the far side of it.\"",
             new[] { "PartCfM2" }, condition: $"{Rpp} and {KingCf}");
         t.Line("PartCfM2", daria,
-            "\"The RNC accepted the ceasefire because His Majesty asked us to, Mr. Speaker. We will not accept that line as a border, nor " +
+            "\"The RNC accepted the ceasefire because His Majesty agreed to it, Madame Speaker. We will not accept that line as a border, nor " +
             "one drawn in Konstantium by people who have never set foot in Zille.\"", new[] { "PartRef" });
         t.Line("PartCfD", daria,
-            "\"Your Majesty, Zille's harbor flies our flag again. The RNC accepted the ceasefire because you asked us to. But we will not " +
+            "\"Your Majesty, Zille's harbor flies our flag again. The RNC accepted the ceasefire because you agreed to it. But we will not " +
             "accept that line as a border, nor one drawn in Konstantium by people who have never set foot in Zille.\"",
             new[] { "PartCfD2" }, condition: $"{NotRpp} and {KingCf}");
         t.Line("PartCfD2", manus,
@@ -297,7 +298,7 @@ internal static class EarlyT7
             "short of Isor and Nanta, and the armistice has frozen the line where our soldiers stood when their strength ran out.\"",
             new[] { "PartArmM2" }, condition: $"{Rpp} and {NoKingCf}");
         t.Line("PartArmM2", daria,
-            "\"The RNC will never accept that line as a border, Mr. Speaker. The army took Zille's harbor. Given time, it can finish the work.\"",
+            "\"The RNC will never accept that line as a border, Madame Speaker. The army took Zille's harbor. Given time, it can finish the work.\"",
             new[] { "PartRef" });
         t.Line("PartArmD", daria,
             "\"Your Majesty, Zille's harbor flies our flag again, and the RNC salutes the army for it. But we will never accept the " +
@@ -312,10 +313,10 @@ internal static class EarlyT7
             "\"Don't go down that road, Your Majesty. Any vote across that line is an open door for Wehlen, and Smolak will walk through it.\"",
             new[] { "CfA1", "CfA2" });
         t.Choice("CfA1", "\"Zille's future will be decided by Rizia, not by ballots.\"", new[] { "CfA1r" });
-        t.Line("CfA1r", daria, "\"Hear, hear.\"", new[] { "Admin" });
+        t.Line("CfA1r", daria, "\"Hear, hear.\"", new[] { "Tax" });
         t.Choice("CfA2", "\"Perhaps a vote is the only way this ends without more graves.\"", new[] { "CfA2r" },
             script: Set(VarReferendumFloated, "true"));
-        t.Line("CfA2r", Narrator, "Manus looked at me in surprise. Hugo did not look at me at all.", new[] { "Admin" });
+        t.Line("CfA2r", Narrator, "Manus looked at me in surprise. Hugo did not look at me at all.", new[] { "Tax" });
 
         // --- lost, after the offensive ran out (armistice)
         t.Logic("Def", new[] { "DefM", "DefD" }, condition: $"{Lost} and {NoKingCf}");
@@ -323,7 +324,7 @@ internal static class EarlyT7
             "\"Your Majesty, I will not pretend this is an easy session. We were promised a short war and a homecoming. Brenas has " +
             "received neither. Only telegrams.\"", new[] { "DefM2" }, condition: Rpp);
         t.Line("DefM2", daria,
-            "\"The RNC will never abandon the claim to Zille, Mr. Speaker. But the people want to know who failed them. The army, or " +
+            "\"The RNC will never abandon the claim to Zille, Madame Speaker. But the people want to know who failed them. The army, or " +
             "its orders.\"", new[] { "DefA1", "DefA2", "DefA3" });
         t.Line("DefD", daria,
             "\"Your Majesty, the RNC will never abandon the claim to Zille. But the people want to know who failed them. The army, or " +
@@ -339,7 +340,7 @@ internal static class EarlyT7
         t.Choice("DefA3", "\"This House will not put the Crown on trial.\"", new[] { "DefA3r" },
             script: Inc("RiziaDLC.LeaningValue_Democratic", -1));
         t.Line("DefA3r", Narrator, "Manus opened his mouth, then closed it again. Beside me, Hugo gave a small nod of approval.", new[] { "DefH" });
-        t.Line("DefH", hugo, "\"Let them grieve, Romus. Just don't let them choose a culprit.\"", new[] { "#191" });
+        t.Line("DefH", hugo, "\"Let them grieve, Romus. Just don't let them choose a culprit.\"", new[] { "Tax" });
 
         // --- lost, after the King's own ceasefire (Zille city never taken)
         t.Logic("Cf", new[] { "CfM", "CfD" }, condition: $"{Lost} and {KingCf}");
@@ -347,20 +348,16 @@ internal static class EarlyT7
             "\"Your Majesty, the guns have fallen silent, and my party is grateful for it. But Brenas buried its sons for a city that " +
             "still flies Smolak's flag. Our constituents want to know what it was for.\"", new[] { "CfM2" }, condition: Rpp);
         t.Line("CfM2", daria,
-            "\"The RNC accepted the ceasefire because His Majesty asked us to, Mr. Speaker. We did not accept it as the end of the claim.\"",
+            "\"The RNC accepted the ceasefire because His Majesty agreed to it, Madame Speaker. We did not accept it as the end of the claim.\"",
             new[] { "DefA1", "CfTime", "DefA3" });
         t.Line("CfD", daria,
-            "\"Your Majesty, the RNC accepted the ceasefire because you asked us to. We did not accept it as the end of the claim to Zille.\"",
+            "\"Your Majesty, the RNC accepted the ceasefire because you agreed to it. We did not accept it as the end of the claim to Zille.\"",
             new[] { "CfD2" }, condition: NotRpp);
         t.Line("CfD2", manus,
             "\"And Brenas buried its sons for a city that still flies Smolak's flag, Madame Speaker. Our constituents want to know what " +
             "it was for.\"", new[] { "DefA1", "CfTime", "DefA3" });
         t.Choice("CfTime", "\"The ceasefire buys us time. Smolak will not hold Zille forever.\"", new[] { "CfTimeR" });
         t.Line("CfTimeR", Narrator, "Daria nodded slowly. Manus did not look convinced.", new[] { "DefH" });
-
-        // "Moving on to more pressing topics..." right after the war debate.
-        t.Variant("NextM", 213, new[] { 194 }, Declared, manus, "\"Moving on to the next item on our agenda...\"", new[] { "#2" });
-        t.Variant("NextD", 214, new[] { 195 }, Declared, daria, "\"Moving on to the next item on our agenda...\"", new[] { "#2" });
 
         t.Register();
     }
@@ -537,16 +534,16 @@ internal static class EarlyT7
                 "one of them told Geopolitico. \"It has customers.\""));
         }
 
-        if (!PalesWar && active && Variables.GetBool("RiziaDLC.Policy_RD_Economy_WarProfitsTax") && !Variables.GetBool(VarNewsWarTax))
+        if (!PalesWar && Variables.GetBool("RiziaDLC.Policy_RD_Economy_WarProfitsTax") && !Variables.GetBool(VarNewsWarTax))
         {
             Variables.Set(VarNewsWarTax, true);
             NewsWire.Publish("E7_WarTax", "RH", "Every Rizian Shares the Burden", string.Join("\n\n",
-                "By royal decree, the extraordinary profits made on war contracts will be taxed for the duration of the campaign in Zille. " +
+                "By royal decree, the extraordinary profits made on war contracts will be taxed, now that the campaign in Zille has shown what the army costs. " +
                 "The soldier gives his blood; it is only right, the Palace says, that the factory give its share. The Treasury expects the " +
                 "tax to raise a full ten billion guilders for the army before the year is out.",
                 "The Royal Herald is confident the great houses of industry will answer the call with the same patriotism as the men of Brenas."));
             NewsWire.Publish("E7_WarTax", "V", "War Profiteers Taxed", string.Join("\n\n",
-                "If the war in Zille must go on, then at the very least our corporations should not grow fat on it. His Majesty has " +
+                "If a war in Zille must be fought, then at the very least our corporations should not grow fat on it. His Majesty has " +
                 "decreed a heavy tax on war profits, and for once the Palace and this newspaper agree on something.",
                 "The arms works of Cardesse-Montaklar have run day and night since Konstantium. The families of Brenas have paid for this " +
                 "war in sons. It is only fair that those who have profited from it pay in guilders. We can only hope His Majesty has " +

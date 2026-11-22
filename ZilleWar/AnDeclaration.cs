@@ -39,6 +39,7 @@ internal static class AnDeclaration
     private const string Azmal = "Jorga Azmal";
     private const string Reinhart = "Axel Reinhart";
     private const string Narrator = "Narrator";
+    private const string Beatrice = "Beatrice Livingston (R)";
     private const string Estela = "Estela Toras";
     private const string Saltana = "Alma Saltana";
     private const string Romus = "Player_Romus";             // spoken choices
@@ -80,8 +81,8 @@ internal static class AnDeclaration
             name: P + "Declare",
             speakerSelector: new CharacterNameSelector(Romus),
             menuText: "\"I hereby declare war on Wehlen.\"",
-            text: "\"Twenty-five years ago, in a dark hour, my father lent Zille to a friend who had stood by him. The lease has ended, " +
-                  "and the friend has decided to keep what was only ever borrowed, and to call it security.\"",
+            text: "\"Twenty-five years ago my father lent Zille to a friend who had stood by him. The lease has ended, " +
+                  "and the friend keeps what was only ever borrowed and calls it security.\"",
             luaScript:
                 $"Variable[\"{VarDeclared}\"] = true; " +
                 $"Variable[\"{VarDeclaredTurn}\"] = 4; Variable[\"{WarState.VarActive}\"] = true; " +
@@ -122,8 +123,8 @@ internal static class AnDeclaration
         const string denounce = "Variable[\"RiziaDLC.Decision_Turn03_ZilleIncidentResponse_DenounceSO\"] == true";
         const string cooperate = "Variable[\"RiziaDLC.Decision_Turn04_WehlenInvestigation_Cooperate\"] == true";
         inj.AddNode(Line("JabScapegoats", Smolak,
-            "\"A month ago, His Majesty sent us two of his countrymen in chains and called them the bombers of Smolak Square. We accepted " +
-            "them in good faith. Now we see what his good faith was worth.\"", Next("Smolak2"), condition: scapegoats));
+            "\"A month ago, His Majesty offered us Su Omina men to take the blame for the bombing in Smolak Square. We accepted in " +
+            "good faith. Now we see what his good faith was worth.\"", Next("Smolak2"), condition: scapegoats));
         inj.AddNode(Line("JabApology", Smolak,
             "\"Only weeks ago, His Majesty apologized to me for the words he spoke in Zille. I see now what the apology was for. He was " +
             "sorry I had heard them too early.\"", Next("Smolak2"), condition: $"not ({scapegoats}) and {apology}"));
@@ -131,7 +132,7 @@ internal static class AnDeclaration
             "\"His Majesty condemned his own nationalists after the bombing. Today he marches with them. The Alliance may decide which of " +
             "his two faces it prefers.\"", Next("Smolak2"), condition: $"not ({scapegoats}) and not ({apology}) and {denounce}"));
         inj.AddNode(Line("JabCooperate", Smolak,
-            "\"Only hours ago his security men sat across the table from mine and swore we were partners in finding the bombers. I wonder now " +
+            "\"Only days ago his security men sat across the table from mine and swore we were partners in finding the bombers. I wonder now " +
             "how many of their questions were about the bombing, and how many were about our barracks.\"", Next("Smolak2"),
             condition: $"not ({scapegoats}) and not ({apology}) and not ({denounce}) and {cooperate}"));
         inj.AddNode(Line("Smolak2", Smolak,
@@ -159,7 +160,7 @@ internal static class AnDeclaration
             "Rizia's business.\"", Next("AlvarezBacks2"), conversant: true, condition: lespiaSpoke,
             script: $"Variable[\"{VarAlvarezStance}\"] = \"backs\";"));
         inj.AddNode(Line("AlvarezBacks2", Narrator,
-            "He sat back down without looking at Smolak. Somewhere behind him, a Wehzek aide was writing down every word.", Next("Hegel1")));
+            "He sat back down without looking at Smolak. Somewhere behind him, a Lespian aide was already writing down every word.", Next("Hegel1")));
         inj.AddNode(Line("Alvarez1", Alvarez,
             "\"Lespia calls on both parties to show restraint.\"", Next("Alvarez2"), conversant: true, condition: $"not ({lespiaSpoke})",
             script: $"Variable[\"{VarAlvarezStance}\"] = \"restraint\";"));
@@ -204,7 +205,7 @@ internal static class AnDeclaration
         const string mitzUnspoken = "Variable[\"RiziaDLCIsolated.Turn04_ANSpeech_Morella\"] ~= true and Variable[\"RiziaDLC.Diplomacy_Morella_ANSpeech_SideWith\"] ~= true " +
                                     "and Variable[\"RiziaDLC.Diplomacy_Morella_ANSpeech_SideAgainst\"] ~= true";
         inj.AddNode(Line("Saltana0", Narrator,
-            "Someone had reached the side door before us. Alma Saltana stood in the corridor with her arms folded, a single aide at her shoulder.",
+            "Alma Saltana was waiting for us in the corridor beyond the side door, arms folded, a single aide at her shoulder.",
             Next("Saltana1"), condition: mitzUnspoken));
         inj.AddNode(Line("Saltana1", Saltana,
             "\"I won't keep you. I imagine you have a great deal to do now.\"", Next("Saltana2"), conversant: true));
@@ -234,7 +235,7 @@ internal static class AnDeclaration
             Next("NoteRead")));
         inj.AddNode(Line("NoteRead", Esquibel,
             "\"From Prime Minister Alvarez.\" He read it twice before handing it to me. \"'Lespia stands ready to discuss practical " +
-            "arrangements. Discreetly.' That man never does anything for free, Your Majesty.\"", Next("NoteGas", "NoteMitz", "NoteFavor")));
+            "arrangements. Discreetly.' That man does nothing for free.\"", Next("NoteGas", "NoteMitz", "NoteFavor")));
         const string ownsAureus = "Variable[\"RiziaDLC.Diplomacy_Pales_GasField_Buy\"] == true and Variable[\"RiziaDLC.Diplomacy_Pales_GasField_BuyCancelled\"] ~= true";
         const string noItzPromise = "Variable[\"RiziaDLC.Diplomacy_Lespia_PromiseITZSupport\"] ~= true";
         inj.AddNode(Line("NoteGas", Esquibel,
@@ -244,7 +245,7 @@ internal static class AnDeclaration
             "\"I can guess the price. Lespia still has no promise from us on the Meftiem, and the board meets next month.\"",
             Next("N1", "N2"), condition: $"not ({ownsAureus}) and {noItzPromise}"));
         inj.AddNode(Line("NoteFavor", Esquibel,
-            "\"He already has his share of the gas and your word on the Meftiem. Whatever he asks for next, he hasn't thought of it yet.\"",
+            "\"He already has your word on the Meftiem. Whatever he asks for next, he hasn't thought of it yet.\"",
             Next("N1", "N2"), condition: $"not ({ownsAureus}) and not ({noItzPromise})"));
         inj.AddNode(Choice("N1", "\"Burn it. I won't have Lespia's fingerprints on this war.\"", Next("PressWarning"),
             script: $"Variable[\"{VarLespianNote}\"] = \"burned\";"));
@@ -270,10 +271,12 @@ internal static class AnDeclaration
             "In the car, Laurento was already on the telephone. I caught only fragments. \"Mobilization.\" \"The border.\" \"Mave Nortus.\"",
             Next("GeneralStaff")));
         inj.AddNode(Line("GeneralStaff", Esquibel,
-            "\"The General Staff will be waiting for you in Porte Drazon, Your Majesty. They're already drawing up plans.\"", Next("Envoys", "Receiver")));
+            "\"The General Staff will be waiting for you in Porte Drazon, Your Majesty. They're already drawing up plans.\"", Next("EnvoysIntro", "Receiver")));
+        inj.AddNode(Line("EnvoysIntro", Narrator, "Laurento lowered the receiver for a moment.", Next("Envoys"),
+            condition: "Variable[\"RiziaDLC.Decision_Turn03_DiplomaticEnvoy_Wehlen\"] == true"));
         inj.AddNode(Line("Envoys", Esquibel,
-            "He lowered the receiver for a moment. \"My people in Wraclawitz, Your Majesty. The mission we sent this winter. They were " +
-            "still at the Foreign Ministry when you spoke. I'm told they are being driven to the border as we speak.\"", Next("Receiver"),
+            "\"My people in Wraclawitz, Your Majesty. The mission we sent this winter was still at the Foreign Ministry when you spoke. " +
+            "I'm told they are being driven to the border as we speak.\"", Next("Receiver"),
             condition: "Variable[\"RiziaDLC.Decision_Turn03_DiplomaticEnvoy_Wehlen\"] == true"));
         inj.AddNode(Line("Receiver", Narrator,
             "The telephone rang again. Laurento listened for a moment, then held the receiver out to me. \"The Queen Mother, Your Majesty.\"",
@@ -292,28 +295,24 @@ internal static class AnDeclaration
         inj.AddNode(Choice("E3", "\"Pray that it ends quickly.\"", Next("Cable")));
         inj.AddNode(Line("Cable", Esquibel,
             "\"One more, Your Majesty.\" Laurento held up a telegram form. \"From Thornbourgh. It must have been sent the minute the news reached the Queen.\"",
-            Next("Cable2", "Cable2Half", "Cable2NoEmbargo")));
-        const string embargo =
-            "Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_HighEnergyExport\"] == true or Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_AverageEnergyExport\"] == true";
-        inj.AddNode(Line("Cable2", Narrator,
-            "He read it aloud, and by the second sentence he was trying not to smile. \"Romus. I gather from the wireless that " +
-            "you have declared war. One does like to hear these things before the newspapers do. Rumburg stands with you, naturally, " +
-            "and we stopped buying Smolak's oil months ago, so you needn't ask. Do try to win it quickly. Long wars are ruinous for " +
-            "treasuries, and worse for thrones. Beatrice.\"", Next("Cable3"), condition: "Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_HighEnergyExport\"] == true"));
-        inj.AddNode(Line("Cable2Half", Narrator,
-            "He read it aloud, and by the second sentence he was trying not to smile. \"Romus. I gather from the wireless that " +
-            "you have declared war. One does like to hear these things before the newspapers do. Rumburg stands with you, naturally. " +
-            "We halved our purchases of Smolak's oil months ago, at your request, and I suppose you'll be wanting the other half. Ring " +
-            "me when you've finished making speeches. Beatrice.\"", Next("Cable3"),
-            condition: "Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_AverageEnergyExport\"] == true and Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_HighEnergyExport\"] ~= true"));
-        inj.AddNode(Line("Cable2NoEmbargo", Narrator,
-            "He read it aloud, and by the second sentence he was trying not to smile. \"Romus. I gather from the wireless that " +
-            "you have declared war. One does like to hear these things before the newspapers do. Rumburg stands with you, naturally. " +
-            "We are still buying Smolak's oil, which I suspect you'll want to discuss. Ring me when you've finished making speeches. " +
-            "Beatrice.\"", Next("Cable3"), condition: $"not ({embargo})"));
+            Next("CableRead")));
+        inj.AddNode(Line("CableRead", Narrator,
+            "He read it aloud, and by the second sentence he was trying not to smile.", Next("Cable2", "Cable2Half", "Cable2NoEmbargo")));
+        inj.AddNode(Line("Cable2", Beatrice,
+            "\"Romus. I gather from the wireless that you have declared war. One does like to hear these things before the newspapers do. " +
+            "Rumburg stands with you, naturally, and we stopped buying Smolak's oil months ago, so you needn't ask. " +
+            "Do try to win it quickly. Long wars are ruinous for treasuries, and worse for thrones.\"", Next("Cable3"), condition: SupplyWar.LuaOilCut));
+        inj.AddNode(Line("Cable2Half", Beatrice,
+            "\"Romus. I gather from the wireless that you have declared war. One does like to hear these things before the newspapers do. " +
+            "Rumburg stands with you, naturally. We halved our purchases of Smolak's oil months ago, at your request, and I suppose " +
+            "you'll be wanting the other half. Ring me when you've finished making speeches.\"", Next("Cable3"), condition: SupplyWar.LuaOilHalved));
+        inj.AddNode(Line("Cable2NoEmbargo", Beatrice,
+            "\"Romus. I gather from the wireless that you have declared war. One does like to hear these things before the newspapers do. " +
+            "Rumburg stands with you, naturally. We are still buying Smolak's oil, which I suspect you'll want to discuss. " +
+            "Ring me when you've finished making speeches.\"", Next("Cable3"), condition: $"not ({SupplyWar.LuaOilCut}) and not ({SupplyWar.LuaOilHalved})"));
         inj.AddNode(Line("Cable3", Esquibel,
-            "\"Her Majesty's sense of humor survives even a war, it seems.\" Laurento folded the telegram and handed it to me. " +
-            "\"But she's with us, and Valgsland will know it by morning. That matters more than anything Smolak said today.\"",
+            "\"Her Majesty's humor survives even a war.\" Laurento folded the telegram. " +
+            "\"She's with us, and Valgsland will know it by morning.\"",
             Next("C1", "C2")));
         inj.AddNode(Choice("C1", "\"Cable her back. Tell her Rizia will never forget this.\"", Next("Rain"),
             script: $"Variable[\"{VarRumburgCable}\"] = \"grateful\";"));

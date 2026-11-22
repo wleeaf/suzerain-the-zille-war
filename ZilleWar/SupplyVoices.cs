@@ -40,48 +40,41 @@ internal static partial class SupplyWar
             "Laurento came in without knocking, which he never did, holding a cable form between two fingers as if it might stain them.",
             "PlaySceneMusic(Diplomacy);", $"AddConversant(\"{Esquibel}\");", "Cable1");
         d.Say("Cable1", Esquibel,
-            "\"From Chancellor Hegel, Your Majesty. His ambassador delivered it in person, with the face of a man reading out a will.\"", "Cable2");
-        d.Say("Cable2", Esquibel,
-            "\"'The Federal Republic of Valgsland notes with grave concern the war waged by the Kingdom of Rizia against a fraternal " +
-            "people.' He goes on like that for a page. Then he gets to the point. Three points, in fact.\"", "Cable2b");
+            "\"From Chancellor Hegel, Your Majesty, delivered by his ambassador in person. Three points, and he will read our answer " +
+            "aloud somewhere.\"", "Cable2");
         // The Valgslandian and CSP embargo (WorldEmbargo) has been in force since the declaration; the cable builds on it.
-        d.Branch("Cable2b", "Cable2E", "Cable3");
+        d.Branch("Cable2", "Cable2E", "Cable2P");
         d.SayIf("Cable2E", EmbargoOn, Esquibel,
-            "\"He begins by reminding us that his embargo stays in force until the last Rizian soldier has left Wehzek soil. As if " +
-            "Councilor Werner would let us forget it. Then he moves on to what Valgsland might do next.\"", "Cable3");
+            "\"He opens with his embargo, as if Ms. Werner would let us forget it. Then the miners of Isor: harm them, and Valgsland " +
+            "goes to the Alliance.\"", "Cable3");
+        d.Say("Cable2P", Esquibel,
+            "\"He opens with the miners of Isor, whom Valgslandian unions call brothers. Harm them, and Valgsland goes to the " +
+            "Alliance.\"", "Cable3");
         d.Say("Cable3", Esquibel,
-            "\"First, the Wehzek miners around Isor. Valgslandian unions count hundreds of them as brothers, he says, and if any harm " +
-            "comes to them, Valgsland will raise it at the Alliance of Nations and move for sanctions.\"", "Cable4");
-        d.Say("Cable4", Esquibel,
-            "\"Second, ships carrying Contanan cargo to Wehlen will go on calling at Valgslandian ports, because Valgsland does not " +
-            "interfere with lawful commerce. By lawful commerce, he means rifles.\"", "Cable5");
-        d.Say("Cable5", Esquibel,
-            "\"Third, the Valgslandian fleet will continue its exercises in the Markian Sea. No explanation offered. None needed, I " +
-            "suppose.\"", "Cable6");
-        d.Say("Cable6", Esquibel,
-            "\"He wants an answer, Your Majesty. Whatever we send, he'll read it aloud somewhere.\"",
+            "\"Then Contanan freighters keep calling at Valgslandian ports, lawful commerce, he says, meaning rifles. And his fleet " +
+            "keeps exercising in the Markian Sea.\"",
             "Guarantee", "Defy", Gate("OfferMitz"), "Stall");
         d.Opt("Guarantee", null,
             "\"Give him his guarantees. The miners of Isor will be safe, and his observers may come and see it for themselves.\"",
             "-1 Authority", Inc(Authority, -1) + Talk.Weaken(1) + S(VarValgslandCable, "guarantee") +
                             $"{V(VarValgslandStage)} = 1; " + stageDone, "Guarantee2");
         d.Say("Guarantee2", Esquibel,
-            "\"He'll accept it as his due. He may hold a few Contanan freighters in port for inspection, just to remind you who is " +
-            "watching. Hegel does not thank anyone.\"", "CableEnd");
+            "\"He'll accept it as his due, and hold a few Contanan freighters in port to remind you who is watching. Valgsland will have " +
+            "less reason to stiffen Smolak, at least.\"", "CableEnd");
         d.Opt("Defy", null, "\"Rizia takes no lectures from Valgsland. Tell him so.\"", "+1 Authority",
             Inc(Authority, 1) + Inc(NpValgsland, -2) + Strengthen(1) + S(VarValgslandCable, "defied") + $"{V(VarValgslandStage)} = 1; " +
             stageDone, "Defy2");
         d.Say("Defy2", Esquibel,
-            "\"I'll find a more diplomatic way of putting it. He'll understand it anyway. And I'm afraid the Contanan freighters will now " +
-            "sail exactly on time.\"", "CableEnd");
+            "\"I'll find a more diplomatic way of putting it. He'll understand anyway, and so will Smolak, who will take heart. The " +
+            "Contanan freighters will now sail exactly on time.\"", "CableEnd");
         d.Opt("OfferMitz", $"{Not(VarLespiaMitz)} and {Not(MitzPromise)} and {Not(MitzPromiseLate)} and {Not(ValgslandMitz)}",
             "\"Tell him Rizia might see the Meftiem his way, if Valgsland's ports see this war ours.\"",
             "Promises Rizia's MITZ Vote to Valgsland",
             T(ValgslandMitz) + Inc(NpLespia, -1) + Talk.Weaken(1) + S(VarValgslandCable, "mitz") +
             $"{V(VarValgslandStage)} = 1; " + stageDone, "Mitz2");
         d.Say("Mitz2", Esquibel,
-            "\"A dangerous promise, Your Majesty. Alvarez will hear of it before dinner. But I daresay the Contanan freighters will " +
-            "find Valgslandian harbors suddenly very crowded.\"", "CableEnd");
+            "\"A dangerous promise, Your Majesty. Alvarez will hear of it before dinner. But Smolak will find his friends in Valgsland " +
+            "less eager, and the Contanan freighters will find its harbors very crowded.\"", "CableEnd");
         d.Opt("Stall", null, "\"Thank the Chancellor for his concern, and say nothing else.\"", null,
             S(VarValgslandCable, "stalled") + $"{V(VarValgslandStage)} = 1; " + stageDone, "Stall2");
         d.Say("Stall2", Esquibel, "\"A non-answer. Hegel is fluent in those. He'll write again, or he'll ring.\"", "CableEnd");
@@ -90,39 +83,40 @@ internal static partial class SupplyWar
         // ---- stage 2: Hegel rings himself
         d.Scene("CallIn",
             "An assistant brought in the blue telephone. The operator announced Valgsland, and the line went so quiet I could hear " +
-            "the Chancellor breathing before he spoke.", null, Music + $"AddConversant(\"{Hegel}\");", "Call1");
-        d.Say("Call1", Hegel, "\"Mr. Toras. I will be brief, since you are busy.\"", "Front");
-        d.Branch("Front", "FrontAur", "FrontZille", "Why");
+            "the Chancellor breathing before he spoke.", null, Music + $"AddConversant(\"{Hegel}\");", "Front");
+        d.Say("Call1", Hegel, "\"Mr. Toras. I will be brief, since you are busy.\"", "Why");
+        d.Branch("Front", "FrontAur", "FrontZille", "Call1");
         d.SayIf("FrontAur", Is(ZilleOperation.CapturedVar("Auremina")), Hegel,
-            "\"Your army is in the Auremina hills now. The miners of Isor can hear its guns from their pitheads, and their unions can " +
-            "hear them in Valgsland.\"", "Why");
+            "\"Mr. Toras. Your army is in the Auremina hills. The miners of Isor can hear its guns from their pitheads.\"", "Why");
         d.SayIf("FrontZille", Is(WarFlags.ZilleCityHeld), Hegel,
-            "\"You hold Zille. Then you hold its Wehzeks too, Mr. Toras, and Valgsland is counting every one of them.\"", "Why");
-        d.Branch("Why", "WhyVillage", "WhyCaleqabiz", "WhyLespia", "WhyBff", "WhySubs", "WhyCable");
+            "\"Mr. Toras. You hold Zille, so you hold its Wehzeks too, and Valgsland is counting every one of them.\"", "Why");
+        d.Branch("Why", "WhyVillage", "WhyCaleqabiz", "WhyLespia", "WhyBff", "WhySubs", "WhyCable", "WhyPlain");
         d.SayIf("WhyVillage", Eq(VarBludsIncident, "kept"), Hegel,
-            "\"Your Bludish mercenaries shot eleven villagers in the hills above Zille, and you kept them at the front. The photographs " +
-            "are pinned to the wall of my cabinet room, Mr. Toras. I have asked my ministers to look at them every morning.\"", "Demand");
+            "\"Your Bludish mercenaries shot eleven villagers above Zille, and you kept them at the front. The photographs are pinned " +
+            "to the wall of my cabinet room.\"", "Demand");
         d.SayIf("WhyCaleqabiz", Is(VarLespiaCaleqabiz), Hegel,
-            "\"Lespian warships now refuel at Caleqabiz. You have invited ATO into the Antacean, Mr. Toras. Do not be surprised when " +
-            "the Contanan Security Pact answers.\"", "Demand");
+            "\"Lespian warships now refuel at Caleqabiz. You have invited ATO into the Antacean, Mr. Toras. The Contanan Security Pact " +
+            "will answer.\"", "Demand");
         d.SayIf("WhyLespia", Is(VarLespiaStrait), Hegel,
             "\"Lespian warships are stopping ships in the Strait of Kreleck on your behalf. Alvarez has wanted a hand on that strait for " +
-            "years, and you have given him both. Valgsland will not sail its merchants past Lespian inspectors, Mr. Toras.\"", "Demand");
+            "years, and you have given him both.\"", "Demand");
         d.SayIf("WhyBff", $"{N(Count(Lever.BffRaids))} > 0", Hegel,
             "\"You have hired the Bludish Freedom Front to blow up harbors full of dockworkers. Valgsland has a word for that, and so " +
             "will the Alliance.\"", "Demand");
         d.SayIf("WhySubs", $"{N(Count(Lever.Submarines))} >= 2", Hegel,
             "\"Your submarines have been sighted twice near our patrol lines in the Markian approaches. Twice is not an accident.\"", "Demand");
-        d.Say("WhyCable", Hegel, "\"My ambassador's cable received an answer in no language I recognize.\"", "Demand");
+        d.SayIf("WhyCable", Eq(VarValgslandCable, "stalled"), Hegel,
+            "\"My ambassador's cable got a non-answer. I am fluent in those, Mr. Toras, and I have not forgotten it.\"", "Demand");
+        d.Say("WhyPlain", Hegel, "\"I have watched your war long enough, Mr. Toras. You should hear what Valgsland thinks of it.\"", "Demand");
         // Rizia sold its Meftiem vote to Lespia for Lespia's vote at the Alliance (SupplyAlvarez): Hegel knows.
         const string veto = "\"And do not think Mr. Alvarez's vote in Konstantium protects you. He can kill a motion. He cannot open " +
                             "a Valgslandian port.\"";
         d.Branch("Demand", "DemandE", "DemandPlain");
         d.SayIf("DemandE", EmbargoOn, Hegel,
-            "\"Valgslandian destroyers are in the Markian Sea, and they will stay there. Here is how this ends quietly: your submarines " +
-            "stay south of the strait. Otherwise Valgsland will move for sanctions at the Alliance. And our embargo, which has so far " +
-            "let your cargo reach you through Agnolian and Sordish holds, will close that door as well. Any ship that has called at a " +
-            "Rizian port will be turned away from ours.\"", "VetoE");
+            "\"Valgslandian destroyers are in the Markian Sea, and they will stay there. Your submarines stay south of the strait, or " +
+            "Valgsland moves for sanctions at the Alliance, and our embargo closes the last door your cargo has used.\"", "DemandE2");
+        d.Say("DemandE2", Hegel,
+            "\"Any ship that has called at a Rizian port will be turned away from ours.\"", "VetoE");
         d.Branch("VetoE", "VetoESay", "MenuE");
         d.SayIf("VetoESay", Is(VarLespiaAllianceVote), Hegel, veto, "MenuE");
         d.Do("MenuE", null, "Yield", "RefuseE");
@@ -171,14 +165,14 @@ internal static partial class SupplyWar
             "\"Your Majesty. You have my gold hills, and the miners of Auremina are learning your anthem with a Wehzek accent. Enjoy " +
             "them. Gold is heavy to carry home.\"", "Offer");
         d.SayIf("OpenMissed", $"not {held} and {N(VarCallFought)} >= 1 and {Not(VarCallLastWon)}", Smolak,
-            "\"Your Majesty. Your army came down the river, looked at Zille, and went back up it again. I listened on the radio. I " +
-            "thought that now, while you are counting, you might be in the mood to listen.\"", "Offer");
+            "\"Your Majesty. Your army came down the river, looked at Zille, and went back up it. I thought that, while you are " +
+            "counting, you might listen.\"", "Offer");
         d.SayIf("OpenHeldFedo", $"{held} and {Is(CityEvents.Flag("Zille_BannerRaised"))}", Smolak,
-            "\"Your Majesty. Your soldiers are sleeping in my harbor, in my hotels, and in the square that had my name on it until they " +
-            "unscrewed it. Fedo Square. How very old-fashioned. I hope the beds are comfortable.\"", "Offer");
+            "\"Your Majesty. Your soldiers are sleeping in my harbor, my hotels, and the square that had my name on it until they " +
+            "unscrewed it. Fedo Square. How very old-fashioned.\"", "Offer");
         d.SayIf("OpenAgain", $"{calls} >= 2", Smolak,
-            "\"Your Majesty. Last month you told me Zille was not for sale. I have since learned that everything in Zille is for sale, " +
-            "beginning with my soldiers' rifles. So I will be shorter this time. My offer has improved, because my situation has not.\"", "Offer");
+            "\"Your Majesty. Last month you told me Zille was not for sale. I will be shorter this time. My offer has improved, because " +
+            "my situation has not.\"", "Offer");
         d.SayIf("OpenHeld", held, Smolak,
             "\"Your Majesty. Your soldiers are quartered in my harbor and my hotels. I hope the beds " +
             "are comfortable.\"", "Offer");
@@ -192,8 +186,7 @@ internal static partial class SupplyWar
         d.SayIf("OfferAgain", $"{calls} >= 2", Smolak,
             "\"The same offer, then, at a better price. A ceasefire on the line where our armies stand tonight, and in return...\"", "Terms");
         d.Say("Offer1", Smolak,
-            "\"Here is my offer. A ceasefire on the line where our armies stand tonight. The Alliance draws a pretty map, everybody " +
-            "goes home, and in return...\"", "Terms");
+            "\"Here is my offer. A ceasefire on the line where our armies stand tonight, and in return...\"", "Terms");
         // Each demand is voiced only while it is still open: Ricardus while he is held and not yet handed over, the border ban
         // and the Wehzek rights until the King has already granted them.
         string rico = $"(Variable[\"RiziaDLC.Rico_Arrested\"] == true and Variable[\"RiziaDLC.Rico_Extradited\"] ~= true and " +
@@ -202,8 +195,7 @@ internal static partial class SupplyWar
         string rights = $"(Variable[\"{WehzekRights}\"] ~= true)";
         d.Branch("Terms", "TermsNone", "TRico", "TBan");
         d.SayIf("TermsNone", $"not {ban} and not {rights} and ({reduced} or not {rico})", Smolak,
-            "\"...nothing, Your Majesty, that you have not already given me. A ceasefire on the line where we stand, and an end to it. " +
-            "I find I have less appetite than I used to.\"", "Aside");
+            "\"...nothing, Your Majesty, that you have not already given me. I find I have less appetite than I used to.\"", "Aside");
         d.SayIf("TRico", $"{full} and {rico}", Smolak,
             "\"...your cousin Ricardus comes to Wraclawitz to answer for Smolak Square.\"", "TBan");
         d.Branch("TBan", "TBanSay", "TRights");
@@ -219,11 +211,11 @@ internal static partial class SupplyWar
             "\"Keep your cousin. I find I have less appetite than I used to.\"", "Aside");
         d.Branch("Aside", "AsideBeatrice", "AsideAgain", "AsidePlain");
         d.SayIf("AsideAgain", $"{calls} >= 2", Esquibel,
-            "Laurento leaned in. \"He is asking for less than he did last month, Your Majesty. That is what a garrison on half rations " +
-            "sounds like. But the line where we stand tonight is still the line we would keep.\"", "Answer");
+            "Laurento leaned in. \"He is asking for less than last month, Your Majesty. That is what a garrison on half rations " +
+            "sounds like.\"", "Answer");
         d.SayIf("AsideBeatrice", Is(VarRumburgWantsCeasefire), Esquibel,
-            "Laurento leaned in and spoke quietly. \"A ceasefire on the present line means we keep what we hold, Your Majesty. And it " +
-            "would give Queen Beatrice the end date she asked for.\"", "Answer");
+            "Laurento leaned in. \"A ceasefire on the present line means we keep what we hold, and it gives Queen Beatrice the end " +
+            "date she asked for.\"", "Answer");
         d.Say("AsidePlain", Esquibel,
             "Laurento leaned in and spoke quietly. \"A ceasefire on the present line means we keep what we hold, Your Majesty. Whether " +
             "that is enough is for you to decide.\"", "Answer");
@@ -239,7 +231,7 @@ internal static partial class SupplyWar
             "\"Midnight, then. I will tell my generals. You may tell your cousin.\"", "Close");
         d.Opt("Counter", $"{full} and {Not(Q(1))}", "\"Rights for your Wehzeks, and nothing else. That is my only offer.\"", null, T(Q(1)),
             "CounterYes", "CounterNo");
-        d.SayIf("CounterYes", $"{s} <= 5", Smolak,
+        d.SayIf("CounterYes", $"{s} <= 6", Smolak,
             "\"You drive a hard bargain for a man with mud on his boots.\" A long breath crackled down the line. \"Fine. Rights for " +
             "my Wehzeks. Midnight.\"", "CounterSeal");
         d.Opt("CounterSeal", null, "\"Midnight.\"", "-1 Authority",
@@ -277,28 +269,26 @@ internal static partial class SupplyWar
         d.Start(SaltanaConv, ResetAsked + T(VarSaltanaCalled) + Music, "Phone");
         d.Scene("Phone",
             "The blue telephone rang a little after nine. The operator announced Cavette, and then Prime Minister Saltana was on the " +
-            "line, brisk as a ledger.", null, $"AddConversant(\"{Saltana}\");", "S1");
-        d.Say("S1", Saltana,
-            "\"Your Majesty. I'll be direct, since you've stopped pretending to be anything other than a king at war.\"", "S2");
-        d.Branch("S2", "S2Road", "S2Zille");
+            "line, brisk as a ledger.", null, $"AddConversant(\"{Saltana}\");", "S2");
+                d.Branch("S2", "S2Road", "S2Zille");
         d.SayIf("S2Road", Not(WarFlags.ZilleCityHeld), Saltana,
-            "\"Wehzek fighters have been crossing the Gulf of Moridia to strafe your columns on the Zille road. Morella doesn't care for " +
-            "anyone's fighters over our gulf. Least of all Wiktor Smolak's.\"", "S3");
+            "\"Your Majesty. I'll be direct. Wehzek fighters keep crossing the Gulf of Moridia to strafe your columns on the Zille road. " +
+            "Morella doesn't want them over our gulf.\"", "S3");
         d.Say("S2Zille", Saltana,
-            "\"Wehzek fighters have been crossing the Gulf of Moridia to strafe your positions in Zille. Morella doesn't care for " +
-            "anyone's fighters over our gulf. Least of all Wiktor Smolak's.\"", "S3");
+            "\"Your Majesty. I'll be direct. Wehzek fighters keep crossing the Gulf of Moridia to strafe your positions in Zille. " +
+            "Morella doesn't want them over our gulf.\"", "S3");
         d.Branch("S3", "S3More", "S3First");
         d.SayIf("S3More", Is("RiziaDLCSupport.Reports_Turn05_Terador_AirplaneDeal"), Saltana,
-            "\"I have more aircraft. Good ones, built in Morella, the same as the two dozen already at Terador. A second squadron, " +
-            "without markings, without Morellan pilots, and with no paperwork that anyone in Konstantium could trace.\"", "Price");
+            "\"I have more aircraft, built in Morella, like the two dozen at Terador. A squadron without markings, Morellan pilots or " +
+            "paperwork that anyone in Konstantium could trace.\"", "Price");
         d.Say("S3First", Saltana,
-            "\"I have aircraft. Good ones, built in Morella. I could sell you a squadron, without markings, without Morellan pilots, " +
-            "and with no paperwork that anyone in Konstantium could trace.\"", "Price");
+            "\"I have aircraft, built in Morella. I could sell you a squadron without markings, Morellan pilots or paperwork that " +
+            "anyone in Konstantium could trace.\"", "Price");
         d.Branch("Price", "PriceCheap", "PriceDear", "PriceFair");
         d.SayIf("PriceCheap", cheap, Saltana,
             "\"Rizia stood with the workers on the Meftiem, so you'll have the price I would give a friend. Three billion guilders for the squadron.\"", "Menu");
         d.SayIf("PriceDear", dear, Saltana,
-            "\"I hear you've sided with Mr. Alvarez at the Meftiem. Then you can pay Alvarez prices. Nine billion guilders for the squadron.\"", "Menu");
+            "\"I hear you've sided with Mr. Alvarez, or at least not with us, at the Meftiem. Then you can pay Alvarez prices. Nine billion guilders for the squadron.\"", "Menu");
         d.Say("PriceFair", Saltana, "\"Six billion guilders for the squadron. The price is fair. Ask anyone who has bought from us.\"", "Menu");
 
         d.Branch("Menu", Gate("Buy1"), Gate("Buy2"), Gate("Buy3"), Gate("Gulf"), "Decline");
@@ -347,13 +337,12 @@ internal static partial class SupplyWar
             "\"Smolak's own investigators traced the Friendship Day bomb, Your Majesty. Not to Su Omina. The parts came through a Palesian " +
             "firm, CircuitRise Systems, and went to a man named Héctor Ramiro.\"", "F3");
         d.Say("F3", Esquibel,
-            "\"Ramiro is a political officer at the Lespian consulate in Zille, Your Majesty. In the diplomatic quarter, everyone knows " +
-            "what that title means. He's a spy, and he has diplomatic immunity.\"", "F3b");
+            "\"Ramiro is a political officer at the Lespian consulate in Zille, Your Majesty. Everyone in the diplomatic quarter knows " +
+            "what that means. He has immunity.\"", "F3b");
         d.Branch("F3b", "F3Kept", "F3Burned", "F4");
         d.SayIf("F3Kept", Eq(AnDeclaration.VarLespianNote, "kept"), Esquibel,
-            "He touched his breast pocket, where I knew he still kept Alvarez's note from Konstantium. \"'Practical arrangements. " +
-            "Discreetly.' He must have had it written before you stood up to speak, Your Majesty. I wondered at the time how he could be " +
-            "so well prepared.\"", "F4");
+            "Laurento touched his breast pocket, where Alvarez's note still was. \"'Practical arrangements. Discreetly.' He had it " +
+            "written before you stood up to speak, Your Majesty.\"", "F4");
         d.SayIf("F3Burned", Eq(AnDeclaration.VarLespianNote, "burned"), Esquibel,
             "\"You burned his note in Konstantium so that Lespia's fingerprints would not be on this war, Your Majesty. It seems " +
             "they were on it before it began.\"", "F4");
@@ -379,8 +368,8 @@ internal static partial class SupplyWar
             publish + F(VarLespiaStrait) + T(VarLespiaWithdrawn) + Strengthen(1), "Published");
         d.Opt("PublishFree", $"not {strait}", publishText, null, publish + T(VarLespiaWithdrawn), "Published");
         d.Staff("Published",
-            "\"Smolak will say he knew all along. He did. The difference is that now everyone else knows it too.\"",
-            "\"Smolak will say he knew all along, Your Majesty. He did. Now everyone else will know it too.\"", "Close");
+            "\"Smolak will say he knew all along. He did. His people will cheer him for a week, and then everyone else will know it too.\"",
+            "\"Smolak will say he knew all along, Your Majesty. He did. His people will cheer him for a week, and then everyone else will know.\"", "Close");
         d.Opt("Confront", null, "\"I'll put it to Alvarez myself. On the telephone, where he can't smile at me.\"", null,
             found + T(Discovered) + S(VarRamiro, "confront"), "Confront2");
         d.Say("Confront2", Esquibel,

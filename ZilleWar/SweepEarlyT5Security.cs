@@ -27,7 +27,7 @@ internal static class SweepEarlyT5Security
         Balcony();
 
         Decision("Turn05_Decision_IzaSocialWelfareFunding", o => !IsActive ? null : o.TrimEnd() +
-            " Since the declaration of war, the unrest has found a new target: Wehzek shopkeepers in Little Wraclawitz report broken " +
+            " Since the fighting began, the unrest has found a new target: Wehzek shopkeepers in Little Wraclawitz report broken " +
             "windows every night, and Su Omina speaks openly of a fifth column.");
 
         AppendNews("Turn05_G_SecurityMigrantBoatTragedy", s =>
@@ -57,7 +57,8 @@ internal static class SweepEarlyT5Security
         var t = new Talk(Security, "ZilleWar.SE.Sec.");
 
         // The seating ([278] with Titus, [956] without) -> [1288]: the war council's folder comes first.
-        // Turn 5 step 3 comes after this turn's War Council: Phase II fought, a hold, or a ceasefire (AuditT45's front states).
+        // The security council is Turn 5 step 4, after the War Council (which briefs Phase II): by now Phase II has been fought,
+        // held or stopped (AuditT45's front states). FrontFree cannot occur on Turn 5 (Zille is liberated only in Phase III); it is a guard.
         t.Line("Front", Narrator,
             "Lucita laid one more folder on the table before she sat down. It bore the seal of the war council.",
             new[] { "FrontAuremina", "FrontCitySecond", "FrontHills", "FrontCityTwice", "FrontHold", "FrontHeld", "FrontNot", "FrontFree", "FrontStopped" },
@@ -79,7 +80,7 @@ internal static class SweepEarlyT5Security
             "It has been quiet since you ordered the army to hold. Both sides are using the time to dig.\"",
             new[] { "FrontHugo" }, condition: AuditT45.FrontHolding);
         t.Line("FrontHeld", Lucita, first +
-            "Our flag is still over Zille city, and the Wehzeks have stopped trying to take it back by daylight.\"",
+            "Our flag is still over Zille city, and the Wehzeks have not tried to take it back since the first attack.\"",
             new[] { "FrontHugo" }, condition: AuditT45.FrontBeforeCity);
         t.Line("FrontNot", Lucita, first +
             "The Wehzek garrison is still holding Zille city. Every disturbance at home will be read in Wraclawitz as a sign that we " +
@@ -142,14 +143,17 @@ internal static class SweepEarlyT5Security
 
         // [664] "Amid this tranquil backdrop, I found a brief respite..." -> [666]
         // Neutral about the front (Lucita may say a moment later that it is quiet tonight).
-        t.Line("North", Narrator,
-            "Somewhere far to the north, my soldiers were spending another night in their trenches. From the balcony, all I could hear " +
+        t.Line("North", "Player_Romus_Italic",
+            "Somewhere far to the north my soldiers were spending another night in their trenches. From the balcony, all I could hear " +
             "were crickets.", new[] { "#666" }, condition: Active, hooks: From(664));
 
         // [680] Lucita: "Good evening, Your Majesty." -> the King's replies.
         t.Line("Quiet", Lucita,
             "\"The front is quiet tonight. I checked before I came up, so you needn't ask.\"",
-            new[] { "#407", "#408", "#409" }, condition: Active, hooks: From(680));
+            new[] { "#407", "#408", "#409" }, condition: $"{Active} and {AuditT45.HeldThisTurn}", hooks: From(680));
+        t.Line("QuietFought", Lucita,
+            "\"Nothing new from the front since the afternoon. I checked before I came up, so you needn't ask.\"",
+            new[] { "#407", "#408", "#409" }, condition: $"{Active} and not ({AuditT45.HeldThisTurn})", hooks: From(680));
         t.Register();
     }
 }

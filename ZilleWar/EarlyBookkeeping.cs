@@ -270,7 +270,31 @@ internal static class EarlyBookkeeping
     /// <summary>Su Omina sabotage weakens the garrison before the next operation; the ATA's shelters make the news.</summary>
     private static void OnFundingChosen(SuzerainModdingKit.StoryFragments.Decision.DecisionOptionInfo o)
     {
-        if (o == null || !WarText.TryGetValue(o.DecisionName ?? string.Empty, out Rewrite w) || !Variables.GetBool(WarFlags.Active))
+        if (o == null || !WarText.TryGetValue(o.DecisionName ?? string.Empty, out Rewrite w))
+        {
+            return;
+        }
+
+        bool afterWar = Variables.GetBool(WarFlags.Declared) && !Variables.GetBool(WarFlags.Active) && !Variables.GetBool(WarFlags.Liberated);
+        if (afterWar)
+        {
+            // The war is over and Zille (or its hinterland) is still Wehzek: the money keeps the networks alive underground.
+            var after = Variables.GetBool(WarFlags.ZilleCityHeld) ? DividedText : LostText;
+            int j = Array.IndexOf(after[o.DecisionName].Options, o.Text);
+            if (j is >= 0 and <= 4)
+            {
+                int t = GameState.CurrentTurnNum ?? 0;
+                NewsWire.Report($"E_Underground_T{t}", SuzerainTokenName.RiziaEventZille, "Zille's Resistance Survives on Crown Money",
+                    "The networks that helped our army in Zille have not been rolled up. Shelters run by the Ariana Toras Association and " +
+                    "Su Omina cells waiting in the villages are still receiving money from the Crown, passed through intermediaries in " +
+                    "Mave Nortus. Wehzek security police have made arrests in the region, but the General Staff believes the networks " +
+                    "will be intact if the line is ever tested again.");
+            }
+
+            return;
+        }
+
+        if (!Variables.GetBool(WarFlags.Active))
         {
             return;
         }

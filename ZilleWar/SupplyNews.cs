@@ -133,7 +133,7 @@ internal static class SupplyNews
                 "Wehzek aircraft attacked the naval base at Fort Ales at dawn, setting fire to a fuel depot and part of the shell stores " +
                 "before the base's guns drove them off. Sailors and dockworkers fought the fires side by side until noon.",
                 "The Admiralty praises the garrison's courage. It has not explained how the raiders found their targets so easily on their " +
-                "first pass. Axa Victoria!"));
+                "first pass."));
         Once("PhotoExpelled", photo == "expelled", () =>
             Paper("PhotoExpelled", "G", "Rizia Expels Lespian Naval Attaché",
                 "The Kingdom of Rizia has declared the Lespian naval attaché in Porte Drazon persona non grata and given him forty-eight " +
@@ -215,7 +215,7 @@ internal static class SupplyNews
                 "at least in part, by us. The palace has not said a word.",
                 "The Voice of Rizia asks a simple question. Who decided this, and when were the people of Rizia going to be told?");
             Paper("Dossier", "RH", "Wraclawitz Turns to Forgery",
-                "Losing on the battlefield, the Smolak government has turned to paper. Its so-called Thornbourgh Dossier, two hundred " +
+                "With its army stalled before Zille, the Smolak government has turned to paper. Its so-called Thornbourgh Dossier, two hundred " +
                 "pages of photographs of crates, has been dismissed by Rumburg as a forgery, and the Royal Herald sees no reason to " +
                 "doubt the word of Her Majesty Queen Beatrice.",
                 "A crate proves only that Wehzek propagandists own crates. The soldiers of the Royal Army need no help from anyone to " +
@@ -345,9 +345,9 @@ internal static class SupplyNews
 
         string pales = Str("ZilleWar.Alvarez_PalesTopic");
         Once("PalesArms", pales == "ignored", () =>
-            Paper("PalesArms", "G", "Lespian Shipyards Deliver Destroyers to Pales Days After Closing Kreleck",
-                "Two destroyers built in Lespian yards were handed over to the Palesian navy at Remaz this week, only days after the " +
-                "Lespian navy closed the Strait of Kreleck to Wehzek shipping on Rizia's behalf.",
+            Paper("PalesArms", "G", "Lespian Shipyards Deliver Destroyers to Pales",
+                "Two destroyers built in Lespian yards were handed over to the Palesian navy at Remaz this week, while Lespia keeps " +
+                "selling warships to the Grand Duchy.",
                 "Asked whether Lespia was arming both sides of Rizia's wars, a spokesman for Prime Minister Alvarez said that \"Lespian " +
                 "shipyards honor their contracts.\" In Porte Drazon, officials declined to comment."));
         Once("PalesArmsStopped", pales is "paid" or "leverage", () =>
@@ -404,7 +404,7 @@ internal static class SupplyNews
                 "elaborating, that Prime Minister Alvarez spoke to the King of Rizia by telephone the day before."));
         Once("RamiroComp", outcome == "compensated", () =>
             Rep("RamiroComp", SuzerainTokenName.RiziaCountryLespia, "A Quiet Payment from Perla",
-                "Just over four billion Arcasian Liras have arrived at the Royal Treasury from an account in Perla, described in the transfer papers as a contribution " +
+                "Nine billion guilders have arrived at the Royal Treasury from an account in Perla, described in the transfer papers as a contribution " +
                 "to \"the victims of terrorism in Zille.\"",
                 "Nobody in Perla will say who authorized it. Nobody in Porte Drazon has asked."));
         Once("LespiaGone", B(SupplyWar.VarLespiaWithdrawn) && lespiaPatrolled && Str(SupplyWar.VarRamiro) != "publish", () =>
@@ -450,7 +450,7 @@ internal static class SupplyNews
                 "Sallabes, his flag lowered and his lights burning, and asked for the protection of the Rizian Crown. His cargo of " +
                 "artillery shells, meant for the guns of the Wehzek garrison, is now in the hands of the Royal Army.",
                 "\"I have sailed for Wehlen for twenty years,\" the captain told our correspondent. \"I will not carry shells to be fired " +
-                "at a city my grandmother was born in.\" His Majesty has granted him asylum. Axa Victoria!"));
+                "at a city my grandmother was born in.\" His Majesty has granted him asylum."));
     }
 
     // ------------------------------------------------------------------ Valgsland, Wehlen, Morella
@@ -539,7 +539,9 @@ internal static class SupplyNews
             };
             Paper("SmolakAccepted", "G", "The Price of Quiet in Zille",
                 $"The ceasefire between Rizia and Wehlen was agreed by telephone, both governments confirmed. Each army keeps the ground " +
-                $"it holds. In return, according to the text circulated in Konstantium, Rizia has accepted {terms}.",
+                (smolak == "countered"
+                    ? $"it holds. Rizia offered {terms} in return, and Wraclawitz agreed, though nothing has been signed."
+                    : $"it holds. In return, Wraclawitz has demanded {terms}, and the Royal Army has not confirmed what it agreed to."),
                 "President Smolak called it \"a peace that Wehlen can live with.\" It remains to be seen whether Rizia can.");
             Paper("SmolakAccepted", "V", "What Did the King Give Away?",
                 $"The guns are silent, and the Voice of Rizia is glad of it. But a ceasefire made over the telephone deserves to be read " +
@@ -551,8 +553,8 @@ internal static class SupplyNews
                     : "At His Majesty's word, the Royal Army has ceased fire in Zille. It holds every inch of the ground it won, and Rizian " +
                       "flags fly over " + (heldTowns.Count == 1 ? heldTowns[0] : string.Join(", ", heldTowns.Take(heldTowns.Count - 1)) +
                       " and " + heldTowns[^1]) + ", which had not seen one in a generation.",
-                $"Wraclawitz asked a price for the quiet: {terms}. The Royal Herald will not pretend the price was nothing. It was " +
-                "less than the lives it spares.");
+                (smolak == "countered" ? $"His Majesty named the price for the quiet: {terms}. Wraclawitz agreed. " : $"Wraclawitz asked a price for the quiet: {terms}. ") +
+                "The Royal Herald will not pretend the price was nothing. It was less than the lives it spares.");
         });
 
         Once("Saltana", B(SupplyWar.VarMorellaAircraft), () =>

@@ -45,7 +45,7 @@ internal static class PalesIncidentPress
         AppendNews("Turn06_V_LandIncident", s => By(s,
             "And all of this while our army is still fighting in Zille. A country cannot keep a war at each end of its map without someone deciding it looks like a target.",
             "We are told the victory in Zille has made Rizia feared. It seems it has also made Rizia a country that everyone now expects to fight, and that every neighbor now watches for the next war.",
-            "The ink on the Zille armistice is hardly dry. Brenas is still counting its dead. If this incident becomes a second war, the same families will pay for it twice.",
+            "The guns on the Zille line have barely fallen silent. Brenas is still counting its dead. If this incident becomes a second war, the same families will pay for it twice.",
             "Rizia has just lost a war in Zille. If the Palace now looks for a victory in the south to make up for it, the families of Brenas will pay for that, too."));
         AppendNews("Turn06_G_LandIncident", s => By(s,
             "The incident comes while Rizia is still at war with Wehlen over Zille. Diplomats in Konstantium are asking whether Remaz hoped to catch the Rizian army looking north.",
@@ -66,7 +66,7 @@ internal static class PalesIncidentPress
             "We lost Zille this year. Must we lose our decency in the Antacean as well?"));
         AppendNews("Turn06_G_NavalIncident", s => By(s,
             "The Rizian navy is already stretched between Zille and the Antacean; analysts doubt it can hold both the strait and the blockade for long.",
-            "Rizia's navy, fresh from closing the Strait of Kreleck to Wehlen, has shown it is ready to use force at sea again.",
+            "Rizia's navy, fresh from its Zille campaign at sea, has shown it is ready to use force again.",
             "Rizia's navy, which spent the Zille war shadowing Wehzek convoys, now has a second front at sea to guard.",
             "Rizia's navy, which could not change the outcome in Zille, seems determined not to lose at sea as well."));
 

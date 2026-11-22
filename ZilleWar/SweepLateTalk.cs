@@ -152,7 +152,9 @@ internal static class SweepLateTalk
         // The Pales victory parade: the regiments back from Zille march too (vanilla 204 shows Wehzek troops instead).
         var pa = new Talk(Parade, "ZilleWar.SL.T10.Parade.");
         pa.Line("ZilleWon", Narr, "Behind them marched the regiments that had fought in Zille, new battle honors stitched onto their colors. The crowd cheered them even louder.",
-            new[] { "#60" }, condition: And(War, WarFlags.L(WarFlags.Over), WarFlags.L(WarFlags.ZilleCityHeld)), hooks: Talk.From(203));
+            new[] { "#60" }, condition: Lib, hooks: Talk.From(203));
+        pa.Line("ZillePart", Narr, "Behind them marched the regiments back from Zille, fewer than had gone. Their colors were still stained from the line, and the crowd cheered them quietly.",
+            new[] { "#60" }, condition: Part, hooks: Talk.From(203));
         pa.Line("ZilleLost", Narr, "Behind them marched the regiments that had fought in Zille. The cheering faltered for a moment, then picked up again, a little too loudly.",
             new[] { "#60" }, condition: Lost, hooks: Talk.From(203));
         pa.Register();
@@ -202,7 +204,7 @@ internal static class SweepLateTalk
         Swap(c, Continued, "Praise", 625, new[] { 623 }, Narr, new S(
             Ongoing: "The hall filled with silence as Lucita stepped forward and praised Rizia's troops for their bravery and service, and asked the hall to remember the men still fighting in Zille." + baton,
             Lib: "The hall filled with silence as Lucita stepped forward and praised Rizia's troops for their bravery and service, and named the regiments that took Zille harbor, one by one." + baton,
-            Part: "The hall filled with silence as Lucita stepped forward and praised Rizia's troops for their bravery and service, and named the regiments that took Zille harbor, one by one." + baton,
+            Part: "The hall filled with silence as Lucita stepped forward and praised Rizia's troops for their bravery and service, and named the regiments that held Zille harbor, one by one." + baton,
             Lost: "The hall filled with silence as Lucita stepped forward and praised Rizia's troops for their bravery and service, and asked the hall to remember the men who never came back from Zille." + baton),
             new[] { "#621" });
         c.Register();
@@ -222,10 +224,16 @@ internal static class SweepLateTalk
             new[] { "#304" }, condition: Lib, hooks: Talk.From(340));
         p.Line("ZillePart", Narr, "A guard let slip that the armistice line in Zille still held, and that the new government had kept Zille city. Nobody told you what they had promised Wehlen for it.",
             new[] { "#304" }, condition: Part, hooks: Talk.From(340));
-        p.Line("ZilleLost", Narr, "A guard let slip that the new government had renounced Rizia's claim to Zille. The treaty with Wehlen was signed in Konstantium, in the same hall where you had declared your war.",
-            new[] { "#304" }, condition: And(Lost, WarFlags.L(LateT9.VarRecognized)), hooks: Talk.From(340));
+        string kind = $"Variable[\"{ZilleTreaty.VarKind}\"]";
+        string signedT = $"Variable[\"{ZilleTreaty.VarSigned}\"] == true";
+        p.Line("ZilleLost", Narr, "A guard let slip that the new government had recognized Wehzek sovereignty over Zille. Nobody in the prison had been surprised.",
+            new[] { "#304" }, condition: And(Lost, WarFlags.L(LateT9.VarRecognized), $"{kind} ~= \"recognized\""), hooks: Talk.From(340));
+        p.Line("ZilleLostTreaty", Narr, "A guard let slip that the new government had recognized Wehzek sovereignty over Zille. The terms were signed in Wraclawitz, in a palace hung with Wehzek flags, and nobody in the prison had been surprised.",
+            new[] { "#304" }, condition: And(Lost, $"{kind} == \"recognized\""), hooks: Talk.From(340));
+        p.Line("ZilleLostTerms", Narr, "A guard let slip that the King had signed Wehzek terms in Wraclawitz and kept his claim to Zille on paper. Nobody in the prison believed the claim would last.",
+            new[] { "#304" }, condition: And(Lost, WarFlags.LNot(LateT9.VarRecognized), $"{kind} == \"terms\""), hooks: Talk.From(340));
         p.Line("ZilleLostNo", Narr, "A guard let slip that the new government had stopped talking about Zille. Nobody had signed anything, and nobody had asked for the province back.",
-            new[] { "#304" }, condition: And(Lost, WarFlags.LNot(LateT9.VarRecognized)), hooks: Talk.From(340));
+            new[] { "#304" }, condition: And(Lost, WarFlags.LNot(LateT9.VarRecognized), $"not ({signedT})"), hooks: Talk.From(340));
         p.Register();
 
         // The Turn 11 speech has a Zille line only when Zille came back.

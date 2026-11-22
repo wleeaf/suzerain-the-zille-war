@@ -222,8 +222,8 @@ internal static class AuditT6
 
         // [271] "It is my intention that Rizia continue on the path of peaceful conflict resolution."
         t.Variant("Path", 271, new[] { 268 }, Lib, Romus,
-            "\"What had to be settled by arms in Zille has been settled. Everything else, Rizia means to settle at the table. We will " +
-            "remain one of the most reliable trading partners in Merkopa.\"", new[] { "#273" });
+            "\"What had to be settled by arms in Zille has been settled. The rest, Rizia means to settle at the table. We will " +
+            "remain a reliable trading partner in Merkopa.\"", new[] { "#273" });
         t.Variant("PathPart", 271, new[] { 268 }, Part, Romus,
             "\"Zille's city is ours again, and the rest will be settled at the table. We will remain one of the most reliable trading " +
             "partners in Merkopa.\"", new[] { "#273" });
@@ -233,8 +233,8 @@ internal static class AuditT6
 
         // [534] "My kingdom believes that our partnerships with our neighbors are our greatest asset."
         t.Variant("Partners", 534, new[] { 533 }, WarFlags.LDeclared, Romus,
-            "\"Whatever our quarrel with Wehlen, my kingdom believes that its partnerships with its other neighbors are its greatest " +
-            "asset. We shall continue to foster them, even at the expense of our own wealth.\"", new[] { "#543" });
+            "\"Whatever our quarrel with Wehlen, my kingdom believes its partnerships with its neighbors are its greatest " +
+            "asset. We shall foster them, even at the expense of our own wealth.\"", new[] { "#543" });
         t.Register();
     }
 

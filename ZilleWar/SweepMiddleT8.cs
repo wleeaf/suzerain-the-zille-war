@@ -135,12 +135,13 @@ internal static class SweepMiddleT8
         Swap(t, conv, "Congrats107", 107, new[] { 105 }, Hugo, new S(Lib: "\"I must... congratulate you on the liberation of Zille.\""), new[] { "#108" });
         Swap(t, conv, "Sorry109", 109, new[] { 106 }, Hugo, new S(
             Ongoing: "\"I was... sorry to hear that the fighting in Zille drags on.\"",
-            Lib: "\"I must... congratulate you on the liberation of Zille.\"",
+            Lib: "\"I was... glad to hear the guns have finally stopped in Zille.\"",
             Part: "\"I was... sorry to hear that Zille remains cut in two.\"",
             Lost: "\"I was... sorry to hear of our defeat in Zille.\""), new[] { "#110" });
         // The King's answers assumed Rico was traded for Zille.
         Swap(t, conv, "Sacrifice15", 15, new[] { 113 }, R, new S(
-            Lib: "\"Our soldiers brought Zille home without him, Uncle. Rico stays where he is until I am sure of him.\""), new[] { "#116" });
+            Lib: "\"Our soldiers brought Zille home without him, Uncle. Rico stays where he is until I am sure of him.\""), new[] { "#116" },
+            when: "Variable[\"RiziaDLC.Rico_Extradited\"] ~= true");
         Swap(t, conv, "Word115", 115, new[] { 114 }, R, new S(
             Ongoing: "\"Not while this war is being fought, Uncle. Rico stays where he is until it is over.\"",
             Lib: "\"Our soldiers brought Zille home without him, Uncle. Rico stays where he is until I am sure of him.\"",
@@ -148,8 +149,8 @@ internal static class SweepMiddleT8
             Lost: "\"I did what I thought was right. After Zille, I cannot afford to be wrong about anyone.\""), new[] { "#116" },
             when: "Variable[\"RiziaDLC.Rico_Extradited\"] ~= true");
         // Rico was handed to Wehlen at the Turn 8 meeting, under the ceasefire terms the King accepted during the war (LateT8)
-        Swap(t, conv, "Word115X", 115, new[] { 114 }, R, S.All(
-            "\"I gave Smolak my word to end the war, Uncle. I could not take it back the moment the guns went quiet.\""), new[] { "#116" },
+        const string gaveWord = "\"I gave Smolak my word to end the war, Uncle. I could not take it back the moment the guns went quiet.\"";
+        Swap(t, conv, "Word115X", 115, new[] { 114 }, R, new S(Lib: gaveWord, Part: gaveWord, Lost: gaveWord), new[] { "#116" },
             when: "Variable[\"RiziaDLC.Rico_Extradited\"] == true");
         t.Register();
     }

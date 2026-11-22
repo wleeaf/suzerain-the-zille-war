@@ -9,7 +9,7 @@ namespace ZilleWar;
 
 /// <summary>
 /// Manus Sazon at the Zille front. Vanilla's Turn 7 talk with Hugo (c395) can only send Manus to Pales. While the Zille
-/// war is fought (or Zille city sits on a armistice line), Hugo can suggest Zille instead and the King can send him there
+/// war is fought (or Zille city sits on an armistice line), Hugo can suggest Zille instead and the King can send him there
 /// with the Brenas levies: Zille was taken from Brenas and House Sazon in 1927. The vanilla machinery for a Manus at war
 /// is reused (Manus_SendToWar, Manus_Gone, the protest decision, the codex, the funeral), with its Pales wording rewritten;
 /// his fate follows the next Zille operation instead of the Pales war:
@@ -65,7 +65,7 @@ internal static class FinishManus
     private static readonly string AliveWhole = And(Alive, $"not ({Fate("wounded")})");
     private static readonly string Over = WarFlags.L(WarFlags.Over);
 
-    /// <summary>There is a front in Zille to send him to: the war is fought, or a armistice line runs through Zille.</summary>
+    /// <summary>There is a front in Zille to send him to: the war is fought, or an armistice line runs through Zille.</summary>
     private static readonly string Front = $"({Ongoing}) or ({Part})";
 
     public static void Register()
@@ -244,6 +244,8 @@ internal static class FinishManus
         c.Variant("MedalsArm", 278, new[] { 276 }, Wounded, Narr,
             "You spotted Manus Sazon at the edge of the crowd. His medals from the Zille campaign gleamed on his chest, and he still favored his left arm.\n\nYou...",
             reign);
+        c.Variant("MedalsMissing", 278, new[] { 276 }, Missing, Narr,
+            "You looked for Manus Sazon at the edge of the crowd. The army still listed him as missing from Zille, and nobody in the hall had an answer for his family.\n\nYou...", reign);
         c.Register();
     }
 

@@ -19,6 +19,9 @@ internal static class LK
     public static readonly string Lost = $"{WarFlags.L(WarFlags.Over)} and {WarFlags.LNot(WarFlags.Liberated)} and {WarFlags.LNot(WarFlags.ZilleCityHeld)}";
     public static readonly string NotLib = $"{WarFlags.LDeclared} and {WarFlags.LNot(WarFlags.Liberated)}";
     public static readonly string Ceasefire = WarFlags.L(WarFlags.Ceasefire);
+
+    /// <summary>A divided war ended by a signed border treaty: the line is a border, not an open armistice line.</summary>
+    public static readonly string BorderTreaty = "Variable[\"ZilleWar.Treaty_Peace\"] == true and Variable[\"ZilleWar.Treaty_Kind\"] == \"border\"";
     public static readonly string PalesWar = WarFlags.L(WarFlags.PalesWar);
     public static readonly string Auremina = WarFlags.L(ZilleOperation.CapturedVar("Auremina"));
 
@@ -39,7 +42,7 @@ internal static class LK
     public static string Set(string name, string luaValue) => $"Variable[\"{name}\"] = {luaValue}; ";
 
     /// <summary>Per-outcome texts. A null text keeps the vanilla entry for that outcome.</summary>
-    public sealed record S(string Ongoing = null, string Lib = null, string Part = null, string Lost = null)
+    public sealed record S(string Ongoing = null, string Lib = null, string Part = null, string Lost = null, string PartBorder = null)
     {
         public static S All(string text) => new(text, text, text, text);
         public static S NotLib(string text) => new(text, null, text, text);
@@ -76,7 +79,8 @@ internal static class LK
 
         Add1("_On", Ongoing, s.Ongoing);
         Add1("_Lib", Lib, s.Lib);
-        Add1("_Part", Part, s.Part);
+        Add1("_Part", s.PartBorder == null ? Part : And(Part, $"not ({BorderTreaty})"), s.Part);
+        Add1("_Border", And(Part, BorderTreaty), s.PartBorder);
         Add1("_Lost", Lost, s.Lost);
         if (conds.Count > 0)
         {

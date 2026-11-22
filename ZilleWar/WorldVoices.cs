@@ -259,8 +259,8 @@ internal static class WorldVoices
             Dispatch("ValgslandFleet", SuzerainTokenName.RiziaCountryValgsland, "Valgsland Rattles Its Sabres", P(
                 "Chancellor Emmerich Hegel has announced naval exercises in the Markian Sea \"for as long as aggression continues in " +
                 "South Merkopa.\" Our naval attaché reports two cruiser squadrons at sea and the Valgish submarine flotilla on alert.",
-                "Hegel has also warned that Valgsland \"will not allow the waters of the Markian Sea to become a theater of royal " +
-                "adventure.\" Our embassy believes the Chancellor wants to frighten us, not to fight us. It cannot be entirely sure."));
+                "Our embassy believes the Chancellor wants to frighten us, not to fight us. It cannot be entirely sure, and it has asked " +
+                "the Navy to keep its ships out of the Markian Sea."));
             News("ValgslandFleet", "G", "Valgish Fleet Exercises as Zille War Continues", P(
                 "Valgsland has put to sea in force, announcing exercises in the Markian Sea that observers read as a warning to Rizia. " +
                 "Chancellor Hegel told the People's Congress that the war in Zille is \"the oldest kind of crime, committed by the " +

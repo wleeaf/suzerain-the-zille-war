@@ -120,7 +120,7 @@ internal static partial class SupplyWar
             "InvOpen2", "InvOpenCold");
         d.SayIf("HelloKept", $"{calls} == 1 and {noDeal} and {kept}", Alvarez,
             "\"Your Majesty. I hope my little note didn't get lost in all the excitement in Konstantium. It was a very exciting day.\"", "FrontA");
-        d.SayIf("HelloBurned", $"{calls} == 1 and {noDeal}", Alvarez,
+        d.SayIf("HelloBurned", $"{calls} == 1 and {noDeal} and {Eq(AnDeclaration.VarLespianNote, "burned")}", Alvarez,
             "\"Your Majesty. I understand my note met with an accident in Konstantium. No matter. I'm a patient man, and Lespia is a " +
             "practical country.\"", "FrontA");
         d.SayIf("HelloAgain", noDeal, Alvarez,
@@ -135,7 +135,7 @@ internal static partial class SupplyWar
         string grievanceNew = $"({grudge} and {Not(VarAlvGrievanceSaid)})";
         string said = T(VarAlvGrievanceSaid) + T(Q(11));
         d.SayIfDo("GrievanceOpen", $"{grievanceNew} and {screwed}", Alvarez,
-            "\"Your Majesty. I've just come back from Cavette, where I watched you and Prime Minister Saltana carve up the Meftiem " +
+            "\"Your Majesty. I've read the Cavette communique, and I can see you and Prime Minister Saltana carved up the Meftiem " +
             "like a Sunday roast. I couldn't help noticing whose plate stayed empty.\"", said, "Grievance2");
         d.SayIfDo("GrievanceOpenB", grievanceNew, Alvarez,
             "\"Your Majesty. The last time we spoke about the Meftiem, you gave me your word. Then the board voted, and I watched " +
@@ -184,9 +184,8 @@ internal static partial class SupplyWar
         d.SayIf("TableBothAgain", $"{mitzOpen} and {calls} >= 2", Alvarez,
             "\"The same two bargains as before, Your Majesty. The strait and the Meftiem. The prices haven't changed. Your war has.\"", "Hub");
         d.SayIf("TableBoth", mitzOpen, Alvarez,
-            "\"I have two things to discuss with you today, Your Majesty. The Strait of Kreleck, and the Meftiem.\"", "TableBoth2");
-        d.Say("TableBoth2", Alvarez,
-            "\"Two separate bargains. Take one, take both, take neither. I'm a modern man. I don't sell in bundles.\"", "Hub");
+            "\"Two things today, Your Majesty. The Strait of Kreleck, and the Meftiem. Take one, take both, take neither. I don't " +
+            "sell in bundles.\"", "Hub");
         d.SayIf("TableHegel", Is(ValgslandMitz), Alvarez,
             "\"I'd have liked to talk about the Meftiem too, but I hear Chancellor Hegel already has your vote. A pity. So let's " +
             "talk about ships.\"", "Hub");
@@ -209,7 +208,7 @@ internal static partial class SupplyWar
         d.Opt("ByeLater", $"{calls} ~= 1", "\"Good day, Prime Minister.\"", null, null, "ByeBranch");
         d.Branch("ByeBranch", "ByeSpurned", "ByeWarn", "ByeNoDealAgain", "ByeNoDeal", "ByeDealAgain", "ByeDeal");
         // He takes "no" twice. The second time he turns to the other customer.
-        string refusedAll = $"({noDeal} and not {LespiaHasVote} and ({Is(VarAlvRefusedStrait)} or {Is(VarAlvRefusedMitz)}))";
+        string refusedAll = $"({noDeal} and not {LespiaHasVote} and {Is(Q(10))})";
         d.SayIfDo("ByeSpurned", $"{refusedAll} and {Is(VarAlvWarned)} and {Not(VarLespiaFuel)}", Alvarez,
             "\"Then you leave me no choice but to be a businessman. From Monday, Perla sells fuel to anyone who pays in cash, Your " +
             "Majesty. Wehzek captains always pay in cash.\"", Strengthen(1) + T(VarLespiaFuel), "Hangup");
@@ -227,10 +226,8 @@ internal static partial class SupplyWar
 
         // ================================================================ (a) the Strait of Kreleck
         d.Say("Strait", Alvarez,
-            "\"The Lespian navy has the ships to close the Strait of Kreleck. Every Wehzek convoy stopped, searched and held in a " +
-            "Lespian port.\"", "Strait2");
-        d.Say("Strait2", Alvarez,
-            "\"For as long as the paperwork takes. And the paperwork, I promise you, will take a very long time.\"", "PriceLine");
+            "\"The Lespian navy can close the Strait of Kreleck. Every Wehzek convoy stopped, searched and held in port for as long " +
+            "as the paperwork takes, which will be very long.\"", "PriceLine");
 
         // With the Aureus field bought from Pales, Lespia wants its gas: -6 Energy for +2 Budget every turn, from the turn the gas
         // flows (Policy_Economy_AureusField_Extractions, set at the Turn 6 deal signing). Without it, Caleqabiz or money.
@@ -239,25 +236,24 @@ internal static partial class SupplyWar
         string now = $"({field} and {flowing})";
         d.Branch("PriceLine", "PriceGasNow", "PriceGasLater", "PriceHarbor");
         d.SayIf("PriceGasNow", now, Alvarez,
-            "\"Now, the price. Let me walk you through it slowly, Your Majesty, since Rizia is new to this sort of thing.\"", "GasNow2");
+            "\"Now, the price. You took the Aureus field from under LesPower, and now the gas is flowing. Lespia would like its share.\"",
+            "GasNow2");
         d.Say("GasNow2", Alvarez,
-            "\"You took the Aureus field from under LesPower. Very bold. Now the gas is flowing, and Lespia would like its share.\"", "GasNow3");
-        d.Say("GasNow3", Alvarez,
-            "\"A steady share every quarter, and LesPower pays three Liras per thousand cubic meters. A fair price, between friends. For as long as you sit on that throne.\"", "GrudgeGas");
+            "\"A steady share every turn, at three Liras per thousand cubic meters. A fair price, between friends, for as long as " +
+            "you sit on that throne.\"", "GrudgeGas");
         d.SayIf("PriceGasLater", pending, Alvarez,
-            "\"Now, the price. I'll keep it simple for you. Your pipeline to Aureus isn't finished. I know, I have engineers too.\"",
-            "GasLater2");
+            "\"Now, the price. Your pipeline to Aureus isn't finished, I know, I have engineers too. So my navy closes the strait now, " +
+            "on credit.\"", "GasLater2");
         d.Say("GasLater2", Alvarez,
-            "\"So my navy closes the strait now, on credit, because I'm a generous man. The day your gas flows, LesPower takes its " +
-            "share every quarter, at three Liras per thousand cubic meters.\"", "GasLater3");
-        d.Say("GasLater3", Alvarez, "\"You'll find that's how grown-up countries do business.\"", "GrudgeGas");
+            "\"The day your gas flows, LesPower takes its share every turn, at three Liras per thousand cubic meters. That's how " +
+            "grown-up countries do business.\"", "GrudgeGas");
         d.Branch("GrudgeGas", "GrudgeGasSay", "EsqGas");
         d.SayIf("GrudgeGasSay", grudge, Alvarez,
             "\"Oh, and after the way Rizia treated Lespia at the Meftiem, a little something up front. Six billion " +
             "guilders, in cash. Call it the price of my disappointment.\"", "EsqGas");
         d.Say("EsqGas", Esquibel,
-            "Laurento covered the mouthpiece. \"Three Liras, when the market pays ten. Most of the field, every quarter, for the rest " +
-            "of your reign. It's not a price, Your Majesty. It's a tribute.\"", "EsqGas2");
+            "Laurento covered the mouthpiece. \"Three Liras, when the market pays ten. Most of the field, every quarter, " +
+            "forever. It's not a price, Your Majesty. It's a tribute.\"", "EsqGas2");
         d.Say("EsqGas2", Esquibel, "\"But he can close that strait, and nobody else can.\"", "MenuGas");
 
         d.Branch("MenuGas", Gate("Free"), Gate("GasNow"), Gate("GasNowG"), Gate("GasLater"), Gate("GasLaterG"), "RefuseGas");
@@ -268,7 +264,7 @@ internal static partial class SupplyWar
             "\"Then let's talk about land instead, since gas upsets you. Fifty years of Caleqabiz. A proper lease, signed and stamped: " +
             "our pier, our depot, our flag over the harbor.\"", "Lease2");
         d.Say("Lease2", Alvarez,
-            "\"And because I'm a generous man, Lespia pays rent. Three billion Liras a month, on time. You'll hardly notice " +
+            "\"And because I'm a generous man, Lespia pays rent. Three billion guilders a turn, on time. You'll hardly notice " +
             "the island is gone.\"", "EsqLease");
         d.Say("EsqLease", Esquibel,
             "Laurento covered the mouthpiece. \"Fifty years, Your Majesty. Your father signed twenty-five on Zille, and we are at war " +
@@ -279,7 +275,7 @@ internal static partial class SupplyWar
             $"{V(WorldModifiers.CaleqabizRent)} = 1; ", "DealLease");
         d.Say("DealLease", Alvarez,
             "\"Splendid. My lawyers have had the papers ready since Konstantium. My admirals will be in the strait by Sunday.\"", "Hub");
-        d.Opt("RefuseLease", null, "\"No. Not the island, and not the gas.\"", null, T(VarAlvRefusedStrait), "NoDeal");
+        d.Opt("RefuseLease", null, "\"No. Not the island, and not the gas.\"", null, T(VarAlvRefusedStrait) + T(Q(10)) + Inc(VarAlvRefusals, 1), "NoDeal");
         const string gasNowText = "\"Six for two. LesPower gets its gas.\"";
         const string gasLaterText = "\"Close the strait. LesPower gets its gas when the pipeline opens.\"";
         string gasDeal = dealScript + Talk.Weaken(1) + T(VarLespiaGasDeal);
@@ -312,7 +308,7 @@ internal static partial class SupplyWar
         d.Branch("MenuHarbor", Gate("Free"), Gate("Harbor"), Gate("HarborG"), Gate("Money2"), Gate("Money3"), Gate("Money4"),
             Gate("Money5"), "Refuse");
         const string harborText = "\"Your ships may use Caleqabiz for as long as the war lasts.\"";
-        string harborDeal = dealScript + Inc(Authority, -1) + T(VarLespiaCaleqabiz) + Inc(NpValgsland, -1);
+        string harborDeal = dealScript + Inc(Authority, -1) + T(VarLespiaCaleqabiz);
         d.Opt("Harbor", friendly, harborText, "-1 Authority, Lespian Naval Rights at Caleqabiz", harborDeal, "Deal2");
         d.Opt("HarborG", $"{grudge} and {budget} >= 2", harborText, "-1 Authority, -2 Budget, Lespian Naval Rights at Caleqabiz",
             harborDeal + Inc(Budget, -2), "Deal2");
@@ -327,7 +323,7 @@ internal static partial class SupplyWar
         d.Say("Money2b", Alvarez,
             "\"Do try to pay on time. I'd hate for us to have one of those awkward conversations.\"", "Deal2");
         d.Say("Deal2", Alvarez,
-            "\"Then it's settled. My admirals will be in the strait by Sunday.\"", "Hub");
+            "\"Then it's settled. My admirals will sail when the paperwork does.\"", "Hub");
 
         // the Ramiro file, kept as leverage, buys the strait for nothing
         d.Opt("Free", $"{leverage} and {Not(VarRamiroConfronted)}",
@@ -339,9 +335,9 @@ internal static partial class SupplyWar
             "\"Very well. Call it a gesture of friendship. And let's never speak of Mr. Ramiro again, on this line or any other.\"", "FreeDeal");
         d.Do("FreeDeal", dealScript + Inc(NpLespia, -2) + T(VarRamiroConfronted) + S(VarRamiroOutcome, "free"), "Deal2");
 
-        d.Opt("Refuse", null, "\"No. Not at that price.\"", null, T(VarAlvRefusedStrait), "NoDeal");
+        d.Opt("Refuse", null, "\"No. Not at that price.\"", null, T(VarAlvRefusedStrait) + T(Q(10)) + Inc(VarAlvRefusals, 1), "NoDeal");
         d.Branch("NoDeal", "NoDealAgain", "NoDeal1");
-        d.SayIf("NoDealAgain", $"{calls} >= 2", Alvarez,
+        d.SayIf("NoDealAgain", $"{N(VarAlvRefusals)} >= 2", Alvarez,
             "\"Still no. You're consistent, Your Majesty, I'll give you that. So are Smolak's convoys.\"", "Hub");
         d.Say("NoDeal1", Alvarez,
             "\"Ha. Pride. I had some once, before I had a navy. The offer stands, Your Majesty. For now.\"", "Hub");
@@ -362,26 +358,22 @@ internal static partial class SupplyWar
             "\"But there will be a final vote, and I'm a forgiving man when it suits me. Give me your word on that one. This time " +
             "I'll hold you to it.\"", "MitzOffer");
         d.SayIf("MitzLate", voted, Alvarez,
-            "\"The board voted the way it voted. There will be a final vote, and Saltana and Hegel are already counting heads.\"", "MitzLate2");
-        d.Say("MitzLate2", Alvarez,
-            "\"When it comes, I want Rizia's vote with Lespia. And I'll pay for it, which is more than Hegel would do.\"", "MitzOffer");
+            "\"The board voted the way it voted. There will be a final vote, and Saltana and Hegel are already counting heads. I want " +
+            "Rizia's with Lespia. Hegel has never paid for anything in his life.\"", "MitzOffer");
         d.Say("MitzAsk", Alvarez,
-            "\"Saltana and Hegel want to nationalize the Meftiem. Lespia wants it left exactly as it is.\"", "MitzAsk2");
-        d.Say("MitzAsk2", Alvarez,
-            "\"When the board votes, I want Rizia's vote with Lespia. And I'll pay for it, which is more than Hegel would do.\"", "MitzOffer");
+            "\"Saltana and Hegel want to nationalize the Meftiem. Lespia wants it left as it is. When the board votes, I want Rizia's " +
+            "vote with Lespia, and I'll pay for it.\"", "MitzOffer");
 
         d.Say("MitzOffer", Alvarez,
-            "\"First, Lespia votes against any motion to sanction Rizia at the Alliance. Hegel is drafting one already, I hear.\"", "MitzOffer2");
-        d.Say("MitzOffer2", Alvarez,
-            "\"And on top of that, take your pick. A destroyer from my yards in Perla, fresh paint and all. Or everything my naval " +
-            "intelligence knows about the Wehzek convoys to Zille.\"", "MitzForgive");
-        d.Branch("MitzForgive", "MitzForgiveSay", "MitzEsq");
+            "\"Lespia votes against any motion to sanction Rizia at the Alliance. And take your pick: a destroyer from my yards in " +
+            "Perla, or my naval intelligence on the Wehzek convoys.\"", "MitzEsq");
         d.SayIf("MitzForgiveSay", $"{grudge} and {noDeal}", Alvarez,
             "\"And I'll forget what I said about charging you extra for the strait. Consider it a sign of good faith. Mine, for once.\"",
-            "MitzEsq");
+            "MitzMenu");
         d.Say("MitzEsq", Esquibel,
             "Laurento covered the mouthpiece. \"Our vote decides who owns the Meftiem, Your Majesty. Hegel and Saltana will hear of " +
-            "it before dinner.\"", "MitzMenu");
+            "it before dinner.\"", "MitzForgive");
+        d.Branch("MitzForgive", "MitzForgiveSay", "MitzMenu");
 
         d.Do("MitzMenu", null, Gate("MitzWhy"), "MitzShip", "MitzIntel", "MitzNo");
         d.Opt("MitzWhy", Not(VarAlvAskedMitzWhy), "\"Why pay so much for one vote?\"", null, T(VarAlvAskedMitzWhy), "MitzWhy2");
@@ -398,7 +390,7 @@ internal static partial class SupplyWar
         d.Say("MitzIntel2", Alvarez,
             "\"A practical choice. My embassy will have the sailing times on your Admiralty's desk by morning. Accurate to the " +
             "hour, I'm told.\"", "Hub");
-        d.Opt("MitzNo", null, "\"Rizia's vote at the Meftiem isn't for sale.\"", null, T(VarAlvRefusedMitz), "MitzNo2");
+        d.Opt("MitzNo", null, "\"Rizia's vote at the Meftiem isn't for sale.\"", null, T(VarAlvRefusedMitz) + T(Q(10)), "MitzNo2");
         d.Say("MitzNo2", Alvarez,
             "\"Everything is for sale, Your Majesty. You simply haven't heard the right price yet.\"", "Hub");
 
@@ -416,10 +408,8 @@ internal static partial class SupplyWar
         d.Branch("Inv", "InvMitz", "InvPales", "InvGift", "InvNothingHeld", "InvNothingMissed", "InvNothingWon", "InvNothing");
         // the attaché expelled over the Fort Ales photographs (SupplyWarRoom): he denies everything, smiling
         d.SayIfDo("InvExpelled", $"{Eq(VarPhotoPayoff, "expelled")} and {Not(VarAlvarezPhotoSaid)}", Alvarez,
-            "\"Your Majesty. I'm told you expelled my naval attaché. A keen amateur photographer, Captain Olmedo. Harbors, " +
-            "lighthouses, that sort of thing.\"", T(VarAlvarezPhotoSaid), "InvExpelled2");
-        d.Say("InvExpelled2", Alvarez,
-            "\"Whatever he photographed, I assure you he kept it to himself. I tell you so with a perfectly straight face.\"", "FrontI");
+            "\"Your Majesty. I'm told you expelled my naval attaché, Captain Olmedo, a keen amateur photographer. Whatever he " +
+            "photographed, he kept to himself. I say so with a straight face.\"", T(VarAlvarezPhotoSaid), "FrontI");
 
         // the Meftiem bargain, if the strait was bought first
         d.SayIfDo("InvMitz", mitzOpen, Alvarez,
@@ -436,7 +426,7 @@ internal static partial class SupplyWar
             Inc(Budget, -2) + $"{V(LespianPalesSupport)} = 0; " + Inc(NpLespia, 1) + S(VarAlvarezPalesDone, "paid"), "PalesPay2");
         d.Say("PalesPay2", Alvarez,
             "\"Done. The Duke will find our order books suddenly very full. These things happen in shipbuilding.\"", "Hangup");
-        d.Opt("PalesLeverage", leverage,
+        d.Opt("PalesLeverage", $"{leverage} and {Not(VarRamiroConfronted)}",
             "\"You'll stop arming Pales for nothing. Or the world reads about Héctor Ramiro.\"", null,
             $"{V(LespianPalesSupport)} = 0; " + Inc(NpLespia, -1) + S(VarAlvarezPalesDone, "leverage"), "PalesLeverage2");
         d.Say("PalesLeverage2", Alvarez,
@@ -448,9 +438,11 @@ internal static partial class SupplyWar
 
         // a good surprise
         d.SayIf("InvGift", $"{Not(VarAlvarezGiftDone)} and not {grudge}", Alvarez,
-            "\"A small gift between partners. My embassy has the sailing schedule of every Wehzek convoy leaving the northern " +
-            "ports this month.\"", "InvGift2");
-        d.Say("InvGift2", Alvarez, "\"Your admirals will find it in their morning post.\"", "GiftWhy", "GiftThanks");
+            "\"A small gift between partners. My hydrographers' charts of the Gulf of Moridia, tide tables included. Your admirals " +
+            "will find them in their morning post.\"", "InvGift2");
+        d.Say("InvGift2", Esquibel,
+            "Laurento covered the mouthpiece. \"Charts and tide tables, Your Majesty. Free, which is what makes me nervous.\"",
+            "GiftWhy", "GiftThanks");
         d.Opt("GiftWhy", null, "\"Why so generous all of a sudden?\"", null, T(VarAlvarezGiftDone) + Talk.Weaken(1), "GiftWhy2");
         d.Say("GiftWhy2", Alvarez,
             "\"Because a short war is cheaper than a long one, Your Majesty. Even for me. Especially for me.\"", "Hangup");
@@ -499,10 +491,10 @@ internal static partial class SupplyWar
         d.Opt("CFree", null, "\"Close the strait. For nothing. Call it the apology Lespia will never have to make.\"", null,
             done + dealScript + Inc(NpLespia, -2) + S(VarRamiroOutcome, "free"), "CFree2");
         d.Say("CFree2", Alvarez,
-            "\"An apology. What a quaint idea. My admirals will be in the strait by Sunday, Your Majesty, and Mr. Ramiro will be " +
+            "\"An apology. What a quaint idea. My admirals will be in the strait, Your Majesty, and Mr. Ramiro will be " +
             "somewhere very far away.\"", "CEnd");
         d.Opt("CNever", null, "\"I want nothing from you, Prime Minister. Ever.\"", null,
-            done + T(VarLespiaWithdrawn) + Inc(NpLespia, -3) + S(VarRamiroOutcome, "sentaway"), "CNever2");
+            done + F(VarLespiaStrait) + T(VarLespiaWithdrawn) + Inc(NpLespia, -3) + S(VarRamiroOutcome, "sentaway"), "CNever2");
         d.Say("CNever2", Alvarez, "\"Never is a long time in Merkopa, Your Majesty. Good afternoon.\"", "CEnd");
         d.Say("CEnd", Esquibel,
             "Laurento took the receiver from me and set it down gently. \"Three people died in Smolak Square, Your Majesty. I keep " +

@@ -48,6 +48,7 @@ internal static class EarlyT5
 
     private const string VarBookkept = "ZilleWar.E5_WehlenTalksBookkept";
     private const string VarCouncilOffered = "ZilleWar.E5_CouncilOffered";
+    private const string VarQueenGiven = "ZilleWar.E5_QueenGiven";
     private const string VarWatchtower = "ZilleWar.E5_WatchtowerPublished";
     private const string VarSaltanaReport = "ZilleWar.E5_SaltanaReportFiled";
     private const string CouncilFragment = "ZilleWar.Pre_EarlyCouncil_T5";
@@ -59,7 +60,7 @@ internal static class EarlyT5
     {
         foreach (string v in new[]
                  {
-                     VarLespiaBetrayed, VarRefugeePolicy, VarWarBonds, VarVinaAnswer, VarBookkept, VarCouncilOffered, VarWatchtower,
+                     VarLespiaBetrayed, VarRefugeePolicy, VarWarBonds, VarVinaAnswer, VarBookkept, VarCouncilOffered, VarQueenGiven, VarWatchtower,
                      VarSaltanaReport,
                  })
         {
@@ -131,8 +132,8 @@ internal static class EarlyT5
         t.Choice("AN_R3", "\"You disapprove, Laurento. Say it.\"", new[] { "AN_R3w", "AN_R3a" });
         // the King's confession in the Turn 4 drinking game ("a big, bloody war, just so I can prove myself")
         t.Line("AN_R3w", Esquibel,
-            "\"At the winery you told us you wished for a big, bloody war, Your Majesty, so that you could prove yourself. Between the " +
-            "second bottle and the third. I decided it was the lie.\" He straightened his cuffs. \"Forgive me. That is not what you asked.\"",
+            "\"At the winery you told us you wished for a big, bloody war. Between the second bottle and the third. " +
+            "I decided it was the wine talking.\" He straightened his cuffs. \"Forgive me.\"",
             new[] { "AN_R3a" }, condition: WarFlags.L(EarlyT4.VarConfessedWar));
         t.Line("AN_R3a", Esquibel,
             "\"I am a son of Brenas, Your Majesty. The Esquibels have estates in Zille, and so do the Sazons. I have wanted that land " +
@@ -151,7 +152,7 @@ internal static class EarlyT5
             script: Set(VarWarBonds, "true") + "Variable[\"RiziaDLC.Resources_Budget\"] = (Variable[\"RiziaDLC.Resources_Budget\"] or 0) + 2;",
             cost: "+2 Budget");
         t.Line("M_R1a", Elena,
-            "\"Six billion guilders, if they sell as well as the newspapers. Patriotism is the cheapest money there is, Your Majesty. Until the war goes badly. Then it becomes the most expensive.\"",
+            "\"Six billion guilders, if they sell as well as the newspapers. Patriotism is the cheapest money there is, until the war goes badly. Then it becomes the most expensive.\"",
             new[] { "House1" });
         t.Choice("M_R2", "\"Then find the money, Ms. Werner. That is your job.\"", new[] { "M_R2a" });
         t.Line("M_R2a", Elena,
@@ -162,7 +163,7 @@ internal static class EarlyT5
 
         // the House
         t.Line("House1", Hugo,
-            "\"The House of Delegates is in uproar. Baroness de Rava's people cheered for ten minutes when the news came in.\"",
+            "\"The House of Delegates is in uproar. Baroness de Rava's people cheered for ten minutes when the first guns sounded in Zille.\"",
             new[] { "HouseCity", "House2" }, conversant: true);
         t.Line("HouseCity", Hugo, "\"When word came that Zille city had fallen, they cheered all over again.\"", new[] { "House2" },
             condition: AuditT45.City);
@@ -175,7 +176,7 @@ internal static class EarlyT5
         t.Line("Sal2", Sal,
             "\"There are Dastnurist families in Iza and Sallabes who have been loyal Rizians all their lives. They are frightened this " +
             "week. They should not be.\"", new[] { "Sal_R1", "Sal_R2" });
-        t.Choice("Sal_R1", "\"They are my subjects, Grand Wiseman. Anyone who touches them answers to me.\"", new[] { "Sal_R1a" },
+        t.Choice("Sal_R1", "\"They are my subjects, Grand Wiseman, and God has put them in my care. Anyone who touches them answers to me.\"", new[] { "Sal_R1a" },
             script: "Variable[\"RiziaDLC.PersonalValue_Religious\"] = (Variable[\"RiziaDLC.PersonalValue_Religious\"] or 0) + 1;");
         t.Line("Sal_R1a", Sal, "\"Halaita. Thank you, Your Majesty.\"", new[] { "Vina1" });
         t.Choice("Sal_R2", "\"This is a war about land, not faith. Smolak can say what he likes.\"", new[] { "Sal_R2a" });
@@ -184,12 +185,18 @@ internal static class EarlyT5
         // Vina's question
         t.Line("Vina1", Vina,
             "\"What of the people living in Zille? Has anyone asked them?\"", new[] { "V_R1", "V_R2", "V_R3" }, conversant: true);
-        t.Choice("V_R1", "\"They will be Rizian again, Vina. That is the answer.\"", new[] { "Vina2" }, script: Set(VarVinaAnswer, "\"rizian\""));
-        t.Choice("V_R2", "\"We will protect them. Rizians and Wehzeks alike.\"", new[] { "Vina2" },
+        t.Choice("V_R1", "\"They will be Rizian again, Vina. That is the answer.\"", new[] { "Vina2R" }, script: Set(VarVinaAnswer, "\"rizian\""));
+        t.Choice("V_R2", "\"We will protect them. Rizians and Wehzeks alike.\"", new[] { "Vina2P" },
             script: Set(VarVinaAnswer, "\"protect\"") + "Variable[\"RiziaDLC.PersonalValue_Pacifist\"] = (Variable[\"RiziaDLC.PersonalValue_Pacifist\"] or 0) + 1;");
-        t.Choice("V_R3", "\"Smolak had twenty-five years to ask them. He never bothered.\"", new[] { "Vina2" }, script: Set(VarVinaAnswer, "\"smolak\""));
-        t.Line("Vina2", Vina,
-            "\"They are being asked now, Father. From their cellars.\"", new[] { "Adjourn" });
+        t.Choice("V_R3", "\"Wehlen had twenty-five years to ask them. It never did.\"", new[] { "Vina2S" }, script: Set(VarVinaAnswer, "\"smolak\""));
+        // the shelling leaves them no other way to be asked: they answer from their cellars
+        t.Line("Vina2R", Vina,
+            "\"Some of them will not want to be Rizian, Father. They can hear the guns from their cellars. Remember that when they answer.\"",
+            new[] { "Adjourn" });
+        t.Line("Vina2P", Vina,
+            "\"Then say that to them, Father. They can hear the guns from their cellars, and they are listening for it.\"", new[] { "Adjourn" });
+        t.Line("Vina2S", Vina,
+            "\"Then do not let Wehlen's silence become ours, Father. They can hear the guns from their cellars.\"", new[] { "Adjourn" });
 
         // Lucita stays behind: the chess queen (vanilla c326 [343]-[378], EnableCollectionItem at [1249])
         t.Line("Adjourn", Narrator,
@@ -248,7 +255,7 @@ internal static class EarlyT5
         t.Variant("NoTalk1", 555, new[] { 31 }, War, Romus,
             "\"No. Not while we are still paying for this war. We cannot afford to lose any more of our gold.\"", new[] { "#566" });
         t.Variant("NoTalk2", 562, new[] { 27 }, War, Romus,
-            "\"An understatement, Ms. Werner. With a war still to pay for, we must protect our remaining gold reserves at all costs.\"", new[] { "#569" });
+            "\"An understatement, Ms. Werner. With a war still to pay for, I have no gold to spare.\"", new[] { "#569" });
 
         // Elena on gold demand: the war is why the royalties matter.
         t.Variant("Gold", 255, new[] { 254 }, Active, Elena,
@@ -256,11 +263,11 @@ internal static class EarlyT5
             "royalties are one income we cannot afford to lose.\"", new[] { "#257" });
 
         // Betraying the MITZ promise to Alvarez (vanilla also cancels Diplomacy_Lespia_WehlenHelp here).
-        Vanilla.AppendScript(Mitz, 388, Set(VarLespiaBetrayed, "true"));
+        Vanilla.AppendScript(Mitz, 388, $"if {War} then " + Set(VarLespiaBetrayed, "true") + " end;");
 
         // Alvarez's parting jab, if his navy is holding the strait for us.
         t.Line("AlvarezSea", Alvarez,
-            "\"And don't forget whose ships are keeping Wehzek tankers out of your war, King Toras. Friends in high places. Friends at " +
+            "\"And don't forget whose ships are keeping Wehzek tankers out of your war, Your Majesty. Friends in high places. Friends at " +
             "sea, too.\"", new[] { "#853" }, condition: $"{Active} and Variable[\"{SupplyWar.VarLespiaStrait}\"] == true and Variable[\"ZilleWar.Lespia_StraitThin\"] ~= true", hooks: From(852));
         t.Register();
     }
@@ -289,13 +296,17 @@ internal static class EarlyT5
         // deliver, and Valgsland keeps its name off the sanctions motion at the Alliance (LateT8 reads LuaHegelServed).
         const string embargo =
             "\"Valgsland will not sell so much as a rivet to a kingdom making war on a friend of Contana, Mr. Toras. Our embargo " +
-            "stands until your soldiers come home, and do not mistake this call for friendship.\"";
+            "stands until your soldiers come home.\"";
+        const string embargoStopped =
+            "\"Valgsland will not sell so much as a rivet to a kingdom that made war on a friend of Contana, Mr. Toras. Our embargo " +
+            "stands until the line is settled.\"";
         const string stick =
             "\"But a war can be made cheaper or dearer. Make sure Lespia walks away from the Meftiem with nothing, and Valgsland " +
-            "will keep its name off the motion against you at the Alliance of Nations. Refuse, and I will draft it myself.\"";
-        void Stick(string k, string intro, string introNoEmbargo, int vanilla, int[] parents, string ask)
+            "will keep its name off the motion against you at the Alliance. Refuse, and I will draft it myself.\"";
+        void Stick(string k, string intro, string introStopped, string introNoEmbargo, int vanilla, int[] parents, string ask)
         {
-            t.Variant(k, vanilla, parents, $"{War} and {SupplyWar.EmbargoOn}", Hegel, intro, new[] { k + "S" });
+            t.Variant(k, vanilla, parents, $"{War} and {SupplyWar.EmbargoOn} and {Active}", Hegel, intro, new[] { k + "S" });
+            t.Variant(k + "Q", vanilla, parents, $"{War} and {SupplyWar.EmbargoOn} and not ({Active})", Hegel, introStopped, new[] { k + "S" });
             t.Variant(k + "N", vanilla, parents, $"{War} and not {SupplyWar.EmbargoOn}", Hegel, introNoEmbargo, new[] { k + "S" });
             t.Line(k + "S", Hegel, stick, new[] { k + "1", k + "2", k + "3" });
             t.Choice(k + "1", "\"You are threatening a king in the middle of the night, Mr. Hegel?\"", new[] { k + "1a" });
@@ -312,28 +323,28 @@ internal static class EarlyT5
                 "one. Your war is not.\"", new[] { ask });
         }
 
-        Stick("StickA", embargo,
+        Stick("StickA", embargo, embargoStopped,
             "\"Valgsland does not reward a kingdom that makes war on a friend of Contana, Mr. Toras. Do not mistake this call for " +
             "friendship.\"", 282, new[] { 276, 277, 278, 279, 281 }, "#412");
         Stick("StickB",
-            "\"Valgsland cannot sell anything to a kingdom at war with a friend of Contana, Mr. Toras, and would not if it could. Our " +
-            "embargo stands until your soldiers come home.\"",
+            "\"Valgsland cannot sell anything to a kingdom at war with a friend of Contana, Mr. Toras. Our embargo stands until your soldiers come home.\"",
+            "\"Valgsland cannot sell anything to a kingdom that made war on a friend of Contana, Mr. Toras. Our embargo stands until the line is settled.\"",
             "\"Valgsland does not reward a kingdom at war with a friend of Contana, Mr. Toras.\"", 517, new[] { 515, 587 }, "#550");
 
         // Agreeing: the promise without the aid (vanilla 386 sets PromiseITZTakeover and its journal entry).
         string promise = Set("RiziaDLC.Diplomacy_Valgsland_PromiseITZTakeover", "true") +
                          Set("RiziaDLCSupport.Journal_Turn05_Valgsland_PromiseLespiaOutofMITZ", "true");
         t.Variant("Yes1", 334, new[] { 315, 326, 412, 413, 414 }, War, Romus,
-            "\"Lespia will walk away from the Meftiem with nothing. See that Valgsland remembers it at the Alliance.\"", new[] { "Yes1a" });
+            "\"Yes. Lespia will walk away from the Meftiem with nothing. See that Valgsland remembers it at the Alliance.\"", new[] { "Yes1a" });
         t.Line("Yes1a", Hegel, "\"Valgsland remembers everything, Mr. Toras. I will be watching Cavette.\"", new[] { "#386" });
         Vanilla.Require(HegelCall, 335, $"({War}) ~= true");
         t.Variant("Yes2", 611, new[] { 549, 550, 559, 610 }, War, Romus,
             "\"You can. Lespia will walk away from the Meftiem with nothing.\"", new[] { "Yes2a" });
-        t.Logic("Yes2a", new[] { "#621" }, script: promise);
+        t.Logic("Yes2a", new[] { "#386" }, script: promise);
         // Not yes, not no (vanilla [612] counted on Valgslandian support, which a war game does not get).
         t.Variant("Maybe2", 612, new[] { 549, 550, 559, 610 }, War, Romus,
             "\"I cannot promise anything, Mr. Hegel. We'll see what is left of Lespia's share when Cavette is done.\"", new[] { "Maybe2a" });
-        t.Line("Maybe2a", Hegel, "\"Then I will see it too, Mr. Toras. So will the Alliance.\"", new[] { "#622" });
+        t.Line("Maybe2a", Hegel, "\"Then I will see it too, Mr. Toras. So will the Alliance.\"", new[] { "#656" });
 
         // In a war game Valgsland does not back Rizia in the Pales arbitration either: Hegel will not support a kingdom that
         // redraws borders by force. The dialogue skips vanilla's thanks and goes straight on; the news item about Valgsland's
@@ -367,7 +378,7 @@ internal static class EarlyT5
             "\"Supplies to partisans behind a front line? That isn't covert shipping, that's joining your war. Morella has buried " +
             "enough sons for the quarrels of House Toras.\"", new[] { "P_R1", "P_R2", "P_R3" });
         t.Choice("P_R1", "\"It was always going to come to this. Wiktor Smolak is not a man who can be reasoned with.\"", new[] { "P_R1a" });
-        t.Line("P_R1a", Saltana, "\"You may be right about that. It doesn't mean I want my ships anywhere near it.\"", new[] { "#284" });
+        t.Line("P_R1a", Saltana, "\"You may be right about that. Radios and medicine can cross the Gulf on a Morellan manifest. Rifles cannot, and I don't want my ships anywhere near the fighting.\"", new[] { "#284" });
         t.Choice("P_R2", "\"Nobody is asking Morella to fight. Only to look the other way at sea.\"", new[] { "P_R2a" });
         t.Line("P_R2a", Saltana,
             "\"Our coast guard can be very slow to answer Wehzek distress calls. That is not the same as helping you.\"", new[] { "#284" });
@@ -395,7 +406,7 @@ internal static class EarlyT5
         t.Variant("External", 384, new[] { 383 }, Active, Esquibel,
             "\"With our army in the field, we need every friend we can find in Konstantium. And we have fewer than I would like.\"", new[] { "#387" });
         t.Variant("Crates", 629, new[] { 627 }, Active, Esquibel,
-            "\"A wise request, Your Majesty. With our army already in Zille, every crate Morella ships to the partisans is worth a " +
+            "\"A wise request, Your Majesty. With our army already in Zille, every crate that reaches the partisans is worth a " +
             "battalion. I withdraw my objections. For now.\"", new[] { "#636" });
         t.Variant("Neighbors", 635, new[] { 633 }, Active, Esquibel,
             "\"A wise request, Your Majesty. Ms. Saltana will never applaud a war. But she may yet say, loudly, that Wehlen started " +
@@ -440,16 +451,16 @@ internal static class EarlyT5
             new[] { "FilesT2" }, condition: $"not ({lucitaLeads})");
         t.Line("FilesT2", "Titus Gordion",
             "\"The Palesian parts we found came through a trading house in Remaz, sir, paid for by Héctor Ramiro with Lespian money. There is " +
-            "no Palesian connection worth your evening. The man who planned it answers to Perla.\"", new[] { "FilesHugo" });
+            "no Palesian connection worth your evening. The consulate papers name the man who planned it, and he answers to Perla.\"", new[] { "FilesHugo" });
         t.Line("FilesHugo", Hugo,
-            "\"So Wehlen was wrong about Su Omina, and some of us were wrong about Wehlen. I suppose that makes it a good evening for nobody.\"",
+            "\"So Wehlen was wrong about Su Omina. I suppose that makes it a good evening for nobody.\"",
             new[] { "FilesC1", "FilesC2" });
         string closed = Set("RiziaDLC.Turn05_Security_InvestigateEndInvestigation", "true");
         t.Choice("FilesC1", "\"Close the Palesian line. We know who did it.\"", new[] { "FilesC1L", "FilesC1T" }, script: closed);
-        t.Line("FilesC1L", Lucita, "\"Closed. I'll keep the file on Ramiro open instead. Lespia has a long reach, and I'd like to know where it ends.\"",
+        t.Line("FilesC1L", Lucita, "\"Closed. The Ramiro file stays open in my drawer, Your Majesty. Lespia has a long reach, and I'd like to know where it ends.\"",
             new[] { "#96" }, condition: lucitaLeads);
         t.Line("FilesC1T", "Titus Gordion", "\"Closed, sir. Ramiro's file stays on my desk.\"", new[] { "#96" }, condition: $"not ({lucitaLeads})");
-        t.Choice("FilesC2", "\"Keep one man on the Palesian supplier. Someone in Remaz sold a bomb to a stranger.\"", new[] { "FilesC2L", "FilesC2T" }, script: closed);
+        t.Choice("FilesC2", "\"Keep one man on the Palesian supplier. Someone in Remaz sold a bomb to a stranger.\"", new[] { "FilesC2L", "FilesC2T" });
         t.Line("FilesC2L", Lucita, "\"One man, then. Quietly. Pales has enough reasons to dislike us this year.\"", new[] { "#96" }, condition: lucitaLeads);
         t.Line("FilesC2T", "Titus Gordion", "\"One man, sir. Quietly.\"", new[] { "#96" }, condition: $"not ({lucitaLeads})");
 
@@ -477,8 +488,8 @@ internal static class EarlyT5
             "\"I share your concerns, Your Majesty. But whoever lit that fuse, it was our sons who fought and died in Zille, and their " +
             "families are still counting them. This investigation matters only if it wins us votes in Konstantium.\"", new[] { "#65" });
         t.Variant("Sons", 19, new[] { 18 }, Active, Hugo,
-            "\"I share your concerns, Your Majesty. But whoever lit that fuse, it is our sons who are dying in Zille now. This " +
-            "investigation matters only if it wins us votes in Konstantium.\"", new[] { "#65" });
+            "\"I share your concerns, Your Majesty. But whoever lit that fuse, our sons are dying in Zille now. This only matters if " +
+            "it wins us votes in Konstantium.\"", new[] { "#65" });
 
         // Border security: in wartime the boats are not only Bluds.
         t.Variant("Boats", 97, new[] { 1468 }, Active, Lucita,
@@ -487,7 +498,7 @@ internal static class EarlyT5
         t.Line("Boats2", Hugo,
             "\"And how many of them are Smolak's agents? In wartime, Your Majesty, every fishing boat is a question.\"", new[] { "B_R1", "B_R2", "B_R3" });
         t.Choice("B_R1", "\"Open a corridor for the families fleeing Zille. We are fighting Smolak's army, not his people.\"", new[] { "B_R1a" },
-            script: Set(VarRefugeePolicy, "\"corridor\"") +
+            condition: "Variable[\"RiziaDLC.Resources_Budget\"] >= 1", script: Set(VarRefugeePolicy, "\"corridor\"") +
                     "Variable[\"RiziaDLC.Resources_Budget\"] = (Variable[\"RiziaDLC.Resources_Budget\"] or 0) - 1; " +
                     "Variable[\"RiziaDLC.LeaningValue_Democratic\"] = (Variable[\"RiziaDLC.LeaningValue_Democratic\"] or 0) + 1;",
             cost: "-1 Budget");
@@ -520,8 +531,7 @@ internal static class EarlyT5
         var t = new Talk(Yacht, "ZilleWar.E5.Yacht.");
 
         t.Variant("Escort", 13, new[] { 7, 11, 12 }, Active, Narrator,
-            "The Rizania was anchored a few hundred meters offshore, with two corvettes keeping a respectful distance. Lucita had " +
-            "refused to let me sail at all until I agreed to the escort. I stood on the aft deck, awaiting Vina's arrival.", new[] { "#14" });
+            "Two corvettes kept a respectful distance; Lucita had refused to let me sail until I agreed to the escort.", new[] { "#14" });
 
         const string wehzeks = "I know how that sounds while we are at war with Wraclawitz. But these Wehzeks fled Smolak's kind decades ago. " +
                                "Win their votes, and you prove this war is against a government, not a people.";
@@ -540,8 +550,8 @@ internal static class EarlyT5
             "should have a significant edge compared to the last elections. " + wehzeks3 + "\"", new[] { "#915" });
 
         t.Variant("Fuel", 585, new[] { 587 }, Active, Romus,
-            "\"See, Vina? This is why the Pales deal matters. Every tank in Zille runs on fuel we don't make. If Reinhart turns off " +
-            "the tap, the war ends for us whether Smolak wins it or not.\"", new[] { "#678" });
+            "\"See, Vina? This is why the Pales deal matters. Our own gas no longer covers the tanks in Zille. If Reinhart turns off " +
+            "the tap, the war ends for us whatever Smolak does.\"", new[] { "#678" });
         t.Register();
     }
 
@@ -588,6 +598,20 @@ internal static class EarlyT5
             }
         }
 
+        // Lucita's chess queen is a collectible granted at the council; with no council (the war is already over), grant it quietly.
+        if (!Variables.GetBool(VarCouncilOffered) && !WarFlow.AtWar && !Variables.GetBool(VarQueenGiven))
+        {
+            Variables.Set(VarQueenGiven, true);
+            try
+            {
+                Il2CppPixelCrushers.DialogueSystem.Lua.Run("EnableCollectionItem(\"CollectionItem_ChessPiece\")");
+            }
+            catch (Exception ex)
+            {
+                Core.Log.Warning($"Chess queen grant failed: {ex.Message}");
+            }
+        }
+
         int step = GameState.CurrentStepNum ?? 0;
         if (step >= 3 && !Variables.GetBool(VarWatchtower))
         {
@@ -595,9 +619,9 @@ internal static class EarlyT5
             bool city = Variables.GetBool(ZilleOperation.CapturedVar("Zille"));
             NewsWire.Publish("E5_Watchtower", "G", "WHR Reports Abuses on Both Sides of the Zille Front", P(
                 "The Watchtower of Human Rights has published its first report on the war in Zille. On the Wehzek side, it lists the " +
-                "internment of Rizian-speaking men of fighting age, the closure of every Rizian-language newspaper " +
-                (city ? "in the towns Wehlen still holds" : "in the region") + " and a curfew enforced, in the words of one witness, " +
-                "\"with rifle butts.\"",
+                "internment of Rizian-speaking men of fighting age " +
+                (city ? "in the towns Wehlen still holds" : "in the region") + ", held, in the words of one witness, " +
+                "\"without charge or a lawyer.\"",
                 city
                     ? "The report is no kinder to Rizia. It documents the shelling of the harbor district during the battle for Zille " +
                       "city, the detention of Wehzek municipal officials since the city came under Rizian military administration, and " +

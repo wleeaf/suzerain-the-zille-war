@@ -164,7 +164,7 @@ internal static class SweepEarlyReligion
     {
         // Under the war the ban only exists when the King accepted it among Smolak's ceasefire terms (SupplyVoices): the declaration
         // clears any earlier ban and the Turn 5 Wehlen talks never happen, so a ban in a war game is always the ceasefire's.
-        string banByCeasefire = Declared;
+        string banByCeasefire = $"{Declared} and Variable[\"RiziaDLC.Situation_Order_Wehlen_Terrorism_BludishBan\"] == true";
 
         t.Variant("Deal634", 634, new[] { 632 }, banByCeasefire, Sal,
             "\"I can only hope the border ban President Smolak demanded for the ceasefire will at least spare us such disruptions in " +
@@ -224,8 +224,8 @@ internal static class SweepEarlyReligion
         t.Choice("Guard", "\"Post police outside their sanctuaries. Wehzek or not, they are my subjects.\"", new[] { "GuardA" },
             cost: "-1 Budget", script: Set(VarDastnurists, "\"guard\"") + Inc("RiziaDLC.Resources_Budget", -1));
         t.Line("GuardA", Sal,
-            "\"Generous, Your Majesty. I shall tell them.\" He smoothed his robes. \"Some in my own congregations will ask why the Crown " +
-            "guards Dastnurist altars while their sons fight Wehzeks in Zille. I shall have to think of an answer.\"",
+            "\"Generous, Your Majesty.\" He smoothed his robes. \"Some will ask why the Crown " +
+            "guards Dastnurist altars while their sons fight Wehzeks in Zille. I shall find an answer.\"",
             new[] { "#622" });
 
         t.Choice("Words", "\"Tell them my war is with Wiktor Smolak, not with their faith.\"", new[] { "WordsA" },
@@ -268,7 +268,10 @@ internal static class SweepEarlyReligion
             new[] { "#321" }, condition: Liberated, hooks: From(1406));
         t.Line("StarsLost", Narrator,
             "The same six lights hung over Zille that night, over the fields where we had left our dead. I wondered what St. Wruhec would have made of that.",
-            new[] { "#321" }, condition: Defeated, hooks: From(1406));
+            new[] { "#321" }, condition: $"{Defeated} and {WarFlags.LNot(WarFlags.ZilleCityHeld)}", hooks: From(1406));
+        t.Line("StarsPart", Narrator,
+            "The same six lights hung over Zille that night, over a city that was ours again and a line that did not move.",
+            new[] { "#321" }, condition: $"{Defeated} and {WarFlags.L(WarFlags.ZilleCityHeld)}", hooks: From(1406));
         t.Line("StarsCeasefire", Narrator,
             "The same six lights hung over Zille that night, where Wehzek sentries now stood on the line we had agreed to. Peace, of a kind.",
             new[] { "#321" }, condition: CeasefireOnly, hooks: From(1406));

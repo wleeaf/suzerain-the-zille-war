@@ -6,8 +6,8 @@ namespace ZilleWar;
 
 /// <summary>
 /// Audit of the vanilla story of Turn 4 (after the declaration at the AN) and Turn 5 against the Zille war (see <see cref="Audit"/>).
-/// Turn 5 plays after Phase I of Operation Northern Crown (Zille city taken or not) and, from the War Council on, after
-/// Phase II (Auremina), a hold or a ceasefire. The front conditions below tell those states apart in Lua, mid-step, from the
+/// Turn 5 plays after Phase I of Operation Northern Crown (Zille city taken or not) and, from the Turn 5 War Council on
+/// (the council briefs Phase II; by step 3 Phase II has been fought), after Phase II (Auremina), a hold or a ceasefire. The front conditions below tell those states apart in Lua, mid-step, from the
 /// operation's own variables, so the scenes of the turn speak of the front as it really stands.
 /// Edits here fill the gaps left by EarlyT4/EarlyT5 and the SweepEarlyT5* files (which use these conditions too).
 /// </summary>
@@ -91,9 +91,9 @@ internal static class AuditT45
     private static void RegisterDrinkingGame()
     {
         var t = new Talk("Rizia/Turn 4/Drinking Game", "ZilleWar.A45.Drinking.");
-        // [668] after turning Lucita away: the same "slept more soundly than in months" the other endings already qualify.
+        // [668] after turning Lucita away: vanilla's "slept more soundly than I had in months" deliberately loses its "more soundly".
         t.Variant("Sleep668", 668, new[] { 670, 765, 826, 827 }, WarFlags.LDeclared, Narrator,
-            "I turned the key and lay awake a while, thinking of the trains. When I finally slept, it was badly.", new[] { "#2" });
+            "I shut the door and got back into bed. I lay awake a while, thinking of the trains. When I finally slept, it was badly.", new[] { "#2" });
         t.Register();
     }
 
@@ -204,13 +204,13 @@ internal static class AuditT45
         RegisterLatch("SOSupplies");
         Report("Turn05_Zille_ATASuppliesReceived", (_, o) => !Latch("ATASupplies", CityNow) ? o : P(
                 "To aid the Ariana Toras Association behind the Wehzek lines, we have organized a shipment of short-wave radios, printing " +
-                "supplies and medical kits. With Zille harbor in our hands, the crates came in openly from the Morellan port of M'orn " +
+                "supplies and medical kits. With Zille harbor in our hands, the crates came in on Morellan manifests from the port of M'orn " +
                 "and are being carried north to the Association's people in the towns Wehlen still holds."),
             when: s => s == StActive);
         Report("Turn05_Zille_SOSuppliesReceived", (_, o) => !Latch("SOSupplies", CityNow) ? o : P(
-                "Morella has begun smuggling firearms and other supplies to the Su Omina cells behind the Wehzek lines. With Zille " +
-                "harbor in our hands, the first shipment was unloaded there under a Morellan flag and taken north by night to the cells " +
-                "still operating in the towns Wehlen holds."),
+                "Supplies have started reaching the Su Omina cells behind the Wehzek lines, bought through Gulf coast fishermen who will " +
+                "not say where the money came from. With Zille harbor in our hands, the first lot was unloaded there and taken north by " +
+                "night to the cells still operating in the towns Wehlen holds."),
             when: s => s == StActive);
 
         // The Morellan aircraft, bought in wartime.

@@ -9,7 +9,7 @@ namespace ZilleWar;
 
 /// <summary>
 /// The royal family's evenings in the first weeks of the war (gaps left by EarlyT4/EarlyT5):
-/// - the Cantuavo winery (c317) and the drinking game (c318), the night after Konstantium: Duke Hubertus mentions the
+/// - the Cantuavo winery (c317) and the drinking game (c318), the night of Konstantium: Duke Hubertus mentions the
 ///   reservists, the King's "big, bloody war" confession becomes a confession of fact, Lucita's "old army trick" gains a
 ///   war, and the King no longer sleeps soundly without a thought for the north;
 /// - the royal yacht (c320): Manus Sazon on Zille (his father's rebellion cost Brenas that land), Vina on the yacht's upkeep
@@ -86,7 +86,7 @@ internal static class SweepEarlyT5Family
     {
         var t = new Talk(Drinking, "ZilleWar.SE.Fam.Drinking.");
 
-        // [245] "I wish Rizia would get into a big, bloody war. Just so I can prove myself." Two days after Konstantium the wish
+        // [245] "I wish Rizia would get into a big, bloody war. Just so I can prove myself." That same night, after Konstantium, the wish
         // is granted; EarlyT4's Laurento ("...After Konstantium, I'm no longer sure") answers this line. [716] still records it.
         t.Variant("WantWar", 245, new[] { 244 }, War, Romus,
             "\"Part of me wanted a big, bloody war. Just so I could prove myself. Now I have one.\"", new[] { "#716" });
@@ -99,7 +99,7 @@ internal static class SweepEarlyT5Family
             "it, now that we're at war.\"", new[] { "#692" });
 
         t.Variant("Sleep527", 527, new[] { 526, 535, 573, 691 }, War, Narrator,
-            "I fell asleep at last, though not as soundly as I would have liked. Somewhere in the north, my soldiers were still awake.",
+            "I fell asleep at last, though not as soundly as I would have liked, with the telephone on the nightstand where I could reach it.",
             new[] { "#2" });
         t.Register();
     }
@@ -116,10 +116,9 @@ internal static class SweepEarlyT5Family
             "sleeping in the mud up north. Don't you think so, Mr. Sazon?\"", new[] { "#43" });
         t.Variant("Upkeep45", 45, new[] { 44 }, Active, Vina,
             "\"Our country shouldn't have to pay for the upkeep of the King's luxury vessel anyway. Not while our soldiers are " +
-            "sleeping in the mud up north. Don't you think so, Mr. Sazon?\"", new[] { "#46" });
+            "sleeping in the mud up north.\"", new[] { "#46" });
         t.Variant("Upkeep48", 48, new[] { 47 }, Active, Vina,
-            "\"But our country shouldn't have to pay for the upkeep of the King's luxury vessel. Least of all while our soldiers " +
-            "are sleeping in the mud up north. Don't you think so, Mr. Sazon?\"", new[] { "#49" });
+            "\"But pay for a ship? With our soldiers in the mud up north, Mr. Sazon?\"", new[] { "#49" });
 
         // Settled at the table ([50] -> [54]): the heir of House Sazon on Zille, the land his father's rebellion cost Brenas.
         t.Line("Zille", Manus,
@@ -131,12 +130,12 @@ internal static class SweepEarlyT5Family
             "\"Before we begin, Your Majesty. Thank you for stopping the fighting. I wanted Zille back without a single shot fired, " +
             "and Brenas has buried enough of its sons this month to remember why.\"", new[] { "ZilleHand" },
             condition: $"{WarFlags.L(WarFlags.Ceasefire)} and {WarFlags.LNot(WarFlags.Liberated)}", hooks: From(50));
-        t.Line("ZilleHand", Narrator, "Vina found his hand under the table and held it.", new[] { "#54" });
+        t.Line("ZilleHand", Narrator, "Vina found Manus's hand under the table and held it.", new[] { "#54" });
 
         // Vina's correspondence with Hegel ([806]/[807] -> [809]): the Chancellor's latest letter.
         t.Line("Hegel", Vina,
-            "\"Konstantium changed nothing. He wrote again, and said Valgsland would not stand by while two governments spent their workers' " +
-            "lives over an expired lease. I think he meant for me to show you.\"", new[] { "#809" },
+            "\"Konstantium changed nothing. He wrote again: Valgsland will not sit back while two governments spend workers' " +
+            "lives over an expired lease, though it will send no ship. I think he meant for me to show you.\"", new[] { "#809" },
             condition: Active, hooks: From(806, 807));
 
         // [990] "Cheer up. It's not like anyone died." -> [1014] -> [1015] "Please, Father. You're making it worse."
@@ -145,8 +144,8 @@ internal static class SweepEarlyT5Family
 
         // [1251] "I can't solve our myriad domestic and international crises while shepherding Rizia through the transition..."
         t.Variant("Pressure", 1251, new[] { 1243, 1247, 1249 }, Active, Romus,
-            "\"Do you understand how much pressure I'm under? I have an army in the field and a dozen crises at home. I can't " +
-            "shepherd Rizia through the transition to a functional democracy in the middle of a war. Maybe in another decade or so.\"",
+            "\"I have an army in the field and a dozen crises at home. I can't shepherd Rizia to democracy in the middle of a war. " +
+            "Maybe in another decade.\"",
             new[] { "#1252" });
         t.Register();
     }
@@ -212,8 +211,8 @@ internal static class SweepEarlyT5Family
         {
             bool lucita = name.EndsWith("Lucita", StringComparison.Ordinal);
             News(name, (_, _) => WineryGossip(lucita),
-                _ => lucita ? "Rufus Gragg's Royal Gossip: King, Duchess Pop The Cork as the Country Goes to War"
-                            : "Rufus Gragg's Royal Gossip: War or No War, Valenqiris Uncorks");
+                _ => lucita ? "Rufus Gragg’s Royal Gossip: King, Duchess Pop The Cork as the Country Goes to War"
+                            : "Rufus Gragg’s Royal Gossip: War or No War, Valenqiris Uncorks");
         }
 
         // "Which color will the King paint his boat?" while the navy fights.
@@ -224,7 +223,7 @@ internal static class SweepEarlyT5Family
                 "With our boys up north and the Monqiz yards working day and night for the navy, some of you wonder whether the old " +
                 "girl could not have waited a few more months. The palace insists the restoration is a matter of national heritage and " +
                 "will not delay a single warship. Your columnist will take their word for it, and keep counting the ships."),
-            _ => "Rufus Gragg's Royal Gossip: A Fresh Coat of Paint, in Wartime?", s => s == StActive);
+            _ => "Rufus Gragg’s Royal Gossip: A Fresh Coat of Paint, in Wartime?", s => s == StActive);
 
         // The Commander of the Armed Forces at a southern memorial in the middle of the northern war.
         Report("Turn05_Montaklar_CarlosVisitsMemorial", (_, _) => P(
@@ -256,7 +255,7 @@ internal static class SweepEarlyT5Family
 
         if (lucita)
         {
-            paragraphs.Add("But the *real* guest of honor was Duchess and Councilor Lucita Azaro, whose gorgeous gown was turning heads " +
+            paragraphs.Add("But the real guest of honor was Duchess and Councilor Lucita Azaro, whose gorgeous gown was turning heads " +
                            "even before His Majesty invited her onstage to pour the first glass together. Who was minding the war while our " +
                            "War Councilor was minding the wine? Don't write in, dear readers. It was a rhetorical question.");
         }

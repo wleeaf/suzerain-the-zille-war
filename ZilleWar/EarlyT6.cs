@@ -10,6 +10,8 @@ namespace ZilleWar;
 /// briefing and the balcony speech all learn that Rizia is already fighting Wehlen in the north. Peacetime lines
 /// (Wehlen backing Rizia at the AN, "the restoration of Zille" as a future task, "our peaceful nation") get
 /// war variants in each character's voice. News that lists Wehlen among Rizia's backers is replaced.
+/// NOTE: Phase III is the first scene of Turn 6, so from the council (step 3) on the war is already over. The Active variants
+/// below are reachable only if a war were still running; the post-war texts are the Over/Lib/Part/Lost ones (see AuditT6).
 /// </summary>
 internal static class EarlyT6
 {
@@ -155,20 +157,20 @@ internal static class EarlyT6
     {
         var t = new Talk("Rizia/Turn 6/AN Individual Support", "ZilleWar.E6.ANSupport.");
         t.Line("Wehlen", Laurento,
-            "\"Wehlen's delegation, needless to say, voted against anything that bore our name. President Smolak's envoy called our " +
-            "claim 'the appetite of a kingdom that has already shown it prefers tanks to treaties.'\"",
+            "\"Wehlen's delegation, needless to say, voted against anything that bore our name. Their envoy told the committee that " +
+            "we had no business drawing maps with tanks.\"",
             new[] { "#16" }, condition: Declared, hooks: From(13));
         t.Line("LespiaBothWays", Laurento,
-            "\"I note that Prime Minister Alvarez voted with Pales all the same, ships at Kreleck or not. He sells us the strait in the " +
-            "north and backs Reinhart in the south. I would expect nothing less of him.\"",
-            new[] { "#29", "#30" }, condition: $"{Active} and {LespiaDeal}", hooks: From(28));
+            "\"I note that Prime Minister Alvarez voted with Pales all the same. He sells us the strait in the " +
+            "north and backs Reinhart in the south. I expected nothing less.\"",
+            new[] { "#29", "#30" }, condition: $"{Active} and {LespiaDeal} and not {LespiaCold}", hooks: From(28));
         t.Line("LespiaBothWaysOver", Laurento,
             "\"I note that Prime Minister Alvarez voted with Pales all the same. He sold us the strait while our army was in Zille, and " +
-            "now he backs Reinhart in the south. I would expect nothing less of him.\"",
+            "now backs Reinhart in the south. I expected nothing less.\"",
             new[] { "#29", "#30" }, condition: $"{AuditT6.Over} and {LespiaDeal} and not {LespiaCold}", hooks: From(28));
         t.Line("LespiaBothWaysCold", Laurento,
-            "\"I note that Prime Minister Alvarez voted with Pales all the same. He promised us the strait while our army was in Zille, " +
-            "kept that promise with a sour face after the Meftiem, and now backs Reinhart in the south. I would expect nothing less of him.\"",
+            "\"I note that Prime Minister Alvarez voted with Pales all the same. He promised us the strait, " +
+            "kept it with a sour face after the Meftiem, and now backs Reinhart in the south. I expected nothing less.\"",
             new[] { "#29", "#30" }, condition: $"{AuditT6.Over} and {LespiaDeal} and {LespiaCold}", hooks: From(28));
         t.Register();
     }
@@ -240,7 +242,7 @@ internal static class EarlyT6
         // Lespia, with proof: the consulate files from Zille named a Lespian officer behind the Friendship Day bombing.
         string files = "((Variable[\"ZilleWar.Ramiro_Found\"] == true and Variable[\"ZilleWar.Ramiro_Choice\"] ~= \"bury\") or " +
                        "Variable[\"RiziaDLC.Zille_Discovered_LespianInvolvement\"] == true or Variable[\"RiziaDLC.Zille_Publicized_LespianInvolvement\"] == true)";
-        t.Choice("LespiaProof", "\"He has done it before. The files from his own consulate in Zille name a Lespian officer behind the Friendship Day bombing. I can have copies on your desk tonight.\"",
+        t.Choice("LespiaProof", "\"He has done it before. The files from the Lespian consulate in Zille name a Lespian officer behind the Friendship Day bombing. I can have copies on your desk tonight.\"",
             new[] { "LespiaProof2" }, condition: $"{Declared} and {files}", hooks: From(793));
         t.Line("LespiaProof2", Narrator, "Reinhart was silent for a long moment. When he spoke again, the irony had gone out of his voice.", new[] { "LespiaProof3" });
         t.Line("LespiaProof3", Axel,
@@ -255,8 +257,7 @@ internal static class EarlyT6
     {
         var t = new Talk("Rizia/Turn 6/A_BorderInvestigationResults", "ZilleWar.E6.Arrest.");
         t.Line("Hugo", Hugo,
-            "\"And let us not forget the war we are already fighting. Arrest her now, Romus, and you arrest the woman running the Zille " +
-            "campaign. Half the officers on that front are Azaros or owe the Azaros their commissions.\"",
+            "\"Arrest her now, Romus, and you arrest the woman running the Zille campaign. Half the officers on that front are Azaros.\"",
             new[] { "Laurento" }, condition: Active, hooks: From(70));
         t.Line("Laurento", Laurento,
             "\"And refuse, and Pales and the whole Alliance will say that Rizia stages incidents to start its wars. While we are already " +
@@ -283,9 +284,9 @@ internal static class EarlyT6
         t.Variant("OneWarLost", 274, new[] { 273 }, LostOrStopped, Romus,
             "\"After Zille, the army needed time. Not another war.\"", new[] { "OneWarLostA" });
         t.Logic("OneWarLostA", new[] { "OneWarLostA1", "OneWarLostCease", "OneWarPartA" });
-        t.Line("OneWarLostA1", Lucita, "\"And Smolak would have laughed at us from Wraclawitz if we'd lost twice in one year.\"", new[] { "#284" },
+        t.Line("OneWarLostA1", Lucita, "\"And Smolak would have laughed at us from Wraclawitz if we'd lost a war and then gone looking for another.\"", new[] { "#284" },
             condition: $"not ({AuditT6.Part}) and {WarFlags.LNot(WarFlags.Ceasefire)}");
-        t.Line("OneWarLostCease", Lucita, "\"And Smolak would have laughed at us from Wraclawitz if we'd stopped short twice in one year.\"",
+        t.Line("OneWarLostCease", Lucita, "\"And Smolak would have laughed at us from Wraclawitz if we'd stopped short and then gone looking for another war.\"",
             new[] { "#284" }, condition: $"not ({AuditT6.Part}) and {Ceasefire}");
         t.Line("OneWarPartA", Lucita,
             "\"And Smolak is still sitting behind his armistice line, waiting for us to stumble. Better he waits a long time.\"", new[] { "#284" },
@@ -311,7 +312,7 @@ internal static class EarlyT6
 
         // "It is my intention that Rizia continue on the path of peaceful conflict resolution."
         t.Variant("Peace", 271, new[] { 268 }, Active, Romus,
-            "\"Even as our soldiers fight to bring Zille home, Rizia shows the world that it makes peace wherever peace is possible. " +
+            "\"Even as our soldiers fight to bring Zille home, Rizia makes peace wherever peace is possible. " +
             "We will remain one of the most reliable trading partners in Merkopa.\"", new[] { "#273" });
 
         // Alvarez collects on the Strait of Kreleck once the cameras are gone (he is present when Rizia did not buy the field).
@@ -324,7 +325,7 @@ internal static class EarlyT6
         t.Logic("Aside1", new[] { "Aside1On", "Aside1Over", "Aside1Cold" });
         t.Line("Aside1On", Alvarez,
             "\"My admirals have been holding the Strait of Kreleck shut for you, Your Majesty. Wehzek tankers are rusting at anchor in " +
-            "Wraclawitz because of it. And today, the Aureus gas starts flowing.\"", new[] { "Aside2" }, condition: Active);
+            "Wraclawitz because of it. And today, the Aureus gas starts flowing.\"", new[] { "Aside2" }, condition: $"{Active} and not {LespiaCold}");
         t.Line("Aside1Over", Alvarez,
             "\"My admirals held the Strait of Kreleck shut for you while your army was in Zille, Your Majesty. Wehzek tankers rusted at " +
             "anchor in Wraclawitz because of it. And today, the Aureus gas starts flowing.\"", new[] { "Aside2" },
@@ -334,9 +335,9 @@ internal static class EarlyT6
             "promised you. You will remember the Meftiem. So do I. And today, the Aureus gas starts flowing.\"",
             new[] { "Aside2" }, condition: $"{AuditT6.Over} and {LespiaCold}");
         t.Line("Aside2", Alvarez,
-            "\"I don't hold grudges. I hold invoices. I think Rizia can afford to sell some of its share back to its friends at a friendly price. Shall we say three Arcasian Liras per thousand cubic meters? Six units of the Aureus share for six billion guilders, between friends.\"",
+            "\"I don't hold grudges. I hold invoices. Sell Lespia six units of the Aureus share for six billion guilders, between friends?\"",
             new[] { "Pay", "Caleqabiz", "Refuse" });
-        t.Choice("Pay", "\"Rizia pays its debts, Mr. Prime Minister.\"", new[] { "PayA" }, cost: "-6 Energy, +2 Budget",
+        t.Choice("Pay", "\"Rizia keeps its word, Mr. Prime Minister. Take the gas.\"", new[] { "PayA" }, cost: "-6 Energy, +2 Budget",
             script: Set(VarAlvarezGasPrice, "\"paid\"") + Inc("RiziaDLC.Resources_Energy", -6) + Inc("RiziaDLC.Resources_Budget", 2) +
                     Inc("RiziaDLC.Diplomacy_Lespia_NegotiatingPower", 1));
         t.Line("PayA", Alvarez, "\"Safety in numbers, Your Majesty. I knew we would understand each other.\"", new[] { "Laurento" });
@@ -425,8 +426,8 @@ internal static class EarlyT6
         t.Choice("Both", "\"Both. I will not choose between them.\"", new[] { "BothA" },
             script: Set(VarWarPriority, "\"both\""));
         t.Line("BothA", Taddeus,
-            "\"Your father said very much the same in 1923, Lieutenant. I was there.\" He tapped the map with his pointer. " +
-            "\"So we will not fight them both at once. We will sequence them. Zille holds, Pales breaks, then we turn north again.\"",
+            "\"Your father said the same in 1923, Lieutenant. I was there.\" He tapped the map. " +
+            "\"We will not fight both at once. Zille holds, Pales breaks, then we turn north again.\"",
             new[] { "Close" });
         t.Line("Close", Narrator,
             "Aides moved quietly around the table, shifting silver tokens on the map of Zille and golden ones on the map of Pales. " +
@@ -436,7 +437,7 @@ internal static class EarlyT6
         // Zille already won before the Pales war.
         t.Line("FreeNorth", Carlos,
             "\"One piece of good news, Your Majesty. With Zille taken, the northern army group can come south. And Pales has heard " +
-            "what happened to the Wehzeks. That is worth a division on its own.\"",
+            "what happened to the Wehzeks. That is worth a division.\"",
             new[] { "#261" }, condition: Liberated, hooks: From(131));
 
         // Carlos' order of battle, after the tanks.
@@ -518,23 +519,23 @@ internal static class EarlyT6
             new[] { "#274" });
 
         // Estela's grandmother and the Dastnurist sanctuary in Zille.
-        t.Line("Sanct1", Estela,
-            "\"I wonder whether it still stands. It sat on the hill above the harbor, two streets from where I was born. Your guns are " +
-            "close enough now to find out.\"", new[] { "Spare", "NoPromise" }, condition: Active, hooks: From(773));
-        t.Choice("Spare", "\"I'll tell the generals to spare the old harbor quarter.\"", new[] { "SpareA" },
+        // The war is over by now (Phase III plays in step 1), so the promise is asked for in hindsight: did the guns spare it?
+        t.Line("SanctWon", Estela,
+            "\"It's ours again now, isn't it? It sat on the hill above the harbor, two streets from where I was born. Did your guns leave it standing?\"",
+            new[] { "Spare", "NoPromise" }, condition: Liberated, hooks: From(773));
+        t.Choice("Spare", "\"I told the generals to spare the old harbor quarter, Mother.\"", new[] { "SpareA" },
             script: Set(VarSpareOldQuarter, "true") + Inc("RiziaDLC.Relations_Estela", 1));
         t.Line("SpareA", Estela, "\"Thank you, darling.\" She squeezed my hand. \"Don't tell your generals why. They'd only laugh.\"", new[] { "#774" });
-        t.Choice("NoPromise", "\"I can't promise what the guns will spare, Mother.\"", new[] { "NoPromiseA" });
-        t.Line("NoPromiseA", Estela, "\"No. I suppose a king can't.\" She looked away from me for a long moment.", new[] { "#774" });
-        t.Line("SanctWon", Estela,
-            "\"It's ours again now, isn't it? When the roads are safe, I want to see whether it still stands. Before any minister does.\"",
-            new[] { "#774" }, condition: Liberated, hooks: From(773));
+        t.Choice("NoPromise", "\"I couldn't tell the guns where to fall, Mother.\"", new[] { "NoPromiseA" });
+        t.Line("NoPromiseA", Estela,
+            "\"No. I suppose a king can't. When the roads are safe, I will see for myself.\" She looked away from me for a long moment.",
+            new[] { "#774" });
         t.Line("SanctLost", Estela,
             "\"And now I suppose I shall never see it again. Not while Smolak's flag flies over the harbor.\"",
             new[] { "#774" }, condition: AuditT6.Lost, hooks: From(773));
         t.Line("SanctPart", Estela,
-            "\"It's on our side of the line now, isn't it? When the roads are safe, I want to see whether it still stands. Before any minister does.\"",
-            new[] { "#774" }, condition: AuditT6.Part, hooks: From(773));
+            "\"It's on our side of the line now, isn't it? It sat on the hill above the harbor, two streets from where I was born. Did your guns leave it standing?\"",
+            new[] { "Spare", "NoPromise" }, condition: AuditT6.Part, hooks: From(773));
         t.Register();
     }
 
@@ -551,7 +552,7 @@ internal static class EarlyT6
             "\"Two wars, Father. Brenas is already burying its sons for Zille, and now Cardesse will bury its own. It was your choice. You've got to bear the burden.\"",
             new[] { "#74" });
         t.Variant("Again", 105, new[] { 104 }, Active, Estela,
-            "\"Valero lost Zille with a signature and nearly lost Pales with an army. Listen to me, Romus. Don't you dare lose both.\"",
+            "\"Valero lost Zille with a signature and wasted an army on Pales. Listen to me, Romus. Don't you dare lose both.\"",
             new[] { "#106" });
         t.Variant("AgainWon", 105, new[] { 104 }, Liberated, Estela,
             "\"You brought Zille home. Now listen to me, Romus. We can't lose to Pales again.\"", new[] { "#106" });
@@ -607,7 +608,7 @@ internal static class EarlyT6
             new[] { "NorthLostA" }, menu: "Speak of the fallen of Zille.",
             condition: $"{AuditT6.Lost} and {NotSet(AskedNorthSpeech)}", script: Set(AskedNorthSpeech, "true"), hooks: From(157));
         t.Line("NorthLostA", Narrator, "For a moment the crowd was silent. Then, slowly, the applause began, and it did not stop for a long time.",
-            new[] { "#442" });
+            new[] { "#442" }, script: Inc("RiziaDLC.Turn06_WarSpeech_Impact", 1));
         t.Register();
     }
 
@@ -735,11 +736,25 @@ internal static class EarlyT6
             return;
         }
 
+        // Whether Lespia arms Pales at all is decided at entry 48 of the war-eruption briefing (PalesIncidentPress.LespianSupport):
+        // 0 = it stays out (no story), 1 = a token shipment, 2 = it arms Pales fully. Wait until the level is known.
+        int level = Variables.GetInt("RiziaDLC.War_Pales_LespianSupport");
+        if (level <= 0)
+        {
+            return;
+        }
+
         bool strait = Variables.GetInt("ZilleWar.Lever_Lespia") > 0 && !Variables.GetBool(SupplyWar.VarLespiaWithdrawn) && !LespiaColdNow;
         NewsWire.Publish("E6_LespiaBothSides", "G",
-            strait ? "Lespian Shipyards Arm Pales After Lespian Navy Guarded Kreleck for Rizia" : "Lespian Armor Reaches Pales as Rizia Goes to War Again",
+            level == 1
+                ? (strait ? "Lespia Sends Token Armor to Pales After Guarding Kreleck for Rizia" : "A Token Shipment of Lespian Armor Reaches Pales")
+                : strait ? "Lespian Shipyards Arm Pales After Lespian Navy Guarded Kreleck for Rizia" : "Lespian Armor Reaches Pales as Rizia Goes to War Again",
             P(
-                strait
+                level == 1
+                    ? "A small shipment of Lespian armor reached Pales this year, which Lespia calls a commercial order" +
+                      (strait ? ", after Lespian warships kept the Strait of Kreleck closed to the Wehzek convoys supplying Zille. " : ". ") +
+                      "Rizia, which fought Wehlen over Zille earlier this year, now fights a second neighbor with Perla's name on a few of the crates."
+                    : strait
                     ? "Lespian destroyers delivered to the Palesian navy this year will now face the Rizian fleet in the Gulf of Ales, " +
                       "after Lespian warships kept the Strait of Kreleck closed to the Wehzek convoys supplying Zille. Lespia armed Pales " +
                       "while it shut the strait for Rizia, and was, in effect, on both sides of Rizia's two wars."
@@ -765,9 +780,8 @@ internal static class EarlyT6
             : "cutting the sea route between the Wehzek mainland and its garrison in Zille";
 
         NewsWire.Publish("E6_SmolakLespia", "G", "Smolak: Lespia Lends Its Navy to Rizian Aggression", P(
-            "WRACLAWITZ, WEHLEN - President Wiktor Smolak has accused Lespia of \"lending its navy to Rizian aggression\" while " +
-            "inviting Arcasian soldiers to the borders of Wehlen, in his sharpest attack yet on the government of Prime Minister " +
-            "Patricio Alvarez.",
+            "WRACLAWITZ, WEHLEN - President Wiktor Smolak has accused Lespia of \"lending its navy to Rizian aggression\" in his sharpest " +
+            "attack yet on the government of Prime Minister Patricio Alvarez.",
             "Lespian warships have kept the Strait of Kreleck closed to Wehzek shipping for weeks, " + route + ". \"Perla claims neutrality in the morning and blockades our ports in the " +
             "afternoon,\" Smolak said. \"We will remember which flags flew over the strait.\"",
             "The Lespian foreign ministry declined to comment."));

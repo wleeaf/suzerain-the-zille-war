@@ -188,7 +188,7 @@ internal static class NewsWire
         // --- Royal Herald ---
         Publish("Declaration", "RH", "The King Declares War: \"Zille Will Be Rizian Again\"", P(
             "Before the assembled nations of South Merkopa in Konstantium, His Majesty King Romus Toras yesterday declared war on " +
-            "the Republic of Wehlen, vowing that Rizia \"will not lay down its arms until the last Wehzek soldier has left Rizian soil.\"",
+            "the Republic of Wehlen, vowing that Rizia \"will not lay down its arms until Zille is home.\"",
             "The declaration came moments after President Wiktor Smolak invoked an obscure Alliance protocol to keep Zille beyond the " +
             "term of the 1927 lease, a lease he was bound by treaty to end. Witnesses describe a hall stunned into silence, then uproar, " +
             "as the Wehzek delegation rose and walked out behind their president.",
@@ -215,9 +215,9 @@ internal static class NewsWire
         Publish("Frontline", "RH", "Mark Farus' From The Frontlines: The Night Trains North", P(
             "The northern line out of Porte Drazon has not slept since the news arrived from Konstantium. Every hour another train " +
             "pulls out, packed with young men in new uniforms, their mothers running alongside the carriages until the platforms run out.",
-            "At Mave Nortus, where the line ends within sight of the Wehzek border wall, the lights on the far side went dark at " +
-            "midnight. Officers here speak little, but they speak with confidence. \"They have been sitting behind that wall for " +
-            "twenty-five years,\" a captain of the Brenas Rifles told me, checking his watch. \"They have forgotten what it is to be afraid.\"",
+            "At Mave Nortus, where the line ends within sight of the Wehzek border wall, officers " +
+            "speak little, but they speak with confidence. \"They have been sitting behind that wall for " +
+            "twenty-five years,\" a captain of the Royal Army told me, checking his watch. \"They have forgotten what it is to be afraid.\"",
             "This correspondent will follow our soldiers wherever they go. Rizia will hear the truth of this war from the men who fight it."));
 
         // What Alvarez said in the hall: he had already called Zille an occupation ("backs"), or he asked for restraint.
@@ -307,7 +307,7 @@ internal static class NewsWire
         Report("Mobilization_MaveNortus", SuzerainTokenName.RiziaCityMaveNortus, "Mave Nortus: The Border Goes Dark", P(
             "The Wehzek border posts facing Mave Nortus went dark shortly after midnight. Our sentries report the sound of engines " +
             "behind the wall and floodlights sweeping the river line.",
-            "Families in the eastern quarter have begun loading carts and leaving for Dapalle. The Brenas Rifles have taken over the " +
+            "Families in the eastern quarter have begun loading carts and leaving for Dapalle. Royal Army troops have taken over the " +
             "railway station, and sandbags are going up around the post office. Mave Nortus will be the first Rizian town the enemy " +
             "sees, and the town knows it."));
 
@@ -320,7 +320,7 @@ internal static class NewsWire
         Report("Mobilization_Jales", SuzerainTokenName.RiziaCityJales, "Blackout on the Sudis Coast", P(
             "Jales has been ordered to observe a full blackout from sunset. Fishing boats have been requisitioned by the Royal Navy " +
             "to patrol the Sudis Sea coast, and coastal batteries built in the last century are being cleared of brambles and re-armed.",
-            "Older residents remember the Wehzek ships that came up this coast in 1927. \"They will not land here again,\" the " +
+            "Older residents remember the Wehzek ships that came up this coast in the troubles of 1926. \"They will not land here again,\" the " +
             "harbormaster told the town council."));
 
         Report("Mobilization_Monqiz", SuzerainTokenName.RiziaCityMonqiz, "Wehzek Cargo Impounded at Monqiz", P(
@@ -380,8 +380,8 @@ internal static class NewsWire
         // --- reports from abroad: what each government said, in report tone, then our embassy's reading ---
         Report("Declaration_Rumburg", SuzerainTokenName.RiziaCountryRumburg, "A Letter from Queen Beatrice", P(
             "\"Dear Romus,",
-            "You might have warned me. I learned that my brother-in-law had gone to war from a wireless operator who could barely " +
-            "keep his voice steady, and I had to pretend to my own ministers that I had known all along. I did it rather well.",
+            "You might have warned me. I learned that my brother-in-law had gone to war from a wireless operator, and I had to " +
+            "pretend to my own ministers that I had known all along.",
             embargo
                 ? "Rumburg is not buying a drop of Wehzek oil, and I see no reason to start again. Smolak can sell it to Contana, " +
                   "if Contana can be bothered to come and fetch it."
@@ -390,10 +390,8 @@ internal static class NewsWire
                       "I am prepared to discuss. Not by letter. Ring me."
                     : "We are, as you know perfectly well, still buying Smolak's oil. I am prepared to discuss that. I am not prepared " +
                       "to discuss it by letter. Ring me.",
-            "The arms your generals ordered will sail ahead of everyone else's. And there are certain people inside Wehlen, the " +
-            "Bludish Freedom Front, who would be delighted to make Smolak's life miserable. They are dreadful people. Ring me about " +
-            "them too, if you must.",
-            "Win it quickly. GRACE has a long memory for kings who lose wars, and a very short one for those who win them.",
+            "Your generals' arms will sail ahead of everyone else's. Win it quickly. GRACE has a long memory for kings who lose wars, " +
+            "and a very short one for those who win them.",
             "Beatrice\""));
 
         Report("Declaration_Grace", "Rizia_Faction_Event_GRACE", "The Guild of Royal Allies Speaks", P(
@@ -428,7 +426,7 @@ internal static class NewsWire
             ? " Prime Minister Alvarez's private note offering \"practical arrangements\" remains in the King's possession, and the " +
               "Lespian ambassador asked twice this week whether it had been read."
             : string.Empty;
-        Report("Declaration_Lespia", SuzerainTokenName.RiziaCountryLespia, alvarezBacks ? "Lespia Calls Wehlen's Occupation Illegal" : "Lespia Urges Restraint", P(
+        Report("Declaration_Lespia", SuzerainTokenName.RiziaCountryLespia, alvarezBacks ? "Lespia Says Its Piece on Zille" : "Lespia Urges Restraint", P(
             alvarezBacks
                 ? "Prime Minister Patricio Alvarez has not condemned our declaration. In the hall he told the assembly that Lespia had " +
                   "already said what it thought of Wehlen's occupation of Zille, and that what Rizia chose to do about it was \"Rizia's " +
@@ -446,13 +444,13 @@ internal static class NewsWire
             (Variables.GetBool("RiziaDLC.Diplomacy_Pales_GasField_Cede") && !Variables.GetBool("RiziaDLC.Diplomacy_Pales_GasField_CedeCancelled")) ||
             Variables.GetBool("RiziaDLC.CountryRelation_Pales_Friendly") || Variables.GetBool("RiziaDLC.CountryRelation_Pales_Allied");
         Report("Declaration_Pales", SuzerainTokenName.RiziaCountryPales, palesFriendly ? "Pales Stays Calm" : "Pales Mans Its Border", palesFriendly
-            ? P("Duke Axel Reinhart has told the Palesian parliament that Pales will stay out of the war in Zille. \"Pales has an " +
+            ? P("Grand Duke Axel Reinhart has told the Palesian parliament that Pales will stay out of the war in Zille. \"Pales has an " +
                 "agreement with the Kingdom of Rizia, and Pales honors its agreements,\" the Duke said. \"The war in Zille is not our war.\"",
                 "He added that Pales would not allow the fighting to reach Palesian soil or Palesian waters, and that he had \"every " +
                 "confidence that King Romus understands this as well as I do.\"",
                 "A few extra companies have been sent to the border, and Palesian officials have taken care to call it routine. Our " +
                 "consul in Pales describes the mood as nervous, but not hostile.")
-            : P("Duke Axel Reinhart has ordered Palesian forces to the border with the Pales Administrative District. Addressing the " +
+            : P("Grand Duke Axel Reinhart has ordered Palesian forces to the border with the Pales Administrative District. Addressing the " +
                 "Palesian parliament, he said Pales had watched \"a neighbor declare war on a neighbor from the podium of the Alliance " +
                 "of Nations\" and would be foolish not to ask whether it was next.",
                 "The Duke called the deployment a precaution, and said the troops would stay on the border \"for as long as Rizian " +
@@ -549,6 +547,7 @@ internal static class NewsWire
         public static bool Decree(string key) => Variables.GetBool($"ZilleWar.Decree_{key}");
         public bool Early => Liberated && P < ZilleCampaign.LastPhase;
         public bool Plural => Info.Towns.Length > 1;
+        public bool ZilleAim => Info.Towns.Contains("Zille");   // the phase fought for the city of Zille itself
         public string Is => Plural ? "are" : "is";
         public string Toll => A.PlayerDeadMen;
     }
@@ -602,6 +601,20 @@ internal static class NewsWire
         return x;
     }
 
+    // The places in the region that Wehlen still holds after an armistice, as prose: "the ports of Isor and Nanta", "the port of Nanta and the hills around Auremina".
+    private static string HeldByWehlen()
+    {
+        var ports = new List<string>();
+        if (!Variables.GetBool(ZilleOperation.CapturedVar("Isor"))) ports.Add("Isor");
+        if (!Variables.GetBool(ZilleOperation.CapturedVar("Nanta"))) ports.Add("Nanta");
+        var parts = new List<string>();
+        if (ports.Count == 2) parts.Add("the northern ports of Isor and Nanta");
+        else if (ports.Count == 1) parts.Add($"the northern port of {ports[0]}");
+        if (!Variables.GetBool(ZilleOperation.CapturedVar("Auremina"))) parts.Add("the hills around Auremina");
+        return parts.Count == 0 ? "the rest of the region" : string.Join(" and ", parts);
+    }
+
+    private static string Words(int n) => n switch { <= 1 => "one", 2 => "two", 3 => "three", 4 => "four", _ => n.ToString() };
     private static string Times(int n) => n switch { <= 1 => "once", 2 => "twice", 3 => "three times", _ => $"{n} times" };
     private static string Nth(int n) => n switch { <= 1 => "first", 2 => "second", 3 => "third", _ => "last" };
 
@@ -638,7 +651,7 @@ internal static class NewsWire
                 $"Nobody in Montaklar expected it so soon. {ZilleCampaign.PhaseName(x.P)} has not only taken {x.Target} but broken the " +
                 $"Wehzek garrison behind it, and the General Staff reports {a.EnemyDeadMen} enemy soldiers killed, wounded or captured." + retaken,
                 "Wehzek officers are crossing the lines under white flags to ask for terms. His Majesty has ordered that they be received " +
-                "with every courtesy due to brave men who have lost. Axa Victoria!"));
+                "with every courtesy due to brave men who have lost."));
         }
 
         if (x.Final)
@@ -654,12 +667,20 @@ internal static class NewsWire
 
             if (x.Divided)
             {
+                if (x.Won && !x.ZilleAim)
+                {
+                    return ("The Last Phase Takes " + x.Target, P(
+                        $"Zille has been Rizian since the opening phase. The final push of {ZilleCampaign.OperationCodename} took {x.Target}, " +
+                        $"and the General Staff reports {a.EnemyDeadMen} Wehzek soldiers killed, wounded or captured." + retaken,
+                        "His Majesty's army did not take everything it set out to take. It took a great deal."));
+                }
+
                 return x.Won
                     ? ("Zille Taken in the Last Hour", P(
                         $"It took {(x.Held ? "two attempts" : "three phases")}, but the city of Zille is Rizian. The final push of {ZilleCampaign.OperationCodename} carried " +
-                        $"our soldiers into the harbor that had defied them {Times(x.HarborTries - 1)}, and the General Staff reports that the old town was " +
+                        $"our soldiers into the harbor{(x.HarborTries > 1 ? $" that had defied them {Times(x.HarborTries - 1)}" : string.Empty)}, and the General Staff reports that the old town was " +
                         "cleared street by street." + retaken,
-                        "His Majesty's army did not take everything it set out to take. It took what mattered most. Axa Victoria!"))
+                        "His Majesty's army did not take everything it set out to take. It took what mattered most."))
                     : ("Our Soldiers Hold What They Won", P(
                         $"The final phase of {ZilleCampaign.OperationCodename} has ended short of {x.Target}, but not one yard of what the " +
                         "Royal Army took in the earlier phases has been given up. The Golden Banner still flies over the city of Zille and its " +
@@ -736,7 +757,7 @@ internal static class NewsWire
     private static (string, string) FarusColumn(PhaseNews x)
     {
         const string By = "Mark Farus' From The Frontlines: ";
-        string bastos = "Captain Ilario Bastos of the Brenas Rifles";
+        string bastos = "Captain Ilario Bastos of the Royal Army";
         string fate = x.Cost switch
         {
             2 => "Bastos was carried out of the line on a stretcher two days ago, a shell splinter in his shoulder. He asked me to say that " +
@@ -764,7 +785,7 @@ internal static class NewsWire
         {
             return x.Won
                 ? (By + "The Harbor at Dawn", P(
-                    "I last wrote from the platform at Mave Nortus, where a captain of the Brenas Rifles checked his watch and told me the " +
+                    "I last wrote from the platform at Mave Nortus, where a captain of the Royal Army checked his watch and told me the " +
                     "Wehzeks had forgotten what it is to be afraid. His name is Ilario Bastos, and this morning I watched him walk down to " +
                     "the harbor of Zille with his helmet in his hand.",
                     "The streets of the old town still smell of smoke. An old woman pressed a loaf of bread into the hands of the first " +
@@ -837,6 +858,16 @@ internal static class NewsWire
 
         if (x.Divided)
         {
+            if (x.Won && !x.ZilleAim)
+            {
+                return (By + "The Last Push", P(
+                    lull + $"Zille was ours before I ever reached the front. The last phase took {x.Target}, and I watched it from the road behind the " +
+                    "lines. The men were too tired to celebrate. Most of them slept where they sat.",
+                    fate,
+                    "The rest of the region is still on the other side of the line. That is a story for another column, and perhaps " +
+                    "another writer."));
+            }
+
             return x.Won
                 ? (By + "Zille, in the Last Hour", P(
                     lull + $"There were {(x.HarborTries >= 3 ? "three" : "two")} attacks on the city of Zille, and I watched all of them. The last went in at night, and by " +
@@ -897,9 +928,18 @@ internal static class NewsWire
 
             if (x.Divided)
             {
+                if (x.Won && !x.ZilleAim)
+                {
+                    return ("Rizian Push Ends With Gains at the Coast", P(
+                        $"Rizian forces have taken {x.Target} in the last phase of their offensive, having held the city of Zille since the opening phase. " +
+                        $"{a.Headline} The rest of the region remains in Wehzek hands." + censor,
+                        "Military observers expect the fighting to stop where it stands. Neither army is believed to have the strength " +
+                        "for another push before winter."));
+                }
+
                 return x.Won
                     ? ("Zille City Taken in Final Rizian Push", P(
-                        $"Rizian forces have taken the city of Zille in the last phase of their offensive, after {(x.HarborTries > 2 ? "two failed attempts" : "a failed attempt")}. " +
+                        $"Rizian forces have taken the city of Zille in the last phase of their offensive, {(x.HarborTries > 2 ? "after two failed attempts" : x.HarborTries == 2 ? "after a failed attempt" : "at the first attempt")}. " +
                         $"{a.Headline} The rest of the region remains in Wehzek hands." + censor,
                         "Military observers expect the fighting to stop where it stands. Neither army is believed to have the strength " +
                         "for another push before winter."))
@@ -914,7 +954,7 @@ internal static class NewsWire
                 (x.HarborEverWon
                     ? "The last phase of Rizia's offensive in Zille has ended without the city of Zille, which Rizian troops took earlier and " +
                       $"lost to a counterattack. {a.Headline}"
-                    : $"The last phase of Rizia's offensive in Zille has failed to take the city of Zille, which has now withstood {Times(x.HarborTries)} " +
+                    : $"The last phase of Rizia's offensive in Zille has failed to take the city of Zille, which has now withstood {Words(x.HarborTries)} " +
                       $"Rizian attacks. {a.Headline}") + censor,
                 "Diplomats in Konstantium say the question is no longer who will win the war in Zille, but who will be first to admit " +
                 "that it is over."));
@@ -1041,7 +1081,7 @@ internal static class NewsWire
                     ? ("Zille, at Twice the Price", P(
                         $"The King has his city at the second attempt. {toll} That is the price of the second attempt alone. The Voice of " +
                         "Rizia has not forgotten the first, and neither have the families who paid it.",
-                        "A corporal of the Brenas Rifles who fell on the river road wrote to his mother in Dapalle the night before. " + home))
+                        "A corporal of the Royal Army who fell on the river road wrote to his mother in Dapalle the night before. " + home))
                     : ("The Same River, the Same Graves", P(
                         $"For the second month running, our soldiers have been sent up the river road to Zille, and for the second month " +
                         $"running they have been stopped there. {toll}",
@@ -1050,12 +1090,12 @@ internal static class NewsWire
 
             return x.Won
                 ? ("A Letter from the Gold Hills", P(
-                    "A corporal of the Brenas Rifles wrote to his mother in Dapalle the night before the attack on Auremina. He was killed " +
+                    "A corporal of the Royal Army wrote to his mother in Dapalle the night before the attack on Auremina. He was killed " +
                     "the next morning, a mile short of the town his regiment took. " + home,
                     $"Auremina is ours, and so are its mines. {toll} The gold will reach Porte Drazon before the coffins do."))
                 : ("A Letter from the Valley Road", P(
-                    "A corporal of the Brenas Rifles wrote to his mother in Dapalle from the valley road below Auremina, where the attack " +
-                    "stopped. It was his last letter. " + home,
+                    "A corporal of the Royal Army wrote to his mother in Dapalle from the valley road below Auremina, where the attack " +
+                    "stopped. " + home,
                     $"{toll} Auremina is still Wehzek. The palace calls this a phase. We would like to know what it calls the next one."));
         }
 
@@ -1291,12 +1331,12 @@ internal static class NewsWire
                     "who couldn't find it on a map last week. Well done. Truly.",
                     "Don't let it go to your head. Smolak will be twice as dangerous now that he's frightened, and Contana will want to " +
                     "prove it hasn't backed a loser.",
-                    "B.\"")
+                    "Beatrice\"")
                 : P("\"Romus,",
                     "I've read the reports. It happens, even to better generals than yours, and I have told my ministers that anyone who " +
                     "says 'I told you so' within my hearing will be appointed ambassador to Galmland.",
                     "Regroup. Then go back. GRACE does not admire kings who stop halfway.",
-                    "B.\""));
+                    "Beatrice\""));
             return;
         }
 
@@ -1489,7 +1529,7 @@ internal static class NewsWire
                     P(n == 1
                         ? "A series of explosions has damaged piers and fuel depots in two Wehzek ports facing the Strait of Kreleck. The " +
                           "Bludish Freedom Front, a militant group outlawed in both Wehlen and Sordland, has claimed responsibility."
-                        : "For the second time since the war began, Bludish Freedom Front fighters have struck a Wehzek port on the Strait " +
+                        : (n == 2 ? "For the second time since the war began" : $"After {Words(n - 1)} earlier raids") + ", Bludish Freedom Front fighters have struck a Wehzek port on the Strait " +
                           "of Kreleck, setting fire to a fuel depot and sinking a transport at its moorings.",
                       "Wehlen accuses Rumburg of arming the group and Rizia of directing it. Sordland has condemned \"any government that " +
                       "makes common cause with terrorists.\" Convoys bound for Zille are reported to have been delayed."));
@@ -1619,7 +1659,7 @@ internal static class NewsWire
                         WorldSystems.ZilleCityHeld || Variables.GetBool(ZilleOperation.CapturedVar("Auremina"))
                             ? "Half a province is not what you promised the crowds in Porte Drazon. It is, however, half a province more than " +
                               "your father managed. I would stop there, if I were you, and I am very glad I am not."
-                            : "Nothing is not what you promised the crowds in Porte Drazon. I would stop there, if I were you, and I am very " +
+                            : "Nothing is a long way from what you promised the crowds in Porte Drazon. I would stop there, if I were you, and I am very " +
                               "glad I am not.",
                         "Beatrice\"")
                     : P("\"Romus,",
@@ -1685,7 +1725,7 @@ internal static class NewsWire
                 break;
             case "divided":
                 // The last phase of Northern Crown is over with Zille city Rizian and part of the region still Wehzek: the front
-                // stops where the armies stand, and an armistice is signed under Alliance supervision.
+                // stops where the armies stand, and Alliance observers watch the line.
                 Publish("End", "RH", "The Golden Banner Stays Over Zille", P(
                     "Operation Northern Crown is over. After three months of fighting, the Royal Army holds the city of Zille, its harbor " +
                     (Variables.GetBool(ZilleOperation.CapturedVar("Auremina")) ? "and the gold hills of Auremina, " : string.Empty) +
@@ -1694,8 +1734,7 @@ internal static class NewsWire
                     "Zille is not forgotten, and neither are the men who fell for it."));
                 Publish("End", "G", "Armistice Divides Zille", P(
                     "The fighting in Zille has stopped along the line of contact, after three months of war. Rizian " +
-                    "troops keep the city of Zille and its harbor; Wehlen keeps the northern ports of Isor and Nanta" +
-                    (Variables.GetBool(ZilleOperation.CapturedVar("Auremina")) ? "." : " and the hills around Auremina.") +
+                    "troops keep the city of Zille and its harbor; Wehlen keeps " + HeldByWehlen() + ". " +
                     " Alliance observers will patrol the line until the two governments meet to negotiate a treaty.",
                     "Both capitals claim the outcome. President Smolak calls the city \"occupied, not lost,\" and the Security Committee is " +
                     "expected to discuss Rizia's conduct before it discusses the new line on the map."));
@@ -1718,16 +1757,16 @@ internal static class NewsWire
                     "After hard fighting in Zille, the General Staff has ordered our forces back to defensive positions along the border. " +
                     "The Royal Herald reminds its readers that Rizia's claim to Zille is as just today as it was yesterday."));
                 Publish("End", "G", "Rizia's War in Zille Ends in Failure", P(
-                    "Rizia's offensive in Zille has collapsed, and the guns have fallen silent along the old border under the supervision of the Alliance of " +
-                    "Nations along the old border. Wehlen keeps Zille. President Smolak has declared victory, and the Security Committee " +
+                    "Rizia's offensive in Zille has collapsed, and the guns have fallen silent along the old border under the watch of Alliance " +
+                    "observers. Wehlen keeps Zille. President Smolak has declared victory, and the Security Committee " +
                     "is expected to discuss sanctions against Rizia."));
                 Publish("End", "V", "Who Answers for This?", P(
                     "The King declared this war alone, in a foreign capital. It has failed. Thousands of our soldiers are dead, Zille is " +
                     "further away than ever, and the world now sees Rizia as an aggressor that could not even win. Someone in the palace " +
                     "must answer for this."));
-                Report("End_Defeat", SuzerainTokenName.RiziaCityPorteDrazon, "Armistice in Zille", P(
-                    "With the failure of our last operation, the General Staff has advised that the war cannot be continued. An armistice " +
-                    "has been signed under Alliance supervision. Our troops are pulling back to the border, and Wehlen keeps Zille.",
+                Report("End_Defeat", SuzerainTokenName.RiziaCityPorteDrazon, "The Guns Fall Silent", P(
+                    "With the failure of our last operation, the General Staff has advised that the war cannot be continued. The guns have fallen silent along " +
+                    "the line of contact, and Alliance observers are on their way to watch it. Our troops are pulling back to the border, and Wehlen keeps Zille.",
                     "There are angry crowds outside the Ministry of War."));
                 Report("End_Wehlen", SuzerainTokenName.RiziaCountryWehlen, "Smolak Triumphant", P(
                     "President Smolak has toured Zille, been photographed in Smolak Square with the garrison, and promised that \"no Rizian " +

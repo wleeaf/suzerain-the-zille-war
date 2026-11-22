@@ -74,7 +74,7 @@ internal static class FinishGold
             new[] { "#310" }, condition: LespiaHelped);
         Councilor(t, "Quiet",
             "\"Lespia hasn't lifted a finger for us in Zille, and everyone knows they're Arcasia's lapdog. Montoro has friends in both capitals. I'd rather his gold sat in our vaults.\"",
-            new[] { "#310" }, condition: $"not ({LespiaHelped})");
+            new[] { "#310" }, condition: $"not ({LespiaHelped}) and (Variable[\"ZilleWar.Lever_Lespia\"] or 0) == 0");
 
         // Paying for the war: after it, or for two of them.
         t.Variant("PayOver", 288, new[] { 290 }, ZilleOver, R, "\"Someone has to pay for the war in Zille. It may as well be Rusty Montoro.\"", C("Funds"));

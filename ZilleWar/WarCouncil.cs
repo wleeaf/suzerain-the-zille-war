@@ -29,7 +29,7 @@ internal static class WarCouncil
 {
     public const string Conv = "ZilleWar/Council/War";
     public const string FragmentPrefix = "ZilleWar.Pre_Council_T";
-    private static readonly string[] PrePrefixes = { "ZilleWar.Pre_", "ZilleWar.Call_" };
+    private static readonly string[] PrePrefixes = { "ZilleWar.Pre_" };
 
     // ---- the King's orders (read by ZilleOperation.BuildWarOperation)
     public const string VarApproach = "ZilleWar.Plan_Approach";            // the war plan: an Approach name, chosen once at the first council
@@ -164,6 +164,9 @@ internal static class WarCouncil
         return new Orders(form, Variables.GetBool(VarBombard), Variables.GetBool(VarDelegated), recalled, split,
             navy, subs, SupplyWar.StraitReinforcements(navy, subs), WarPlan, adapt ?? string.Empty);
     }
+
+    /// <summary>A loaded save starts the turn afresh: its war table may need injecting again.</summary>
+    internal static void ForgetInjections() => Reinjected.Clear();
 
     private static readonly HashSet<string> Reinjected = new();     // "operation:turn", one re-injection per turn and session
     private static Talk t;
@@ -582,7 +585,7 @@ internal static class WarCouncil
             "our columns had taken beyond it.",
             new[] { "Open2b" }, condition: And(Later, Is(VarExtraTaken)), sequence: "PlaySceneMusic(Security);");
         t.Line("Open2MissedZ", Narrator,
-            "The map in the Council Chambers had hardly changed. The golden tokens had crossed the border and reached the river below Zille, " +
+            "The map in the Council Chambers had hardly changed. The golden tokens had reached the river below Zille, " +
             "and there they had stopped. The silver ones still ringed the city.",
             new[] { "Open2b" }, condition: And(Later, Fought, IsNot(VarLastWon), $"{V(VarLastObjective)} == \"Harbor\""),
             sequence: "PlaySceneMusic(Security);");
@@ -652,7 +655,7 @@ internal static class WarCouncil
             new[] { "Pol1Laur" }, condition: And(Not(HugoHere), anyone));
 
         Opt("Pol1Laur", Laurento,
-            "\"Konstantium was rather less musical, Your Grace. President Smolak walked out of the session, and the Security Committee sat until " +
+            "\"Konstantium was rather less musical, Your Majesty. President Smolak walked out of the session, and the Security Committee sat until " +
             "midnight without agreeing on a censure. That is the good news. The bad news is that they will meet again next week, and the week " +
             "after that, for as long as this war lasts.\"",
             LaurentoHere, "Pol1Elena");
@@ -1012,7 +1015,7 @@ internal static class WarCouncil
             new[] { "FrontHarbor2" }, condition: Obj(Objective.Harbor));
         Intel("FrontHarbor2", "\"From the sea, the bay is wide open. But those guns will be waiting for any ship that comes in.\"", new[] { "FrontHome" });
         t.Line("FrontWall", Carlos,
-            "\"Auremina is up in the hills. Mining country: narrow roads, ridges, and old tunnels where they can hide a battalion. Our tanks won't " +
+            "\"Auremina is up in the hills. Mining country: narrow roads, ridges, old tunnels where a battalion can hide. Our tanks won't " +
             "be much use up there. It will be infantry work.\"", new[] { "FrontHome" }, condition: Obj(Objective.Wall));
         t.Line("FrontPorts", Carlos,
             "\"Isor is on the west coast, Nanta on the north. Nanta is where their convoys land, and it has coastal guns of its own. Take both, " +
@@ -1043,7 +1046,7 @@ internal static class WarCouncil
             "don't, Wehlen keeps.\"", new[] { "Command" }, condition: And(Later, Obj(Objective.Ports), lastMissed("Ports")));
         t.Line("ObjWallAgain", Carlos,
             "\"Auremina again, Your Majesty. The hills cost us last time, but this time we go in knowing where their guns are. And it is the " +
-            "last phase: whatever we hold when it ends is what the armistice will draw.\"",
+            "last phase: whatever we hold when the guns stop is where the observers will draw the line.\"",
             new[] { "Command" }, condition: And(Later, Obj(Objective.Wall), lastMissed("Wall")));
         t.Line("ObjWallLastHeld", Carlos,
             "\"We held for a month, so the last phase goes for Auremina and its mines. Isor and Nanta will have to wait for the diplomats.\"",
@@ -1055,7 +1058,7 @@ internal static class WarCouncil
             "\"The objective is the city of Zille itself: the harbor, the railway station, and the Wehzek headquarters. Take Zille, and every " +
             "Wehzek soldier south of the hills is cut off from the sea.\"", new[] { "ObjHarbor2" }, condition: And(First, Obj(Objective.Harbor)));
         t.Line("ObjHarbor2", Carlos,
-            "\"After that, the hills and the gold mines at Auremina. Then the northern ports, Isor and Nanta, and the war is won. The Staff calls " +
+            "\"After that, the hills and the gold mines at Auremina. Then the northern ports, Isor and Nanta, and the war can be won. The Staff calls " +
             "the whole campaign Operation Northern Crown, in three phases, one each month, every phase starting from the ground the last one won. Zille is the first.\"", new[] { "Command" });
         t.Line("ObjHarborL", Carlos,
             "\"The objective hasn't changed, Your Majesty. Zille, its harbor and its railway station. The next phase goes in from the lines we hold " +
@@ -1298,7 +1301,7 @@ internal static class WarCouncil
             "\"Last of all, the guns. There is no sense saving shells for a phase that won't come. A full night's barrage before the infantry " +
             "goes in, if you want one.\"", new[] { "BarrageYes", "BarrageNo" }, condition: $"{Num(VarPhase)} >= 3");
         t.Line("BarrageAskAgain", Carlos,
-            "\"And the guns again. The Wehzeks have learned to sleep in their deepest bunkers since the last barrage, but it still costs them " +
+            "\"And the guns again. The Wehzeks have learned to sleep in their deepest bunkers, but it still costs them " +
             "every gun they leave above ground. Another night of it?\"", new[] { "BarrageYes", "BarrageNo" }, condition: $"{Num(VarBarrages)} >= 1");
         t.Line("BarrageAskSaved", Carlos,
             "\"And the guns. We held them back last time, so the gunners have the shells for a full night's barrage now, if you want one.\"",
@@ -1317,7 +1320,7 @@ internal static class WarCouncil
     {
         t.Logic("Close", new[] { "CloseFirst", "CloseLater" });
         t.Line("CloseFirst", Carlos, "\"We will relay your orders immediately, Your Majesty.\"", new[] { "Close2" }, condition: First);
-        t.Line("Close2", Narrator, "The generals in the room gave me a military salute and answered as one. \"Yes, sir.\"",
+        t.Line("Close2", Narrator, "The generals in the room gave me a military salute and answered as one. \"Yes, Your Majesty.\"",
             new[] { "CloseA", "CloseB", "CloseC" });
         t.Choice("CloseA", "\"Good luck to us all.\"", new[] { "CloseA2" });
         Intel("CloseA2", "\"Good luck to all of us, Your Majesty.\"", new[] { "Close3" });

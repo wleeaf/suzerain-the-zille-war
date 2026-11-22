@@ -184,10 +184,6 @@ internal static class WorldCodex
     /// <summary>The Turn 8 treaty kind (renounced, border, accord, recognized, terms), or empty before or without a signed treaty.</summary>
     private static string TreatyKind => Variables.GetBool(ZilleTreaty.VarSigned) ? Variables.GetString(ZilleTreaty.VarKind) ?? string.Empty : string.Empty;
 
-    private static string NotRecognized => TreatyKind == "recognized"
-        ? "a claim Rizia has since accepted in the treaty signed at Wraclawitz"
-        : "a claim Rizia does not recognize";
-
     private static string Pending => TreatyKind == "border"
         ? "the line having been made the border by the Mave Nortus Treaty."
         : "pending a final settlement.";
@@ -239,11 +235,11 @@ internal static class WorldCodex
                 : null),
         "Organisations_Political_BludishFreedomFront_Rizia" => P(
             "The Bludish Freedom Front (BFF) is a Bludish separatist militant organization active in Sordland and in the northeast " +
-            "of Wehlen, where it maintains bases in the mountains around Vernen. Founded in 1933 after the Izzam Incident, it seeks " +
+            "of Wehlen, where it maintains bases in the mountains around Vernen. Emerging after the 1933 ban on the Bludish Freedom Party, it seeks " +
             "an independent state for the Bludish people.",
             "Wehlen and Sordland designate the group a terrorist organization, and President Smolak's government has waged repeated " +
             "military campaigns against it. The BFF is widely believed to receive money and weapons from the Kingdom of Rumburg and " +
-            "from Derdia, an accusation Wehlen makes loudly and Thornbourgh has never confirmed.",
+            "from Derdia, an accusation Wehlen makes loudly and the Rumburgian government has never confirmed.",
             Lever(SupplyWar.Lever.BffRaids) > 0 || Lever(SupplyWar.Lever.BffFighters) > 0
                 ? "During the Zille War, BFF raids on the Wehzek ports facing the Strait of Kreleck tied down units that might otherwise " +
                   "have reinforced Zille." + (Lever(SupplyWar.Lever.BffFighters) > 0
@@ -326,9 +322,9 @@ internal static class WorldCodex
         string end = Outcome(
             WorldSystems.ZilleCityHeld ? "The city of Zille is under Rizian military administration, and fighting continues in the rest of the region." : null,
             "The war ended with the surrender of the last Wehzek garrisons and the return of the entire region to Rizian sovereignty, " +
-            "ending twenty-five years of Wehzek administration.",
-            "The war ended in a Rizian defeat. Wehlen continues to administer the region and has since declared the Zille Agreement void, " +
-            NotRecognized + ".",
+            "ending thirty years of Wehzek administration.",
+            "The war ended in a Rizian defeat. Wehlen continues to administer the region and has since declared the Zille Agreement void. " +
+            (TreatyKind == "recognized" ? "Rizia has since accepted that claim in the treaty signed at Wraclawitz." : "Rizia does not recognize that claim."),
             "The war ended in a ceasefire supervised by the Alliance of Nations, with the region divided along the line of contact" +
             (WorldSystems.ZilleCityHeld ? " and the city of Zille in Rizian hands." : ". Wehlen continues to administer most of the region."),
             "The war ended in an armistice under Alliance supervision, with Zille city in Rizian hands and the rest of the region in Wehzek hands.");
@@ -377,7 +373,7 @@ internal static class WorldCodex
             case "Locations_Regions_ZilleTerritory_RiziaImperii":
                 return WorldSystems.Liberated
                     ? original.Replace("Since the 1957 return of Zille to Rizia,", "Since the Zille War returned the territory to Rizia by force of arms,")
-                    : null;
+                    : original.Replace("Since the 1957 return of Zille to Rizia, it has been", "Although Zille was due to return to Rizia in 1957, Wehlen has kept it, and in law it is still");
             case "Locations_Cities_Zille":
                 return WorldSystems.Liberated
                     ? original.Replace(
@@ -387,7 +383,14 @@ internal static class WorldCodex
                         "waterfront in ruins for the second time in a generation. Many Wehzek residents left on the last boats across the " +
                         "Strait of Kreleck, while ethnic Rizians from other parts of the country have begun returning to their ancestral home." +
                         (Flag("Zille_BannerRaised") ? " The square the Wehzek administration had named after President Smolak has taken back its old name." : string.Empty))
-                    : null;
+                    : original.Replace(
+                        "Recently the city was reincorporated back into Rizia after decades of Wehzek occupation, leading to a rapid growth " +
+                        "as many ethnic Rizians from other parts of the country returned to their ancestral home.",
+                        WorldSystems.ZilleCityHeld
+                            ? "Rizian troops have held the city since the Zille War, while Wehzek forces hold the rest of the region."
+                            : WorldSystems.Defeated || WorldSystems.Ceasefire
+                                ? "Wehlen has kept the city since the Zille War, after the army's campaign to take it failed."
+                                : "Wehlen still holds the city, which the Royal Army is fighting to take.");
             case "Locations_Cities_Nanta":
                 return WorldSystems.Liberated
                     ? original.Replace(
@@ -397,16 +400,22 @@ internal static class WorldCodex
                         "Wehzek administration that began with the 1927 Zille Agreement. Its large Wehzek and Bludish communities make it " +
                         "the most closely watched city in the reclaimed territory." +
                         (Flag("Nanta_PortSabotaged") ? " Its piers, demolished during the fighting, are still being rebuilt." : string.Empty))
-                    : null;
+                    : original.Replace(
+                        "Like the rest of the area, Nanta was only recently reunified with the rest of Rizia, after spending several " +
+                        "decades under Wehzek occupation, a result of the 1927 Zille Agreement.",
+                        "Like the rest of the area, Nanta has been under Wehzek administration since the 1927 Zille Agreement, and its port " +
+                        "was one of Wehlen's lifelines across the strait during the Zille War.");
             case "History_ImportantEvents_ZilleAgreement":
                 return P(original,
                     "The agreement's term expired without a handover. President Smolak's invocation of the AN Threat Mitigation Protocol " +
-                    "was answered the same day by Rizia's declaration of war, making the Zille Agreement the only lease in the history " +
-                    "of the Alliance of Nations to end on a battlefield.",
+                    "was answered the same day by Rizia's declaration of war, and the lease ended on a battlefield " +
+                    "instead of at the treaty table.",
                     Outcome("The war over its terms continues.",
-                        TreatyKind is "renounced" or "border"
-                            ? "Rizia regards the agreement as fulfilled by force of arms. Wehlen has since renounced all claim to the region in a treaty signed with Rizia."
-                            : "Rizia regards the agreement as fulfilled by force of arms. Wehlen regards it as broken.",
+                        TreatyKind == "renounced"
+                            ? "Rizia regards the agreement as ended by force of arms. Wehlen has since renounced all claim to the region in a treaty signed with Rizia."
+                            : TreatyKind == "border"
+                                ? "Rizia regards the agreement as ended by force of arms. Wehlen has since recognized Rizia's border at the Strait of Kreleck in a treaty signed with Rizia."
+                                : "Rizia regards the agreement as ended by force of arms. Wehlen regards it as broken.",
                         TreatyKind == "recognized"
                             ? "Wehlen cited Rizia's declaration of war as grounds for voiding the agreement altogether, and Rizia has since recognized that in a treaty signed at Wraclawitz."
                             : "Wehlen now cites Rizia's declaration of war as grounds for voiding the agreement altogether.",
@@ -456,7 +465,7 @@ internal static class WorldCodex
                     ? P(original, "During the Zille War she was Rizia's most important foreign backer" +
                                   (SupplyWar.RumburgOilCut ? ", keeping Rumburg's ports closed to Wehzek oil" : SupplyWar.RumburgOilHalved ? ", cutting Rumburg's purchases of Wehzek oil by half" : string.Empty) +
                                   (Lever(SupplyWar.Lever.BffRaids) > 0 || Lever(SupplyWar.Lever.BffFighters) > 0
-                                      ? ", and she was widely believed to have arranged Bludish Freedom Front raids in northern Wehlen, though Thornbourgh has never confirmed it."
+                                      ? ", and she was widely believed to have arranged Bludish Freedom Front raids in northern Wehlen, though the Rumburgian government has never confirmed it."
                                       : "."))
                     : P(original, "During the Zille War she declared Rumburg's support for her brother-in-law's claim to Zille.");
             case "Characters_ForeignLeaders_EmmerichHegel":
@@ -507,7 +516,9 @@ internal static class WorldCodex
             case "Locations_Countries_Rumburg":
             case "Locations_Countries_RumburgOMECExpelled":
                 return P(original,
-                    "Rumburg was the Kingdom of Rizia's principal foreign backer in the Zille War" +
+                    (Lever(SupplyWar.Lever.BffRaids) > 0 || Lever(SupplyWar.Lever.BffFighters) > 0 || SupplyWar.RumburgOilCut || SupplyWar.RumburgOilHalved
+                        ? "Rumburg was the Kingdom of Rizia's principal foreign backer in the Zille War"
+                        : "Rumburg kept out of the fighting in the Zille War, though its queen declared support for her brother-in-law's claim to Zille") +
                     (SupplyWar.RumburgOilCut ? ", and it kept its ports closed to Wehzek oil for the duration of the fighting."
                         : SupplyWar.RumburgOilHalved ? ", and it bought only half its old share of Wehzek oil while the fighting lasted." : "."));
             default:

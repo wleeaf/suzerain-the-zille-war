@@ -266,7 +266,7 @@ internal static class StrategicMap
     {
         AddBadge(BadgeFront, "Front Line", "Rizian and Wehzek troops face each other across the region. Towns change hands with every offensive.", "RedNegative");
         AddBadge(BadgeDivided, "Divided Territory",
-            "A ceasefire line runs through the region. Rizia administers the districts it took; Wehlen holds the rest.", "OrangeMild");
+            "The line of contact runs through the region, watched by Alliance observers. Rizia administers the districts it took; Wehlen holds the rest.", "OrangeMild");
     }
 
     private static void AddBadge(string name, string title, string subtitle, string color)

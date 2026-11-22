@@ -64,8 +64,8 @@ internal static class SweepEarlyT6War
 
         // "...best known for his defense of Porte Drazon during the Uprising." He has run the Zille war from this room.
         t.Variant("CarlosActive", 541, new[] { 543 }, Active, Narrator,
-            "Standing next to them was General Carlos Robles Azaro, best known for his defense of Porte Drazon during the Uprising, " +
-            "and lately for the war in Zille, which he had been directing from this very room since Konstantium.", new[] { "#542" });
+            "Standing next to them was General Carlos Robles Azaro, best known for his defense of Porte Drazon during the Uprising. " +
+            "Since Konstantium he had been directing the war in Zille from this very room.", new[] { "#542" });
         t.Variant("CarlosOver", 541, new[] { 543 }, Over, Narrator,
             "Standing next to them was General Carlos Robles Azaro, best known for his defense of Porte Drazon during the Uprising, " +
             "and lately for the campaign in Zille.", new[] { "#542" });
@@ -151,8 +151,8 @@ internal static class SweepEarlyT6War
 
         // Speech option: "we live in a volatile region... Let Rizia and Pales serve as an example."
         t.Variant("Volatile", 270, new[] { 268 }, Active, Romus,
-            "\"I know how Rizia is spoken of in Konstantium these days. Our soldiers are fighting in Zille for land that was always " +
-            "ours. But let Rizia and Pales show the region that where a fair bargain can be struck, it need not be struck with guns.\"",
+            "\"I know how Rizia is spoken of in Konstantium these days. " +
+            "But let Rizia and Pales show the region that where a fair bargain can be struck, it need not be struck with guns.\"",
             new[] { "#273" });
         t.Register();
     }
@@ -265,7 +265,7 @@ internal static class SweepEarlyT6War
                 ? P(o, AuditT6.ByP(s, "",
                     "The King's war in Zille is not yet a season old, and already he has found another. The families who buried their " +
                     "sons for Zille will now watch the trains leave for the south.",
-                    "The armistice in Zille is barely signed, half of the province is still behind Wehzek guns, and already the King has " +
+                    "The guns in Zille have barely fallen silent, half of the province is still behind Wehzek lines, and already the King has " +
                     "found another war. The families who buried their sons for Zille city will now watch the trains leave for the south.",
                     "The King lost one war this year and has decided to start another. The families who buried their sons for Zille, for " +
                     "nothing, will now watch the trains leave for the south."))
@@ -311,8 +311,7 @@ internal static class SweepEarlyT6War
                 ? "Abroad, the speech was read alongside the news from Zille, where the same army is still at war with Wehlen. \"Two wars " +
                   "and one treasury,\" a diplomat in Konstantium remarked. \"The applause will be the cheapest part.\""
                 : "Abroad, the speech was read as the second declaration of war from Porte Drazon in a single year, weeks after the guns " +
-                  "fell silent in Zille. \"Two wars and one treasury,\" a diplomat in Konstantium remarked. \"The applause will be the " +
-                  "cheapest part.\"");
+                  "fell silent in Zille. \"The applause will be the cheapest part,\" a diplomat in Konstantium remarked.");
         }
 
         AppendReport("Turn06_FolceDator_MilitaryIndustryOutputIncrease", _ =>
@@ -331,7 +330,7 @@ internal static class SweepEarlyT6War
             return;
         }
 
-        NewsWire.Report("SE6_Volunteers", "Rizia_City_MaveNortus", "Brenas Volunteers Ask to Be Sent North", P(
+        NewsWire.Report("SE6_Volunteers", "Rizia_City_MaveNortus", "Mave Nortus Volunteers Ask to Be Sent North", P(
             "Recruitment offices in Mave Nortus have been overwhelmed since the King's balcony speech, though not quite in the way the " +
             "General Staff intended. Many of the young men queuing outside asked to join the northern army in Zille rather than the " +
             "divisions bound for Pales, and several recruiting officers admitted they had stopped asking.",

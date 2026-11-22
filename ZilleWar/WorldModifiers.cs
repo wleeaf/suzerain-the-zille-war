@@ -66,6 +66,7 @@ internal static class WorldModifiers
     private const string SitDivided = "ZilleWar.Sit_Divided";
     private const string SitReconstruction = "ZilleWar.Sit_Reconstruction";
     private const string PolRepudiated = "ZilleWar.Pol_ZLLARepudiated";
+    private const string SitCeasefire = "ZilleWar.Sit_Ceasefire";
     private const string VarLastTurn = "ZilleWar.Mod_LastTurn";
 
     private const string Budget = "Rizia_HUDStat_Budget";
@@ -127,8 +128,8 @@ internal static class WorldModifiers
     private static readonly Card[] Situations =
     {
         new("ZilleWar_Diplomacy_Wehlen_War", "Diplomacy", "High", WarState.VarActive, "State of War with the Republic of Wehlen",
-            "The declaration of war against the Republic of Wehlen, made before the Alliance of Nations in Konstantium, ended a quarter " +
-            "century of uneasy lease and began a campaign to restore the territory of Zille to the Crown. \n\nThe conflict turns the " +
+            "The declaration of war against the Republic of Wehlen, made before the Alliance of Nations in Konstantium, ended thirty " +
+            "years of uneasy lease and began a campaign to restore the territory of Zille to the Crown. \n\nThe conflict turns the " +
             "border at Mave Nortus into a front line and puts Rizian shipping within reach of Wehzek raiders in the Strait of Kreleck. " +
             "Success depends on swift operations in Zille and on keeping the friends who lend their navies, their credit and their oil."),
         new("ZilleWar_Military_TwoFronts", "Military", "High", WarFlags.TwoWars, "War on Two Fronts",
@@ -155,7 +156,7 @@ internal static class WorldModifiers
             "The armistice line, watched by Alliance observers, runs where the armies stopped. Rizian troops hold Zille city and its harbor, " +
             "and Wehzek forces hold the ports and the hills. \n\nNeither government calls this peace, and both armies are still " +
             "dug in within sight of each other."),
-        new("ZilleWar_Military_ZilleArmistice", "Military", "Medium", WarFlow.VarCeasefire, "Armistice Line in Zille",
+        new("ZilleWar_Military_ZilleArmistice", "Military", "Medium", SitCeasefire, "Armistice Line in Zille",
             "The guns in Zille are silent under a ceasefire supervised by the Alliance of Nations. The line of contact runs through " +
             "the region, and families on either side of it cannot cross. \n\nNeither government calls this peace, and both armies " +
             "are still dug in within sight of each other."),
@@ -182,7 +183,7 @@ internal static class WorldModifiers
         ("Diplomacy_GlobalPerceptionWar", "ZilleWar.War_Zille_Liberated == true && ZilleWar.Event_Zille_Restraint == true", "RiziaDLC.Country_GlobalPerception += 1"),
         ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Liberated == true", "RiziaDLC.Country_Military_PowerProjection += 2;"),
         ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Defeated == true", "RiziaDLC.Country_Military_PowerProjection -= 4;"),
-        ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Ceasefire == true && ZilleWar.ZilleCity_Held == true", "RiziaDLC.Country_Military_PowerProjection += 1;"),
+        ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Ceasefire == true && ZilleWar.ZilleCity_Held == true && ZilleWar.Treaty_Signed == false", "RiziaDLC.Country_Military_PowerProjection += 1;"),
     };
 
     private const string WehlenGate = "ZilleWar.War_Declared == false";
@@ -190,7 +191,7 @@ internal static class WorldModifiers
     public static void Register()
     {
         foreach (string v in External.Concat(External.Select(Turns)).Concat(Computed)
-                     .Concat(new[] { StraitClosed, SitOccupation, SitRefugees, SitReconstruction, PolRepudiated, VarLastTurn, SitLost, SitDivided }))
+                     .Concat(new[] { StraitClosed, SitOccupation, SitRefugees, SitReconstruction, PolRepudiated, VarLastTurn, SitLost, SitDivided, SitCeasefire }))
         {
             Variables.Register(v);
         }
@@ -200,7 +201,7 @@ internal static class WorldModifiers
             Vanilla.Expose(v, isBool: false);
         }
 
-        foreach (string v in new[] { StraitClosed, SitOccupation, SitRefugees, SitReconstruction, PolRepudiated, SitLost, SitDivided, CityEvents.Flag("Zille_Restraint") })
+        foreach (string v in new[] { StraitClosed, SitOccupation, SitRefugees, SitReconstruction, PolRepudiated, SitLost, SitDivided, SitCeasefire, CityEvents.Flag("Zille_Restraint") })
         {
             Vanilla.Expose(v);
         }
@@ -308,9 +309,13 @@ internal static class WorldModifiers
         Variables.Set(SitOccupation, occupation < 0);
         Variables.Set(SitRefugees, refugees < 0);
         Variables.Set(SitReconstruction, reconstruction < 0);
-        Variables.Set(PolRepudiated, declared && !liberated);
+        // once Rizia has signed away the claim (recognized) or accepted the line (border, accord), the declaration no longer stands
+        bool settled = Variables.GetBool(ZilleTreaty.VarSigned) && Variables.GetString(ZilleTreaty.VarKind) is "recognized" or "border" or "accord";
+        bool treatySigned = Variables.GetBool(ZilleTreaty.VarSigned);
+        Variables.Set(PolRepudiated, declared && !liberated && !settled);
+        Variables.Set(SitCeasefire, ceasefire && !treatySigned);
         Variables.Set(SitLost, declared && defeated && !cityHeld);
-        Variables.Set(SitDivided, declared && defeated && cityHeld);
+        Variables.Set(SitDivided, declared && defeated && cityHeld && !treatySigned);
 
         if (declared)
         {

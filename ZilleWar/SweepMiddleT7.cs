@@ -75,7 +75,7 @@ internal static class SweepMiddleT7
             "\"And the bill keeps coming, doesn't it? Drink it slowly, dears. When this war is over, I want there to be something left to toast with.\"",
             new[] { "#94" }, condition: Ongoing);
         t.Line("WineLib", Estela,
-            "\"Paid in full now, darling. Twenty-five years late, but in full. Pabel, put a bottle aside for me. I mean to drink it in Zille.\"",
+            "\"Paid in full now, darling. Years late, but in full. Pabel, put a bottle aside for me. I mean to drink it in Zille.\"",
             new[] { "#94" }, condition: Lib);
         t.Line("WinePart", Estela,
             "\"Half paid, then. Zille's harbor is ours, and Isor and Nanta are still his. Twenty-five years, and my homeland still can't be in one piece.\"",

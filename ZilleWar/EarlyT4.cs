@@ -70,7 +70,8 @@ internal static class EarlyT4
             "That same afternoon, I had declared war on Wehlen from the floor of the Alliance of Nations. Reservists were already " +
             "boarding the night trains north, and the country could talk of nothing else.", new[] { "#7" });
         // [57] Vina -> [64] Hugo -> the King's replies. In wartime both lines change, and the King's [66] ("Shouldn't I make it my
-        // priority to talk to Smolak?" -> "Mr. Esquibel has already set up the meeting") becomes a question about the war.
+        // priority to talk to Smolak?" -> "Mr. Esquibel has already set up the meeting") is replaced by WineWhileWar: Smolak is
+        // beyond talking to on the day war is declared.
         t.Variant("Vina", 57, new[] { 55, 56, 61, 62, 63 }, War, Vina,
             "\"Our soldiers are on their way north, and we're uncorking wine, Father.\"", new[] { "Hugo" });
         t.Line("Hugo", Hugo,
@@ -96,8 +97,8 @@ internal static class EarlyT4
         t.Choice("ToastSoldiers", "\"Tonight our soldiers are marching north to bring Zille home. The first glass of this vintage is theirs.\"",
             new[] { "ToastSoldiers2" }, condition: War, script: Set(VarToastSoldiers, "true"), hooks: From(253));
         t.Line("ToastSoldiers2", Narrator,
-            "For a moment the tent was silent. Then, one by one, the barons and viscounts rose to their feet with their glasses raised, " +
-            "and they drank to the soldiers in a silence that lasted longer than the toast.", new[] { "#239" });
+            "For a moment the tent was silent. Then, one by one, the barons and viscounts rose with their glasses raised, " +
+            "and drank to the soldiers.", new[] { "#239" });
 
         t.Register();
     }
@@ -107,7 +108,7 @@ internal static class EarlyT4
     private static void RegisterDrinkingGame()
     {
         var t = new Talk(Drinking, "ZilleWar.E4.Drinking.");
-        Vanilla.AppendScript(Drinking, 716, Set(VarConfessedWar, "true"));
+        Vanilla.AppendScript(Drinking, 716, $"if {War} then " + Set(VarConfessedWar, "true") + " end;");
 
         t.Variant("WarLie", 342, new[] { 333 }, War, Esquibel,
             "\"I would very much like to believe that the big, bloody war was the lie, Your Majesty. After Konstantium, I'm no longer " +
@@ -140,9 +141,9 @@ internal static class EarlyT4
         {
             Variables.Set(VarSordlandWithdrawn, true);
             NewsWire.Report("E4_SordlandBonds", SuzerainTokenName.RiziaCountrySordland, "Sordland Puts Its Bond Sale on Hold", P(
-                "The Sordish finance ministry has told our embassy, through diplomatic channels, that talks on a sale of government " +
-                "bonds will not go ahead while the Kingdom is engaged in hostilities. The offer, it added, \"will be revisited when " +
-                "the region is calmer.\"",
+                "Sordland had been courting a sale of government bonds to Rizia, and talks in Holsord were pencilled in for this month. " +
+                "The Sordish finance ministry has now told our embassy, through diplomatic channels, that they will not go ahead while " +
+                "the Kingdom is engaged in hostilities. The offer, it added, \"will be revisited when the region is calmer.\"",
                 "Our ambassador reads the note as Holsord keeping its distance. Sordland is calling for talks between Rizia and Wehlen, " +
                 "and its government does not want photographs of the King in Holsord while Wehzek towns are being shelled. Sordish " +
                 "bankers, he adds, are still very interested in Rizian money. Just not this month."));
@@ -174,7 +175,7 @@ internal static class EarlyT4
                       "would have preferred the wine."
                     : "The palace insists the evening was a matter of keeping the loyalty of Valenqiris. One wonders whose loyalty the " +
                       "Crown thinks it is losing, and why it believes wine is the answer.",
-                "The Voice of Rizia asks a simple question. If the nation is at war, why is its King at a party?"));
+                "A simple question, and one the palace does not answer. If the nation is at war, why is its King at a party?"));
         }
     }
 

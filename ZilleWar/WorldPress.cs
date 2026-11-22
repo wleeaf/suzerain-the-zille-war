@@ -59,10 +59,11 @@ internal static class WorldPress
 
         // "now that Zille is returned to Rizia" (Turn 10 birthday); the Turn 9 one is LateState's
         Vanilla.HideNews("Turn10_RH_Birthday_ZilleBrenasChange", NotLiberated);
-        // A promise of Zille to House Sazon cannot be kept when the war left Zille city Wehzek: the birthday handover
-        // (ownership flags, map tokens, journal) is skipped, as if no promise had been made.
+        // A promise of Zille (and Nanta's port) to House Sazon cannot be kept unless all four cities are Rizian: after a lost or a
+        // divided war the birthday handover (ownership flags, map tokens, journal, news) is skipped, as if no promise had been made.
+        // Node 176 would otherwise hand Wehzek Nanta to House Sazon. A peace game never reaches this (War_Declared is false).
         Vanilla.AppendScript("Rizia/Turn 10/Birthday_Gathering", 169,
-            $"if Variable[\"{LateState.VarZilleLost}\"] == true then Variable[\"RiziaDLC.Zille_PromisedToHouseSazon\"] = false end");
+            "if Variable[\"ZilleWar.War_Declared\"] == true and Variable[\"ZilleWar.War_Zille_Liberated\"] ~= true then Variable[\"RiziaDLC.Zille_PromisedToHouseSazon\"] = false end");
 
         foreach ((string ci, string row) in OccupationRows)
         {
@@ -93,7 +94,7 @@ internal static class WorldPress
             "to make multiple interruptions.\n\n" +
             "Hegel was ostensibly present because of his country's new relationship with the Republic of Morella, whose leader Alma " +
             "Saltana spoke at the proceedings. However, he seemed more interested in weighing in on Palesian-Rizian relations, with " +
-            "one particular outburst directed at Palesian Grand Duke Axel Reinhart.\n\n" +
+            "one particular outburst directed at Palesian Duke Axel Reinhart.\n\n" +
             "By the end of the day, his interruptions were the least of the session's scandals. After King Romus Toras declared war " +
             "on Wehlen from the podium, the Chancellor was among the first to leave the hall, telling reporters that Valgsland " +
             "\"will not forget who spoke for the King tonight.\"");

@@ -44,8 +44,7 @@ internal static partial class SupplyWar
         var d = new Dlg(WarRoomConv, "ZilleWar.WarRoom.");
         d.Start(WarRoomConv, null, "Chart");
         d.Scene("Chart",
-            "The chart of the Strait of Kreleck was still pinned to the war room table. The fleet's orders had already gone out from " +
-            "the Council Chambers.", "PlaySceneMusic(Security);", null, "End");
+            "The chart of the Strait of Kreleck was still pinned to the table. The orders had gone out from the Council Chambers.", "PlaySceneMusic(Security);", null, "End");
         d.Finish();
     }
 

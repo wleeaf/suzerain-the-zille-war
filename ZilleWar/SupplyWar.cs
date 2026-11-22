@@ -194,6 +194,7 @@ internal static partial class SupplyWar
     private const string VarBeaToldDossier = "ZilleWar.Call_Beatrice_ToldDossier";
     private const string VarBeaToldBluds = "ZilleWar.Call_Beatrice_ToldBluds";
     private const string VarBeaNoEmbargo = "ZilleWar.Call_Beatrice_RefusedEmbargo";
+    private const string VarBeaNoEmbargoCount = "ZilleWar.Call_Beatrice_RefusedEmbargoCount";
     private const string VarBeaNoCredit = "ZilleWar.Call_Beatrice_RefusedCredit";
     private const string VarBeaNoRaids = "ZilleWar.Call_Beatrice_RefusedRaids";
     private const string VarBeaNoFighters = "ZilleWar.Call_Beatrice_RefusedFighters";
@@ -203,6 +204,7 @@ internal static partial class SupplyWar
     private const string VarBeaAskedFigWhy = "ZilleWar.Call_Beatrice_AskedFightersWhy";
     private const string VarAlvRefusedStrait = "ZilleWar.Call_Alvarez_RefusedStrait";
     private const string VarAlvRefusedMitz = "ZilleWar.Call_Alvarez_RefusedMitz";
+    private const string VarAlvRefusals = "ZilleWar.Call_Alvarez_RefusalCount";
     private const string VarAlvAskedWhy = "ZilleWar.Call_Alvarez_AskedWhy";
     private const string VarAlvAskedMitzWhy = "ZilleWar.Call_Alvarez_AskedMitzWhy";
     private const string VarAlvInvoices = "ZilleWar.Call_Alvarez_Invoices";
@@ -239,7 +241,7 @@ internal static partial class SupplyWar
     private static readonly string[] IntVars =
     {
         VarRumburgDebt, VarRumburgCredits, ModRumburgCredit, VarRumburgPatience, ModValgsland, VarValgslandStage,
-        VarBeatriceCalls, VarAlvarezCalls, VarWarRoomMeetings, VarSubPatrols, VarTwoWarsPenaltyTurn,
+        VarBeatriceCalls, VarBeaNoEmbargoCount, VarAlvRefusals, VarAlvarezCalls, VarWarRoomMeetings, VarSubPatrols, VarTwoWarsPenaltyTurn,
         VarLespiaDealTurn, VarStraitTurns, VarValgslandStageTurn, VarSmolakCalls, VarSmolakTurn, VarLastOfferTurn,
         VarUpkeepTurn, VarBffFirstTurn, VarCallFought, VarCallLastPhase, VarCallLossTier, VarCallCities, VarAlvInvoices,
     };
@@ -654,7 +656,7 @@ internal static partial class SupplyWar
 
     private static bool HegelCallReady(int turn)
     {
-        if (Variables.GetInt(VarValgslandStage) != 1 || turn <= Variables.GetInt(VarValgslandStageTurn))
+        if (turn == 5 || Variables.GetInt(VarValgslandStage) != 1 || turn <= Variables.GetInt(VarValgslandStageTurn))
         {
             return false;
         }

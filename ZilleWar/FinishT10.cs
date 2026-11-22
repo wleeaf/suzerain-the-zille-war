@@ -70,6 +70,17 @@ internal static class FinishT10
         Swap(z, ZilleBranch, "SayAdarfo", 47, new[] { 7 }, "Adarfo Sotelato", new S(Lib:
             "\"Yet nobody asked the people of Zille anything. An army marched in, and now they get a ballot. You can guess how warmly that's been received.\""),
             new[] { "#8" });
+        // Vanilla [5], [42] and [7] describe a finished reintegration; before and without a liberation the war's registers are in pieces.
+        // ([3] and [4] need the referendum won, which a war game never has.)
+        Swap(z, ZilleBranch, "RollsManus", 5, new[] { 40 }, "Manus Sazon", S.NotLib(
+            "\"The war left Zille's registers in pieces, and we are building the voter rolls from whatever survived. Registration is slow, but those who have come forward vote in numbers.\""),
+            new[] { "#6" });
+        Swap(z, ZilleBranch, "RollsDaria", 42, new[] { 44 }, "Daria de Rava", S.NotLib(
+            "\"The war left Zille's registers in pieces, so the commission is rebuilding the rolls from whatever survived. Registration is slow, but those who come forward turn out in numbers.\""),
+            new[] { "#46" });
+        Swap(z, ZilleBranch, "RollsAdarfo", 7, new[] { 45 }, "Adarfo Sotelato", S.NotLib(
+            "\"The war left Zille's registers in pieces, and the commission is rebuilding the rolls from whatever survived. Registration is slow, but those who come forward turn out in numbers.\""),
+            new[] { "#47" });
         z.Register();
 
         // The Prime Minister's election brief: vanilla's "losing Zille" is a lost negotiation; after a war it is a ceasefire line
@@ -105,7 +116,11 @@ internal static class FinishT10
         {
             string a = also ? "also " : string.Empty;
             Swap(e, Elections, name, entry, new[] { parent }, speaker,
-                new S(Lib: "\"" + string.Format(lib, a) + "\"", Part: "\"" + string.Format(part, a) + "\"", Lost: "\"" + string.Format(lost, a) + "\""), new[] { "#177" });
+                new S(Lib: "\"" + string.Format(lib, a) + "\"", Part: "\"" + string.Format(part, a) + "\"", Lost: "\"" + string.Format(lost, a) + "\"",
+                    PartBorder: name.StartsWith("Daria", StringComparison.Ordinal)
+                        ? "\"" + string.Format("The border in Zille has {0}become a rallying point for voters. They wanted a victory or a peace, and got a border, with a treaty to keep it.", a) + "\""
+                        : null),
+                new[] { "#177" });
         }
 
         e.Register();

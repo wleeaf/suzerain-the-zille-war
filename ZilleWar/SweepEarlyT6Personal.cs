@@ -239,7 +239,9 @@ internal static class SweepEarlyT6Personal
                         "Royal Army who fell in the war that returned Zille to the Kingdom. Several veterans of the campaign, some still in " +
                         "bandages, stood in the front rows.",
                         "The roll of kings was followed by a minute of silence for the soldiers who fell in Zille. Fewer members of the " +
-                        "public attended than in previous years, and the palace asked the press not to photograph the families of the fallen."),
+                        "public attended than in previous years, and the palace asked the press not to photograph the families of the fallen.",
+                        "The roll of kings was followed by a minute of silence for the soldiers who brought Zille city home. The rest of the " +
+                        "province still lies behind the armistice line, and the families of the fallen stood at the back of the crowd."),
                     "A notable moment of the ceremony was the presence of former queen Estela Toras, who attended for the first time since " +
                     "the passing of her late husband, the king. Her participation reflects her strength and resilience, considering the deep " +
                     "bond they shared over the years." +

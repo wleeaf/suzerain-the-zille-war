@@ -63,6 +63,12 @@ internal static class EarlyT7Diplomacy
         t.Variant("Pry868Part", 868, new[] { 867 }, Part, Beatrice,
             "\"And what of our ability to help you pry the rest of Zille from the claws of the Wehzeks?\"",
             new[] { "#897", "#882", "#885", "#886", "#888" });
+        t.Variant("Pry868Lost", 868, new[] { 867 }, Lost, Beatrice,
+            "\"And what of our ability to help you get Zille back? It can still be done, with the right help.\"",
+            new[] { "#897", "#882", "#885", "#886", "#888" });
+        t.Variant("Contacts933Lost", 933, new[] { 886, 934 }, Lost, Beatrice,
+            "\"We have certain contacts within Wehlen who could still make Smolak's hold on Zille uncomfortable. It is not too late for that.\"",
+            new[] { "#935" });
         t.Variant("Contacts933Lib", 933, new[] { 886, 934 }, Lib, Beatrice,
             "\"We have certain contacts within Wehlen who could keep Smolak far too busy at home to ever think of taking Zille back.\"",
             new[] { "#935" });
@@ -78,7 +84,7 @@ internal static class EarlyT7Diplomacy
         t.Variant("Laurento1081Lib", 1081, new[] { 1079 }, Lib, Laurento, busy, new[] { "#1098", "#1099", "#1100", "#1351" });
         t.Variant("Laurento1082Lib", 1082, new[] { 1084 }, Lib, Laurento, busy, new[] { "#1098", "#1094", "#1100", "#1351" });
         t.Variant("Laurento1082Over", 1082, new[] { 1084 }, $"{Over} and {WarFlags.LNot(WarFlags.Liberated)}", Laurento,
-            "\"I am still loathe to suggest violence as a solution to the Zille conundrum. But the army has done what it could, and Smolak " +
+            "\"I am still loath to suggest violence as a solution to the Zille conundrum. But the army has done what it could, and Smolak " +
             "will never give back a single village at a table. An internal resistance may be our last hope.\"",
             new[] { "#1098", "#1094", "#1100", "#1351" });
         t.Variant("Bff1076Lib", 1076, new[] { 1069 }, Lib, Romus, "\"Hmm. Is that how you help us keep Zille, then?\"", new[] { "#1077" });
@@ -122,7 +128,7 @@ internal static class EarlyT7Diplomacy
                 $"\"{lead}Half a loaf, I'm told. You have the city and its harbor, and Smolak sits behind an armistice line with the rest.\"",
                 new[] { "RPart1", "RPart2", "RDef3" });
             t.Variant("ZillePartCf" + sfx, entry, parents, partCf, Beatrice,
-                $"\"{lead}A ceasefire, with the harbor in your pocket and the rest still in Smolak's. How very Kyrutian of you.\"",
+                $"\"{lead}A ceasefire, with the harbor in your pocket and the rest still in Smolak's. Very diplomatic of you.\"",
                 new[] { "RCf1", "RCf2", "RPart2" });
             t.Variant("ZilleLostArm" + sfx, entry, parents, lostArm, Beatrice,
                 $"\"{lead}I told my ministers Smolak would not give it up easily. I did not expect him to keep all of it.\"",
@@ -284,7 +290,7 @@ internal static class EarlyT7Diplomacy
             "\"Wehlen? You're at war with Wehlen, Your Majesty. If I didn't know better, I'd say you were bluffing.\"", new[] { "#684" },
             condition: Act);
         t.Line("BluffOver", Axel,
-            "\"Wehlen? You've only just stopped shooting at each other. If I didn't know better, I'd say you were bluffing.\"", new[] { "#684" });
+            "\"Wehlen? You stopped shooting at each other not long ago. If I didn't know better, I'd say you were bluffing.\"", new[] { "#684" });
         t.Register();
     }
 
