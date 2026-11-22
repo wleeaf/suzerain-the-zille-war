@@ -13,8 +13,9 @@ namespace ZilleWar;
 /// with the Brenas levies: Zille was taken from Brenas and House Sazon in 1927. The vanilla machinery for a Manus at war
 /// is reused (Manus_SendToWar, Manus_Gone, the protest decision, the codex, the funeral), with its Pales wording rewritten;
 /// his fate follows the next Zille operation instead of the Pales war:
-/// won lightly "decorated", won at a heavy cost "wounded", lost at a heavy cost "killed" (vanilla Manus_DiesInWar),
-/// lost otherwise "missing" (vanilla's Turn 10 presumed-dead rule then applies), war over without another battle "line".
+/// as in vanilla, he dies if the House Sazon unit is destroyed (Army_Unit_Sazon_Dead rises after he left: "killed",
+/// vanilla Manus_DiesInWar); otherwise won lightly "decorated", won or lost at a heavy cost "wounded", lost lightly or the
+/// war over without another battle "line" (holding the ceasefire line, or having covered the retreat).
 /// Vina reacts at the dinner and again when the news comes; Leona, Angelica and the endings remember where he served.
 /// </summary>
 internal static class FinishManus
@@ -23,6 +24,8 @@ internal static class FinishManus
     public const string VarZille = "ZilleWar.Fin_ManusZille";          // Manus went to the Zille front (set when he accepts)
     public const string VarMissing = "ZilleWar.Fin_ManusMissing";      // fate "missing" (expresso)
     public const string VarOps = "ZilleWar.Fin_ManusOpsAtSend";        // operations done when he left
+    public const string VarSazonDeadAtSend = "ZilleWar.Fin_SazonDeadAtSend"; // vanilla Army_Unit_Sazon_Dead when he left
+    private const string SazonDead = "RiziaDLC.Army_Unit_Sazon_Dead";
     public const string VarFate = "ZilleWar.Fin_ManusFate";            // "" | decorated | wounded | killed | missing | line
     public const string VarFateTurn = "ZilleWar.Fin_ManusFateTurn";
     private const string VarFateReported = "ZilleWar.Fin_ManusFateReported";
@@ -69,7 +72,7 @@ internal static class FinishManus
     {
         foreach (string v in new[]
                  {
-                     VarCall, VarZille, VarMissing, VarOps, VarFate, VarFateTurn, VarFateReported, VarPresumedReported, VarSentNews,
+                     VarCall, VarZille, VarMissing, VarOps, VarSazonDeadAtSend, VarFate, VarFateTurn, VarFateReported, VarPresumedReported, VarSentNews,
                      VarVinaDone, VarVinaOffered, VarVinaAnswer,
                  })
         {
@@ -131,6 +134,7 @@ internal static class FinishManus
         Vanilla.AppendScript(HugoManus, 1174,
             $"if {Call} then " + Set(VarZille, "true") +
             $"Variable[\"{VarOps}\"] = Variable[\"{ZilleCampaign.VarOpsDone}\"] or 0; " +
+            $"Variable[\"{VarSazonDeadAtSend}\"] = Variable[\"{SazonDead}\"] or 0; " +
             Add("RiziaDLC.Country_HouseSazon", 1) +
             $"if {Ongoing} then {Talk.Weaken(1)} end " +
             "end");
@@ -325,7 +329,11 @@ internal static class FinishManus
             int k = sent + 1;
             bool won = Variables.GetBool(ZilleCampaign.ResultVar(k));
             int dead = Variables.GetInt(ZilleCampaign.PlayerDeadVar(k));
-            fate = won ? (dead >= 3 ? "wounded" : "decorated") : (dead >= 6 ? "killed" : "missing");
+            // As in vanilla, Manus lives and dies with the House Sazon unit: if it was destroyed, so was he. Otherwise the
+            // operation decides: a victory decorates him (or wounds him if it was costly), a defeat sends him back wounded
+            // from a bloody retreat or leaves him holding the new line.
+            bool sazonLost = Variables.GetInt(SazonDead) > Variables.GetInt(VarSazonDeadAtSend);
+            fate = sazonLost ? "killed" : won ? (dead >= 3 ? "wounded" : "decorated") : (dead >= 3 ? "wounded" : "line");
             string[] hist = ZilleCampaign.Str(ZilleCampaign.VarHistory).Split(';', StringSplitOptions.RemoveEmptyEntries);
             if (hist.Length >= k && Enum.TryParse(hist[k - 1].Split(':')[0], out Objective o))
             {
@@ -410,10 +418,13 @@ internal static class FinishManus
                         "with much of the Brenas battalion he commanded. His body has been recovered and will be returned to Sallabes.");
                     break;
                 case "line":
-                    NewsWire.Report("Fin_ManusLine", token, "Sazon Battalion Holds the Line",
-                        "With the guns in Zille silent, the Brenas battalion under Manus Sazon has been posted to the ceasefire line north of Zille " +
-                        "city. Its officers report nightly Wehzek patrols and loudspeaker broadcasts urging Rizian soldiers to go home. Mr. Sazon is " +
-                        "said to have answered the broadcasts by ordering his men to sing louder.");
+                    NewsWire.Report("Fin_ManusLine", token, "Sazon Battalion Holds the Line", Variables.GetBool(WarFlags.ZilleCityHeld)
+                        ? "With the guns in Zille silent, the Brenas battalion under Manus Sazon has been posted to the ceasefire line north of Zille " +
+                          "city. Its officers report nightly Wehzek patrols and loudspeaker broadcasts urging Rizian soldiers to go home. Mr. Sazon is " +
+                          "said to have answered the broadcasts by ordering his men to sing louder."
+                        : "When the offensive broke down, the Brenas battalion under Manus Sazon covered the retreat to the old border at Mave Nortus " +
+                          "and came back in good order, one of the few units that did. Mr. Sazon is unhurt. His officers say he walked the last miles " +
+                          "beside the stretchers and refused a car.");
                     break;
             }
         }
