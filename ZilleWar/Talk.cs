@@ -99,7 +99,7 @@ internal sealed class Talk
     /// Rejoins chains of short lines by one speaker (a line whose only continuation is a plain line by the same speaker,
     /// reached from nowhere else) into small-to-medium replies, so a reply is never chopped sentence by sentence.
     /// </summary>
-    private void MergeShortLines(int maxChars = 300)
+    private void MergeShortLines(int maxChars = 160)
     {
         bool changed = true;
         while (changed)
@@ -138,12 +138,14 @@ internal sealed class Talk
     /// Splits a long reply into parts of about two sentences. Only pure speech ("...", quotes at both ends only) or pure
     /// narration (no quotes) is split; mixed lines are kept whole. Speech parts are each re-wrapped in quotes.
     /// </summary>
-    public static List<string> SplitSpeech(string text, int maxChars = 300)
+    public static List<string> SplitSpeech(string text, int maxChars = 160)
     {
         var whole = new List<string> { text };
-        if (string.IsNullOrEmpty(text) || text.Length <= 360)
+        // Vanilla's lines run a median of 70 characters and rarely pass 150: a reply longer than that is told in a few
+        // consecutive lines, split only at sentence ends.
+        if (string.IsNullOrEmpty(text) || text.Length <= 180)
         {
-            return whole;      // small-to-medium replies stay whole
+            return whole;
         }
 
         string body = text;
@@ -183,7 +185,7 @@ internal sealed class Talk
         }
 
         sentences.Add(body.Substring(start).Trim());
-        if (sentences.Count < 3)
+        if (sentences.Count < 2)
         {
             return whole;
         }
