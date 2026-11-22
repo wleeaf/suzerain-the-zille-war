@@ -94,6 +94,10 @@ internal static class ZilleOperation
         }
 
         (string won, string lost) = ZilleReports.Register(vanillaOp.OperationProperties.WinReport, vanillaOp.OperationProperties.LoseReport);
+        if (opName != MainOperation && phase < ZilleCampaign.LastPhase)
+        {
+            won = lost = ZilleReports.RegisterPhase(phase, vanillaOp.OperationProperties.WinReport);
+        }
 
         // --- story layer: OperationData, its phases in order (the game resumes a phase from the save when it is not the first)
         var phases = new Il2CppStringList();
@@ -153,7 +157,7 @@ internal static class ZilleOperation
             WarFragmentProperties = new WarFragmentProperties
             {
                 HubWarFragmentTitle = ZilleCampaign.PhaseTitle(phase),
-                HubWarFragmentSubtitle = $"Liberation of Zille: {info.Target}",
+                HubWarFragmentSubtitle = $"Objective: {info.Target}",
                 Operation = opName,
             },
             TagsProperties = vanillaFrag.TagsProperties,

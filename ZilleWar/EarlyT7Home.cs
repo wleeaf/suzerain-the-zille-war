@@ -41,6 +41,10 @@ internal static class EarlyT7Home
         t.Variant("Titus108", 108, new[] { 101 }, Act, Hugo,
             "\"It's true that he has no experience with military operations. In the middle of the Zille campaign, that is not a small thing.\"",
             new[] { "#111" });
+        // "But then again, we are not at war": the Zille war has only just ended.
+        t.Variant("Titus108Over", 108, new[] { 101 }, Over, Hugo,
+            "\"It's true that he has no experience with military operations. But the fighting in Zille is over, and Lord willing, it will stay that way.\"",
+            new[] { "#111" });
         t.Register();
     }
 
@@ -50,10 +54,14 @@ internal static class EarlyT7Home
     {
         var t = new Talk("Rizia/Turn 7/P_HugoConfronts", "ZilleWar.E7.HugoRico.");
         t.Variant("Plea133", 133, new[] { 132 }, Declared, Hugo,
-            "\"Let him live, even if in exile or imprisonment. And whatever Smolak demands at the table, do not hand my son to the Wehzeks.\"",
+            "\"Let him live, even if in exile or imprisonment. And whatever Smolak demands, do not hand my son to the Wehzeks.\"",
             new[] { "#135" });
-        t.Variant("Price138", 138, new[] { 134 }, Declared, Romus,
+        t.Variant("Price138", 138, new[] { 134 }, $"{Declared} and {WarFlags.LNot(WarFlags.Liberated)}", Romus,
             "\"I cannot promise that, Uncle. Smolak wants his head as the price of any peace.\"", new[] { "#140" });
+        // Liberated: Wehlen conceded Zille, there is no peace left to buy with Rico.
+        t.Variant("Price138Lib", 138, new[] { 134 }, Lib, Romus,
+            "\"I cannot promise that, Uncle. Smolak has lost Zille, and he still wants Rico's head for the bombing. One day I may need something from Wehlen.\"",
+            new[] { "#140" });
         t.Variant("Court139", 139, new[] { 134 }, Declared, Romus,
             "\"No Wehzek court will ever touch him. But a Rizian one will, and I will not stand in its way.\"", new[] { "#140" });
         t.Register();
@@ -100,6 +108,17 @@ internal static class EarlyT7Home
         Widen(t, "Execute755", 756, 755, ZilleOnly);      // "Especially while we're at war."
         Widen(t, "TitusWar1075", 1076, 1075, ZilleOnly);  // "The war has been weighing on my mind"
         Widen(t, "TitusWar990", 991, 990, $"{ZilleOnly} and {Num("RiziaDLC.Army_Unit_GoldenGuard_Total")} > 0");
+        // Rico's Su Omina "sowing chaos in Zille" and Titus' "the fate of Zille", once the war has settled it.
+        t.Variant("Chaos722Lib", 722, new[] { 720 }, Lib, "Rico Toras",
+            "\"They're already hard at work in Zille, rooting out Smolak's collaborators. What else would you ask?\"",
+            new[] { "#723", "#724", "#725" });
+        t.Variant("Chaos722Part", 722, new[] { 720 }, Part, "Rico Toras",
+            "\"They're already hard at work behind the line in Zille. What else would you ask?\"", new[] { "#723", "#724", "#725" });
+        t.Variant("Fate1079Lib", 1079, new[] { 1078 }, Lib, "Titus Gordion",
+            "\"Holding Zille has been weighing on my mind, as I'm sure it has yours. Smolak will not forget it.\"",
+            new[] { "#1080", "#1085", "#1082", "#1370" });
+        t.Variant("Fate1079Part", 1079, new[] { 1078 }, Part, "Titus Gordion",
+            "\"The line in Zille has been weighing on my mind, as I'm sure it has yours.\"", new[] { "#1080", "#1085", "#1082", "#1370" });
         t.Register();
     }
 

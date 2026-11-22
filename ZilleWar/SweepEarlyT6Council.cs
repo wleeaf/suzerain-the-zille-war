@@ -103,11 +103,13 @@ internal static class SweepEarlyT6Council
             "Herald. \"I served a king who tried to do too much at once. I would not see his son make the same mistake.\"",
             s => s == StActive);
 
-        AppendReport("Turn06_ATO_CondemnsWar", s => By(s,
+        AppendReport("Turn06_ATO_CondemnsWar", s => AuditT6.ByP(s,
             "The statement notes that this is the second war the Kingdom has started this year, while its army is still fighting Wehlen " +
             "over Zille, and that several member states are reviewing their arms sales to Rizia.",
             "The statement notes that this is the second war the Kingdom has started this year, after its seizure of Zille from Wehlen, " +
             "and that several member states are reviewing their arms sales to Rizia.",
+            "The statement notes that this is the second war the Kingdom has started this year, after a war with Wehlen that left Zille " +
+            "divided along an armistice line, and that several member states are reviewing their arms sales to Rizia.",
             "The statement notes that this is the second war the Kingdom has started this year, after its failed war with Wehlen over " +
             "Zille, and that several member states are reviewing their arms sales to Rizia."));
 
@@ -122,11 +124,13 @@ internal static class SweepEarlyT6Council
             "“Dear Romus,",
             "On behalf of the Kingdom of Rumburg, I would like to extend my official congratulations with the victory of the RNC in " +
             "your elections. It warms my heart to see just how much your people support you.",
-            By(s,
+            AuditT6.ByP(s,
                 "Now do try to win the other thing as well. Rumburg's patience is considerable, but its oil is not free, and neither, " +
                 "I am afraid, am I.",
                 "And congratulations on Zille, of course. An election and a war in one season. Some would call that showing off. I " +
                 "call it a good year.",
+                "As for Zille, half a province is better than none, I suppose. Do hold on to the half you have, my dear. Maps are so " +
+                "tiresome to redraw.",
                 "As for Zille, I am told it was not your fault. I am told a great many things.") + "”"));
     }
 }

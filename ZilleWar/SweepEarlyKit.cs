@@ -39,6 +39,7 @@ internal static class SweepEarlyKit
     public const string StWon = "won";
     public const string StDefeated = "defeated";
     public const string StCeasefire = "ceasefire";
+    public const string StDivided = "divided";     // over, not liberated, Zille city Rizian (armistice or ceasefire)
 
     public static bool IsDeclared => Variables.GetBool(WarFlags.Declared);
     public static bool IsActive => IsDeclared && WarFlow.AtWar;
@@ -64,12 +65,21 @@ internal static class SweepEarlyKit
             return StWon;
         }
 
+        if (Variables.GetBool(ZilleOperation.CapturedVar("Zille")))
+        {
+            return StDivided;
+        }
+
         return ZilleCampaign.Defeated ? StDefeated : StCeasefire;
     }
 
     /// <summary>Picks the text for a state: fought now, won, or lost / stopped.</summary>
     public static string By(string state, string active, string won, string lost) =>
         state == StActive ? active : state == StWon ? won : lost;
+
+    /// <summary>As <see cref="By(string,string,string,string)"/>, with its own text for a divided Zille.</summary>
+    public static string By(string state, string active, string won, string lost, string divided) =>
+        state == StDivided ? divided : By(state, active, won, lost);
 
     public static string P(params string[] paragraphs) => NewsWire.P(paragraphs.Where(p => !string.IsNullOrEmpty(p)).ToArray());
 

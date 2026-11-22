@@ -127,7 +127,12 @@ internal static class SweepEarlyT5Family
         t.Line("Zille", Manus,
             "\"Before we begin, Your Majesty. I wanted Zille back without a single shot fired. My father's rebellion cost Brenas " +
             "that land, and I had hoped my generation could win it back with signatures. Instead, Brenas is sending its sons north. " +
-            "All I ask is that you bring as many of them home as you can.\"", new[] { "ZilleHand" }, condition: Active, hooks: From(50));
+            "All I ask is that you bring as many of them home as you can.\"", new[] { "ZilleHand" }, condition: AuditT45.Fighting, hooks: From(50));
+        // The King sought the ceasefire at this turn's War Council.
+        t.Line("ZilleCeasefire", Manus,
+            "\"Before we begin, Your Majesty. Thank you for stopping the fighting. I wanted Zille back without a single shot fired, " +
+            "and Brenas has buried enough of its sons this month to remember why.\"", new[] { "ZilleHand" },
+            condition: $"{WarFlags.L(WarFlags.Ceasefire)} and {WarFlags.LNot(WarFlags.Liberated)}", hooks: From(50));
         t.Line("ZilleHand", Narrator, "Vina found his hand under the table and held it.", new[] { "#54" });
 
         // Vina's correspondence with Hegel ([806]/[807] -> [809]): the Chancellor's latest letter.

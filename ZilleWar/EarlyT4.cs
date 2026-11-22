@@ -198,12 +198,20 @@ internal static class EarlyT4
         if (step >= 8 && !Variables.GetBool(VarMartialLaw))
         {
             Variables.Set(VarMartialLaw, true);
-            NewsWire.Report("E4_MartialLaw", SuzerainTokenName.RiziaEventZille, "Martial Law Declared in Zille", P(
-                "The Wehzek military governor of Zille has placed the region under martial law. A curfew from dusk to dawn is in force " +
-                "in Zille city and Nanta, public gatherings are banned outright, and Rizian-language newspapers have been closed " +
-                "\"for the duration of hostilities.\"",
-                "Residents describe armored cars at the harbor gates and long queues outside bakeries before the curfew falls. Wehzek " +
-                "radio has told the population that the measures are temporary and that \"the aggressor will be driven back into the sea.\""));
+            // By the end of the turn the opening phase has been fought: Zille city may already be ours.
+            bool city = Variables.GetBool(ZilleOperation.CapturedVar("Zille"));
+            NewsWire.Report("E4_MartialLaw", SuzerainTokenName.RiziaEventZille, "Martial Law Declared in Zille", city
+                ? P("Driven out of Zille city, the Wehzek military governor has set up his headquarters in Nanta and placed the rest of " +
+                    "the region under martial law. A curfew from dusk to dawn is in force in every town Wehlen still holds, public gatherings " +
+                    "are banned outright, and Rizian-language newspapers have been closed \"for the duration of hostilities.\"",
+                    "Residents describe armored cars at the harbor gates of Nanta and long queues outside bakeries before the curfew falls. " +
+                    "Wehzek radio has told the population that the loss of Zille city is temporary and that \"the aggressor will be " +
+                    "driven back into the sea.\"")
+                : P("The Wehzek military governor of Zille has placed the region under martial law. A curfew from dusk to dawn is in force " +
+                    "in Zille city and Nanta, public gatherings are banned outright, and Rizian-language newspapers have been closed " +
+                    "\"for the duration of hostilities.\"",
+                    "Residents describe armored cars at the harbor gates and long queues outside bakeries before the curfew falls. Wehzek " +
+                    "radio has told the population that the measures are temporary and that \"the aggressor will be driven back into the sea.\""));
         }
 
         // Right after the winery evening (Turn04_P_PabelLucitaRomance), not a step later.

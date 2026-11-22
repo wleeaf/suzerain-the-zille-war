@@ -17,6 +17,7 @@ internal static class SweepMiddleT7
     private const string R = Talk.Romus;
 
     private static string ZilleOnly => EarlyT7.ZilleOnly;
+    private static string NoPales => EarlyT7.NoPales;
 
     public static void Register()
     {
@@ -35,18 +36,21 @@ internal static class SweepMiddleT7
         var t = new Talk(conv, "ZilleWar.SM.T7.Pabel.");
 
         // "I won't sleep until we have Zille back." Not once it is back.
-        Swap(t, conv, "Sleep365", 365, new[] { 363 }, R, new S(Lib: "\"Like a baby. Zille is ours again.\""), new[] { "#584" });
+        // Sleeping like a baby goes to Pabel's "I'm glad to hear it", not to his remedy for a sleepless king.
+        Swap(t, conv, "Sleep365", 365, new[] { 363 }, R, new S(Lib: "\"Like a baby. Zille is ours again.\""), new[] { "#368" });
+        Swap(t, conv, "Sleep365b", 365, new[] { 363 }, R, new S(Part: "\"I won't sleep until the rest of Zille is ours.\""), new[] { "#584" });
 
         // The morning paper: what the household reads first.
         foreach ((string sfx, string state, string text) in new[]
                  {
                      ("On", Ongoing, "\"The front page is Zille again, I'm afraid. Cook reads the casualty lists before anything else now. Her nephew is with the infantry up there.\""),
                      ("Lib", Lib, "\"The front page is still Zille, Your Majesty. Cook cried into the porridge this morning. Her nephew came through the whole campaign without a scratch.\""),
-                     ("Part", Part, "\"The front page is the ceasefire again. Cook's nephew writes that the two sides wave at each other across the line now. She doesn't know whether to laugh.\""),
+                     ("Part", Part, "\"The front page is the armistice line again. Cook's nephew writes that the two sides wave at each other across it now. She doesn't know whether to laugh.\""),
                      ("Lost", Lost, "\"I would read it after breakfast, if I were you, Your Majesty. It's Zille again.\""),
                  })
         {
-            t.Line("Paper" + sfx, Pabel, text, new[] { "#370" }, condition: state, hooks: Talk.From(366));
+            // With the Pales war on, the front page is Pales: vanilla's line stands.
+            t.Line("Paper" + sfx, Pabel, text, new[] { "#370" }, condition: And(state, NoPales), hooks: Talk.From(366));
         }
 
         // Derdian mercenaries "for use in Zille", once Zille is already ours.
@@ -74,7 +78,7 @@ internal static class SweepMiddleT7
             "\"Paid in full now, darling. Twenty-five years late, but in full. Pabel, put a bottle aside for me. I mean to drink it in Zille.\"",
             new[] { "#94" }, condition: Lib);
         t.Line("WinePart", Estela,
-            "\"Half paid, then. The harbor is ours and the hills are his. Twenty-five years, and my homeland still can't be in one piece.\"",
+            "\"Half paid, then. Zille's harbor is ours, and Isor and Nanta are still his. Twenty-five years, and my homeland still can't be in one piece.\"",
             new[] { "#94" }, condition: Part);
         t.Line("WineLost", Estela,
             "\"And now we've paid it twice. Pour me a large one, Pabel. I would rather not think about my homeland tonight.\"",
@@ -107,7 +111,7 @@ internal static class SweepMiddleT7
             "\"The actions of my son... I cannot fathom what led Rico to such darkness. The bombing, and now a war over Zille... It's a stain upon our House.\"",
             new[] { "#173" });
         t.Variant("Mercy127", 127, new[] { 126 }, War, R,
-            "\"He showed no mercy when he planted that bomb. It cost lives, it cost us Zille, and in the end it cost us a war. I'm sorry.\"",
+            "\"He showed no mercy when he planted that bomb. It cost lives, it cost us Zille's peaceful return, and in the end it cost us a war. I'm sorry.\"",
             new[] { "#132" });
         t.Register();
     }

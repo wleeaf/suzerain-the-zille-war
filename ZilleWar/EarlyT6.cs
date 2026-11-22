@@ -153,7 +153,11 @@ internal static class EarlyT6
         t.Line("LespiaBothWays", Laurento,
             "\"I note that Prime Minister Alvarez voted with Pales all the same, ships at Kreleck or not. He sells us the strait in the " +
             "north and backs Reinhart in the south. I would expect nothing less of him.\"",
-            new[] { "#29", "#30" }, condition: $"{Declared} and {LespiaDeal}", hooks: From(28));
+            new[] { "#29", "#30" }, condition: $"{Active} and {LespiaDeal}", hooks: From(28));
+        t.Line("LespiaBothWaysOver", Laurento,
+            "\"I note that Prime Minister Alvarez voted with Pales all the same. He sold us the strait while our army was in Zille, and " +
+            "now he backs Reinhart in the south. I would expect nothing less of him.\"",
+            new[] { "#29", "#30" }, condition: $"{AuditT6.Over} and {LespiaDeal}", hooks: From(28));
         t.Register();
     }
 
@@ -198,14 +202,23 @@ internal static class EarlyT6
         t.Variant("StandLiberated", 257, new[] { 239 }, Liberated, Axel,
             "\"I watched what your army did in Zille, Your Majesty. Believe me, I watched. But I am not Smolak, and Pales is not a lease.\"",
             after257);
-        t.Variant("StandLost", 257, new[] { 239 }, LostOrStopped, Axel,
-            "\"Your army could not hold a single Wehzek port. Spare me the threats, Your Majesty.\"", after257);
+        t.Variant("StandLost", 257, new[] { 239 }, AuditT6.Lost, Axel,
+            "\"Your army could not even take Zille from Smolak, Your Majesty. Spare me the threats.\"", after257);
+        t.Variant("StandPart", 257, new[] { 239 }, AuditT6.Part, Axel,
+            "\"Your army could not finish Smolak, Your Majesty. He still holds half of Zille behind his armistice line. Spare me the threats.\"",
+            after257);
 
         // The suspects.
-        t.Choice("Suspect", "\"Wehlen.\"", new[] { "Suspect1" }, condition: Declared, hooks: From(464));
+        t.Choice("Suspect", "\"Wehlen.\"", new[] { "Suspect1", "Suspect1Lib", "Suspect1Over" }, condition: Declared, hooks: From(464));
         t.Line("Suspect1", Axel,
             "\"Smolak? He has his hands full with your army. Though I grant you, nothing would please him more than to see us at each other's throats.\"",
-            new[] { "Suspect2", "Suspect3" });
+            new[] { "Suspect2", "Suspect3" }, condition: Active);
+        t.Line("Suspect1Lib", Axel,
+            "\"Smolak? He has only just lost Zille to you. I doubt he has the stomach for more. Though I grant you, nothing would please " +
+            "him more than to see us at each other's throats.\"", new[] { "Suspect2", "Suspect3" }, condition: Liberated);
+        t.Line("Suspect1Over", Axel,
+            "\"Smolak? He has only just signed an armistice with you. Though I grant you, nothing would please him more than to see us " +
+            "at each other's throats.\"", new[] { "Suspect2", "Suspect3" }, condition: AuditT6.NotLib);
         t.Choice("Suspect2", "\"Every division I send south is one he no longer has to face. Think about who that serves.\"", new[] { "Suspect4" });
         t.Choice("Suspect3", "\"Smolak has been trying to divide this region since the day he decided Zille's lease was his to keep.\"", new[] { "Suspect4" });
         t.Line("Suspect4", Axel,
@@ -247,7 +260,12 @@ internal static class EarlyT6
         t.Line("OneWarWonA", Lucita, "\"We took Zille. Pales knows it. Why do you think Reinhart is so polite these days?\"", new[] { "#284" });
         t.Variant("OneWarLost", 274, new[] { 273 }, LostOrStopped, Romus,
             "\"After Zille, the army needed time. Not another war.\"", new[] { "OneWarLostA" });
-        t.Line("OneWarLostA", Lucita, "\"And Smolak would have laughed at us from Wraclawitz if we'd lost twice in one year.\"", new[] { "#284" });
+        t.Logic("OneWarLostA", new[] { "OneWarLostA1", "OneWarPartA" });
+        t.Line("OneWarLostA1", Lucita, "\"And Smolak would have laughed at us from Wraclawitz if we'd lost twice in one year.\"", new[] { "#284" },
+            condition: $"not ({AuditT6.Part})");
+        t.Line("OneWarPartA", Lucita,
+            "\"And Smolak is still sitting behind his armistice line, waiting for us to stumble. Better he waits a long time.\"", new[] { "#284" },
+            condition: AuditT6.Part);
 
         // "How is House Azaro feeling about the fact that we aren't at war right now?"
         t.Variant("AzaroWar", 289, new[] { 287 }, Active, Romus,
@@ -279,9 +297,13 @@ internal static class EarlyT6
             "away from the photographers.", new[] { "Aside1" },
             condition: $"{Declared} and {LespiaDeal} and {alvarezHere} and {NotSet(AlvarezAsideDone)}",
             script: Set(AlvarezAsideDone, "true") + $"AddConversant(\"{Alvarez}\"); AddConversant(\"{Laurento}\");", hooks: From(374));
-        t.Line("Aside1", Alvarez,
+        t.Logic("Aside1", new[] { "Aside1On", "Aside1Over" });
+        t.Line("Aside1On", Alvarez,
             "\"My admirals have been holding the Strait of Kreleck shut for you, Your Majesty. Wehzek tankers are rusting at anchor in " +
-            "Wraclawitz because of it. And today, the Aureus gas starts flowing.\"", new[] { "Aside2" });
+            "Wraclawitz because of it. And today, the Aureus gas starts flowing.\"", new[] { "Aside2" }, condition: Active);
+        t.Line("Aside1Over", Alvarez,
+            "\"My admirals held the Strait of Kreleck shut for you while your army was in Zille, Your Majesty. Wehzek tankers rusted at " +
+            "anchor in Wraclawitz because of it. And today, the Aureus gas starts flowing.\"", new[] { "Aside2" }, condition: AuditT6.Over);
         t.Line("Aside2", Alvarez,
             "\"I don't hold grudges. I hold invoices. I think Rizia can afford to sell some of its share back to its friends at a friendly price. Shall we say three Arcasian Liras per thousand cubic meters?\"",
             new[] { "Pay", "Caleqabiz", "Refuse" });
@@ -403,7 +425,10 @@ internal static class EarlyT6
         // Lespian destroyers in the Palesian navy, while Lespia closes Kreleck for us.
         t.Line("Customers1", Lucita,
             "\"And yes, Your Majesty, those are the same Lespian shipyards. Alvarez sells us the strait in the north and sells " +
-            "Reinhart destroyers in the south.\"", new[] { "Customers2" }, condition: $"{Declared} and {LespiaDeal}", hooks: From(167, 189));
+            "Reinhart destroyers in the south.\"", new[] { "Customers2" }, condition: $"{Active} and {LespiaDeal}", hooks: From(167, 189));
+        t.Line("Customers1Over", Lucita,
+            "\"And yes, Your Majesty, those are the same Lespian shipyards. Alvarez sold us the strait while we fought for Zille, and " +
+            "sold Reinhart destroyers all the while.\"", new[] { "Customers2" }, condition: $"{AuditT6.Over} and {LespiaDeal}", hooks: From(167, 189));
         t.Line("Customers2", Taddeus, "\"Lespia does not have allies, Lieutenant. It has customers.\"", new[] { "#177" });
         t.Register();
     }
@@ -473,7 +498,10 @@ internal static class EarlyT6
             new[] { "#774" }, condition: Liberated, hooks: From(773));
         t.Line("SanctLost", Estela,
             "\"And now I suppose I shall never see it again. Not while Smolak's flag flies over the harbor.\"",
-            new[] { "#774" }, condition: Defeated, hooks: From(773));
+            new[] { "#774" }, condition: AuditT6.Lost, hooks: From(773));
+        t.Line("SanctPart", Estela,
+            "\"It's on our side of the line now, isn't it? When the roads are safe, I want to see whether it still stands. Before any minister does.\"",
+            new[] { "#774" }, condition: AuditT6.Part, hooks: From(773));
         t.Register();
     }
 
@@ -505,7 +533,10 @@ internal static class EarlyT6
         var t = new Talk(conv, "ZilleWar.E6.Balcony.");
 
         // "Wehlen, despite years of alliance, refrained from standing by us when it mattered most."
-        t.Variant("Wehlen", 200, new[] { 51 }, $"{Declared} and not ({Liberated})", Romus,
+        t.Variant("WehlenPart", 200, new[] { 51 }, AuditT6.Part, Romus,
+            "\"Wehlen, which still holds half of Zille behind an armistice line, stood against us once again. It will not hold it forever.\"",
+            new[] { "#341" });
+        t.Variant("Wehlen", 200, new[] { 51 }, $"{Declared} and not ({Liberated}) and not ({AuditT6.Part})", Romus,
             "\"Wehlen, which still holds our people in Zille by force, stood against us once again. It will not stand for long.\"",
             new[] { "#341" });
         t.Variant("WehlenWon", 200, new[] { 51 }, Liberated, Romus,
@@ -533,6 +564,17 @@ internal static class EarlyT6
         t.Line("NorthWonA", Narrator,
             "The crowd took up the name before I had finished the sentence. \"Zille! Zille!\" It was some time before I could go on.",
             new[] { "#442" }, script: Inc("RiziaDLC.Turn06_WarSpeech_Impact", 1));
+        t.Choice("NorthPart", "\"Our soldiers brought Zille city home, and they still stand guard on the armistice line. Today I ask this nation to carry a second burden.\"",
+            new[] { "NorthPartA" }, menu: "Speak of the soldiers in Zille.",
+            condition: $"{AuditT6.Part} and {NotSet(AskedNorthSpeech)}", script: Set(AskedNorthSpeech, "true"), hooks: From(157));
+        t.Line("NorthPartA", Narrator,
+            "The cheer that answered me was loud, and louder still when I named the regiments that had taken Zille city.",
+            new[] { "#442" }, script: Inc("RiziaDLC.Turn06_WarSpeech_Impact", 1));
+        t.Choice("NorthLost", "\"Our soldiers gave everything for Zille. I will not let their sacrifice be forgotten, and I will ask no less courage of us now.\"",
+            new[] { "NorthLostA" }, menu: "Speak of the fallen of Zille.",
+            condition: $"{AuditT6.Lost} and {NotSet(AskedNorthSpeech)}", script: Set(AskedNorthSpeech, "true"), hooks: From(157));
+        t.Line("NorthLostA", Narrator, "For a moment the crowd was silent. Then, slowly, the applause began, and it did not stop for a long time.",
+            new[] { "#442" });
         t.Register();
     }
 
@@ -547,10 +589,14 @@ internal static class EarlyT6
             "\"Our soldiers are already fighting Wehlen in Zille. Tell me the religious context of what I have begun, Sal.\"", new[] { "#461" });
         t.Variant("Troubles", 745, new[] { 744 }, Declared, Romus,
             "\"The war for Zille troubles me more than I let my generals see. Does Wruhecism justify it?\"", new[] { "#86" });
-        t.Variant("Divine", 764, new[] { 763 }, Declared, Romus,
+        t.Variant("Divine", 764, new[] { 763 }, Active, Romus,
             "\"How can we know if our war with Wehlen aligns with the divine order?\"", new[] { "#109" });
-        t.Variant("Discern", 768, new[] { 767 }, Declared, Romus,
+        t.Variant("Discern", 768, new[] { 767 }, Active, Romus,
             "\"How can we discern whether our war with Wehlen aligns with the text you speak of?\"", new[] { "#488" });
+        t.Variant("DivineOver", 764, new[] { 763 }, AuditT6.Over, Romus,
+            "\"How can I know whether our war with Wehlen was in accord with the divine order?\"", new[] { "#109" });
+        t.Variant("DiscernOver", 768, new[] { 767 }, AuditT6.Over, Romus,
+            "\"How can I discern whether our war with Wehlen was in accord with the text you speak of?\"", new[] { "#488" });
 
         // After the just-war doctrine.
         t.Line("Hearth", Sal,
@@ -561,6 +607,14 @@ internal static class EarlyT6
             "\"One just war is a heavy enough burden for a soul, Your Majesty. Two is a question the Lord will put to you personally. " +
             "I would have an answer ready.\"", new[] { "#110" },
             condition: $"{Active} and {PalesWarComing}", hooks: From(109, 488));
+        t.Line("HearthOver", Sal,
+            "\"St. Wruhec forgave the sword drawn for one's own hearth, Your Majesty. He also taught that it must go back into its " +
+            "sheath. I would remember both halves of the lesson.\"", new[] { "#110" },
+            condition: $"{AuditT6.Over} and not {PalesWarComing}", hooks: From(109, 488));
+        t.Line("TwoSwordsOver", Sal,
+            "\"One war is a heavy burden for a soul, Your Majesty, and you have carried one already this year. Be sure of your answer " +
+            "before you take up a second. The Lord will ask for it.\"", new[] { "#110" },
+            condition: $"{AuditT6.Over} and {PalesWarComing}", hooks: From(109, 488));
 
         // Derdia: "this could anger President Smolak... and further complicate Zille's return."
         t.Variant("Azmal", 680, new[] { 703 }, Declared, Sal,
@@ -609,8 +663,11 @@ internal static class EarlyT6
             "overlapping maritime borders of Rizia and Pales, the field should be shared equally between the two countries. The " +
             "committee rejected the Palesian argument that Caleqabiz shouldn't have the same maritime border radius as mainland " +
             "Rizia, as it is to be considered part of Rizia proper. Rumburg, Morella and Derdia backed up this position.",
-            "Wehlen, at war with Rizia since the King's declaration in Konstantium, voted against the ruling. Its envoy told the " +
-            "committee that \"a kingdom that settles its borders with tanks has no business asking this assembly to draw its maps.\"",
+            (WarFlow.AtWar
+                ? "Wehlen, at war with Rizia since the King's declaration in Konstantium, voted against the ruling."
+                : "Wehlen, whose war with Rizia over Zille ended only weeks ago, voted against the ruling.") +
+            " Its envoy told the committee that \"a kingdom that settles its borders with tanks has no business asking this assembly to " +
+            "draw its maps.\"",
             "While some in Rizia are disappointed over not receiving full exploitation rights, the AN stresses that both countries " +
             "should now work together towards peacefully dividing the field and repairing diplomatic relations." +
             (navy

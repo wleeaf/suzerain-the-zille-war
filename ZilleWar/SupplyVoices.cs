@@ -91,7 +91,13 @@ internal static partial class SupplyWar
         d.Scene("CallIn",
             "An assistant brought in the blue telephone. The operator announced Valgsland, and the line went so quiet I could hear " +
             "the Chancellor breathing before he spoke.", null, Music + $"AddConversant(\"{Hegel}\");", "Call1");
-        d.Say("Call1", Hegel, "\"Mr. Toras. I will be brief, since you are busy.\"", "Why");
+        d.Say("Call1", Hegel, "\"Mr. Toras. I will be brief, since you are busy.\"", "Front");
+        d.Branch("Front", "FrontAur", "FrontZille", "Why");
+        d.SayIf("FrontAur", Is(ZilleOperation.CapturedVar("Auremina")), Hegel,
+            "\"Your army is in the Auremina hills now. The miners of Isor can hear its guns from their pitheads, and their unions can " +
+            "hear them in Valgsland.\"", "Why");
+        d.SayIf("FrontZille", Is(WarFlags.ZilleCityHeld), Hegel,
+            "\"You hold Zille. Then you hold its Wehzeks too, Mr. Toras, and Valgsland is counting every one of them.\"", "Why");
         d.Branch("Why", "WhyVillage", "WhyCaleqabiz", "WhyLespia", "WhyBff", "WhySubs", "WhyCable");
         d.SayIf("WhyVillage", Eq(VarBludsIncident, "kept"), Hegel,
             "\"Your Bludish mercenaries shot eleven villagers in the hills above Zille, and you kept them at the front. The photographs " +
@@ -157,12 +163,22 @@ internal static partial class SupplyWar
         d.SayDo("Phone", Esquibel,
             "\"President Smolak, Your Majesty. Through the Kyrutian embassy. He asked for you by name, and then by several other names.\"",
             $"AddConversant(\"{Esquibel}\"); AddConversant(\"{Smolak}\");", "Open");
-        d.Branch("Open", "OpenAgain", "OpenHeldFedo", "OpenHeld", "OpenStrong", "OpenPlain");
+        d.Branch("Open", "OpenAgain", "OpenQuiet", "OpenAuremina", "OpenHeldFedo", "OpenHeld", "OpenMissed", "OpenStrong", "OpenPlain");
+        d.SayIf("OpenQuiet", Is(VarCallHeld), Smolak,
+            "\"Your Majesty. Your guns have been quiet for a month. Either you are tired or you are thinking, and I am calling in case it " +
+            "is the second.\"", "Offer");
+        d.SayIf("OpenAuremina", Is(ZilleOperation.CapturedVar("Auremina")), Smolak,
+            "\"Your Majesty. You have my gold hills, and the miners of Auremina are learning your anthem with a Wehzek accent. Enjoy " +
+            "them. Gold is heavy to carry home.\"", "Offer");
+        d.SayIf("OpenMissed", $"not {held} and {N(VarCallFought)} >= 1 and {Not(VarCallLastWon)}", Smolak,
+            "\"Your Majesty. Your army came down the river, looked at Zille, and went back up it again. I listened on the radio. I " +
+            "thought that now, while you are counting, you might be in the mood to listen.\"", "Offer");
         d.SayIf("OpenHeldFedo", $"{held} and {Is(CityEvents.Flag("Zille_BannerRaised"))}", Smolak,
             "\"Your Majesty. Your soldiers are sleeping in my harbor, in my hotels, and in the square that had my name on it until they " +
             "unscrewed it. Fedo Square. How very old-fashioned. I hope the beds are comfortable.\"", "Offer");
         d.SayIf("OpenAgain", $"{calls} >= 2", Smolak,
-            "\"Your Majesty. I will be shorter this time. My offer has improved, because my situation has not.\"", "Offer");
+            "\"Your Majesty. Last month you told me Zille was not for sale. I have since learned that everything in Zille is for sale, " +
+            "beginning with my soldiers' rifles. So I will be shorter this time. My offer has improved, because my situation has not.\"", "Offer");
         d.SayIf("OpenHeld", held, Smolak,
             "\"Your Majesty. Your soldiers are sleeping in my harbor, in my hotels, in the square with my name on it. I hope the beds " +
             "are comfortable.\"", "Offer");
@@ -172,7 +188,10 @@ internal static partial class SupplyWar
         d.Say("OpenPlain", Smolak,
             "\"Your Majesty. You have made your point, and the newspapers in Wraclawitz have made theirs. Perhaps now the grown-ups can talk.\"",
             "Offer");
-        d.Say("Offer", Smolak,
+        d.Branch("Offer", "OfferAgain", "Offer1");
+        d.SayIf("OfferAgain", $"{calls} >= 2", Smolak,
+            "\"The same offer, then, at a better price. A ceasefire on the line where our armies stand tonight, and in return...\"", "Terms");
+        d.Say("Offer1", Smolak,
             "\"Here is my offer. A ceasefire on the line where our armies stand tonight. The Alliance draws a pretty map, everybody " +
             "goes home, and in return...\"", "Terms");
         d.Branch("Terms", "TermsReduced", "TermsFull");
@@ -183,7 +202,10 @@ internal static partial class SupplyWar
             "\"...your cousin Ricardus comes to Wraclawitz to answer for Smolak Square, your border closes to the Bludish bandits " +
             "Thornbourgh keeps arming, and every Wehzek living in Rizia gets the same rights as a Rizian. The very terms my ministers " +
             "drafted before you decided to shoot instead.\"", "Aside");
-        d.Branch("Aside", "AsideBeatrice", "AsidePlain");
+        d.Branch("Aside", "AsideBeatrice", "AsideAgain", "AsidePlain");
+        d.SayIf("AsideAgain", $"{calls} >= 2", Esquibel,
+            "Laurento leaned in. \"He is asking for less than he did last month, Your Majesty. That is what a garrison on half rations " +
+            "sounds like. But the line where we stand tonight is still the line we would keep.\"", "Answer");
         d.SayIf("AsideBeatrice", Is(VarRumburgWantsCeasefire), Esquibel,
             "Laurento leaned in and spoke quietly. \"A ceasefire on the present line means we keep what we hold, Your Majesty. And it " +
             "would give Queen Beatrice the end date she asked for.\"", "Answer");
@@ -219,7 +241,10 @@ internal static partial class SupplyWar
         d.Say("RefusedStarving", Smolak,
             "\"Then we keep burying boys. Mine are hungry and yours are dying. I hope the history books are kind to you. They are " +
             "rarely kind to me.\"", "Close");
-        d.Say("Close", Narrator, "The line went dead before Laurento could take the receiver from me.", "End");
+        d.Branch("Close", "CloseAgain", "Close1");
+        d.SayIf("CloseAgain", $"{calls} >= 2", Narrator,
+            "This time Smolak did not wait to hear how I took it. The line was dead while I still had the receiver at my ear.", "End");
+        d.Say("Close1", Narrator, "The line went dead before Laurento could take the receiver from me.", "End");
         d.Finish();
     }
 
@@ -240,7 +265,11 @@ internal static partial class SupplyWar
             "line, brisk as a ledger.", null, $"AddConversant(\"{Saltana}\");", "S1");
         d.Say("S1", Saltana,
             "\"Your Majesty. I'll be direct, since you've stopped pretending to be anything other than a king at war.\"", "S2");
-        d.Say("S2", Saltana,
+        d.Branch("S2", "S2Road", "S2Zille");
+        d.SayIf("S2Road", Not(WarFlags.ZilleCityHeld), Saltana,
+            "\"Wehzek fighters have been crossing the Gulf of Moridia to strafe your columns on the Zille road. Morella doesn't care for " +
+            "anyone's fighters over our gulf. Least of all Wiktor Smolak's.\"", "S3");
+        d.Say("S2Zille", Saltana,
             "\"Wehzek fighters have been crossing the Gulf of Moridia to strafe your positions in Zille. Morella doesn't care for " +
             "anyone's fighters over our gulf. Least of all Wiktor Smolak's.\"", "S3");
         d.Say("S3", Saltana,

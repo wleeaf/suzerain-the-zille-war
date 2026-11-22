@@ -162,7 +162,10 @@ internal static class SweepEarly
                 "The guns in Zille have fallen silent, and the Palace will want the victory counted as a vote for the King. It is not. " +
                 "Someone must still ask what it cost, and who will pay the bill. The RNC will not ask. The RPP will.",
                 "The war in Zille is over, and it was not won. Someone must ask how a war declared from a podium in Konstantium ended " +
-                "like this, and who will pay for it. The RNC will not ask. The RPP will."),
+                "like this, and who will pay for it. The RNC will not ask. The RPP will.",
+                "The guns in Zille have stopped on a line through the middle of the region. The Palace will call the city of Zille a " +
+                "victory; the families on the wrong side of the wire will call it something else. Someone must ask what half a province " +
+                "cost, and who will pay for it. The RNC will not ask. The RPP will."),
             "If everyone who's reading this votes, we may even win a majority in the House of Delegates for the first time in history.",
             "So please: Vote RPP in '55!"));
 
@@ -216,7 +219,7 @@ internal static class SweepEarly
 
         Variables.Set(ReportCampaign, true);
         string s = State();
-        string title = By(s, "The War Comes to the Campaign", "Zille Dominates the Campaign", "Zille Haunts the Campaign");
+        string title = By(s, "The War Comes to the Campaign", "Zille Dominates the Campaign", "Zille Haunts the Campaign", "A Divided Zille Divides the Campaign");
         NewsWire.Report("SE_WarCampaign", SuzerainTokenName.RiziaCityPorteDrazon, title, P(
             By(s,
                 "With the army fighting in Zille, the election campaign has become a contest over the war. RNC candidates now close " +
@@ -225,14 +228,20 @@ internal static class SweepEarly
                 "Victory in Zille has turned the last weeks of the campaign into a procession for the RNC. Candidates share the stage " +
                 "with returning soldiers, and in Valenqir one of them took the stage in his reserve officer's uniform.",
                 "The outcome in Zille hangs over the last weeks of the campaign. RNC candidates speak of honor and sacrifice and very " +
-                "little of the war itself, while widows' black is a common sight in the front rows of every rally."),
+                "little of the war itself, while widows' black is a common sight in the front rows of every rally.",
+                "The armistice in Zille hangs over the last weeks of the campaign. RNC candidates promise that the city of Zille will " +
+                "never be given back and say little about the rest of the region, while widows' black is a common sight in the front " +
+                "rows of every rally."),
             By(s,
                 "The RPP has been more careful. Manus Sazon told a crowd in Iza that his party \"stands with every soldier in Zille, " +
                 "and with every mother who wants him home,\" but RPP canvassers in Porte Drazon report doors being shut in their faces.",
                 "The RPP has tried to turn the conversation to the bill. Manus Sazon told a crowd in Iza that \"victory has a price, and " +
                 "the Palace means to send it to your door,\" to applause that was polite rather than warm.",
                 "The RPP smells an opening. Manus Sazon told a crowd in Iza that \"a war declared without a single vote was lost without a " +
-                "single vote,\" and RPP canvassers report a hearing in neighborhoods that would not open their doors a month ago."),
+                "single vote,\" and RPP canvassers report a hearing in neighborhoods that would not open their doors a month ago.",
+                "The RPP has found its line. Manus Sazon told a crowd in Iza that \"the King went to war for all of Zille and came back " +
+                "with half of it, and nobody voted for either,\" and RPP canvassers report a hearing in neighborhoods that would not " +
+                "open their doors a month ago."),
             "Officials of the electoral commission have asked both parties to keep the war out of the polling stations, with little " +
             "hope of success."));
     }

@@ -192,7 +192,17 @@ internal static partial class SupplyWar
         string subsOut = Is(WarCouncil.VarSubsOut);
 
         // ---- where the strait stands
-        t.Logic(entry, new[] { "WRGone", "WRThin", "WRClosed", "WROpen" });
+        // A month after the last council, the strait is told as what changed (or didn't), not word for word again.
+        string again = $"{N(VarWarRoomMeetings)} >= 3";
+        t.Logic(entry, new[] { "WRGone", "WRThin", "WRClosedAgain", "WRClosed", "WROpenAgain", "WROpen" });
+        Say("WRClosedAgain", $"{closed} and {again}",
+            "\"The strait, then. Another month of Lespian inspections. Their captains get slower every week, and the Wehzek night runners " +
+            "bolder.\"",
+            "\"The strait, Your Majesty. Another month of Lespian inspections, slower every week, and the Wehzek night runners bolder.\"",
+            "WRState");
+        Say("WROpenAgain", $"{open} and {again}",
+            "\"The strait is still open, Your Majesty. Every night we leave it alone, Nanta gets another trainload of men off the ships.\"",
+            "\"The strait is still open, Your Majesty. Every night we leave it alone, Nanta takes in another battalion.\"", "WROpen2");
         Say("WRGone", $"{open} and {Is(VarLespiaWithdrawn)}",
             "\"Now the strait. The Lespian ships are gone, and the convoys came back the same week. As if someone had sent them a telegram.\"",
             "\"Now the strait, Your Majesty. The Lespian ships have left, and the convoys came back within the week.\"", "WROpen2");
@@ -212,7 +222,10 @@ internal static partial class SupplyWar
             "\"If our ships stay in port, we will find more of them in Zille than we counted today.\"", "WRState");
 
         // ---- what we have at sea
-        t.Logic("WRState", new[] { "WRNone", "WRSubsOnly", "WRLast", "WRFew", "WRGoodLater", "WRGood" });
+        t.Logic("WRState", new[] { "WRNone", "WRSubsOnly", "WRLast", "WRFew", "WRGoodAgain", "WRGoodLater", "WRGood" });
+        Say("WRGoodAgain", $"{later} and {again}",
+            "\"The fleet has come through another month in fair shape, and the crews keep asking when they get to finish the job.\"",
+            "\"The fleet has come through another month in fair shape, Your Majesty.\"", "WROrders");
         Say("WRNone", $"{ships} + {subs} <= 0",
             "\"And we have nothing left at sea that could fight there. Whatever happens in the strait now, Lespia or the weather will decide it.\"",
             "\"And we have nothing left at sea that could fight there, Your Majesty.\"", exit);
@@ -232,7 +245,19 @@ internal static partial class SupplyWar
             "\"The fleet is in good order, Your Majesty, and the crews are eager. Where do you want it?\"", "WROrders");
 
         // ---- later councils: the standing orders, to keep or change
-        t.Logic("WROrders", new[] { "WROrdStrait", "WROrdCoastInland", "WROrdCoast", "WROrdHome", "WRMenu" });
+        t.Logic("WROrders", new[] { "WROrdStraitAgain", "WROrdStrait", "WROrdCoastInland", "WROrdCoastAgain", "WROrdCoast", "WROrdHomeAgain",
+            "WROrdHome", "WRMenu" });
+        Say("WROrdStraitAgain", $"{later} and {inStrait} and {again}",
+            "\"The fleet has been hunting in the strait for two months now. It's thinner for it, and so are their convoys. One more month " +
+            "out there, or do we bring it home?\"",
+            "\"The fleet has been in the strait two months now, Your Majesty. Thinner for it, and so are their convoys. One more month?\"",
+            "WRMenu");
+        Say("WROrdCoastAgain", $"{later} and {offCoast} and ({coastal}) and {again}",
+            "\"The destroyers are still off the coast. Their batteries have learned to fire once and move. Do they stay?\"",
+            "\"The destroyers are still off the coast, Your Majesty. Their batteries fire once and move now. Do they stay?\"", "WRMenu");
+        Say("WROrdHomeAgain", $"{later} and {again}",
+            "\"The fleet is still at Sallabes. The crews have started painting things that don't need painting. Do you want it out this time?\"",
+            "\"The fleet is still at Sallabes, Your Majesty. Do you want it out this time?\"", "WRMenu");
         Say("WROrdStrait", $"{later} and {inStrait}",
             "\"It's still in the strait on your orders, hunting their convoys. Every month out there costs us a ship. Do we keep it there?\"",
             "\"It's still in the strait on your orders, Your Majesty. Every month out there costs us a ship. Do we keep it there?\"", "WRMenu");

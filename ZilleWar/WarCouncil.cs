@@ -18,6 +18,10 @@ namespace ZilleWar;
 /// objective as the campaign's next step with the plan carried onto it (in its nearest sensible form where it does not fit
 /// the ground or the units are gone), the fleet's current orders (keep or change), the submarines, and the barrage.
 /// The tactic is never re-picked; the navy can be. Orders are read by <see cref="ZilleOperation"/>.
+/// No two progress meetings run alike: the map, the salute, the result (aim reached, missed, reached late, overrun, or a month
+/// held), its cost, the plan's assessment (a second one says something new), the garrison read-out ("no change" when it has
+/// not changed), the objective and its phase words, the fleet, the barrage and the closing all branch on phase and outcome,
+/// and before the last phase Laurento brings Konstantium's armistice lines.
 /// The war table only opens once the council has given its order and no other "ZilleWar.Pre_" fragment
 /// (or supply-war call) is pending in the current step, so everything that belongs before the war comes first.
 /// </summary>
@@ -62,6 +66,10 @@ internal static class WarCouncil
     private const string VarLastAdapt = "ZilleWar.Council_LastAdapt";       // the same for the operation just fought
     private const string VarMatter = "ZilleWar.Council_Matter";             // Rest | Morale | Supply | Reinforce
     private const string VarPhase = "ZilleWar.Council_Phase";               // the phase this council sends the army into (1..3)
+    private const string VarLastWon = "ZilleWar.Council_LastWon";           // the operation just fought reached its aim
+    private const string VarLastPhase = "ZilleWar.Council_LastPhase";       // the phase just fought (1..3), 0 before the first
+    private const string VarGarrTold = "ZilleWar.Council_GarrisonTold";     // the garrison tier read out at the last council (1..4)
+    private const string VarBarrages = "ZilleWar.Council_Barrages";         // barrages ordered so far
     private static string LostVar(string city) => $"ZilleWar.Council_Lost_{city.Replace(" ", string.Empty)}";
     private static readonly string[] RizianCities = { "Mave Nortus", "Dapalle", "Balle", "Jales" };
 
@@ -167,7 +175,8 @@ internal static class WarCouncil
                      VarApproach, VarBombard, VarDelegated, VarFleetRecalled, VarNavy, VarSubsOut, VarOpForm, VarOpAdapt, AskedNavyWhy,
                      VarDoneTurn, VarOrderTurn, VarHeldTurn, VarMeetings, VarToldEmbargo, VarToldRaids,
                      VarTurn, VarKind, VarObjective, VarCoastal, VarLastObjective, VarLossTier, VarSetback, VarWaited,
-                     VarExtraTaken, VarVinaAsked, VarFought, VarForm, VarAdapt, VarLastAdapt, VarMatter, VarPhase,
+                     VarExtraTaken, VarVinaAsked, VarFought, VarForm, VarAdapt, VarLastAdapt, VarMatter, VarPhase, VarLastWon, VarLastPhase,
+                     VarGarrTold, VarBarrages,
                      AskedForces, AskedGarrison, AskedFronts, HubVisited,
                  }.Concat(RizianCities.Select(LostVar)))
         {
@@ -301,6 +310,9 @@ internal static class WarCouncil
         string[] hist = ZilleCampaign.Str(ZilleCampaign.VarHistory).Split(';', StringSplitOptions.RemoveEmptyEntries);
         string lastObjective = hist.Length > 0 ? hist[^1].Split(':')[0] : string.Empty;
         Variables.Set(VarLastObjective, lastObjective);
+        Variables.Set(VarLastWon, k > 0 && (Variables.GetBool(ZilleCampaign.ResultVar(k)) || (hist.Length > 0 && hist[^1].EndsWith(":won"))));
+        int lastPhase = k > 0 ? Variables.GetInt(ZilleCampaign.PhaseOfVar(k)) : 0;
+        Variables.Set(VarLastPhase, lastPhase > 0 ? lastPhase : Math.Min(k, ZilleCampaign.LastPhase));
         int playerDead = k > 0 ? Variables.GetInt(ZilleCampaign.PlayerDeadVar(k)) : 0;
         int enemyDead = k > 0 ? Variables.GetInt(ZilleCampaign.EnemyDeadVar(k)) : 0;
         int tier = playerDead >= 6 || (playerDead >= 3 && playerDead > enemyDead) ? 2 : playerDead >= 3 || playerDead > enemyDead ? 1 : 0;
@@ -393,7 +405,7 @@ internal static class WarCouncil
                      "RiziaDLC.Army_Unit_Infantry_Total", "RiziaDLC.Army_Unit_Support_Total", "RiziaDLC.Army_Unit_Tank_Total",
                      "RiziaDLC.Army_Unit_Marine_Total", "RiziaDLC.Army_Unit_Ship_Total", "RiziaDLC.Army_Unit_Submarine_Total",
                      "RiziaDLC.Resources_Military_Equipment", VarDoneTurn, VarOrderTurn, VarHeldTurn, WarFlow.VarLastOperationTurn,
-                     ZilleCampaign.VarStrength,
+                     ZilleCampaign.VarStrength, VarGarrTold, VarBarrages, VarLastPhase, PhaseResume.VarLanded,
                  })
         {
             Il2CppPixelCrushers.DialogueSystem.Lua.Run($"if Variable[\"{v}\"] == nil then Variable[\"{v}\"] = 0 end");
@@ -505,7 +517,7 @@ internal static class WarCouncil
             $"if {HugoHere} then AddConversant(\"{Hugo}\") end; if {ElenaHere} then AddConversant(\"{Elena}\") end; " +
             $"if {VinaHere} then AddConversant(\"{Vina}\") end; end; " +
             $"if {LaurentoHere} then AddConversant(\"{Laurento}\") end; ";
-        t.Logic("Start", new[] { "Truce", "Open1", "Open2Quiet", "Open2Setback", "Open2" }, hooks: AtStart(Conv), script: reset + conversants);
+        t.Logic("Start", new[] { "Truce", "Open1", "Open2Quiet", "Open2Held", "Open2Setback", "Open2Extra", "Open2MissedZ", "Open2MissedA", "Open2Aure", "Open2" }, hooks: AtStart(Conv), script: reset + conversants);
 
         // The war ended earlier this turn (a ceasefire was accepted on the telephone): the briefing becomes a short stand-down.
         t.Line("Truce", Narrator,
@@ -560,15 +572,44 @@ internal static class WarCouncil
             "Others had been swept off the table, and a few silver ones now stood on our side of the line.",
             new[] { "Open2b" }, condition: And(Later, Is(VarSetback)), sequence: "PlaySceneMusic(Security);",
             hooks: null);
-        t.Logic("Open2b", new[] { "Open2Laurento", "Salute" });
+        // Each progress meeting finds the map changed in its own way: held, overrun, short of the aim, or past it.
+        t.Line("Open2Held", Narrator,
+            "Nothing on the map in the Council Chambers had moved in a month. Someone had dusted the tokens, and the golden ones still stood " +
+            "exactly where the last phase had left them.",
+            new[] { "Open2b" }, condition: And(Later, Fought, Is(VarWaited)), sequence: "PlaySceneMusic(Security);");
+        t.Line("Open2Extra", Narrator,
+            "The map in the Council Chambers had been redrawn twice since I last saw it: once for the objective, and once more for everything " +
+            "our columns had taken beyond it.",
+            new[] { "Open2b" }, condition: And(Later, Is(VarExtraTaken)), sequence: "PlaySceneMusic(Security);");
+        t.Line("Open2MissedZ", Narrator,
+            "The map in the Council Chambers had hardly changed. The golden tokens had crossed the border and reached the river below Zille, " +
+            "and there they had stopped. The silver ones still ringed the city.",
+            new[] { "Open2b" }, condition: And(Later, Fought, IsNot(VarLastWon), $"{V(VarLastObjective)} == \"Harbor\""),
+            sequence: "PlaySceneMusic(Security);");
+        t.Line("Open2MissedA", Narrator,
+            "On the map in the Council Chambers, the golden tokens had climbed into the foothills and stopped short of Auremina. Someone had " +
+            "drawn the new line in pencil, as if nobody quite trusted it yet.",
+            new[] { "Open2b" }, condition: And(Later, Fought, IsNot(VarLastWon), $"{V(VarLastObjective)} == \"Wall\""),
+            sequence: "PlaySceneMusic(Security);");
+        t.Line("Open2Aure", Narrator,
+            "Someone had moved the golden tokens up into the hills on the map in the Council Chambers. The silver ones that were left stood " +
+            "along the northern coast, around Isor and Nanta.",
+            new[] { "Open2b" }, condition: And(Later, Fought, $"{V(VarLastObjective)} == \"Wall\""), sequence: "PlaySceneMusic(Security);");
+        t.Logic("Open2b", new[] { "Open2Laurento3", "Open2Laurento", "Salute" });
+        t.Line("Open2Laurento3", Narrator,
+            "Laurento Esquibel sat at the far end of the table. His folder of cables from Konstantium had grown a good deal thicker since last month.",
+            new[] { "Salute" }, condition: And(LaurentoHere, $"{Num(VarPhase)} >= 3"));
         t.Line("Open2Laurento", Narrator,
             "Laurento Esquibel sat at the far end of the table with a folder of cables from Konstantium, looking as if he would rather be anywhere else.",
             new[] { "Salute" }, condition: LaurentoHere);
 
-        t.Logic("Salute", new[] { "SaluteFirst", "SaluteLater" });
+        t.Logic("Salute", new[] { "SaluteFirst", "SaluteLast", "SaluteLater" });
+        t.Line("SaluteLast", Narrator,
+            "Nobody needed telling that this was the last briefing of the campaign. The officers came to attention as I entered, and Carlos " +
+            "did not wait for them to sit.", new[] { "Taddeus" }, condition: $"{Num(VarPhase)} >= 3");
         t.Line("SaluteFirst", Narrator, "As soon as I entered, the chatter stopped and every officer in the room came to attention.",
             new[] { "SaluteA", "SaluteB", "SaluteC" }, condition: First);
-        t.Line("SaluteLater", Narrator, "The officers came to attention as I entered. Carlos was already at the map, with the week's reports under his arm.",
+        t.Line("SaluteLater", Narrator, "The officers came to attention as I entered. Carlos was already at the map, with the month's reports under his arm.",
             new[] { "Taddeus" });
         t.Choice("SaluteA", "I saluted.", new[] { "SaluteA2" }, menu: "Salute.");
         t.Line("SaluteA2", Narrator, "The room returned the salute with full force.", new[] { "Taddeus" });
@@ -577,11 +618,14 @@ internal static class WarCouncil
         t.Choice("SaluteC", "\"Let's not waste any time.\"", new[] { "SaluteC2" });
         t.Line("SaluteC2", Carlos, "\"Your Majesty.\"", new[] { "Taddeus" });
 
-        t.Logic("Taddeus", new[] { "TaddeusFirst", "TaddeusLater", "Carlos" });
+        t.Logic("Taddeus", new[] { "TaddeusFirst", "TaddeusLast", "TaddeusLater", "Carlos" });
+        t.Line("TaddeusLast", Narrator,
+            "Taddeus Azaro had asked to be wheeled closer to the map. He had not said a word since he arrived, and his eyes stayed on the line " +
+            "where the last phase had stopped.", new[] { "Carlos" }, condition: And(TaddeusHere, $"{Num(VarPhase)} >= 3"));
         t.Line("TaddeusFirst", Narrator,
             "General Taddeus Azaro had been wheeled to the head of the table. He raised a trembling hand to his brow, and his eyes never left the map.",
             new[] { "Carlos" }, condition: And(First, TaddeusHere));
-        t.Line("TaddeusLater", Narrator, "Taddeus Azaro sat at the head of the table, where he had sat every week since the war began.",
+        t.Line("TaddeusLater", Narrator, "Taddeus Azaro sat at the head of the table, where he had sat for every briefing since the war began.",
             new[] { "Carlos" }, condition: TaddeusHere);
 
         t.Logic("Carlos", new[] { "Carlos1", "Pol2" });
@@ -675,8 +719,36 @@ internal static class WarCouncil
         t.Choice("Pol2R2", "\"Thank you all. Now let the generals speak.\"", new[] { "Res" });
 
         // The result of the last operation (nothing to report while no offensive has been fought yet).
-        t.Logic("Res", new[] { "ResSay", "ResWaited" });
-        t.Line("ResSay", Carlos, "\"Your Majesty. The latest from the front.\"", new[] { "ResHarbor", "ResWall", "ResOther" }, condition: Fought);
+        t.Logic("Res", new[] { "ResHeld", "ResSay", "ResWaited" });
+        // After a month's hold there is no new result to report, only the quiet.
+        t.Logic("ResHeld", new[] { "ResHeldL", "ResHeldC" }, condition: And(Fought, Is(VarWaited)));
+        t.Logic("ResHeldL", new[] { "ResWaited" }, condition: LucitaHere);
+        t.Line("ResHeldC", Carlos,
+            "\"The front has been quiet since we halted, Your Majesty. Patrols, a few raids at night, and the weather. The men have rested, " +
+            "and so, I'm afraid, have theirs.\"", new[] { "ResTwoWars" });
+        t.Logic("ResSay", new[] { "ResSayPick" }, condition: Fought);
+        Pick("ResSayPick", Carlos, "ResWhat",
+            ($"{Num(VarLastPhase)} >= 2", "\"Your Majesty. The second phase is over, and here is where it left us.\""),
+            (null, "\"Your Majesty. The reports from the first phase are in.\""));
+        string lastObj(string o) => $"{V(VarLastObjective)} == \"{o}\"";
+        string missedAim = IsNot(VarLastWon);
+        t.Logic("ResWhat", new[] { "ResMissZ2", "ResMissZ", "ResMissA", "ResMissP", "ResHarborLate", "ResHarbor", "ResWall", "ResOther" });
+        // A missed aim is a setback in a war that goes on: the next phase goes in from the ground we hold.
+        t.Line("ResMissZ2", Carlos,
+            "\"We have failed to take Zille a second time, Your Majesty. Our lines are closer than they were, but the harbor and the station " +
+            "are still theirs.\"", new[] { "ResExtra" }, condition: And(missedAim, lastObj("Harbor"), $"{Num(VarFought)} >= 2"));
+        t.Line("ResMissZ", Carlos,
+            "\"We did not take Zille. The columns reached the river crossings and the outskirts, but the harbor and the station are still in " +
+            "Wehzek hands. The next phase goes in from the ground we hold.\"", new[] { "ResExtra" }, condition: And(missedAim, lastObj("Harbor")));
+        t.Line("ResMissA", Carlos,
+            "\"Auremina held. We are in the foothills and among the first mine heads, but the town and the ridges above it are still theirs.\"",
+            new[] { "ResExtra" }, condition: And(missedAim, lastObj("Wall")));
+        t.Line("ResMissP", Carlos,
+            "\"The ports held, Your Majesty. Our columns are on the coast road, but Isor and Nanta are still in Wehzek hands.\"",
+            new[] { "ResExtra" }, condition: missedAim);
+        t.Line("ResHarborLate", Carlos,
+            "\"Zille is ours at last. It took two phases instead of one, but the harbor, the station and their headquarters are in our hands.\"",
+            new[] { "ResExtra" }, condition: And(lastObj("Harbor"), $"{Num(VarFought)} >= 2"));
         t.Line("ResHarbor", Carlos,
             "\"Zille is ours. The harbor, the railway station and the Wehzek headquarters. Their whole southern front has lost its port.\"",
             new[] { "ResExtra" }, condition: $"{V(VarLastObjective)} == \"Harbor\"");
@@ -697,9 +769,15 @@ internal static class WarCouncil
             Is(LostVar("Balle")), "ResLostJales");
         Opt("ResLostJales", Carlos, "\"And they have landed at Jales. I don't yet know how they got past the fleet.\"",
             Is(LostVar("Jales")), "ResLosses");
+        string second = $"{Num(VarLastPhase)} >= 2";
         Pick("ResLosses", Carlos, "ResWaited",
+            (And($"{V(VarLossTier)} == 2", second),
+                "\"And it cost us more than any month of this war. The lists no longer fit on the board in the corridor. The clerks have started a second one.\""),
             ($"{V(VarLossTier)} == 2", "\"It cost us dearly. The casualty lists are the longest this army has seen since the Reclamation War.\""),
+            (And($"{V(VarLossTier)} == 1", second),
+                "\"It was not cheap. The hospital trains have run south day and night, and the field hospitals at Balle are taking the overflow.\""),
             ($"{V(VarLossTier)} == 1", "\"It was not cheap. The hospitals in Dapalle are full, and the trains south are full of wounded.\""),
+            (second, "\"Our losses were light again. The men have started to believe in their own luck, which worries me more than the Wehzeks do.\""),
             (null, "\"Our losses were light, thank God. The men are tired, but in good spirits.\""));
         Opt("ResWaited", Lucita,
             "\"The front has been quiet since we halted. Our men have rested. I'm afraid so have theirs.\"",
@@ -707,20 +785,51 @@ internal static class WarCouncil
         Opt("ResTwoWars", Taddeus,
             "\"Two wars at once, Lieutenant. I have seen what that does to an army. We will not fight them both at full stretch. We sequence them. " +
             "Zille holds, Pales breaks, then we turn north again.\"",
-            And(TaddeusHere, "Variable[\"RiziaDLC.Pales_War\"] == true"), "Assess");
+            And(TaddeusHere, "Variable[\"RiziaDLC.Pales_War\"] == true"), "Pol3");
+
+        // Before the last phase, Laurento brings word from Konstantium: the armistice lines are being drawn.
+        string phase3 = $"{Num(VarPhase)} >= 3";
+        t.Logic("Pol3", new[] { "Pol3Held", "Pol3Not", "Assess" });
+        t.Line("Pol3Held", Laurento,
+            "\"One word from Konstantium before the generals go on, Your Majesty. The Secretary-General's staff have started drafting " +
+            "armistice lines. They draw them where the armies stand on the day they finish drafting, and I would like us to be standing a " +
+            "little farther north.\"", new[] { "Assess" }, condition: And(phase3, LaurentoHere, Is(WarFlags.ZilleCityHeld)));
+        t.Line("Pol3Not", Laurento,
+            "\"One word from Konstantium, Your Majesty. The Secretary-General's staff have started drafting armistice lines. As things " +
+            "stand tonight, theirs runs south of Zille.\"", new[] { "Assess" }, condition: And(phase3, LaurentoHere));
     }
 
     /// <summary>Push on, hold for a turn, or seek a ceasefire. On a setback the generals push back, as in c412.</summary>
     private static void PushOrHold()
     {
         t.Logic("Push", new[] { "PushSetback", "PushGood" });
-        t.Line("PushGood", Carlos, "\"The troops are waiting for their orders, Your Majesty. The Staff is ready to move on the next objective.\"",
-            new[] { "PushTad" }, condition: IsNot(VarSetback));
-        Opt("PushTad", Taddeus, "\"A complete victory is in sight, Lieutenant.\"", TaddeusHere, "PushMenu");
-        t.Logic("PushMenu", new[] { "PushGo", "PushWait", "Cease1", "Cease2" });
-        t.Choice("PushGo", "\"Then we keep moving. Smolak doesn't get a month to recover.\"", new[] { "Intel" });
+        string missed = And(Fought, IsNot(VarLastWon), IsNot(VarWaited));
+        string last = $"{Num(VarPhase)} >= {ZilleCampaign.LastPhase}";
+        t.Logic("PushGood", new[] { "PushGoodHeld", "PushGoodMissed", "PushGoodLast", "PushGood0" }, condition: IsNot(VarSetback));
+        t.Line("PushGoodHeld", Carlos, "\"The men are rested and the guns are up, Your Majesty. The Staff is ready to move the moment you give the word.\"",
+            new[] { "PushTad" }, condition: Is(VarWaited));
+        t.Line("PushGoodMissed", Carlos,
+            "\"The divisions are still in front of the objective, Your Majesty, and they want another go at it. The Staff is ready when you are.\"",
+            new[] { "PushTad" }, condition: missed);
+        t.Line("PushGoodLast", Carlos,
+            "\"One more phase, Your Majesty, and the Staff is ready for it. After this one there is no next month to save anything for.\"",
+            new[] { "PushTad" }, condition: last);
+        t.Line("PushGood0", Carlos, "\"The troops are waiting for their orders, Your Majesty. The Staff is ready to move on the next objective.\"",
+            new[] { "PushTad" });
+        t.Logic("PushTad", new[] { "PushTadMissed", "PushTadLast", "PushTad0", "PushMenu" });
+        t.Line("PushTadMissed", Taddeus, "\"We were close, Lieutenant. Closer than the newspapers say.\"", new[] { "PushMenu" },
+            condition: And(TaddeusHere, missed));
+        t.Line("PushTadLast", Taddeus, "\"One more push, Lieutenant. Finish it, and finish it properly.\"", new[] { "PushMenu" },
+            condition: And(TaddeusHere, last));
+        t.Line("PushTad0", Taddeus, "\"A complete victory is in sight, Lieutenant.\"", new[] { "PushMenu" }, condition: TaddeusHere);
+        t.Logic("PushMenu", new[] { "PushGo", "PushGoMissed", "PushGoLast", "PushWait", "Cease1", "Cease2" });
+        t.Choice("PushGo", "\"Then we keep moving. Smolak doesn't get a month to recover.\"", new[] { "Intel" },
+            condition: And(Not(last), Not(missed)));
+        t.Choice("PushGoMissed", "\"Then we go back in. Same objective, and this time we take it.\"", new[] { "Intel" },
+            condition: And(Not(last), missed));
+        t.Choice("PushGoLast", "\"Then we finish it. All of it, if the army can.\"", new[] { "Intel" }, condition: last);
         t.Choice("PushWait", "\"We'll hold for now. The men need their rest.\"", new[] { "PushWait2" }, condition: CanHold);
-        Intel("PushWait2", "\"Wehlen will use the time too, Your Majesty. Every quiet week is another week of convoys across the strait.\"",
+        Intel("PushWait2", "\"Wehlen will use the time too, Your Majesty. Every quiet month is another month of convoys across the strait.\"",
             new[] { "PushWaitYes", "PushWaitNo" });
         t.Choice("PushWaitYes", "\"I know. We hold.\"", new[] { "Hold" });
         t.Choice("PushWaitNo", "\"You're right. We go on.\"", new[] { "Intel" });
@@ -775,23 +884,49 @@ internal static class WarCouncil
     private static void IntelReadout()
     {
         t.Logic("Intel", new[] { "IntelOpenL", "IntelOpenC" }, script: SupplyWar.CouncilMeetingScript);
-        t.Line("IntelOpenL", Narrator, "Lucita stepped up to the map and tapped the Strait of Kreleck with her pointer.", new[] { "Garr" }, condition: LucitaHere);
-        t.Line("IntelOpenC", Narrator, "Carlos picked up a pointer and tapped the Strait of Kreleck.", new[] { "Garr" }, condition: Not(LucitaHere));
-        t.Logic("Garr", new[] { "Garr1", "Garr2", "Garr3", "Garr4" });
+        t.Logic("IntelOpenL", new[] { "IntelOpenL3", "IntelOpenL2", "IntelOpenL1" }, condition: LucitaHere);
+        t.Logic("IntelOpenC", new[] { "IntelOpenC3", "IntelOpenC2", "IntelOpenC1" }, condition: Not(LucitaHere));
+        string ph3 = $"{Num(VarPhase)} >= 3", ph2 = And(Later, $"{Num(VarPhase)} == 2");
+        t.Line("IntelOpenL3", Narrator, "Lucita did not bother with the pointer this time. She laid a thin folder on the table and opened it at the last page.",
+            new[] { "Garr" }, condition: ph3);
+        t.Line("IntelOpenL2", Narrator, "Lucita pinned a fresh set of reconnaissance photographs beside the map and waited for the room to settle.",
+            new[] { "Garr" }, condition: ph2);
+        t.Line("IntelOpenL1", Narrator, "Lucita stepped up to the map and tapped the Strait of Kreleck with her pointer.", new[] { "Garr" });
+        t.Line("IntelOpenC3", Narrator, "Carlos laid a thin folder on the table and opened it at the last page.", new[] { "Garr" }, condition: ph3);
+        t.Line("IntelOpenC2", Narrator, "Carlos pinned the month's reconnaissance photographs beside the map.", new[] { "Garr" }, condition: ph2);
+        t.Line("IntelOpenC1", Narrator, "Carlos picked up a pointer and tapped the Strait of Kreleck.", new[] { "Garr" });
+        // The same reading as at the last council is told as "no change", not word for word again.
+        string told(int n) => And(Later, $"{Num(VarGarrTold)} == {n}");
+        t.Logic("Garr", new[] { "GarrSame1", "GarrSame2", "GarrSame3", "GarrSame4", "Garr1", "Garr2", "Garr3", "Garr4" });
+        Intel("GarrSame1", "\"The garrison is as strong as it was last month, Your Majesty. Whatever we sink or kill, Wehlen replaces.\"",
+            new[] { "SupEmbargo" }, And($"{Strength} >= 8", told(1)));
+        Intel("GarrSame2", "\"Their numbers haven't moved since we last met. The convoys still come, only slower, and they spend whatever lands as fast " +
+                           "as it lands.\"", new[] { "SupEmbargo" }, And($"{Strength} >= 6 and {Strength} < 8", told(2)));
+        Intel("GarrSame3", "\"The garrison is still on short rations. Nothing that crossed the strait this month has changed that.\"",
+            new[] { "SupEmbargo" }, And($"{Strength} >= 4 and {Strength} < 6", told(3)));
+        Intel("GarrSame4", "\"Still starving, Your Majesty. The deserters have started bringing their officers' maps with them.\"",
+            new[] { "SupEmbargo" }, And($"{Strength} < 4", told(4)));
         Intel("Garr1", "\"The Wehzek garrison in Zille is strong, and it is still growing. Their convoys cross the strait every night, and they have had " +
-                       "months to dig in.\"", new[] { "SupEmbargo" }, $"{Strength} >= 8");
+                       "months to dig in.\"", new[] { "SupGarr1" }, $"{Strength} >= 8");
+        t.Logic("SupGarr1", new[] { "SupEmbargo" }, script: Set(VarGarrTold, "1"));
         Intel("Garr2", "\"The Wehzek garrison is holding its numbers. Their convoys still cross the strait, but the reinforcements have slowed.\"",
-            new[] { "SupEmbargo" }, $"{Strength} >= 6 and {Strength} < 8");
+            new[] { "SupGarr2" }, $"{Strength} >= 6 and {Strength} < 8");
+        t.Logic("SupGarr2", new[] { "SupEmbargo" }, script: Set(VarGarrTold, "2"));
         Intel("Garr3", "\"The garrison is feeling the squeeze. Their convoys arrive late or not at all, and prisoners talk about rationed shells and " +
-                       "tanks parked for want of fuel.\"", new[] { "SupEmbargo" }, $"{Strength} >= 4 and {Strength} < 6");
+                       "tanks parked for want of fuel.\"", new[] { "SupGarr3" }, $"{Strength} >= 4 and {Strength} < 6");
+        t.Logic("SupGarr3", new[] { "SupEmbargo" }, script: Set(VarGarrTold, "3"));
         Intel("Garr4", "\"The garrison is starving, Your Majesty. Fuel, shells, bread. Deserters come over every night now, most of them without rifles.\"",
-            new[] { "SupEmbargo" }, $"{Strength} < 4");
+            new[] { "SupGarr4" }, $"{Strength} < 4");
+        t.Logic("SupGarr4", new[] { "SupEmbargo" }, script: Set(VarGarrTold, "4"));
 
         IntelOpt("SupEmbargo", "\"Rumburg no longer buys Wehzek oil. Smolak's treasury feels it, and so do his fuel depots in Zille.\"",
             And(Embargo, IsNot(VarToldEmbargo)), "SupRaids", script: Set(VarToldEmbargo, "true"));
         IntelOpt("SupRaids",
             "\"The Bludish Freedom Front has been busy in the north of Wehlen. Every battalion Smolak keeps at home to guard his ports is one he " +
-            "can't send to Zille.\"", And(Lever(SupplyWar.Lever.BffRaids), IsNot(VarToldRaids)), "Surprise", script: Set(VarToldRaids, "true"));
+            "can't send to Zille.\"", And(Lever(SupplyWar.Lever.BffRaids), IsNot(VarToldRaids)), "SupLanded", script: Set(VarToldRaids, "true"));
+        // What the strait let through just before the last phase (PhaseResume landed it on the map).
+        IntelOpt("SupLanded", "\"And they put fresh battalions ashore at Nanta just before our last push. We met them on the line within the day.\"",
+            And(Later, Fought, IsNot(VarWaited), $"{Num(PhaseResume.VarLanded)} >= 1"), "Surprise");
 
         // At most one disruption (the Bludish companies, the Lespian cameras, a defector); the strait itself comes with the orders.
         SupplyWar.CouncilSurprise(t, "Surprise", "Brief", LucitaHere);
@@ -885,7 +1020,32 @@ internal static class WarCouncil
     /// <summary>The objective is announced in the fixed order: the first council lays out the campaign, later ones its next step.</summary>
     private static void Objectives()
     {
-        t.Logic("Obj", new[] { "ObjHarbor", "ObjHarborL", "ObjWallL", "ObjPortsL", "ObjWall", "ObjPorts" });
+        string phase3 = $"{Num(VarPhase)} >= 3";
+        string lastMissed(string o) => And(Fought, IsNot(VarLastWon), $"{V(VarLastObjective)} == \"{o}\"");
+        t.Logic("Obj", new[]
+        {
+            "ObjHarbor", "ObjHarborLast", "ObjHarborL", "ObjPortsEarly", "ObjPortsAgain", "ObjPortsL", "ObjWallAgain", "ObjWallLastHeld",
+            "ObjWallLast", "ObjWallL", "ObjWall", "ObjPorts",
+        });
+        t.Line("ObjHarborLast", Carlos,
+            "\"It is still Zille, Your Majesty. This is the last phase of Northern Crown. If Zille is not ours when it ends, the line we hold " +
+            "is the line the diplomats will draw.\"", new[] { "Command" }, condition: And(Later, Obj(Objective.Harbor), phase3));
+        t.Line("ObjPortsEarly", Carlos,
+            "\"We are ahead of the plan, Your Majesty. With Auremina already ours, the Staff goes straight for Isor and Nanta. Take them in " +
+            "this phase, and the war ends a month early.\"", new[] { "Command" }, condition: And(Later, Obj(Objective.Ports), Not(phase3)));
+        t.Line("ObjPortsAgain", Carlos,
+            "\"Isor and Nanta, still. This is the last phase, Your Majesty. Whatever we hold on that coast when it ends, we keep. Whatever we " +
+            "don't, Wehlen keeps.\"", new[] { "Command" }, condition: And(Later, Obj(Objective.Ports), lastMissed("Ports")));
+        t.Line("ObjWallAgain", Carlos,
+            "\"Auremina again, Your Majesty. The hills cost us last time, but this time we go in knowing where their guns are. And it is the " +
+            "last phase: whatever we hold when it ends is what the armistice will draw.\"",
+            new[] { "Command" }, condition: And(Later, Obj(Objective.Wall), lastMissed("Wall")));
+        t.Line("ObjWallLastHeld", Carlos,
+            "\"We held for a month, so the last phase goes for Auremina and its mines. Isor and Nanta will have to wait for the diplomats.\"",
+            new[] { "Command" }, condition: And(Later, Obj(Objective.Wall), phase3, Is(VarWaited)));
+        t.Line("ObjWallLast", Carlos,
+            "\"Zille cost us more time than the plan allowed, so the last phase goes for Auremina and its mines. Isor and Nanta will have to " +
+            "wait for the diplomats.\"", new[] { "Command" }, condition: And(Later, Obj(Objective.Wall), phase3));
         t.Line("ObjHarbor", Carlos,
             "\"The objective is the city of Zille itself: the harbor, the railway station, and the Wehzek headquarters. Take Zille, and every " +
             "Wehzek soldier south of the hills is cut off from the sea.\"", new[] { "ObjHarbor2" }, condition: And(First, Obj(Objective.Harbor)));
@@ -1078,11 +1238,20 @@ internal static class WarCouncil
             "\"This is the ground the mountaineers were trained for, Your Majesty. They go over the ridges while the Wehzeks watch the roads.\"");
         C("CMount", Carlos, FormIs(Approach.Mountain),
             "\"The mountaineers keep to your plan where the ground lets them: the high ground on the flanks, while the army goes down the road below.\"");
+        C("CDirectAgain", Carlos, And(Obj(Objective.Harbor), Fought),
+            "\"The same plan, Your Majesty, and the same road. Straight at Zille, harder and faster than last time.\"");
+        C("CDirectWall", Carlos, Obj(Objective.Wall),
+            "\"The plan stays as you set it, Your Majesty. Straight up the valley road, as fast as the hills allow.\"");
+        C("CDirectPorts", Carlos, Obj(Objective.Ports),
+            "\"Straight at them again, as you ordered at the start. Down the coast road to Isor, and on to Nanta.\"");
         C("CDirect", Carlos, null,
             "\"The plan stays as you set it at the start, Your Majesty. Straight at them and fast, before their armor can come up.\"");
         t.Logic("Carry", names.ToArray());
 
-        t.Line("CarryAsk", Carlos, "\"Is there anything you want to go over before the orders go out?\"", new[] { "CarryAskYes", "CarryAskNo" });
+        t.Logic("CarryAsk", new[] { "CarryAsk3", "CarryAsk2" });
+        t.Line("CarryAsk3", Carlos, "\"Is there anything you want to go over before the last orders of this campaign go out?\"",
+            new[] { "CarryAskYes", "CarryAskNo" }, condition: $"{Num(VarPhase)} >= 3");
+        t.Line("CarryAsk2", Carlos, "\"Is there anything you want to go over before the orders go out?\"", new[] { "CarryAskYes", "CarryAskNo" });
         t.Choice("CarryAskYes", "\"Take me through where we stand.\"", new[] { "Hub" });
         t.Choice("CarryAskNo", "\"No. Go on.\"", new[] { "Fleet" });
     }
@@ -1119,11 +1288,18 @@ internal static class WarCouncil
             "\"Last of all, the artillery. We can give their forward positions a full night's barrage before the infantry goes in. It will cost " +
             "us shells we may want later, and it won't be kind to the villages along the line.\"",
             new[] { "BarrageYes", "BarrageNo" }, condition: First);
-        t.Line("BarrageAskLater", Carlos,
-            "\"And the guns. The gunners have the shells for another full night's barrage before the infantry goes in, if you want one.\"",
+        t.Logic("BarrageAskLater", new[] { "BarrageAskLast", "BarrageAskAgain", "BarrageAskSaved" });
+        t.Line("BarrageAskLast", Carlos,
+            "\"Last of all, the guns. There is no sense saving shells for a phase that won't come. A full night's barrage before the infantry " +
+            "goes in, if you want one.\"", new[] { "BarrageYes", "BarrageNo" }, condition: $"{Num(VarPhase)} >= 3");
+        t.Line("BarrageAskAgain", Carlos,
+            "\"And the guns again. The Wehzeks have learned to sleep in their deepest bunkers since the last barrage, but it still costs them " +
+            "every gun they leave above ground. Another night of it?\"", new[] { "BarrageYes", "BarrageNo" }, condition: $"{Num(VarBarrages)} >= 1");
+        t.Line("BarrageAskSaved", Carlos,
+            "\"And the guns. We held them back last time, so the gunners have the shells for a full night's barrage now, if you want one.\"",
             new[] { "BarrageYes", "BarrageNo" });
         t.Choice("BarrageYes", "\"Open fire the night before. Spare nothing.\"", new[] { "BarrageYes2" }, cost: $"-{BarrageCost} Military Equipment",
-            script: Set(VarBombard, "true") +
+            script: Set(VarBombard, "true") + $"{V(VarBarrages)} = {Num(VarBarrages)} + 1; " +
                     $"{V("RiziaDLC.Resources_Military_Equipment")} = {Num("RiziaDLC.Resources_Military_Equipment")} - {BarrageCost}; ");
         t.Line("BarrageYes2", Carlos, "\"Understood. The guns will be in position by nightfall.\"", new[] { "Close" });
         t.Choice("BarrageNo", "\"No barrage. We may need those shells, and the people in those villages are ours.\"", new[] { "BarrageNo2" });
@@ -1147,11 +1323,18 @@ internal static class WarCouncil
         Intel("Close3", "\"I will come to you as soon as we have news from the front.\"", new[] { "Close4" });
         t.Line("Close4", Narrator, "And there it was. The war for Zille was about to begin.", new[] { "Order" });
 
+        string lastPhase = $"{Num(VarPhase)} >= {ZilleCampaign.LastPhase}";
         Pick("CloseLater", Carlos, "CloseLater2",
-            (Obj(Objective.Ports), "\"The orders go out tonight, Your Majesty. If all goes well, the next time we meet in this room, it will be to talk about the peace.\""),
+            (lastPhase, "\"The orders go out tonight. This is the last phase of Northern Crown, Your Majesty. Whatever happens, the next time we " +
+                        "meet in this room, it will be to talk about the peace.\""),
+            (Obj(Objective.Ports), "\"The orders go out tonight, Your Majesty. If the ports fall, the next time we meet in this room, it will be to talk about the peace.\""),
+            (And(Obj(Objective.Harbor), Fought), "\"The orders go out tonight, Your Majesty. Zille again, and this time the men know the streets.\""),
             (Obj(Objective.Wall), "\"The orders go out tonight. By morning the columns will be on the valley road.\""),
             (null, "\"The orders go out tonight, Your Majesty. I'll come to you as soon as we have news.\""));
         Pick("CloseLater2", Narrator, "Order",
+            (lastPhase, "That night, the trains to the north ran without lights, and nobody in Palas Rezna slept much."),
+            (And(Obj(Objective.Harbor), Fought),
+                "On my way out, I saw that someone had drawn a small circle around Zille on the map in pencil, and then gone over it again in ink."),
             (Obj(Objective.Wall), "On my way out, I saw a young captain lean over the map and move a golden token an inch toward Auremina."),
             (Obj(Objective.Ports), "That night, the trains to the north ran without lights."),
             (null, "Somewhere north of Dapalle, the guns were already being moved forward."));
@@ -1162,7 +1345,8 @@ internal static class WarCouncil
     /// <summary>Later councils: how the war plan worked in the operation just fought, tied to the result.</summary>
     private static void Assessment()
     {
-        string good = And($"{Num(VarLossTier)} == 0", IsNot(VarSetback));
+        string good = And($"{Num(VarLossTier)} == 0", IsNot(VarSetback), Is(VarLastWon));
+        string again = $"{Num(VarFought)} >= 2";   // the second assessment of the same plan says something new
         var names = new List<string>();
         void A(string name, string speaker, string cond, string text)
         {
@@ -1182,31 +1366,62 @@ internal static class WarCouncil
             "\"In the hills the tanks could only follow the infantry, as we expected. Out on the coast road they'll lead again.\"");
         A("AsInland", null, last("inland"),
             "\"The marines' landing on the coast pulled their reserves down out of the hills, as we hoped. They're watching every beach now.\"");
+        A("AsUnits2", Carlos, And(last("units"), again),
+            "\"It was the plain way again, straight down the road. Until the units your plan needs are rebuilt, it will stay that way.\"");
         A("AsUnits", Carlos, last("units"),
             "\"We fought it the plain way last time, straight down the road. There was nothing left to fight it any other way.\"");
+        A("AsFeint2G", Carlos, And(PlanIs(Approach.Feint), good, again),
+            "\"Your feint worked again, Your Majesty. They changed their generals after the first one, but not their habits.\"");
+        A("AsFeint2", Carlos, And(PlanIs(Approach.Feint), again),
+            "\"The feint fooled nobody this time. They have learned to count our columns before they move. The Staff will make the next " +
+            "one louder, and earlier.\"");
         A("AsFeintG", Carlos, And(PlanIs(Approach.Feint), good),
             "\"Your feint worked, Your Majesty. Their reserves spent two days marching to defend a town we never meant to take. Smolak's " +
             "generals will be wiser next time, so the Staff will change the bait, not the plan.\"");
         A("AsFeint", Carlos, PlanIs(Approach.Feint),
             "\"The feint bought us less than we hoped. Their reserves hesitated, but not for long. Still, it keeps their armor guessing, and the plan holds.\"");
+        A("AsArmor2G", Carlos, And(PlanIs(Approach.Armor), good, again),
+            "\"The tanks did it again. Once they are out in front, the Wehzek infantry stops digging and starts walking.\"");
+        A("AsArmor2", Carlos, And(PlanIs(Approach.Armor), again),
+            "\"The tanks are worn down to the tracks, Your Majesty. The fitters work through the night, and we still have fewer of them in " +
+            "front than we did last month.\"");
         A("AsArmorG", Carlos, And(PlanIs(Approach.Armor), good),
             "\"The tanks did what you asked of them. Once they were through the wall, nothing the Wehzeks had could stand in front of them for long.\"");
         A("AsArmor", Carlos, PlanIs(Approach.Armor),
             "\"The tanks got through, but we left a good many of them burning by the road. The Wehzeks have learned to wait for the infantry behind them.\"");
+        A("AsLanding2G", null, And(PlanIs(Approach.Landing), good, again),
+            "\"The marines went ashore again and found the beaches emptier than the first time. They are running out of men to watch every cove.\"");
+        A("AsLanding2", null, And(PlanIs(Approach.Landing), again),
+            "\"The second landing was dearer than the first. They had moved guns onto every headland we used before.\"");
         A("AsLandingG", null, And(PlanIs(Approach.Landing), good),
             "\"The landing caught them facing the wrong way. They are still pulling battalions off the line to watch the beaches.\"");
         A("AsLanding", null, PlanIs(Approach.Landing),
             "\"The landing worked, but the beaches were expensive. Every Wehzek battery on that coast now knows what our boats look like.\"");
+        A("AsDrop2G", null, And(PlanIs(Approach.Airborne), good, again),
+            "\"The paratroopers held again until the columns reached them. Every battalion the Wehzeks keep back to watch the sky is one " +
+            "missing from their front, and it shows.\"");
+        A("AsDrop2", null, And(PlanIs(Approach.Airborne), again),
+            "\"The paratroopers were alone too long again. The men who came back have stopped joking about the jump.\"");
         A("AsDropG", null, And(PlanIs(Approach.Airborne), good),
             "\"The paratroopers held until the columns reached them, just as planned. The Wehzeks now keep a battalion behind every line, watching the sky.\"");
         A("AsDrop", null, PlanIs(Approach.Airborne),
             "\"The paratroopers held, but they were alone longer than anyone wanted. We lost good men waiting for the columns.\"");
+        A("AsMount2G", Carlos, And(PlanIs(Approach.Mountain), good, again),
+            "\"The mountaineers were over the ridges again before the Wehzeks looked up. The Wehzeks know their badge by now, Your Majesty, " +
+            "and they still can't stop them.\"");
+        A("AsMount2", Carlos, And(PlanIs(Approach.Mountain), again),
+            "\"The mountaineers took the heights again, and paid for them again. There are fewer of them every time the Staff counts.\"");
         A("AsMountGT", Taddeus, And(PlanIs(Approach.Mountain), good, TaddeusHere),
             "\"Over the ridges, Lieutenant, and they never once looked up. I told you they wouldn't.\"");
         A("AsMountG", Carlos, And(PlanIs(Approach.Mountain), good),
             "\"The mountaineers were on the ridges before the Wehzeks knew they had left our lines. Your plan suits this country, Your Majesty.\"");
         A("AsMount", Carlos, PlanIs(Approach.Mountain),
             "\"The mountaineers took the ridges, but the Wehzek positions below them made them pay for every one.\"");
+        A("AsDirect2G", Carlos, And(good, again),
+            "\"Straight at them again, and it held. Their armor still comes up a day late. I think they have stopped expecting to arrive in time.\"");
+        A("AsDirect2", Carlos, again,
+            "\"The direct road again, and the bill again at the head of every column. They mine the obvious roads now, Your Majesty, and " +
+            "every road we take is obvious.\"");
         A("AsDirectG", Carlos, good,
             "\"Straight at them and fast, as you ordered. Their armor still arrives a day after we do, and the men have stopped expecting it sooner.\"");
         A("AsDirect", Carlos, null,

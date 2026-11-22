@@ -57,16 +57,39 @@ internal static class SweepEarlyT5Security
         var t = new Talk(Security, "ZilleWar.SE.Sec.");
 
         // The seating ([278] with Titus, [956] without) -> [1288]: the war council's folder comes first.
+        // Turn 5 step 3 comes after this turn's War Council: Phase II fought, a hold, or a ceasefire (AuditT45's front states).
         t.Line("Front", Narrator,
             "Lucita laid one more folder on the table before she sat down. It bore the seal of the war council.",
-            new[] { "FrontHeld", "FrontNot" }, condition: Active, hooks: From(278, 956));
-        t.Line("FrontHeld", Lucita,
-            "\"The front first, Your Majesty, since everything else in this room depends on it. Our flag is still over Zille city, and " +
-            "the Wehzeks have stopped trying to take it back by daylight.\"", new[] { "FrontHugo" }, condition: CityHeld);
-        t.Line("FrontNot", Lucita,
-            "\"The front first, Your Majesty, since everything else in this room depends on it. The Wehzek garrison is still holding " +
-            "Zille city. Every disturbance at home will be read in Wraclawitz as a sign that we are tiring.\"",
-            new[] { "FrontHugo" }, condition: $"not ({CityHeld})");
+            new[] { "FrontAuremina", "FrontCitySecond", "FrontHills", "FrontCityTwice", "FrontHold", "FrontHeld", "FrontNot", "FrontFree", "FrontStopped" },
+            condition: Declared, hooks: From(278, 956));
+        const string first = "\"The front first, Your Majesty, since everything else in this room depends on it. ";
+        t.Line("FrontAuremina", Lucita, first +
+            "Auremina is ours, and the gold hills with it. The Wehzeks have fallen back on Isor and Nanta to defend the ports.\"",
+            new[] { "FrontHugo" }, condition: AuditT45.FrontAuremina);
+        t.Line("FrontCitySecond", Lucita, first +
+            "Zille city is ours at the second attempt. It cost us more than the first, but our flag is over the harbor.\"",
+            new[] { "FrontHugo" }, condition: AuditT45.FrontCitySecond);
+        t.Line("FrontHills", Lucita, first +
+            "Zille city is still ours, but the hills held. The attack on Auremina has stalled, and the Wehzeks are digging in above " +
+            "the mines.\"", new[] { "FrontHugo" }, condition: AuditT45.FrontHillsHeld);
+        t.Line("FrontCityTwice", Lucita, first +
+            "The Wehzek garrison has held Zille city a second time. Every disturbance at home will be read in Wraclawitz as a sign " +
+            "that we are tiring.\"", new[] { "FrontHugo" }, condition: AuditT45.FrontCityHeldTwice);
+        t.Line("FrontHold", Lucita, first +
+            "It has been quiet since you ordered the army to hold. Both sides are using the time to dig.\"",
+            new[] { "FrontHugo" }, condition: AuditT45.FrontHolding);
+        t.Line("FrontHeld", Lucita, first +
+            "Our flag is still over Zille city, and the Wehzeks have stopped trying to take it back by daylight.\"",
+            new[] { "FrontHugo" }, condition: AuditT45.FrontBeforeCity);
+        t.Line("FrontNot", Lucita, first +
+            "The Wehzek garrison is still holding Zille city. Every disturbance at home will be read in Wraclawitz as a sign that we " +
+            "are tiring.\"", new[] { "FrontHugo" }, condition: AuditT45.FrontBeforeNoCity);
+        t.Line("FrontFree", Lucita, first +
+            "There is no front anymore. The last Wehzek garrisons have surrendered, and our flag is over every town in Zille.\"",
+            new[] { "FrontHugo" }, condition: $"{AuditT45.Stopped} and {WarFlags.L(WarFlags.Liberated)}");
+        t.Line("FrontStopped", Lucita, first +
+            "The guns have been silent since the fighting stopped. The Wehzeks are fortifying their side of the line, and so are we.\"",
+            new[] { "FrontHugo" }, condition: $"{AuditT45.Stopped} and {WarFlags.LNot(WarFlags.Liberated)}");
         t.Line("FrontHugo", Hugo, "\"Then let us give Wraclawitz nothing to read.\"", new[] { "#1288" });
 
         // [490] Titus: "...confirming Wehlen's suspicions, we would no doubt have an edge in securing the return of Zille."
@@ -115,9 +138,10 @@ internal static class SweepEarlyT5Security
         var t = new Talk(Briefing, "ZilleWar.SE.Brief.");
 
         // [664] "Amid this tranquil backdrop, I found a brief respite..." -> [666]
+        // Neutral about the front (Lucita may say a moment later that it is quiet tonight).
         t.Line("North", Narrator,
-            "Somewhere beyond the hills to the north, our guns were firing on Wehzek positions around Zille. From the balcony, all I " +
-            "could hear were crickets.", new[] { "#666" }, condition: Active, hooks: From(664));
+            "Somewhere far to the north, my soldiers were spending another night in their trenches. From the balcony, all I could hear " +
+            "were crickets.", new[] { "#666" }, condition: Active, hooks: From(664));
 
         // [680] Lucita: "Good evening, Your Majesty." -> the King's replies.
         t.Line("Quiet", Lucita,

@@ -38,6 +38,12 @@ internal static class EarlyT7
     public static readonly string Cf = $"{WarFlags.L(WarFlags.Ceasefire)} and {WarFlags.LNot(WarFlags.Liberated)} and {WarFlags.LNot(WarFlags.Defeated)}";
     public static readonly string Over = WarFlags.L(WarFlags.Over);
     public static readonly string Two = WarFlags.L(WarFlags.TwoWars);
+    // After the war (always the case from Turn 7 on): liberated / divided (Zille city ours, the rest Wehzek) / lost,
+    // each either by the King's own ceasefire or by the armistice when the offensive ran out.
+    public static readonly string Part = LK.Part;
+    public static readonly string Lost = LK.Lost;
+    public static readonly string KingCf = WarFlags.L(WarFlags.Ceasefire);
+    public static readonly string NoKingCf = WarFlags.LNot(WarFlags.Ceasefire);
     public static readonly string NoPales = WarFlags.LNot("RiziaDLC.Pales_War");
     /// <summary>The Zille war is being fought and the Pales war is not: vanilla's generic war lines apply to Zille.</summary>
     public static readonly string ZilleOnly = $"{Act} and {NoPales}";
@@ -61,6 +67,7 @@ internal static class EarlyT7
                  {
                      VarZilleAdmin, VarRumburgPriority, VarRumburgWarned, VarRumburgPromise, VarZilleGold, VarReferendumFloated,
                      VarNewsDerdiaG, VarNewsDerdiaV, VarNewsWehlenNorth, VarNewsWarTax, VarNewsLespiaBothSides,
+                     VarRepBluds, VarRepDerdians,
                  })
         {
             Variables.Register(v);
@@ -97,6 +104,10 @@ internal static class EarlyT7
         Widen(t, "RemindWarD", 243, 256, ZilleOnly);
         Widen(t, "WelfareWarD", 251, 248, ZilleOnly);
         Widen(t, "BlessTroopsD", 273, 268, ZilleOnly);
+        // After the Zille war (no Pales war): Sal's opening prayer remembers the fallen.
+        t.Variant("SalFallen", 119, new[] { 117 }, $"{Over} and {NoPales}", "Sal Ignacius",
+            "\"We pray for the souls of those who fell in Zille, and for the wisdom to choose paths that lead to prosperity and peace for our kingdom.\"",
+            new[] { "#120" });
         t.Register();
     }
 
@@ -112,7 +123,10 @@ internal static class EarlyT7
         t.Variant("Doubt18Lib", 18, new[] { 17, 19, 23 }, Lib, "Manus Sazon",
             "\"Zille has come home, and Brenas thanks the army for it. But it is difficult for my party to support another war so soon, this time against the Grand Duchy.\"",
             new[] { "#11" });
-        t.Variant("Doubt18Lost", 18, new[] { 17, 19, 23 }, $"({Def}) or ({Cf})", "Manus Sazon",
+        t.Variant("Doubt18Part", 18, new[] { 17, 19, 23 }, Part, "Manus Sazon",
+            "\"Zille's harbor flies our flag again, and Brenas thanks the army for it. But half of the region is still behind Wehzek guns, and it is difficult for my party to support another war, this time against the Grand Duchy.\"",
+            new[] { "#11" });
+        t.Variant("Doubt18Lost", 18, new[] { 17, 19, 23 }, Lost, "Manus Sazon",
             "\"We have only just failed to bring Zille home by force. It is difficult for my party to support another war, this time against the Grand Duchy.\"",
             new[] { "#11" });
         t.Variant("Doubt53Act", 53, new[] { 51, 52 }, Act, "Manus Sazon",
@@ -138,9 +152,11 @@ internal static class EarlyT7
         var t = new Talk(conv, "ZilleWar.E7.Zille.");
 
         // The treaty, the probation period and the "peaceful transfer" no longer exist: the House debates the war.
-        t.Logic("Start", new[] { "Act", "Lib", "Def", "Cf", "#3" }, condition: Declared, hooks: From(1));
+        // From Turn 7 the war is over: liberated, divided (Zille city ours, the rest behind an armistice or ceasefire line)
+        // or lost. "Act" is kept for safety only.
+        t.Logic("Start", new[] { "Act", "Lib", "Part", "Def", "Cf", "#3" }, condition: Declared, hooks: From(1));
 
-        // --- the war goes on
+        // --- the war goes on (cannot happen from Turn 7 on)
         t.Logic("Act", new[] { "ActM", "ActD" }, condition: Act);
         t.Line("ActM", manus,
             "\"My constituents in Brenas have sons in Zille, Your Majesty. Many of them are fighting over fields their grandfathers farmed " +
@@ -194,35 +210,54 @@ internal static class EarlyT7
         t.Choice("TaxNo", "\"Not while our soldiers depend on those factories.\"", new[] { "TaxNoR" });
         t.Line("TaxNoR", daria, "\"Thank you, Your Majesty. The House will make a note of it.\"", new[] { "Admin" });
 
-        // --- who governs Zille: vanilla's Brenas or Rizia Imperii argument, made concrete by the war
-        t.Logic("Admin", new[] { "Adm1Lib", "Adm1Act" });
+        // --- who governs Zille (the whole region, or the part that is ours): vanilla's Brenas or Rizia Imperii argument
+        t.Logic("Admin", new[] { "Adm1Lib", "Adm1Part", "Adm1Act" });
         t.Line("Adm1Act", daria,
             "\"Which brings us to what comes after. Once Zille is liberated, it should be administered from Porte Drazon, the way the " +
-            "Pales Administrative District is. Stability first.\"", new[] { "Adm2" }, condition: WarFlags.LNot(WarFlags.Liberated));
+            "Pales Administrative District is. Stability first.\"", new[] { "Adm2" }, condition: Act);
         t.Line("Adm1Lib", daria,
             "\"Which brings us to what comes next. Zille has been through a war. It should be administered from Porte Drazon, the way " +
             "the Pales Administrative District is, until it is stable.\"", new[] { "Adm2" }, condition: Lib);
+        t.Line("Adm1Part", daria,
+            "\"Which brings us to the part of Zille that is ours. A city on an armistice line should be administered from Porte Drazon, " +
+            "the way the Pales Administrative District is, until that line is settled.\"", new[] { "Adm2Part" }, condition: Part);
         t.Line("Adm2", manus,
             "\"Objection. Zille has always been part of the province of Brenas. Brenas paid for this war with its sons. Brenas should " +
             "govern what they won back.\"", new[] { "Adm3" });
+        // Divided: the question is only about the city of Zille and the strip we hold (it feeds E7_ZilleAdmin for our own
+        // lines and the divided map layer; LateState sets vanilla ZilleOwnership_* only for a liberated Zille).
+        t.Line("Adm2Part", manus,
+            "\"Objection. The city of Zille has always been part of the province of Brenas, line or no line. Brenas paid for it with its " +
+            "sons. Brenas should govern what they won back.\"", new[] { "Adm3" });
         t.Line("Adm3", Narrator, "The volume in the room grew as the Delegates began arguing among themselves. I turned to Hugo.", new[] { "Adm4" });
         t.Line("Adm4", hugo,
             "\"You have empowered the Sazons enough without handing them a liberated city, Your Majesty. Whatever you decide, decide it " +
-            "before the generals decide it for you.\"", new[] { "AdmB", "AdmI", "AdmW" });
-        t.Choice("AdmB", "\"Zille will return to Brenas, as it was before 1927.\"", new[] { "AdmBR" },
+            "before the generals decide it for you.\"", new[] { "AdmB", "AdmBPart", "AdmI", "AdmIPart", "AdmW", "AdmWLib", "AdmWPart" });
+        string notPart = $"not ({Part})";
+        t.Choice("AdmBPart", "\"The city of Zille and the land we hold will return to Brenas, as before 1927.\"", new[] { "AdmBR" },
+            condition: Part,
+            script: Str(VarZilleAdmin, "brenas") + Inc("RiziaDLC.Country_HouseSazon", 1) + Inc("RiziaDLC.Country_HouseToras", -1));
+        t.Choice("AdmIPart", "\"What we hold of Zille will be governed from Porte Drazon until the line is settled.\"", new[] { "AdmIR" },
+            condition: Part, script: Str(VarZilleAdmin, "imperii") + Inc("RiziaDLC.Country_HouseSazon", -1));
+        t.Choice("AdmB", "\"Zille will return to Brenas, as it was before 1927.\"", new[] { "AdmBR" }, condition: notPart,
             script: Str(VarZilleAdmin, "brenas") + Inc("RiziaDLC.Country_HouseSazon", 1) + Inc("RiziaDLC.Country_HouseToras", -1));
         t.Line("AdmBR", Narrator, "The RPP benches broke into applause. Beside me, Hugo closed his eyes.", new[] { "#191" });
-        t.Choice("AdmI", "\"Zille will be governed from Porte Drazon until it is secure.\"", new[] { "AdmIR" },
+        t.Choice("AdmI", "\"Zille will be governed from Porte Drazon until it is secure.\"", new[] { "AdmIR" }, condition: notPart,
             script: Str(VarZilleAdmin, "imperii") + Inc("RiziaDLC.Country_HouseSazon", -1));
         t.Line("AdmIR", Narrator, "Daria smiled. Manus gripped the edges of his podium until his knuckles went white.", new[] { "#191" });
-        t.Choice("AdmW", "\"That can wait until the war is truly behind us.\"", new[] { "AdmWR" }, script: Str(VarZilleAdmin, "undecided"));
+        t.Choice("AdmW", "\"That can wait until the war is truly behind us.\"", new[] { "AdmWR" }, condition: Act,
+            script: Str(VarZilleAdmin, "undecided"));
+        t.Choice("AdmWLib", "\"That can wait until Zille is back on its feet.\"", new[] { "AdmWR" }, condition: Lib,
+            script: Str(VarZilleAdmin, "undecided"));
+        t.Choice("AdmWPart", "\"That can wait until we know where the line will stay.\"", new[] { "AdmWR" }, condition: Part,
+            script: Str(VarZilleAdmin, "undecided"));
         t.Line("AdmWR", hugo, "\"Sooner rather than later, one hopes.\"", new[] { "#191" });
 
         // --- liberated
         t.Logic("Lib", new[] { "LibM", "LibD" }, condition: Lib);
         t.Line("LibM", manus,
             "\"The first matter on our agenda is a happy one. On behalf of the people of Brenas, this House congratulates His Majesty and " +
-            "the Royal Army. After nearly three decades, Zille is Rizian again.\"", new[] { "LibM2" }, condition: Rpp);
+            "the Royal Army. After a quarter of a century, Zille is Rizian again.\"", new[] { "LibM2" }, condition: Rpp);
         t.Line("LibM2", daria, "\"The RNC never doubted it for a moment, Mr. Speaker.\"", new[] { "LibQ" });
         t.Line("LibD", daria,
             "\"The first matter on our agenda is a happy one. This House congratulates His Majesty and the Royal Army on the liberation " +
@@ -241,8 +276,49 @@ internal static class EarlyT7
         t.Choice("LibA2", "\"Those who served Smolak will answer for it. The rest have nothing to fear.\"", new[] { "LibA2r" });
         t.Line("LibA2r", Narrator, "Applause rose from the RNC benches. Manus wrote something down.", new[] { "Admin" });
 
-        // --- lost
-        t.Logic("Def", new[] { "DefM", "DefD" }, condition: Def);
+        // --- divided: Zille city is ours, Isor and Nanta (and perhaps Auremina) are not
+        t.Logic("Part", new[] { "PartCfM", "PartCfD", "PartArmM", "PartArmD" }, condition: Part);
+        t.Line("PartCfM", manus,
+            "\"Your Majesty, Zille's harbor flies our flag again, and Brenas is grateful to the army for it. But the ceasefire has left a " +
+            "line across the region. Isor and Nanta are still Wehzek, and our constituents have cousins on the far side of it.\"",
+            new[] { "PartCfM2" }, condition: $"{Rpp} and {KingCf}");
+        t.Line("PartCfM2", daria,
+            "\"The RNC accepted the ceasefire because His Majesty asked us to, Mr. Speaker. We will not accept that line as a border, nor " +
+            "one drawn in Konstantium by people who have never set foot in Zille.\"", new[] { "PartRef" });
+        t.Line("PartCfD", daria,
+            "\"Your Majesty, Zille's harbor flies our flag again. The RNC accepted the ceasefire because you asked us to. But we will not " +
+            "accept that line as a border, nor one drawn in Konstantium by people who have never set foot in Zille.\"",
+            new[] { "PartCfD2" }, condition: $"{NotRpp} and {KingCf}");
+        t.Line("PartCfD2", manus,
+            "\"A ceasefire is not a peace, Madame Speaker. Isor and Nanta are still Wehzek, and our constituents have cousins on the far " +
+            "side of that line.\"", new[] { "PartRef" });
+        t.Line("PartArmM", manus,
+            "\"Your Majesty, Zille's harbor flies our flag again, and Brenas is grateful to the army for it. But the offensive stopped " +
+            "short of Isor and Nanta, and the armistice has frozen the line where our soldiers stood when their strength ran out.\"",
+            new[] { "PartArmM2" }, condition: $"{Rpp} and {NoKingCf}");
+        t.Line("PartArmM2", daria,
+            "\"The RNC will never accept that line as a border, Mr. Speaker. The army took Zille's harbor. Given time, it can finish the work.\"",
+            new[] { "PartRef" });
+        t.Line("PartArmD", daria,
+            "\"Your Majesty, Zille's harbor flies our flag again, and the RNC salutes the army for it. But we will never accept the " +
+            "armistice line as a border. Given time, the army can finish the work.\"", new[] { "PartArmD2" }, condition: $"{NotRpp} and {NoKingCf}");
+        t.Line("PartArmD2", manus,
+            "\"Finish it with whose sons, Madame Speaker? The offensive ran out short of Isor and Nanta, and Brenas has buried enough of " +
+            "them already.\"", new[] { "PartRef" });
+        t.Line("PartRef", manus,
+            "\"Then let the people on the other side of the line decide where they belong. A referendum in Isor and Nanta, under " +
+            "international supervision.\"", new[] { "PartH" });
+        t.Line("PartH", hugo,
+            "\"Don't go down that road, Your Majesty. Any vote across that line is an open door for Wehlen, and Smolak will walk through it.\"",
+            new[] { "CfA1", "CfA2" });
+        t.Choice("CfA1", "\"Zille's future will be decided by Rizia, not by ballots.\"", new[] { "CfA1r" });
+        t.Line("CfA1r", daria, "\"Hear, hear.\"", new[] { "Admin" });
+        t.Choice("CfA2", "\"Perhaps a vote is the only way this ends without more graves.\"", new[] { "CfA2r" },
+            script: Set(VarReferendumFloated, "true"));
+        t.Line("CfA2r", Narrator, "Manus looked at me in surprise. Hugo did not look at me at all.", new[] { "Admin" });
+
+        // --- lost, after the offensive ran out (armistice)
+        t.Logic("Def", new[] { "DefM", "DefD" }, condition: $"{Lost} and {NoKingCf}");
         t.Line("DefM", manus,
             "\"Your Majesty, I will not pretend this is an easy session. We were promised a short war and a homecoming. Brenas has " +
             "received neither. Only telegrams.\"", new[] { "DefM2" }, condition: Rpp);
@@ -258,36 +334,33 @@ internal static class EarlyT7
         t.Choice("DefA1", "\"The failure is mine to carry. Not the army's.\"", new[] { "DefA1r" },
             script: Inc("RiziaDLC.LeaningValue_Democratic", 1));
         t.Line("DefA1r", Narrator, "The chamber went silent. Even Daria lowered her eyes.", new[] { "DefH" });
-        t.Choice("DefA2", "\"Zille is not lost. We lost a battle, not the claim.\"", new[] { "DefA2r" });
+        t.Choice("DefA2", "\"Zille is not lost. We lost a campaign, not the claim.\"", new[] { "DefA2r" });
         t.Line("DefA2r", daria, "\"Then the RNC will hold you to that, Your Majesty.\"", new[] { "DefH" });
         t.Choice("DefA3", "\"This House will not put the Crown on trial.\"", new[] { "DefA3r" },
             script: Inc("RiziaDLC.LeaningValue_Democratic", -1));
         t.Line("DefA3r", Narrator, "Manus opened his mouth, then closed it again. Beside me, Hugo gave a small nod of approval.", new[] { "DefH" });
         t.Line("DefH", hugo, "\"Let them grieve, Romus. Just don't let them choose a culprit.\"", new[] { "#191" });
 
-        // --- ceasefire
-        t.Logic("Cf", new[] { "CfM", "CfD" }, condition: Cf);
+        // --- lost, after the King's own ceasefire (Zille city never taken)
+        t.Logic("Cf", new[] { "CfM", "CfD" }, condition: $"{Lost} and {KingCf}");
         t.Line("CfM", manus,
-            "\"Your Majesty, the guns in Zille have fallen silent, and my party is grateful for it. But a ceasefire is not a peace. Our " +
-            "constituents want to know where the line runs, and who is left living on the wrong side of it.\"", new[] { "CfM2" }, condition: Rpp);
+            "\"Your Majesty, the guns have fallen silent, and my party is grateful for it. But Brenas buried its sons for a city that " +
+            "still flies Smolak's flag. Our constituents want to know what it was for.\"", new[] { "CfM2" }, condition: Rpp);
         t.Line("CfM2", daria,
-            "\"The RNC accepted the ceasefire because His Majesty asked us to. We will not accept a border drawn in Konstantium by people " +
-            "who have never set foot in Zille.\"", new[] { "CfRef" });
+            "\"The RNC accepted the ceasefire because His Majesty asked us to, Mr. Speaker. We did not accept it as the end of the claim.\"",
+            new[] { "DefA1", "CfTime", "DefA3" });
         t.Line("CfD", daria,
-            "\"The RNC accepted the ceasefire because His Majesty asked us to, Your Majesty. But we will not accept a border drawn in " +
-            "Konstantium by people who have never set foot in Zille.\"", new[] { "CfD2" }, condition: NotRpp);
+            "\"Your Majesty, the RNC accepted the ceasefire because you asked us to. We did not accept it as the end of the claim to Zille.\"",
+            new[] { "CfD2" }, condition: NotRpp);
         t.Line("CfD2", manus,
-            "\"A ceasefire is not a peace, Madame Speaker. Our constituents want to know where the line runs, and who is left living on " +
-            "the wrong side of it.\"", new[] { "CfRef" });
-        t.Line("CfRef", manus, "\"Then let the people of Zille draw it. A referendum, under international supervision.\"", new[] { "CfH" });
-        t.Line("CfH", hugo,
-            "\"Don't go down that road, Your Majesty. Any vote in Zille is an open door for Wehlen, and Smolak will walk through it.\"",
-            new[] { "CfA1", "CfA2" });
-        t.Choice("CfA1", "\"Zille's future will be decided by Rizia, not by ballots.\"", new[] { "CfA1r" });
-        t.Line("CfA1r", daria, "\"Hear, hear.\"", new[] { "#191" });
-        t.Choice("CfA2", "\"Perhaps a vote is the only way this ends without more graves.\"", new[] { "CfA2r" },
-            script: Set(VarReferendumFloated, "true"));
-        t.Line("CfA2r", Narrator, "Manus looked at me in surprise. Hugo did not look at me at all.", new[] { "#191" });
+            "\"And Brenas buried its sons for a city that still flies Smolak's flag, Madame Speaker. Our constituents want to know what " +
+            "it was for.\"", new[] { "DefA1", "CfTime", "DefA3" });
+        t.Choice("CfTime", "\"The ceasefire buys us time. Smolak will not hold Zille forever.\"", new[] { "CfTimeR" });
+        t.Line("CfTimeR", Narrator, "Daria nodded slowly. Manus did not look convinced.", new[] { "DefH" });
+
+        // "Moving on to more pressing topics..." right after the war debate.
+        t.Variant("NextM", 213, new[] { 194 }, Declared, manus, "\"Moving on to the next item on our agenda...\"", new[] { "#2" });
+        t.Variant("NextD", 214, new[] { 195 }, Declared, daria, "\"Moving on to the next item on our agenda...\"", new[] { "#2" });
 
         t.Register();
     }
@@ -336,8 +409,50 @@ internal static class EarlyT7
         Vanilla.HideNews("G_WehlenDeploysForces", () => IsDeclared);
         // Voice of Rizia's war profits tax story is about Pales.
         Vanilla.HideNews("RD_V_WarProfitsTax", () => IsDeclared && !PalesWar);
-        // "Wehlen slowly appears to lose grip over the security situation" in a Zille that is Rizian again.
-        Vanilla.HideNews("Turn07_G_BFFZilleActivitySpike", () => Variables.GetBool(WarFlags.Liberated));
+        // "Wehlen slowly appears to lose grip over the security situation" in a Zille (city) that is Rizian again.
+        Vanilla.HideNews("Turn07_G_BFFZilleActivitySpike",
+            () => Variables.GetBool(WarFlags.Liberated) || Variables.GetBool(WarFlags.ZilleCityHeld));
+        // Reports written for the peacetime Zille agreement: "despite previous agreements with Wehlen", Wehzek border guards
+        // on the far side of the Mave Nortus crossing. Replaced in OnStep by war-aware versions.
+        Vanilla.HideReport("Turn07_MaveNortus_BludsLetIn", () => IsDeclared);
+        Vanilla.HideReport("Turn07_Sallabes_DerdiansLetIn", () => IsDeclared);
+    }
+
+    private const string VarRepBluds = "ZilleWar.E7_Report_BludsLetIn";
+    private const string VarRepDerdians = "ZilleWar.E7_Report_DerdiansLetIn";
+
+    private static void PublishReports()
+    {
+        if (Variables.GetBool("RiziaDLCSupport.Reports_Turn07_MaveNortus_BludsLetIn") && !Variables.GetBool(VarRepBluds))
+        {
+            Variables.Set(VarRepBluds, true);
+            bool lib = Variables.GetBool(WarFlags.Liberated);
+            bool held = Variables.GetBool(WarFlags.ZilleCityHeld);
+            NewsWire.Report("E7_BludsLetIn", "Rizia_City_MaveNortus", "Rizia Opens Its Border to Bluds", lib
+                ? NewsWire.P(
+                    "Thousands of Bludish families fleeing the Wehzek civil war have begun crossing into Zille, now that its border posts are " +
+                    "manned by Rizian soldiers instead of Wehzek police. Relief camps have been set up along the road to Mave Nortus.",
+                    "Wraclawitz has accused Porte Drazon of opening a door for terrorists into the region it lost.")
+                : held
+                    ? NewsWire.P(
+                        "Thousands of Bludish families fleeing the Wehzek civil war have begun crossing the armistice line into Rizian-held " +
+                        "Zille. Wehzek patrols on the far side tried to turn them back, then gave up. Relief camps have been set up along the " +
+                        "road to Mave Nortus.",
+                        "Wraclawitz has called it a breach of the armistice. Our officers on the line call it a flood.")
+                    : NewsWire.P(
+                        "Rizia has opened the Mave Nortus crossing to Bluds fleeing the Wehzek civil war. Wehzek border police on the Zille side " +
+                        "of the river tried to stop the thousands who wanted to cross, then had to let them pass.",
+                        "Wraclawitz has called it one more provocation from a kingdom that has already gone to war over the region."));
+        }
+
+        if (Variables.GetBool("RiziaDLCSupport.Reports_Turn07_Sallabes_DerdiansLetIn") && !Variables.GetBool(VarRepDerdians))
+        {
+            Variables.Set(VarRepDerdians, true);
+            NewsWire.Report("E7_DerdiansLetIn", "Rizia_City_Sallabes", "Hundreds of Derdians Arrive in Sallabes", NewsWire.P(
+                "Ships full of Derdian Golcondists have started arriving in the port of Sallabes, and the harbor master has opened a second " +
+                "quay to take them.",
+                "In Wraclawitz, President Wiktor Smolak called the arrivals proof that Rizia means to arm every enemy Wehlen has."));
+        }
     }
 
     public static void OnStep()
@@ -351,6 +466,7 @@ internal static class EarlyT7
 
         bool active = Variables.GetBool(WarFlags.Active);
         bool liberated = Variables.GetBool(WarFlags.Liberated);
+        PublishReports();
 
         if (Variables.GetBool("RiziaDLCSupport.News_Turn07_G_DerdiansReallowed") && !Variables.GetBool(VarNewsDerdiaG))
         {
@@ -397,7 +513,8 @@ internal static class EarlyT7
                       "in the northeast of the country under curfew, and has moved specially trained units from the Rizian front to fight the " +
                       "Bludish Freedom Front.";
             NewsWire.Publish("E7_WehlenNorth", "G", title, string.Join("\n\n", opening,
-                "Wehzek officials accuse foreign powers of arming the rebels and of timing their raids to the fighting in the south. " +
+                "Wehzek officials accuse foreign powers of arming the rebels and of timing their raids to the " +
+                (active ? "fighting in the south. " : "war in the south. ") +
                 "Analysts in Konstantium note that the Wehzek army, already one of the weakest in Eastern Merkopa, can ill afford a " +
                 "campaign on its own soil.",
                 "The operation will be felt across the region, particularly in Lespia, Rumburg and Sordland, which has a large Bludish " +

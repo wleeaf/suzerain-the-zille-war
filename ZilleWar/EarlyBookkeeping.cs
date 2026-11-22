@@ -136,6 +136,45 @@ internal static class EarlyBookkeeping
         },
     };
 
+    /// <summary>After an armistice that left Zille city Rizian: the resistance lives on behind the line, in Isor and Nanta.</summary>
+    private static readonly Dictionary<string, Rewrite> DividedText = new()
+    {
+        [Funding5] = new Rewrite
+        {
+            Description =
+                "The guns have fallen silent along the new line in Zille. The city and its harbor are ours, but beyond the wire Wehlen's " +
+                "security police are hunting everyone who helped our soldiers. The Ariana Toras Association and the Zille branch of " +
+                "Su Omina have gone underground in Isor and Nanta. Without our money they will be broken within months. With it, they " +
+                "keep the rest of the claim alive, and give Wiktor Smolak every reason to fortify the line.",
+            Options = new[]
+            {
+                "Increase funding to the Ariana Toras Association beyond the line (-1 Budget)",
+                "Fund the Ariana Toras Association to hide those who helped us (-2 Budget)",
+                "Keep the Su Omina cells armed and waiting (-1 Budget, -500 Military Equipment)",
+                "Arm a Su Omina branch beyond the line (-2 Budget, -250 Military Equipment)",
+                "Fund both organizations beyond the line (-2 Authority, -4 Budget, -500 Military Equipment)",
+                "Fund neither organization",
+            },
+        },
+        [Funding7] = new Rewrite
+        {
+            Description =
+                "Since the armistice, Wehlen has filled the prisons of Isor and Nanta with anyone suspected of helping our army, and " +
+                "families who crossed into our half of Zille cannot go back. What is left of the resistance on the far side of the line " +
+                "asks for money to keep its people hidden and its networks alive. Supporting them keeps the rest of Zille's question " +
+                "open; it also hands Wehlen proof that Rizia means to move the line again.",
+            Options = new[]
+            {
+                "Increase funding to the Ariana Toras Association beyond the line (-2 Budget)",
+                "Fund the Ariana Toras Association to hide those who helped us (-2 Budget)",
+                "Keep the Su Omina cells armed and waiting (-2 Budget, -1000 Military Equipment)",
+                "Arm a Su Omina branch beyond the line (-4 Budget, -500 Military Equipment)",
+                "Fund both organizations beyond the line (-2 Authority, -4 Budget, -1000 Military Equipment)",
+                "Fund none",
+            },
+        },
+    };
+
     private static readonly Dictionary<string, (string desc, string[] options)> Original = new(StringComparer.Ordinal);
 
     public static void Register()
@@ -186,7 +225,7 @@ internal static class EarlyBookkeeping
         }
 
         RewriteFundingDecisions(!declared || Variables.GetBool(WarFlags.Liberated) ? null
-            : Variables.GetBool(WarFlags.Active) ? WarText : LostText);
+            : Variables.GetBool(WarFlags.Active) ? WarText : Variables.GetBool(WarFlags.ZilleCityHeld) ? DividedText : LostText);
     }
 
     private static void RewriteFundingDecisions(Dictionary<string, Rewrite> texts)

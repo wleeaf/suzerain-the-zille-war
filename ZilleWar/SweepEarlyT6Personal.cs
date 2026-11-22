@@ -66,7 +66,11 @@ internal static class SweepEarlyT6Personal
         t.Line("SilenceLost", Narrator,
             "This year, Hugo had added a new line to the program: a minute of silence for the soldiers who had fallen in Zille. Nobody " +
             "at the palace had yet found a way to say what they had fallen for.",
-            new[] { "#184" }, condition: LostOrStopped, hooks: From(4));
+            new[] { "#184" }, condition: AuditT6.Lost, hooks: From(4));
+        t.Line("SilencePart", Narrator,
+            "This year, Hugo had added a new line to the program: a minute of silence for the soldiers who had fallen in Zille. They had " +
+            "brought Zille city home. The rest of the province still lay beyond an armistice line, and the list of their names was long.",
+            new[] { "#184" }, condition: AuditT6.Part, hooks: From(4));
 
         // [291] "To think... if only she was around to talk to Wiktor Smolak now."
         t.Variant("Smolak", 291, new[] { 290 }, Declared, Estela,
@@ -104,8 +108,11 @@ internal static class SweepEarlyT6Personal
         t.Variant("VowWon", 903, new[] { 896 }, Liberated, Romus,
             "\"Your greatest mistake is undone, Father. Zille is ours again. Now I will become the greatest king Rizia has ever known.\"",
             new[] { "#905" });
-        t.Variant("VowLost", 903, new[] { 896 }, LostOrStopped, Romus,
+        t.Variant("VowLost", 903, new[] { 896 }, AuditT6.Lost, Romus,
             "\"I tried to take Zille back by force, Father, and I failed. I vow it will not be the last time Rizia tries.\"",
+            new[] { "#905" });
+        t.Variant("VowPart", 903, new[] { 896 }, AuditT6.Part, Romus,
+            "\"I have taken back Zille city, Father. I vow to rectify the rest of your mistakes and become the greatest king Rizia has ever known.\"",
             new[] { "#905" });
         t.Register();
     }
@@ -143,8 +150,16 @@ internal static class SweepEarlyT6Personal
         // [269] "I took the throne with the aim of avoiding conflict. I am proud to have stayed the course."
         t.Variant("Course", 269, new[] { 272 }, Declared, Romus,
             "\"I took the throne to avoid needless wars. Zille was not one of them. Pales would have been.\"", new[] { "CourseA" });
-        t.Line("CourseA", Lucita,
-            "\"A needless war is one you lose, Your Majesty. Make sure Zille isn't one of them.\"", new[] { "#284" });
+        t.Logic("CourseA", new[] { "CourseOn", "CourseLib", "CoursePart", "CourseLost" });
+        t.Line("CourseOn", Lucita,
+            "\"A needless war is one you lose, Your Majesty. Make sure Zille isn't one of them.\"", new[] { "#284" }, condition: Active);
+        t.Line("CourseLib", Lucita, "\"Spoken like a man who won his, Your Majesty.\"", new[] { "#284" }, condition: Liberated);
+        t.Line("CoursePart", Lucita,
+            "\"Half of Zille came home, Your Majesty. History will decide whether the other half makes it needless.\"", new[] { "#284" },
+            condition: AuditT6.Part);
+        t.Line("CourseLost", Lucita,
+            "\"Zille was not needless, Your Majesty. It was badly finished. That is a different sin.\"", new[] { "#284" },
+            condition: AuditT6.Lost);
 
         // [279] after "I'm a lover, not a fighter."
         t.Variant("Frisson", 279, new[] { 278 }, Active, Lucita,

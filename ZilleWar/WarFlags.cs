@@ -22,6 +22,10 @@ internal static class WarFlags
 
     private static readonly string[] Bools = { Declared, Active, Over, Liberated, Defeated, Ceasefire, ZilleCityHeld, TwoWars };
 
+    /// <summary>Rizian border towns Wehlen holds now (true while occupied; after an armistice they can stay occupied).</summary>
+    public static readonly string[] RizianTowns = { "Mave Nortus", "Dapalle", "Balle", "Jales" };
+    public static string Occupied(string town) => $"ZilleWar.{town.Replace(" ", string.Empty)}_Occupied";
+
     // ---- expresso
     public static string X(string v, bool value = true) => $"{v} == {(value ? "true" : "false")}";
     public static readonly string XPeace = X(Declared, false);           // vanilla scene untouched when there was never a war
@@ -46,6 +50,12 @@ internal static class WarFlags
         {
             Vanilla.Expose(v);
         }
+
+        foreach (string town in RizianTowns)
+        {
+            Variables.Register(Occupied(town));
+            Vanilla.Expose(Occupied(town));
+        }
     }
 
     /// <summary>Recompute derived flags and make sure none is nil.</summary>
@@ -56,6 +66,12 @@ internal static class WarFlags
         Variables.Set(Over, declared && !active);
         Variables.Set(ZilleCityHeld, declared && Variables.GetBool(ZilleOperation.CapturedVar("Zille")));
         Variables.Set(TwoWars, active && Variables.GetBool(PalesWar));
+        Dictionary<string, bool> owners = declared ? ZilleCampaign.CurrentOwners() : null;
+        foreach (string town in RizianTowns)
+        {
+            Variables.Set(Occupied(town), owners != null && ZilleCampaign.IsEnemy(owners, ZilleCampaign.TownTile(town)));
+        }
+
 
         // Smolak's AN Threat Mitigation Protocol ("Zille stays Wehzek until the threat is over") is answered by the declaration of
         // war; the vanilla AN ending switches it on after our declaration, so it is cleared on every step from then on.

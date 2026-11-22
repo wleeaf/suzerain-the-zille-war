@@ -83,12 +83,11 @@ internal static class SweepLateTalk
 
     private static void RegisterTurn10Court()
     {
-        // Lucita's news: vanilla only remembers the Pales war or a referendum fight in Zille.
+        // Lucita's news: vanilla only remembers the Pales war or a referendum fight in Zille. (Only while Zille is fought, which
+        // can no longer happen in Turn 10: the war ended years before her pregnancy.)
         var a = new Talk(Announcement, "ZilleWar.SL.T10.Announce.");
         a.Line("ZilleBlur", "Lucita Azaro", "\"Time's been a blur since the war in Zille began. I thought I was throwing up from nerves.\"",
             new[] { "#37" }, condition: And(Ongoing, NoPalesWar), hooks: Talk.From(46));
-        a.Line("ZilleBlurOver", "Lucita Azaro", "\"The war in Zille was such a blur. I thought I was throwing up from nerves.\"",
-            new[] { "#37" }, condition: And(War, WarFlags.L(WarFlags.Over), NoPalesWar), hooks: Talk.From(46));
         a.Register();
 
         // Taddeus's birthday toast to the Queen Mother, who was born in Zille (vanilla 510 "men and women in uniform").
@@ -108,6 +107,10 @@ internal static class SweepLateTalk
             new[] { "#333" }, condition: And(Lib, PalesNotWon), hooks: Talk.From(343));
         p.Line("TitusZille", "Titus Gordion", "\"You trusted House Azaro, and they led our army to defeat in Zille. I swear that would never have happened under my watch.\"",
             new[] { "#355" }, condition: And(Lost, PalesNotLost, "Variable[\"RiziaDLC.Council_Security_Titus\"] ~= true"), hooks: Talk.From(351));
+        Swap(p, Petitions, "Someday", 276, new[] { 439 }, "Taddeus Azaro", new S(
+                Part: "\"The line in Zille will not hold forever, sire. When it breaks, I am ready to die a thousand deaths for my proud kingdom.\"",
+                Lost: "\"Zille is not finished with us, sire, nor we with it. When war comes again, I am ready to die a thousand deaths for my proud kingdom.\""),
+            new[] { "#333" });
         p.Register();
 
         // House Azaro's spare unit: vanilla says "no wars on the horizon" whenever the Pales war is not on.
@@ -133,7 +136,7 @@ internal static class SweepLateTalk
         // Daria on giving Zille to Brenas, months after the army took it.
         var rf = new Talk(Reform, "ZilleWar.SL.T10.Reform.");
         Swap(rf, Reform, "Unstable", 875, new[] { 878 }, "Daria de Rava", new S(Lib:
-            "\"That's not something I can promise either, Your Majesty. Zille is still far too unstable for yet another ownership change. We took it by force only months ago.\""),
+            "\"That's not something I can promise either, Your Majesty. Zille is still far too unstable for yet another ownership change. The scars of the war have barely healed.\""),
             new[] { "#876" });
         rf.Register();
 
@@ -145,9 +148,9 @@ internal static class SweepLateTalk
 
         // The Pales victory parade: the regiments back from Zille march too (vanilla 204 shows Wehzek troops instead).
         var pa = new Talk(Parade, "ZilleWar.SL.T10.Parade.");
-        pa.Line("ZilleWon", Narr, "Behind them marched the regiments back from Zille, still in their mud-caked greatcoats. The crowd cheered them even louder.",
+        pa.Line("ZilleWon", Narr, "Behind them marched the regiments that had fought in Zille, new battle honors stitched onto their colors. The crowd cheered them even louder.",
             new[] { "#60" }, condition: And(War, WarFlags.L(WarFlags.Over), WarFlags.L(WarFlags.ZilleCityHeld)), hooks: Talk.From(203));
-        pa.Line("ZilleLost", Narr, "Behind them marched the regiments back from Zille. The cheering faltered for a moment, then picked up again, a little too loudly.",
+        pa.Line("ZilleLost", Narr, "Behind them marched the regiments that had fought in Zille. The cheering faltered for a moment, then picked up again, a little too loudly.",
             new[] { "#60" }, condition: Lost, hooks: Talk.From(203));
         pa.Register();
     }
@@ -165,8 +168,10 @@ internal static class SweepLateTalk
 
         // Zille liberated: the report on its reintegration says nothing about the war that brought it back.
         f.Line("Damage", Narr,
-            "\"Much of the harbor district of Zille city is still in ruins after the fighting, and burned-out Wehzek trucks still line the Auremina road. The Wehzek prisoners of war in our camps wait on an exchange that President Smolak refuses to discuss.\"",
-            new[] { "#228" }, condition: Lib, hooks: Talk.From(217, 218));
+            "\"The harbor district of Zille city is still being rebuilt after the fighting, and Wraclawitz has yet to accept that the province is gone. Wehzek radio still calls our administration an occupation.\"",
+            new[] { "Prisoners", "#228" }, condition: Lib, hooks: Talk.From(217, 218));
+        f.Line("Prisoners", Narr, "\"The Wehzek prisoners of war in our camps still wait on an exchange that President Smolak refuses to discuss.\"",
+            new[] { "#228" }, condition: $"{V(LateT8.VarPrisoners)} == \"held\"");
 
         // The military report.
         Swap(f, ForeignAffairs, "Buildup", 341, new[] { 344 }, Narr, new S(Lib:
@@ -226,6 +231,18 @@ internal static class SweepLateTalk
             new[] { "#203" }, condition: Part, hooks: Talk.From(163));
         s.Choice("PartLine", "\"Our soldiers brought Zille city home. The ceasefire line will not last forever.\"",
             new[] { "#203" }, condition: Part, hooks: Talk.From(163));
+        foreach ((string sfx, int from) in new[] { ("B", 177), ("C", 668) })
+        {
+            s.Choice("LostHonest" + sfx, "\"I will not pretend that Zille was won. But I will never pretend that it was not worth fighting for.\"",
+                new[] { "#178" }, condition: Lost, hooks: Talk.From(from));
+            s.Choice("LostOwn" + sfx, "\"We tried to bring Zille home, and we failed. That failure is mine, not our soldiers'.\"",
+                new[] { "#178" }, condition: Lost, hooks: Talk.From(from));
+            s.Choice("PartCity" + sfx, "\"Zille city is Rizian again. The rest of Zille will follow, in time.\"",
+                new[] { "#178" }, condition: Part, hooks: Talk.From(from));
+            s.Choice("PartLine" + sfx, "\"Our soldiers brought Zille city home. The ceasefire line will not last forever.\"",
+                new[] { "#178" }, condition: Part, hooks: Talk.From(from));
+        }
+
         s.Register();
     }
 }

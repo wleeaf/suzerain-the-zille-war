@@ -121,9 +121,16 @@ internal static class WorldVoices
         switch (w)
         {
             case 2:
-                Dispatch(key, SuzerainTokenName.RiziaCityPorteDrazon, "Ration Cards and Recruiting Posters", P(
-                    "Fuel ration cards were handed out in Porte Drazon this week, and taxi drivers queued for them outside the town hall " +
-                    "before dawn. Recruiting posters showing a soldier raising the golden banner over Zille harbor are pasted on every wall.",
+                bool rationed = Variables.GetBool("ZilleWar.Decree_FuelRationing");
+                Dispatch(key, SuzerainTokenName.RiziaCityPorteDrazon, rationed ? "Ration Cards and Recruiting Posters" : "Petrol Queues and Recruiting Posters", P(
+                    (rationed
+                        ? "Fuel ration cards were handed out in Porte Drazon this week, and taxi drivers queued for them outside the town hall " +
+                          "before dawn."
+                        : "Petrol has doubled in price since the army began buying every drop it can find, and the queues at the pumps of " +
+                          "Porte Drazon now start before dawn.") +
+                    (Variables.GetBool(ZilleOperation.CapturedVar("Zille"))
+                        ? " Recruiting posters showing a soldier raising the golden banner over Zille harbor are pasted on every wall."
+                        : " Recruiting posters showing a soldier pointing north, toward Zille, are pasted on every wall."),
                     "Shopkeepers report that coffee, sugar and imported cloth have doubled in price since the strait closed to merchant " +
                     "shipping. For now, most people grumble and pay. \"It is for Zille,\" one woman told a reporter, counting her coins."));
                 Dispatch($"Refugees_T{Turn}", SuzerainTokenName.RiziaCityMaveNortus, "Refugees on the Road to Dapalle", P(
@@ -178,7 +185,7 @@ internal static class WorldVoices
         }
 
         string key = $"Editorial_T{Turn}";
-        bool strained = Tier is "Strained" or "Starving";
+        bool strained = Tier is "Strained" or "Starved";
         if (w == 2)
         {
             News(key, "RH", "Rizia Answers the Call", P(
@@ -195,7 +202,14 @@ internal static class WorldVoices
                 "The Voice of Rizia promised to count the cost of the King's war. Here is the first instalment. Fuel is rationed. Bread " +
                 "costs more than it did a month ago. The northern railway carries soldiers instead of freight, and the farmers of Brenas " +
                 "watch their harvest rot at the sidings.",
-                "Meanwhile the palace reports victories and no casualties. We would like to see both sets of figures, side by side."));
+                Variables.GetBool("ZilleWar.Decree_WarCensorship")
+                    ? "Meanwhile the censors decide which figures from the front we may print, and they have not yet decided on any. We would " +
+                      "like to see the cost of the war and the cost of the shells side by side. So, we suspect, would the censors."
+                    : Variables.GetBool(ZilleCampaign.ResultVar(1))
+                        ? "Meanwhile the palace prints its victory in Zille on the front page and its casualty lists on its railings. We would " +
+                          "like to see both on the same page, next to the price of bread."
+                        : "Meanwhile the palace explains that the first phase was never meant to take Zille. We would like to see the plan it " +
+                          "was meant to follow, next to the bill for it."));
         }
         else if (w == 3)
         {
@@ -377,7 +391,8 @@ internal static class WorldVoices
                 "fishermen sold side by side, as they did before the war, under the eyes of a few bored military policemen.",
                 "An old woman told our officers that she had kept a Rizian flag folded in her linen chest since 1927. She hung it from " +
                 "her window on the morning the troops arrived, and has not taken it down since."));
-            News("MarketDay", "RH", "Mark Farus' From The Frontlines: Zille Remembers", P(
+            // Not under Mark Farus' byline: his column follows the phases of the operation, and one runs this turn as well.
+            News("MarketDay", "RH", "Zille Remembers", P(
                 "The children of Zille have learned the Rizian anthem faster than our soldiers have learned the streets. They sing it " +
                 "at the harbor every evening, a little out of tune, while the fishing boats come in.",
                 "There are shuttered windows in the Wehzek quarter, and some of the people behind them are afraid. But the city is " +
@@ -519,19 +534,22 @@ internal static class WorldVoices
         {
             if (since == 1)
             {
-                Dispatch("ArmyHolds", WorldSystems.ZilleToken, "Back to the City Walls", P(
-                    "The Royal Army has fallen back from the hills to a ring of trenches around Zille city. The harbor and the old town are " +
-                    "still ours. Everything beyond the last tram stop is Wehzek again, and Wehzek artillery spotters can see our sentries " +
-                    "change the guard.",
-                    "Refugees from the hill villages, who cheered our columns a few weeks ago, now crowd the warehouses on the waterfront. " +
-                    "Most of them say they cannot go back."));
+                bool hills = Taken("Auremina");
+                Dispatch("ArmyHolds", WorldSystems.ZilleToken, "Digging In on the Armistice Line", P(
+                    hills
+                        ? "The Royal Army is turning the line it reached into a frontier: trenches on the ridges north of Auremina, wire across " +
+                          "the coast road, and observation posts from which Wehzek sentries can be seen changing the guard outside Isor and Nanta."
+                        : "The Royal Army is turning the line it reached into a frontier: a ring of trenches beyond the last tram stop of Zille " +
+                          "city, wire across the valley road, and observation posts from which the Wehzek positions in the hills can be watched.",
+                    "Refugees from the villages beyond the line, who cheered our columns a few weeks ago, now crowd the warehouses on the " +
+                    "waterfront. Most of them say they cannot go back."));
                 Dispatch("ReprisalsHills", WorldSystems.ZilleToken, "Reprisals in the Hills", P(
                     "Our sources behind the Wehzek lines report arrests in every village that welcomed our troops. The Ariana Toras " +
                     "Association's former organizers are being sought by name, and the families of Su Omina members have been ordered to leave.",
                     "In Zille city itself, people have begun asking our officers, quietly, what will happen to them if the army leaves."));
                 News("DefeatHeld", "V", "Half a Victory, Whole Graves", P(
-                    "The King still holds Zille city, and the palace would like us to call that a success. It is a city surrounded on three " +
-                    "sides, supplied by sea, and claimed by the army that just beat ours in the hills.",
+                    "The King still holds Zille city, and the palace would like us to call that a success. It is a city with a Wehzek army " +
+                    "a few miles up the road, supplied by sea, and claimed by a president who has promised to be back for it.",
                     "The King owes the nation an explanation. He also owes the people of the hill villages, who hung out our flag and are " +
                     "now paying for it, something better than silence."));
             }
@@ -543,9 +561,10 @@ internal static class WorldVoices
         {
             if (since == 1)
             {
-                Dispatch("ArmyHome", SuzerainTokenName.RiziaCityMaveNortus, "The Army Comes Home", P(
-                    "The last columns of the Royal Army crossed back over the river at Mave Nortus this week. There were no bands and no " +
-                    "crowds. Townspeople brought water to the trucks and did not ask questions.",
+                Dispatch("ArmyHome", SuzerainTokenName.RiziaCityMaveNortus, "The Reservists Come Home", P(
+                    "The first battalions stood down from the Zille front crossed back over the river at Mave Nortus this week, leaving " +
+                    "the armistice line to the regulars. There were no bands and no crowds. Townspeople brought water to the trucks and " +
+                    "did not ask questions.",
                     "Refugees from the Zille villages who followed the army south now fill the warehouses by the station. Most say they " +
                     "cannot go back."));
                 Dispatch("Reprisals", WorldSystems.ZilleToken, "Reprisals in Zille", P(

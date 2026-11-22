@@ -54,7 +54,7 @@ internal static class FinishT10
             "\"Yeah. The Sazons got the Auremina pits, so I bought up the land around them instead. Mined out, most of it -- but ripe for rehabilitation as farmland.\"",
             new[] { "#700" });
         Swap(g, Gather, "Farm", 699, new[] { 698 }, "Russello Montoro", new S(
-            Part: "\"Yeah. Some of RRG's old land ended up on our side of the ceasefire line. All mined out -- but perfect for farming. The Wehzek side I'm still working on.\"",
+            Part: "\"Yeah. Some of RRG's old land ended up on our side of the ceasefire line. All mined out -- but perfect for farming.\"",
             Lost: "\"Yeah. Turns out the Wehzek colonel running Zille now likes Rizian money as much as the last one did. Got back a patch of old RRG land that's all mined out -- but perfect for farming.\""),
             new[] { "#700" });
         g.Register();
@@ -62,7 +62,7 @@ internal static class FinishT10
         // The new government's report on Zille's elections: Zille came back at the point of a bayonet.
         var z = new Talk(ZilleBranch, "ZilleWar.Fin.ZilleRef10.");
         Swap(z, ZilleBranch, "SayManus", 6, new[] { 5 }, "Manus Sazon", new S(Lib:
-            "\"However, Zille came back to us by force of arms, and many there feel the decision was made over their heads. It doesn't help that some of the polling stations are in buildings our own artillery shelled a few months ago.\""),
+            "\"However, Zille came back to us by force of arms, and many there feel the decision was made over their heads. It doesn't help that some of the polling stations are in buildings our own artillery shelled during the war.\""),
             new[] { "#8" });
         Swap(z, ZilleBranch, "SayDaria", 46, new[] { 42 }, "Daria de Rava", new S(Lib:
             "\"However, Zille came back to us at the point of a bayonet, and a good many Zilleans resent having had no say in it. That has led to some resistance.\""),
@@ -78,10 +78,10 @@ internal static class FinishT10
         foreach ((string name, int entry, int parent, string speaker, bool also, string part, string lost) in new[]
                  {
                      ("Manus", 156, 171, "Manus Sazon", false,
-                         "The ceasefire in Zille has {0}become a rallying point for voters. Half a province won and half given up, and many feel the price was worth neither.",
+                         "The ceasefire in Zille has {0}become a rallying point for voters. Half a province won and half left behind the line, and many ask whether that was worth the price.",
                          "The lost war for Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change."),
                      ("ManusAlso", 172, 170, "Manus Sazon", true,
-                         "The ceasefire in Zille has {0}become a rallying point for voters. Half a province won and half given up, and many feel the price was worth neither.",
+                         "The ceasefire in Zille has {0}become a rallying point for voters. Half a province won and half left behind the line, and many ask whether that was worth the price.",
                          "The lost war for Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change."),
                      ("Daria", 163, 175, "Daria de Rava", false,
                          "The unfinished war in Zille has {0}become a rallying point for voters. They wanted a victory or a peace, and got a line of trenches.",
@@ -107,7 +107,7 @@ internal static class FinishT10
         // The domestic desk: Zille's resources are the Auremina gold the Wehzeks flooded before they left.
         var d = new Talk(Domestic, "ZilleWar.Fin.Domestic10.");
         Swap(d, Domestic, "Gold", 631, new[] { 629 }, Talk.Narrator, new S(Lib:
-            "\"This is not yet taking into account the gold in the Auremina hills. The Wehzeks flooded the pits before they withdrew, but the engineers expect them pumped dry within the year.\""),
+            "\"This is not yet taking into account the gold in the Auremina hills. The Wehzeks flooded the pits before they withdrew, and the engineers are only now pumping the last of them dry.\""),
             new[] { "#190" });
         d.Register();
     }

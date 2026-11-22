@@ -46,8 +46,10 @@ internal static class SweepEarlyT5Diplomacy
         Decision("Turn05_Decision_GasomInvestOffer", o => !IsActive ? null : o.TrimEnd() +
             " Sordish fuel would also reach our army in the north without passing through a single Wehzek port, a point the general " +
             "staff has not failed to make.");
-        Decision("Turn05_Decision_DerdiaANSupport", o => o.TrimEnd() +
-            " Wehlen, at war with us, will lobby the committee against our claim, and Derdia's voice would count for more than ever.");
+        Decision("Turn05_Decision_DerdiaANSupport", o => o.TrimEnd() + (IsActive && !Variables.GetBool(WarFlags.Ceasefire)
+            ? " Wehlen, at war with us, will lobby the committee against our claim, and Derdia's voice would count for more than ever."
+            : " Wehlen, still hostile since the fighting in Zille stopped, will lobby the committee against our claim, and Derdia's " +
+              "voice would count for more than ever."));
         Decision("Turn05_Decision_WestTradeReduced_PenaltyWarning", o => !IsActive ? null : o.TrimEnd() +
             " Officials in the ATO capitals let it be known, off the record, that a kingdom at war over Zille should expect its " +
             "paperwork to be read more carefully.");

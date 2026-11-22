@@ -99,8 +99,11 @@ internal static class SweepEarlyT6War
         // EarlyT6 has the Active version of [78].
         t.Variant("BegunWon", 78, new[] { 88 }, Liberated, Narrator,
             "And just like that, the Second Pales War had begun. The guns in Zille had barely fallen silent.", new[] { "#90" });
-        t.Variant("BegunLost", 78, new[] { 88 }, LostOrStopped, Narrator,
+        t.Variant("BegunLost", 78, new[] { 88 }, AuditT6.Lost, Narrator,
             "And just like that, the Second Pales War had begun. I had already lost one war this year. I did not intend to lose another.",
+            new[] { "#90" });
+        t.Variant("BegunPart", 78, new[] { 88 }, AuditT6.Part, Narrator,
+            "And just like that, the Second Pales War had begun. The war in Zille had ended on an armistice line. This one, I meant to finish.",
             new[] { "#90" });
         t.Register();
     }
@@ -181,6 +184,11 @@ internal static class SweepEarlyT6War
                 "The war in Zille is won, but it emptied the army's depots. The kingdom's modern military factories offer a solid " +
                 "foundation to replace what was lost and scale up production of Land and Air Units, either to keep the army ready " +
                 "for the next conflict or to sell what Rizia has shown it can build on the international arms market.");
+            Decision(name, _ => !AuditT6.CityHeldNow || WarFlow.AtWar ? null :
+                "The war in Zille ended in an armistice, with Zille city won back and the rest of the province still in Wehzek hands, and " +
+                "the army must replace the tanks, aircraft and equipment it spent in the north. The kingdom's modern military factories " +
+                "offer a solid foundation to rebuild, and the General Staff wants the armistice line held by an army that is never short " +
+                "of anything.");
             Decision(name, _ =>
                 "The war in Zille ended without the victory the kingdom was promised, and the army must replace the tanks, aircraft " +
                 "and equipment it left behind in the north. The kingdom's modern military factories offer a solid foundation to " +
@@ -203,6 +211,11 @@ internal static class SweepEarlyT6War
             "the victory in Zille, the call has found a confident nation, and veterans of the northern campaign are among the first in " +
             "line to enlist again. The official war recruitment report reflects the nation's commitment to the war effort and guides " +
             "the kingdom's manpower pool for the start of the conflict.");
+        Decision("Turn06_Decision_WarEnlistments", _ => !AuditT6.CityHeldNow || WarFlow.AtWar ? null :
+            "In the wake of the war declaration, citizens have responded in varying degrees to the call to arms. Coming so soon after " +
+            "the armistice in Zille, the call has met a tired but steady nation: veterans who took Zille city are among the first in line, " +
+            "while families with sons still on the armistice line are slower to send more. The official war recruitment report reflects " +
+            "the nation's commitment to the war effort and guides the kingdom's manpower pool for the start of the conflict.");
         Decision("Turn06_Decision_WarEnlistments", _ =>
             "In the wake of the war declaration, citizens have responded in varying degrees to the call to arms. Coming so soon after " +
             "the war in Zille ended without victory, the call has met a wary nation, and many families who sent sons north are slow to " +
@@ -221,16 +234,32 @@ internal static class SweepEarlyT6War
     {
         Func<string, bool> active = s => s == StActive;
 
-        News("Turn06_RH_PalesWarStart", (_, _) => P(
-                "As the first reports of fighting on the Palesian border started coming in last night, one thing has become clear. " +
-                "Rizia and Pales are at war once again, even as our brave soldiers in the north press on to bring Zille home.",
-                "While the Palace hasn't commented yet on these early reports, King Romus has announced he will give a speech later " +
-                "today. The Royal Herald declares its commitment to our troops on both fronts and prays for their victory, from the " +
-                "harbor of Zille to the banks of the Alca.",
-                "Glovurius Axa Rizia!"),
-            _ => "Glory To The Troops! Rizia Now Fights On Two Fronts", active);
+        News("Turn06_RH_PalesWarStart", (s, _) => s == StActive
+                ? P("As the first reports of fighting on the Palesian border started coming in last night, one thing has become clear. " +
+                    "Rizia and Pales are at war once again, even as our brave soldiers in the north press on to bring Zille home.",
+                    "While the Palace hasn't commented yet on these early reports, King Romus has announced he will give a speech later " +
+                    "today. The Royal Herald declares its commitment to our troops on both fronts and prays for their victory, from the " +
+                    "harbor of Zille to the banks of the Alca.",
+                    "Glovurius Axa Rizia!")
+                : P("As the first reports of fighting on the Palesian border started coming in last night, one thing has become clear. " +
+                    "Rizia and Pales are at war once again! " + AuditT6.ByP(s, "",
+                        "The same army that brought Zille home this year now marches south.",
+                        "The same army that brought Zille city home this year now marches south.",
+                        "The same army that gave its all in Zille this year now marches south, determined to finish what it starts."),
+                    "While the Palace hasn't commented yet on these early reports, King Romus has announced he will give a speech later " +
+                    "today. For now, the Royal Herald declares its commitment to our brave troops and prays for their victory on the battlefield.",
+                    "Glovurius Axa Rizia!"),
+            s => s == StActive ? "Glory To The Troops! Rizia Now Fights On Two Fronts" : null);
 
-        News("Turn06_V_PalesWarStart", (_, _) => P(
+        News("Turn06_V_PalesWarStart", (s, o) => s != StActive
+                ? P(o, AuditT6.ByP(s, "",
+                    "The King's war in Zille is not yet a season old, and already he has found another. The families who buried their " +
+                    "sons for Zille will now watch the trains leave for the south.",
+                    "The armistice in Zille is barely signed, half of the province is still behind Wehzek guns, and already the King has " +
+                    "found another war. The families who buried their sons for Zille city will now watch the trains leave for the south.",
+                    "The King lost one war this year and has decided to start another. The families who buried their sons for Zille, for " +
+                    "nothing, will now watch the trains leave for the south."))
+                : P(
                 "The unthinkable has happened twice in a single season. With Rizian soldiers still dying in Zille, the King has opened " +
                 "a second war, this time against Pales.",
                 "Palesian civilians living in the border areas woke up terrified as artillery shelling commenced in the middle of the " +
@@ -239,9 +268,18 @@ internal static class SweepEarlyT6War
                 "We at the Voice of Rizia condemn this barbaric act. Families in Brenas who have not yet buried their sons from the " +
                 "northern front will now watch the trains leave for the south. Our thoughts are with our brother population in Pales, " +
                 "and with everyone forced to serve in either of the King's wars."),
-            _ => "Not One War, But Two", active);
+            s => s == StActive ? "Not One War, But Two" : null);
 
-        News("Turn06_G_PalesWarStart", (_, _) => P(
+        News("Turn06_G_PalesWarStart", (s, o) => s != StActive
+                ? P(o, AuditT6.ByP(s, "",
+                    "The invasion comes only weeks after Rizia took Zille from Wehlen by force. \"Konstantium had hoped one war would " +
+                    "satisfy the King,\" one diplomat told Geopolitico. \"It seems to have given him a taste for it.\"",
+                    "The invasion comes only weeks after Rizia's war with Wehlen over Zille ended in an armistice that left Zille city " +
+                    "in Rizian hands and the rest of the province with Wehlen. In Wraclawitz, President Wiktor Smolak's office said only " +
+                    "that Wehlen \"takes note\" of where the Rizian army is going.",
+                    "The invasion comes only weeks after Rizia's war with Wehlen over Zille ended without the Kingdom taking the city. " +
+                    "\"A king who could not win in the north is looking for a victory in the south,\" one diplomat in Konstantium said."))
+                : P(
                 "Last night, first reports started emerging of Palesian border posts being shelled by Rizian troops, as well as " +
                 "violations of Palesian airspace and the first tank columns entering border areas. Everything indicates a full scale " +
                 "invasion, launched while the Rizian army is still at war with Wehlen over the Zille region.",
@@ -249,7 +287,7 @@ internal static class SweepEarlyT6War
                 "representatives have already condemned the aggression and called for an immediate retreat of Rizian troops. In " +
                 "Wraclawitz, the office of President Wiktor Smolak said only that Wehlen \"takes note\" of Rizia's decision to divide " +
                 "its army."),
-            _ => "Rizia Opens Second Front, Invades Pales", active);
+            s => s == StActive ? "Rizia Opens Second Front, Invades Pales" : null);
 
         News("Turn06_V_Decision_OperationTutorial", (_, _) => P(
                 "Military exercises held by the Rizian armed forces, coordinated by King Romus himself with the help of General Taddeus " +
@@ -259,9 +297,12 @@ internal static class SweepEarlyT6War
 
         foreach (string name in new[] { "Turn06_G_WarSpeech_CautiousPublic", "Turn06_G_WarSpeech_GalvanizedPublic", "Turn06_G_WarSpeech_UnitedPublic" })
         {
-            AppendNews(name, _ =>
-                "Abroad, the speech was read alongside the news from Zille, where the same army is still at war with Wehlen. \"Two wars " +
-                "and one treasury,\" a diplomat in Konstantium remarked. \"The applause will be the cheapest part.\"", active);
+            AppendNews(name, s => s == StActive
+                ? "Abroad, the speech was read alongside the news from Zille, where the same army is still at war with Wehlen. \"Two wars " +
+                  "and one treasury,\" a diplomat in Konstantium remarked. \"The applause will be the cheapest part.\""
+                : "Abroad, the speech was read as the second declaration of war from Porte Drazon in a single year, weeks after the guns " +
+                  "fell silent in Zille. \"Two wars and one treasury,\" a diplomat in Konstantium remarked. \"The applause will be the " +
+                  "cheapest part.\"");
         }
 
         AppendReport("Turn06_FolceDator_MilitaryIndustryOutputIncrease", _ =>

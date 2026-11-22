@@ -166,6 +166,48 @@ internal static partial class SupplyWar
     private const string VarPriorityApplied = "ZilleWar.Rumburg_PriorityApplied";
     private const string VarWarnedApplied = "ZilleWar.Rumburg_WarnedApplied";
 
+    // ---- the war as the calls see it, set once per turn before the calls (SupplyWar.PrepareCallState)
+    /// <summary>Phases fought so far when this turn's calls were offered.</summary>
+    internal const string VarCallFought = "ZilleWar.Call_Fought";
+    /// <summary>The phase (1..3) of the last offensive fought, 0 before the first.</summary>
+    internal const string VarCallLastPhase = "ZilleWar.Call_LastPhase";
+    /// <summary>The last offensive fought reached its aim.</summary>
+    internal const string VarCallLastWon = "ZilleWar.Call_LastWon";
+    /// <summary>The aim of the last offensive fought: "Harbor" | "Wall" | "Ports" ("" before the first).</summary>
+    internal const string VarCallLastAim = "ZilleWar.Call_LastAim";
+    /// <summary>The last offensive's cost: 0 light, 1 heavy, 2 severe.</summary>
+    internal const string VarCallLossTier = "ZilleWar.Call_LossTier";
+    /// <summary>The King held the front last turn (the phase was skipped).</summary>
+    internal const string VarCallHeld = "ZilleWar.Call_Held";
+    /// <summary>The last offensive took more cities than its aim.</summary>
+    internal const string VarCallExtra = "ZilleWar.Call_Extra";
+    /// <summary>Wehzek cities (of Zille, Auremina, Isor, Nanta) in Rizian hands.</summary>
+    internal const string VarCallCities = "ZilleWar.Call_Cities";
+    /// <summary>A Rizian border town is in Wehzek hands.</summary>
+    internal const string VarCallOwnLost = "ZilleWar.Call_OwnLost";
+
+    // ---- what was said on the previous calls (read back on the next one)
+    private const string VarBeaGave = "ZilleWar.Call_Beatrice_Gave";             // "" | "none" | "embargo" | "credit" | "raids" | "fighters"
+    private const string VarBeaGavePrev = "ZilleWar.Call_Beatrice_GavePrev";
+    private const string VarBeaPromise = "ZilleWar.Call_Beatrice_Promise";       // "" | "zille" | "end"
+    private const string VarBeaPromisePrev = "ZilleWar.Call_Beatrice_PromisePrev";
+    private const string VarBeaToldDossier = "ZilleWar.Call_Beatrice_ToldDossier";
+    private const string VarBeaToldBluds = "ZilleWar.Call_Beatrice_ToldBluds";
+    private const string VarBeaNoEmbargo = "ZilleWar.Call_Beatrice_RefusedEmbargo";
+    private const string VarBeaNoCredit = "ZilleWar.Call_Beatrice_RefusedCredit";
+    private const string VarBeaNoRaids = "ZilleWar.Call_Beatrice_RefusedRaids";
+    private const string VarBeaNoFighters = "ZilleWar.Call_Beatrice_RefusedFighters";
+    private const string VarBeaAskedEmbWhy = "ZilleWar.Call_Beatrice_AskedEmbargoWhy";
+    private const string VarBeaAskedInterest = "ZilleWar.Call_Beatrice_AskedInterest";
+    private const string VarBeaAskedRaidWhy = "ZilleWar.Call_Beatrice_AskedRaidWhy";
+    private const string VarBeaAskedFigWhy = "ZilleWar.Call_Beatrice_AskedFightersWhy";
+    private const string VarAlvRefusedStrait = "ZilleWar.Call_Alvarez_RefusedStrait";
+    private const string VarAlvRefusedMitz = "ZilleWar.Call_Alvarez_RefusedMitz";
+    private const string VarAlvAskedWhy = "ZilleWar.Call_Alvarez_AskedWhy";
+    private const string VarAlvAskedMitzWhy = "ZilleWar.Call_Alvarez_AskedMitzWhy";
+    private const string VarAlvInvoices = "ZilleWar.Call_Alvarez_Invoices";
+    private const string VarAlvJabbed = "ZilleWar.Call_Alvarez_Jabbed";
+
     // ---- read from the Turns 4-7 module
     private const string VarRumburgPriority = "ZilleWar.E7_RumburgPriority";   // "zille" | "pales" | "both"
     private const string VarRumburgWarned = "ZilleWar.E7_RumburgWarned";
@@ -186,7 +228,7 @@ internal static partial class SupplyWar
         VarRumburgDebt, VarRumburgCredits, ModRumburgCredit, VarRumburgPatience, ModValgsland, VarValgslandStage,
         VarBeatriceCalls, VarAlvarezCalls, VarWarRoomMeetings, VarSubPatrols, VarTwoWarsPenaltyTurn,
         VarLespiaDealTurn, VarStraitTurns, VarValgslandStageTurn, VarSmolakCalls, VarSmolakTurn, VarLastOfferTurn,
-        VarUpkeepTurn, VarBffFirstTurn,
+        VarUpkeepTurn, VarBffFirstTurn, VarCallFought, VarCallLastPhase, VarCallLossTier, VarCallCities, VarAlvInvoices,
     };
 
     private static readonly string[] BoolVars =
@@ -195,12 +237,16 @@ internal static partial class SupplyWar
         VarLespiaCaleqabiz, VarLespiaGasDeal, VarLespiaMitz, VarLespiaPaid, VarLespiaWithdrawn, VarRamiroFound,
         VarRamiroConfronted, VarStraitThin, VarAlvarezGiftDone, VarValgslandPorts, VarSubsGrounded, VarAureusRecalled,
         VarMorellaAircraft, VarSaltanaCalled, VarSaltanaGulf, VarDefector, VarPriorityApplied, VarWarnedApplied, VarGrudgeApplied,
+        VarCallLastWon, VarCallHeld, VarCallExtra, VarCallOwnLost, VarBeaToldDossier, VarBeaToldBluds, VarBeaNoEmbargo, VarBeaNoCredit,
+        VarBeaNoRaids, VarBeaNoFighters, VarBeaAskedEmbWhy, VarBeaAskedInterest, VarBeaAskedRaidWhy, VarBeaAskedFigWhy, VarAlvRefusedStrait,
+        VarAlvRefusedMitz, VarAlvAskedWhy, VarAlvAskedMitzWhy, VarAlvJabbed,
     };
 
     private static readonly string[] StringVars =
     {
         VarRamiro, VarRamiroOutcome, VarAlvarezPalesDone, VarAlvarezGasDone, VarValgslandCable, VarValgslandCall,
-        VarSmolakAnswer, VarCeasefireTerms, VarPhotoBoats, VarBludsIncident, VarPhotoPayoff,
+        VarSmolakAnswer, VarCeasefireTerms, VarPhotoBoats, VarBludsIncident, VarPhotoPayoff, VarCallLastAim, VarBeaGave, VarBeaGavePrev,
+        VarBeaPromise, VarBeaPromisePrev,
     };
 
     /// <summary>Vanilla numbers our scripts do arithmetic on.</summary>
@@ -425,6 +471,7 @@ internal static partial class SupplyWar
 
         Variables.Set(VarLastOfferTurn, turn);
         int w = WarTurn;
+        PrepareCallState(turn);
         PrepareBeatrice(turn, w);
 
         if (!Variables.GetBool(VarRumburgSaidNo))
@@ -461,6 +508,42 @@ internal static partial class SupplyWar
                 events++;
             }
         }
+    }
+
+    private static readonly string[] RizianTowns = { "Mave Nortus", "Dapalle", "Balle", "Jales" };
+
+    /// <summary>
+    /// The war as it stands when this turn's calls are offered (before this turn's phase): the last phase fought, its aim,
+    /// result and cost, whether the King held last month, how many Wehzek cities are ours. Every call reads these to open,
+    /// react and close differently from the last one.
+    /// </summary>
+    private static void PrepareCallState(int turn)
+    {
+        int k = ZilleCampaign.OperationsDone;
+        Variables.Set(VarCallFought, k);
+        string[] hist = ZilleCampaign.Str(ZilleCampaign.VarHistory).Split(';', StringSplitOptions.RemoveEmptyEntries);
+        string[] last = hist.Length > 0 ? hist[^1].Split(':') : Array.Empty<string>();
+        string aim = last.Length > 0 ? last[0] : string.Empty;
+        bool won = k > 0 && (Variables.GetBool(ZilleCampaign.ResultVar(k)) || (last.Length > 1 && last[1] == "won"));
+        Variables.Set(VarCallLastAim, aim);
+        Variables.Set(VarCallLastWon, won);
+        int phase = k > 0 ? Variables.GetInt(ZilleCampaign.PhaseOfVar(k)) : 0;
+        Variables.Set(VarCallLastPhase, phase > 0 ? phase : Math.Min(k, ZilleCampaign.LastPhase));
+        int playerDead = k > 0 ? Variables.GetInt(ZilleCampaign.PlayerDeadVar(k)) : 0;
+        int enemyDead = k > 0 ? Variables.GetInt(ZilleCampaign.EnemyDeadVar(k)) : 0;
+        Variables.Set(VarCallLossTier, playerDead >= 6 || (playerDead >= 3 && playerDead > enemyDead) ? 2 : playerDead >= 3 || playerDead > enemyDead ? 1 : 0);
+        int held = Variables.GetInt(WarCouncil.VarHeldTurn);
+        Variables.Set(VarCallHeld, held > 0 && held == turn - 1);
+
+        string[] cities = { "Zille", "Auremina", "Isor", "Nanta" };
+        int taken = cities.Count(c => Variables.GetBool(ZilleOperation.CapturedVar(c)));
+        Variables.Set(VarCallCities, taken);
+        int idx = Array.IndexOf(ZilleCampaign.Sequence.Select(o => o.ToString()).ToArray(), aim);
+        int expected = idx < 0 ? 0 : ZilleCampaign.Sequence.Take(idx + 1).Sum(o => ZilleCampaign.Info(o).Towns.Length);
+        Variables.Set(VarCallExtra, won && taken > expected);
+
+        Dictionary<string, bool> owners = ZilleCampaign.CurrentOwners();
+        Variables.Set(VarCallOwnLost, RizianTowns.Any(c => ZilleCampaign.TownTile(c) is { } tile && ZilleCampaign.IsEnemy(owners, tile)));
     }
 
     private static void PrepareBeatrice(int turn, int w)

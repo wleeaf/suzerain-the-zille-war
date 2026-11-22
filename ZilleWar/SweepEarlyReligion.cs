@@ -99,13 +99,18 @@ internal static class SweepEarlyReligion
             "\"Men are dying in Zille on my orders as we speak. I would hear what our faith says of that.\"", new[] { "#461" });
         t.Variant("Ask1227Won", 1227, new[] { 740 }, Liberated, Romus,
             "\"I took Zille back by force of arms. Now that it is done, I would hear what our faith says of it.\"", new[] { "#461" });
-        t.Variant("Ask1227Lost", 1227, new[] { 740 }, LostOrStopped, Romus,
+        t.Variant("Ask1227Lost", 1227, new[] { 740 }, AuditT6.Lost, Romus,
             "\"I sent men to die for Zille, and Zille is still Wehzek. I would hear what our faith says of that.\"", new[] { "#461" });
+        t.Variant("Ask1227Part", 1227, new[] { 740 }, AuditT6.Part, Romus,
+            "\"I sent men to die for Zille, and only half of it came home. I would hear what our faith says of that.\"", new[] { "#461" });
 
         // [741] "We may need to reclaim Zille through less peaceful means..." (EarlyT6 covers the war being fought).
         t.Variant("Ask741Won", 741, new[] { 740 }, Liberated, Romus,
             "\"Zille was taken back by force of arms. Tell me the religious context and implications of what I have done.\"", new[] { "#461" });
-        t.Variant("Ask741Lost", 741, new[] { 740 }, LostOrStopped, Romus,
+        t.Variant("Ask741Part", 741, new[] { 740 }, AuditT6.Part, Romus,
+            "\"I went to war for Zille and won back only half of it. Tell me the religious context and implications of what I have done.\"",
+            new[] { "#461" });
+        t.Variant("Ask741Lost", 741, new[] { 740 }, AuditT6.Lost, Romus,
             "\"I went to war for Zille and could not win it. Tell me the religious context and implications of what I have done.\"",
             new[] { "#461" });
 
@@ -133,7 +138,10 @@ internal static class SweepEarlyReligion
         t.Variant("Worse700Won", 700, new[] { 699 }, Liberated, Sal,
             "\"You took Zille from him, Your Majesty. Supreme Wiseman Azmal respects strength. Let us hope he does not learn to fear it.\"",
             new[] { "#986" });
-        t.Variant("Worse700Lost", 700, new[] { 699 }, LostOrStopped, Sal,
+        t.Variant("Worse700Part", 700, new[] { 699 }, AuditT6.Part, Sal,
+            "\"And half of Zille is still in his hands, Your Majesty. Standing up to President Smolak has cost us dearly enough already.\"",
+            new[] { "#986" });
+        t.Variant("Worse700Lost", 700, new[] { 699 }, AuditT6.Lost, Sal,
             "\"And Zille is still in his hands, Your Majesty. Standing up to President Smolak has cost us dearly enough already.\"",
             new[] { "#986" });
 
@@ -151,8 +159,9 @@ internal static class SweepEarlyReligion
 
     private static void CeasefireBan(Talk t)
     {
-        // Under the war the ban only exists when the King accepted it among Smolak's ceasefire terms (SupplyVoices).
-        string banByCeasefire = CeasefireOnly;
+        // Under the war the ban only exists when the King accepted it among Smolak's ceasefire terms (SupplyVoices): the declaration
+        // clears any earlier ban and the Turn 5 Wehlen talks never happen, so a ban in a war game is always the ceasefire's.
+        string banByCeasefire = Declared;
 
         t.Variant("Deal634", 634, new[] { 632 }, banByCeasefire, Sal,
             "\"I can only hope the border ban President Smolak demanded for the ceasefire will at least spare us such disruptions in " +
@@ -236,7 +245,11 @@ internal static class SweepEarlyReligion
         t.Line("DastLost", Sal,
             "\"The Dastnurist archpriests of Iza tell me their cousins in Zille are paying for our war. Wehlen has closed every sanctuary " +
             "there suspected of sheltering our soldiers.\"",
-            new[] { "#622" }, condition: $"{LostOrStopped} and {once}", script: Set(AskedDastnurists, "true"), hooks: From(beforeGolcondists));
+            new[] { "#622" }, condition: $"{AuditT6.Lost} and {once}", script: Set(AskedDastnurists, "true"), hooks: From(beforeGolcondists));
+        t.Line("DastPart", Sal,
+            "\"The Dastnurist archpriests of Iza tell me their cousins beyond the armistice line are paying for our war. Wehlen has " +
+            "closed every sanctuary there it suspects of praying for a Rizian victory.\"",
+            new[] { "#622" }, condition: $"{AuditT6.Part} and {once}", script: Set(AskedDastnurists, "true"), hooks: From(beforeGolcondists));
     }
 
     // ================================================================== the Alignment appears

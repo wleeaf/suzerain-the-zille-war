@@ -26,6 +26,11 @@ internal static class SweepLateSystems
     private static bool Lost => LateState.Lost;
     private static bool Fought => LateState.Declared && ZilleCampaign.OperationsDone >= 1;
 
+    /// <summary>Rumburg actually helped in the Zille war (Queen Beatrice's levers or war credits).</summary>
+    private static bool RumburgHelped =>
+        Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.Embargo)) + Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.BffRaids)) +
+        Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.BffFighters)) + Variables.GetInt(SupplyWar.VarRumburgCredits) > 0;
+
     public static void Register()
     {
         Variables.Register(VarTourismNudged);
@@ -181,7 +186,7 @@ internal static class SweepLateSystems
             "The Royal Army is now fighting to take Zille back, and the nation's pride rides on the outcome.\n\nUntil the war is " +
             "decided, the loss continues to weigh on strategic positioning and the allocation of resources.");
         SLK.Situation(lost, () => Part, null,
-            "The country faces a significant setback with the loss of its ancestral lands of Pales and most of the territory of " +
+            "The country faces a significant setback with the loss of its ancestral lands of Pales and much of the territory of " +
             "Zille. Zille city flies the Rizian flag again, but the rest of the region lies beyond a ceasefire line, in Wehzek hands." +
             "\n\nA border drawn by the guns satisfies no one, and the unfinished war weighs on national pride and on the treasury.");
         SLK.Situation(lost, () => Lost, null,
@@ -212,9 +217,8 @@ internal static class SweepLateSystems
             "The war in Zille weighs heavily on the Alliance's view of Rizia.");
         SLK.Append("situation", "Diplomacy_ANSanctions_Heavy", () => War,
             "The war in Zille weighs heavily on the Alliance's view of Rizia.");
-        SLK.Append("situation", "Diplomacy_Rumburg_Suzerain", () => War,
-            "The embargo, the credits and the Bludish fighters Queen Beatrice lent for Zille were never gifts, and Datefort has " +
-            "begun to collect.");
+        SLK.Append("situation", "Diplomacy_Rumburg_Suzerain", () => War && RumburgHelped,
+            "The help Queen Beatrice lent Rizia in the Zille war was never a gift, and Datefort has begun to collect.");
         SLK.Append("situation", "Diplomacy_GlobalInfluence_ATO", () => War && WorldSystems.LespiaHelps,
             "Lespian warships in the Strait of Kreleck, sent to help Rizia's war in Zille, have given the Arcasian alliance a " +
             "foothold it did not have before.");
@@ -324,8 +328,8 @@ internal static class SweepLateSystems
     private static void RegisterDecisions()
     {
         SLK.Append("decision", "Turn09_Decision_TourismCampaignResults", () => War,
-            "The war in Zille has been on the front page of every foreign newspaper, and travel agents report that many visitors " +
-            "chose other destinations this year.");
+            "The war in Zille is still the first thing foreign newspapers mention about Rizia, and travel agents report that many " +
+            "visitors chose other destinations.");
         SLK.Append("decision", "Turn09_Decision_StockExchangeResults", () => Lib,
             "Brokers expect the gold of liberated Zille to lift mining shares, and RRG's prospectors are already talking about Auremina.");
         SLK.Append("decision", "Turn09_Decision_StockExchangeResults", () => Part,
@@ -335,6 +339,6 @@ internal static class SweepLateSystems
         SLK.Append("decision", "Turn09_Decision_StockExchangeResults", () => Ongoing,
             "Foreign investors are reluctant to buy into a kingdom at war, and the brokers fear the war in Zille will scare them off.");
         SLK.Append("decision", "Turn09_Decision_LeaveAllianceOfNations", () => War,
-            "The Alliance's condemnation of the war in Zille, declared from its own floor in Konstantium, is fresh in every mind at court.");
+            "The Alliance's condemnation of the war in Zille, declared from its own floor in Konstantium, has not been forgotten at court.");
     }
 }

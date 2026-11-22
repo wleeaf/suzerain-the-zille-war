@@ -14,6 +14,9 @@ namespace ZilleWar;
 /// Once the strait is closed it weakens the garrison every turn (SupplyWar.NewTurn). Later calls are invoices: his shipyards
 /// arming Pales in the other war, a free gift, the expelled attaché and, if the consulate files were found, the confrontation
 /// over Héctor Ramiro and the Zille bombing.
+/// Each call opens, reads the front and closes differently: the telephone, his greeting (or his reminder that the King turned
+/// him down last time), one line on the latest phase (Zille or Auremina taken, an aim missed, a quiet month), the bargains
+/// "as before" on a second call, a later report from the strait, and a different goodbye and hang-up each time.
 /// </summary>
 internal static partial class SupplyWar
 {
@@ -63,33 +66,84 @@ internal static partial class SupplyWar
                           Inc(NpLespia, 1) + Inc(NpValgsland, -1);
         string enter = $"AddConversant(\"{Alvarez}\"); AddConversant(\"{Esquibel}\");";
 
+        // He reads the front like a market report: one line on the latest phase, then on to business.
+        void Front(string name, string exit)
+        {
+            d.Branch(name, name + "Held", name + "Extra", name + "ZilleR", name + "Zille", name + "Aur", name + "MissedW", name + "Missed", exit);
+            d.SayIf(name + "Held", Is(VarCallHeld), Alvarez,
+                "\"A quiet month at the front, I hear. Quiet months make my admirals nervous. They start asking what exactly they're being " +
+                "paid for.\"", exit);
+            d.SayIf(name + "Extra", $"{N(VarCallFought)} >= 1 and {Is(VarCallLastWon)} and {Is(VarCallExtra)}", Alvarez,
+                "\"And two cities in a single phase. My admirals have started a sweepstake on the day Smolak asks for terms. I've put my " +
+                "money on next month.\"", exit);
+            d.SayIf(name + "ZilleR", $"{N(VarCallFought)} >= 1 and {Is(VarCallLastWon)} and {Eq(VarCallLastAim, "Harbor")} and {Not(VarRamiroFound)}",
+                Alvarez, "\"And congratulations on Zille. I trust my consulate there was treated with every courtesy. Diplomats are such " +
+                         "delicate creatures.\"", exit);
+            d.SayIf(name + "Zille", $"{N(VarCallFought)} >= 1 and {Is(VarCallLastWon)} and {Eq(VarCallLastAim, "Harbor")}", Alvarez,
+                "\"And congratulations on Zille. A beautiful harbor. I always said it was wasted on the Wehzeks.\"", exit);
+            d.SayIf(name + "Aur", $"{N(VarCallFought)} >= 1 and {Is(VarCallLastWon)} and {Eq(VarCallLastAim, "Wall")}", Alvarez,
+                "\"Auremina, I read. Gold. You'll forgive a Lespian for taking an interest. Gold has a way of becoming everybody's " +
+                "business.\"", exit);
+            d.SayIf(name + "MissedW", $"{N(VarCallFought)} >= 1 and {Not(VarCallLastWon)} and {Eq(VarCallLastAim, "Wall")}", Alvarez,
+                "\"The hills held, I read. Hills do that. It's why nobody has ever built a navy for them.\"", exit);
+            d.SayIf(name + "Missed", $"{N(VarCallFought)} >= 1 and {Not(VarCallLastWon)}", Alvarez,
+                "\"I read about the river crossings. Unfortunate. Perla's markets dislike a stalemate, Your Majesty, and so do I. " +
+                "Stalemates are very bad for business.\"", exit);
+        }
+
+        // The war since his last call (SupplyWar.PrepareCallState).
+        string fought = $"{N(VarCallFought)} >= 1";
+        string won = $"({fought} and {Is(VarCallLastWon)})";
+        string held = Is(VarCallHeld);
+        string missed = $"({fought} and {Not(VarCallLastWon)} and not {held})";
+        string aim(string a) => Eq(VarCallLastAim, a);
+        string invoices = N(VarAlvInvoices);
+
         d.Start(AlvarezConv, ResetAsked + Inc(VarAlvarezCalls, 1) + Music, "Phone");
-        d.Branch("Phone", "PhoneFirst", "PhoneLater");
+        d.Branch("Phone", "PhoneFirst", "PhoneMissed", "PhoneLater3", "PhoneLater");
         d.SayIfDo("PhoneFirst", $"{calls} == 1", Narrator,
             "Laurento was waiting in my study with the blue telephone already on the desk. \"Prime Minister Alvarez, Your Majesty. " +
             "He says he has been very patient.\"", enter, "Open");
+        d.SayIfDo("PhoneMissed", missed, Narrator,
+            "Laurento brought in the blue telephone. \"Prime Minister Alvarez, Your Majesty. He asked after your health, which means he " +
+            "has read the casualty lists.\"", enter, "Open");
+        d.SayIfDo("PhoneLater3", $"{calls} >= 3", Narrator,
+            "The blue telephone was already ringing when Laurento carried it in. \"Perla again, Your Majesty. I've stopped asking the " +
+            "operator who it is.\"", enter, "Open");
         d.SayDo("PhoneLater", Narrator,
             "Laurento brought in the blue telephone and set it down as if it might bite. \"Prime Minister Alvarez again, Your Majesty. " +
             "He sounds pleased with himself, which is never good news.\"", enter, "Open");
 
-        d.Branch("Open", "ConfrontOpen", "HelloKept", "HelloBurned", "HelloAgain", "InvExpelled", "InvOpen");
+        d.Branch("Open", "ConfrontOpen", "HelloKept", "HelloBurned", "HelloRefused", "HelloAgain3", "HelloAgain", "InvExpelled", "InvOpen1",
+            "InvOpen2");
         d.SayIf("HelloKept", $"{calls} == 1 and {noDeal} and {kept}", Alvarez,
-            "\"Your Majesty. I hope my little note didn't get lost in all the excitement in Konstantium. It was a very exciting day.\"", "Jab");
+            "\"Your Majesty. I hope my little note didn't get lost in all the excitement in Konstantium. It was a very exciting day.\"", "FrontA");
         d.SayIf("HelloBurned", $"{calls} == 1 and {noDeal}", Alvarez,
             "\"Your Majesty. I understand my note met with an accident in Konstantium. No matter. I'm a patient man, and Lespia is a " +
-            "practical country.\"", "Jab");
+            "practical country.\"", "FrontA");
         d.SayIf("HelloAgain", noDeal, Alvarez,
-            "\"Your Majesty. Smolak's convoys are still crossing the strait, I see. I thought you might like to talk about that.\"", "Jab");
+            "\"Your Majesty. Smolak's convoys are still crossing the strait, I see. I thought you might like to talk about that.\"", "FrontA");
+        d.SayIfDo("HelloRefused", $"{noDeal} and {Is(VarAlvRefusedStrait)}", Alvarez,
+            "\"Your Majesty. The last time we spoke, you told me Rizia had its pride. I've been reading your newspapers since, and I " +
+            "wondered whether pride is still in stock.\"", F(VarAlvRefusedStrait), "FrontA");
+        d.SayIf("HelloAgain3", $"{noDeal} and {calls} >= 3", Alvarez,
+            "\"Your Majesty. Every night another Wehzek convoy crosses Kreleck, and every morning I read where it unloaded. I thought we " +
+            "might try this conversation once more.\"", "FrontA");
+        Front("FrontA", "Jab");
+        Front("FrontI", "Inv");
 
+        // His jabs about Aureus are made once, not on every call.
         d.Branch("Jab", "JabBlockade", "JabField", "Table");
-        d.SayIf("JabBlockade", Is(BlockDrillship), Alvarez,
+        d.SayIfDo("JabBlockade", $"{Is(BlockDrillship)} and {Not(VarAlvJabbed)}", Alvarez,
             "\"Though I confess I find it amusing. Your warships are still circling my partner's drillship at Aureus, and you'd like " +
-            "mine at Kreleck.\"", "Table");
-        d.SayIf("JabField", field, Alvarez,
-            "\"No hard feelings about Aureus, by the way. You outbid LesPower fair and square. Well. Square, at least.\"", "Table");
+            "mine at Kreleck.\"", T(VarAlvJabbed), "Table");
+        d.SayIfDo("JabField", $"{field} and {Not(VarAlvJabbed)}", Alvarez,
+            "\"No hard feelings about Aureus, by the way. You outbid LesPower fair and square. Well. Square, at least.\"", T(VarAlvJabbed), "Table");
 
         // ---- what he has to sell today
-        d.Branch("Table", "TableBoth", "TableHegel", "TableFriend", "TableStrait");
+        d.Branch("Table", "TableBothAgain", "TableBoth", "TableHegel", "TableFriend", "TableStraitAgain", "TableStrait");
+        d.SayIf("TableBothAgain", $"{mitzOpen} and {calls} >= 2", Alvarez,
+            "\"The same two bargains as before, Your Majesty. The strait and the Meftiem. The prices haven't changed. Your war has.\"", "Hub");
         d.SayIf("TableBoth", mitzOpen, Alvarez,
             "\"I have two things to discuss with you today, Your Majesty. The Strait of Kreleck, and the Meftiem.\"", "TableBoth2");
         d.Say("TableBoth2", Alvarez,
@@ -100,19 +154,25 @@ internal static partial class SupplyWar
         d.SayIf("TableFriend", LespiaHasVote, Alvarez,
             "\"Rizia already stands with Lespia at the Meftiem, so we can skip the tiresome part. I remember my friends, Your Majesty. " +
             "It's my enemies I write down.\"", "Hub");
+        d.SayIf("TableStraitAgain", $"{calls} >= 2", Alvarez, "\"So. Ships, again. My favorite subject, and lately yours.\"", "Hub");
         d.Say("TableStrait", Alvarez, "\"So. Let's talk about ships.\"", "Hub");
 
-        d.Branch("Hub", Gate("AskStrait"), Gate("AskMitz"), Gate("Why"), "Bye");
+        d.Branch("Hub", Gate("AskStrait"), Gate("AskMitz"), Gate("Why"), Gate("Bye"), "ByeLater");
         d.Opt("AskStrait", $"{noDeal} and {Not(Q(1))}", "\"Tell me about the strait.\"", null, T(Q(1)), "Strait");
         d.Opt("AskMitz", $"{mitzOpen} and {Not(Q(2))}", "\"What does Lespia want at the Meftiem?\"", null, T(Q(2)), "Mitz");
-        d.Opt("Why", $"{noDeal} and {Not(Q(3))}", "\"Why would Lespia help Rizia at all?\"", null, T(Q(3)), "Why2");
+        d.Opt("Why", $"{noDeal} and {Not(VarAlvAskedWhy)}", "\"Why would Lespia help Rizia at all?\"", null, T(VarAlvAskedWhy), "Why2");
         d.Say("Why2", Alvarez,
             "\"Because President Smolak has called me an Arcasian puppet on the radio three times this year. A Wehlen without Zille " +
             "has fewer reasons to make speeches about Lespia.\"", "Why3");
         d.Say("Why3", Alvarez,
             "\"And because you will owe me. I'm being honest, you see. My lying days are behind me.\"", "Hub");
-        d.Opt("Bye", null, "\"That will be all, Prime Minister.\"", null, null, "ByeBranch");
-        d.Branch("ByeBranch", "ByeNoDeal", "ByeDeal");
+        d.Opt("Bye", $"{calls} == 1", "\"That will be all, Prime Minister.\"", null, null, "ByeBranch");
+        d.Opt("ByeLater", $"{calls} ~= 1", "\"Good day, Prime Minister.\"", null, null, "ByeBranch");
+        d.Branch("ByeBranch", "ByeNoDealAgain", "ByeNoDeal", "ByeDealAgain", "ByeDeal");
+        d.SayIf("ByeNoDealAgain", $"{noDeal} and {calls} >= 2", Alvarez,
+            "\"The offer stays on my desk, Your Majesty, beside the Wehzek shipping lists. Both are getting longer.\"", "Hangup");
+        d.SayIf("ByeDealAgain", $"{deal} and {invoices} >= 2", Alvarez,
+            "\"Until next month, Your Majesty. My accountants will be in touch, and so, I'm afraid, will I.\"", "Hangup");
         d.SayIf("ByeNoDeal", noDeal, Alvarez,
             "\"Of course. The strait isn't going anywhere. Neither, unfortunately, are Smolak's convoys.\"", "Hangup");
         d.Say("ByeDeal", Alvarez,
@@ -172,7 +232,7 @@ internal static partial class SupplyWar
             $"{V(WorldModifiers.CaleqabizRent)} = 1; ", "DealLease");
         d.Say("DealLease", Alvarez,
             "\"Splendid. My lawyers have had the papers ready since Konstantium. My admirals will be in the strait by Sunday.\"", "Hub");
-        d.Opt("RefuseLease", null, "\"No. Not the island, and not the gas.\"", null, null, "NoDeal");
+        d.Opt("RefuseLease", null, "\"No. Not the island, and not the gas.\"", null, T(VarAlvRefusedStrait), "NoDeal");
         const string gasNowText = "\"Six for two. LesPower gets its gas.\"";
         const string gasLaterText = "\"Close the strait. LesPower gets its gas when the pipeline opens.\"";
         string gasDeal = dealScript + Talk.Weaken(1) + T(VarLespiaGasDeal);
@@ -232,12 +292,18 @@ internal static partial class SupplyWar
             "\"Very well. Call it a gesture of friendship. And let's never speak of Mr. Ramiro again, on this line or any other.\"", "FreeDeal");
         d.Do("FreeDeal", dealScript + Inc(NpLespia, -2) + T(VarRamiroConfronted) + S(VarRamiroOutcome, "free"), "Deal2");
 
-        d.Opt("Refuse", null, "\"No. Not at that price.\"", null, null, "NoDeal");
-        d.Say("NoDeal", Alvarez,
+        d.Opt("Refuse", null, "\"No. Not at that price.\"", null, T(VarAlvRefusedStrait), "NoDeal");
+        d.Branch("NoDeal", "NoDealAgain", "NoDeal1");
+        d.SayIf("NoDealAgain", $"{calls} >= 2", Alvarez,
+            "\"Still no. You're consistent, Your Majesty, I'll give you that. So are Smolak's convoys.\"", "Hub");
+        d.Say("NoDeal1", Alvarez,
             "\"Ha. Pride. I had some once, before I had a navy. The offer stands, Your Majesty. For now.\"", "Hub");
 
         // ================================================================ (b) the Meftiem
-        d.Branch("Mitz", "MitzBetrayed", "MitzLate", "MitzAsk");
+        d.Branch("Mitz", "MitzBetrayed", "MitzAgain", "MitzLate", "MitzAsk");
+        d.SayIf("MitzAgain", Is(VarAlvRefusedMitz), Alvarez,
+            "\"Last time you told me Rizia's vote wasn't for sale. I've come back with the same price, because I find principles soften " +
+            "as a war goes on. Shall we see whether yours have?\"", "MitzOffer");
         d.SayIf("MitzBetrayed", grudge, Alvarez,
             "\"You looked me in the eye at the Meftiem, and then you voted with the Malenyevists. I haven't forgotten.\"", "MitzBetrayed2");
         d.Say("MitzBetrayed2", Alvarez,
@@ -266,7 +332,7 @@ internal static partial class SupplyWar
             "it before dinner.\"", "MitzMenu");
 
         d.Do("MitzMenu", null, Gate("MitzWhy"), "MitzShip", "MitzIntel", "MitzNo");
-        d.Opt("MitzWhy", Not(Q(4)), "\"Why pay so much for one vote?\"", null, T(Q(4)), "MitzWhy2");
+        d.Opt("MitzWhy", Not(VarAlvAskedMitzWhy), "\"Why pay so much for one vote?\"", null, T(VarAlvAskedMitzWhy), "MitzWhy2");
         d.Say("MitzWhy2", Alvarez,
             "\"Because the Meftiem is worth a great deal more than one destroyer, Your Majesty. You'd see that, if you were in my " +
             "line of work.\"", "MitzWhy3");
@@ -280,21 +346,24 @@ internal static partial class SupplyWar
         d.Say("MitzIntel2", Alvarez,
             "\"A practical choice. My naval attaché will have the sailing times on your Admiralty's desk by morning. Accurate to the " +
             "hour, I'm told.\"", "Hub");
-        d.Opt("MitzNo", null, "\"Rizia's vote at the Meftiem isn't for sale.\"", null, null, "MitzNo2");
+        d.Opt("MitzNo", null, "\"Rizia's vote at the Meftiem isn't for sale.\"", null, T(VarAlvRefusedMitz), "MitzNo2");
         d.Say("MitzNo2", Alvarez,
             "\"Everything is for sale, Your Majesty. You simply haven't heard the right price yet.\"", "Hub");
 
         // ================================================================ invoices: one topic per call once the strait is closed
-        d.Say("InvOpen", Alvarez,
+        d.SayIfDo("InvOpen1", $"{invoices} == 0", Alvarez,
             "\"Your Majesty. My admirals send their regards from the strait. Wehzek captains have discovered the joys of Lespian " +
-            "paperwork.\"", "Inv");
-        d.Branch("Inv", "InvMitz", "InvPales", "InvGift", "InvNothing");
+            "paperwork.\"", Inc(VarAlvInvoices, 1), "FrontI");
+        d.SayDo("InvOpen2", Alvarez,
+            "\"Your Majesty. A report from Kreleck, since your own admirals are too proud to send one. Every Wehzek ship this month " +
+            "was stopped and searched, and most of them are still waiting for their papers.\"", Inc(VarAlvInvoices, 1), "FrontI");
+        d.Branch("Inv", "InvMitz", "InvPales", "InvGift", "InvNothingHeld", "InvNothingMissed", "InvNothingWon", "InvNothing");
         // the attaché expelled over the Fort Ales photographs (SupplyWarRoom): he denies everything, smiling
         d.SayIfDo("InvExpelled", $"{Eq(VarPhotoPayoff, "expelled")} and {Not(VarAlvarezPhotoSaid)}", Alvarez,
             "\"Your Majesty. I'm told you expelled my naval attaché. A keen amateur photographer, Captain Olmedo. Harbors, " +
             "lighthouses, that sort of thing.\"", T(VarAlvarezPhotoSaid), "InvExpelled2");
         d.Say("InvExpelled2", Alvarez,
-            "\"Whatever he photographed, I assure you he kept it to himself. I tell you so with a perfectly straight face.\"", "Inv");
+            "\"Whatever he photographed, I assure you he kept it to himself. I tell you so with a perfectly straight face.\"", "FrontI");
 
         // the Meftiem bargain, if the strait was bought first
         d.SayIfDo("InvMitz", mitzOpen, Alvarez,
@@ -331,6 +400,15 @@ internal static partial class SupplyWar
             "\"Because a short war is cheaper than a long one, Your Majesty. Even for me. Especially for me.\"", "Hangup");
         d.Opt("GiftThanks", null, "\"Thank you, Prime Minister. Rizia won't forget it.\"", null, T(VarAlvarezGiftDone) + Talk.Weaken(1), "GiftThanks2");
         d.Say("GiftThanks2", Alvarez, "\"I'm counting on it.\"", "Hangup");
+        d.SayIf("InvNothingHeld", held, Alvarez,
+            "\"I only called to ask what my navy is blockading while your army sits still. A quiet front is a very expensive thing to " +
+            "blockade for.\"", "Hangup");
+        d.SayIf("InvNothingMissed", missed, Alvarez,
+            "\"I only called to check on my investment. My parliament reads the same newspapers you do, Your Majesty, and it has " +
+            "started asking what exactly it bought.\"", "Hangup");
+        d.SayIf("InvNothingWon", won, Alvarez,
+            "\"I only called to check on my investment. It seems to be doing nicely. Do finish soon, Your Majesty. My parliament has " +
+            "started asking what else it could buy.\"", "Hangup");
         d.Say("InvNothing", Alvarez,
             "\"I only called to check on my investment. Do try to win soon, Your Majesty. My parliament keeps asking what it bought.\"", "Hangup");
 
@@ -375,7 +453,13 @@ internal static partial class SupplyWar
             "trying to remember their names.\"", "Hangup2");
         d.Say("Hangup2", Narrator, "He carried the telephone away without another word.", "End");
 
-        d.Say("Hangup", Narrator, "We said our goodbyes, and Laurento carried the telephone away.", "End");
+        d.Branch("Hangup", "Hang1", "Hang2", "Hang3");
+        d.SayIf("Hang1", $"{calls} == 1", Narrator, "We said our goodbyes, and Laurento carried the telephone away.", "End");
+        d.SayIf("Hang2", $"{calls} == 2", Narrator,
+            "Alvarez rang off still chuckling at something he had said. Laurento carried the telephone away without comment.", "End");
+        d.Say("Hang3", Narrator,
+            "When the line went dead, Laurento wrote the date and the hour in his little notebook. He had started doing that after every " +
+            "call from Perla.", "End");
         d.Finish();
     }
 }

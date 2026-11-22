@@ -132,7 +132,10 @@ internal static class SweepEarlyT6Home
             new[] { "#257" }, condition: Liberated, hooks: From(249));
         t.Line("HoldsLost", Hugo,
             "\"Mercifully, the voters did not punish us for Zille. Not yet.\"",
-            new[] { "#257" }, condition: LostOrStopped, hooks: From(249));
+            new[] { "#257" }, condition: AuditT6.Lost, hooks: From(249));
+        t.Line("HoldsPart", Hugo,
+            "\"The armistice helped, I think. The voters have Zille city back and their sons coming home. For most of them, that is enough.\"",
+            new[] { "#257" }, condition: AuditT6.Part, hooks: From(249));
 
         // After "The RPP has now become a real threat."
         t.Line("ThreatWar", Hugo,
@@ -156,6 +159,10 @@ internal static class SweepEarlyT6Home
             "\"I should say at the outset that the war has changed every figure in this file. The army's fuel orders for the northern " +
             "front have nearly doubled since the declaration, and the General Staff has first call on every barrel.\"",
             new[] { "#167" }, condition: Active, hooks: From(50, 51));
+        t.Line("FuelOver", Elena,
+            "\"I should say at the outset that the war in Zille has left its mark on every figure in this file. The army burned through a " +
+            "winter's worth of fuel in the north, and the depots still have to be refilled before anything else.\"",
+            new[] { "#167" }, condition: AuditT6.Over, hooks: From(50, 51));
         t.Register();
     }
 
@@ -223,12 +230,14 @@ internal static class SweepEarlyT6Home
             "Luckily, the Crown's response was fierce and the strike was dispersed. A kingdom at war cannot afford idle hands, and the men " +
             "at the front cannot wait for Argno's Malenyevists to decide when they feel like working."), when: s => s == StActive);
 
-        // "...and wished us a peaceful future": not while the guns are firing in Zille.
-        Report("Turn06_Kyrute_CongratulateSuccesfulElections", (_, _) =>
-            "The Republic of Kyrute extended its formal congratulations to the Kingdom of Rizia for holding a successful election in time " +
-            "of war. It cited a desire for continued diplomatic relations with our Kingdom, and urged King Romus to seek an end to the " +
-            "fighting in Zille \"through the institutions of the Alliance of Nations, which sit in Konstantium for a reason.\"",
-            when: s => s == StActive);
+        // "...and wished us a peaceful future": not while the guns are firing in Zille, nor as if they never had.
+        Report("Turn06_Kyrute_CongratulateSuccesfulElections", (s, _) => s == StActive
+            ? "The Republic of Kyrute extended its formal congratulations to the Kingdom of Rizia for holding a successful election in time " +
+              "of war. It cited a desire for continued diplomatic relations with our Kingdom, and urged King Romus to seek an end to the " +
+              "fighting in Zille \"through the institutions of the Alliance of Nations, which sit in Konstantium for a reason.\""
+            : "The Republic of Kyrute extended its formal congratulations to the Kingdom of Rizia for holding a successful election so soon " +
+              "after its war with Wehlen. It cited a desire for continued diplomatic relations with our Kingdom and wished us a peaceful " +
+              "future, \"now that the guns in Zille have fallen silent.\"");
     }
 
     public static void OnStep()

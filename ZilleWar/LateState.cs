@@ -253,12 +253,7 @@ internal static class LateState
 
     private static readonly List<TextSwap> Swaps = new()
     {
-        new(true, "Turn08_G_LespiaEvidenceReleased", () => Declared, "Revelations Unveiled: Lespia Linked to Zille Bombing",
-            "Rizia's Toras government has leveled serious allegations against Lespia in connection with the 1950 Friendship Day bombing in " +
-            "Zille. Newly released evidence links the Alvarez administration to the men who built and planted the device, among them a " +
-            "Lespian political officer at the consulate in Zille, Héctor Ramiro.\n\nThe bombing gave President Smolak his reason to keep " +
-            "Zille past the end of the lease, and King Romus his reason to go to war for it. Prime Minister Alvarez called the evidence " +
-            "\"a Wehzek fairy tale told by a Rizian king,\" but did not say which part of it was untrue."),
+        // Turn08_G_LespiaEvidenceReleased is rewritten by WorldPress (one owner, so the text never flips).
         new(true, "Turn09_RH_ZilleReturnSpeech_Negociations", () => Liberated, "Zille Reunites with Rizia: A Triumph of Arms",
             "After twenty-five years under a foreign flag, Zille has formally rejoined the Kingdom. The ceremony in the city's main " +
             "square, its Wehzek name already gone from the street signs, sealed what the Royal Army won in the field.\n\nHis Majesty " +

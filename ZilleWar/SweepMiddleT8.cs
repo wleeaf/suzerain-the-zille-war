@@ -89,9 +89,9 @@ internal static class SweepMiddleT8
         // After it: the bill.
         foreach ((string sfx, string state, string text) in new[]
                  {
-                     ("Lib", Lib, "\"Zille has come home, Your Majesty, and the bill came with it. Shells, fuel, pensions for the widows. The Auremina mines may pay some of it back, in a few years.\""),
-                     ("Part", Part, "\"The ceasefire stopped the shelling, Your Majesty, but not the spending. We are paying to garrison half of Zille, and the war pensions begin this quarter.\""),
-                     ("Lost", Lost, "\"I won't dress it up, Your Majesty. We spent close to thirty billion guilders on the Zille campaign, and all we have to show for it are the pensions for the widows.\""),
+                     ("Lib", Lib, "\"Zille has come home, Your Majesty, and the bill came with it. We are still paying for the shells and the fuel, and the pensions for the widows will be with us for a generation. The Auremina mines may pay some of it back, in a few years.\""),
+                     ("Part", Part, "\"The armistice stopped the shelling, Your Majesty, but not the spending. We are paying to garrison half of Zille, and the war pensions are now a permanent line in my budget.\""),
+                     ("Lost", Lost, "\"I won't dress it up, Your Majesty. The Zille campaign emptied the war chest, and all we have to show for it are the pensions for the widows.\""),
                  })
         {
             t.Line("Bill" + sfx, Elena, text, new[] { "#68" }, condition: And(state, NoPales), hooks: Talk.From(56));
@@ -146,7 +146,12 @@ internal static class SweepMiddleT8
             Ongoing: "\"Not while this war is being fought, Uncle. Rico stays where he is until it is over.\"",
             Lib: "\"Our soldiers brought Zille home without him, Uncle. Rico stays where he is until I am sure of him.\"",
             Part: "\"I did what I thought was right. With half of Zille still in Smolak's hands, I cannot afford to be wrong about Rico.\"",
-            Lost: "\"I did what I thought was right. After Zille, I cannot afford to be wrong about anyone.\""), new[] { "#116" });
+            Lost: "\"I did what I thought was right. After Zille, I cannot afford to be wrong about anyone.\""), new[] { "#116" },
+            when: "Variable[\"RiziaDLC.Rico_Extradited\"] ~= true");
+        // Rico was handed to Wehlen at the Turn 8 meeting, under the ceasefire terms the King accepted during the war (LateT8)
+        Swap(t, conv, "Word115X", 115, new[] { 114 }, R, S.All(
+            "\"I gave Smolak my word to end the war, Uncle. I could not take it back the moment the guns went quiet.\""), new[] { "#116" },
+            when: "Variable[\"RiziaDLC.Rico_Extradited\"] == true");
         t.Register();
     }
 
@@ -192,14 +197,14 @@ internal static class SweepMiddleT8
         // Beatrice, who has been paying for part of the war.
         Swap(t, conv, "Bea329", 329, new[] { 328 }, Beatrice, new S(
             Ongoing: "\"Why, I wouldn't miss it for anything in the world. Not even for your war, Romus, which my ministers now discuss more often than my own budget.\"",
-            Lib: "\"Why, I wouldn't miss it for anything in the world. And congratulations on Zille. Do try to remember who kept the Wehzek tankers in port.\"",
-            Part: "\"Why, I wouldn't miss it for anything in the world. Half of Zille and a whole wedding in one season. It's more than most kings manage.\"",
-            Lost: "\"Why, I wouldn't miss it for anything in the world. One defeat a season is quite enough for any family, Romus. Let's make today a victory.\""),
+            Lib: "\"Why, I wouldn't miss it for anything in the world. And congratulations on Zille. Do try to remember who helped you pay for it.\"",
+            Part: "\"Why, I wouldn't miss it for anything in the world. Half of Zille and a whole wedding. It's more than most kings manage in a reign.\"",
+            Lost: "\"Why, I wouldn't miss it for anything in the world. Your family has had its fill of bad news from Zille, Romus. Let's make today a victory.\""),
             new[] { "#330" }, when: BeatriceHelped);
 
         // Rayne's toast to Wehlen's friends (a Sordland game with the Wehzek joint operation, and Zille "returned").
         Swap(t, conv, "Rayne687", 687, new[] { 685 }, Rayne,
-            S.All("\"Sordland has always been a friend of Wehlen, Your Majesty. I would like to think we can be a friend of Rizia too, whatever happens in Zille.\""),
+            S.All("\"Sordland has always been a friend of Wehlen, Your Majesty. I would like to think we can be a friend of Rizia too, whatever happened in Zille.\""),
             new[] { "#692" });
         t.Register();
     }

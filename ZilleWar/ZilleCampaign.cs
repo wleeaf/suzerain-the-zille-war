@@ -398,6 +398,8 @@ internal static class ZilleCampaign
             ZilleReports.SetDescription(ZilleReports.LostName, report);
         }
 
+        ZilleReports.SetDescription($"Operation_Zille_Phase{phase}_Report", report);
+
         NewsWire.Batch(() => NewsWire.PublishOperationResult(k, info, won, a));
         NewsWire.OperationReports(k, info, won, a);
         Core.Log.Msg($"Phase {phase} (offensive {k}, aim {info.Target}) ended: read {read} tiles, aim reached={won}, final={final}, " +

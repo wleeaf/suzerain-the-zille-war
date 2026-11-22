@@ -98,7 +98,7 @@ internal static class LateT10
         var g = new Talk(Gather, "ZilleWar.Late.Gather.");
         Swap(g, Gather, "Tobacco", 894, new[] { 892 }, "Russello Montoro", new S(
             Ongoing: "\"We can't import these. Something about a war. Ring any bells?\"",
-            Part: "\"We can't import these. The farm's on the wrong side of a ceasefire line. I'm working on it.\"",
+            Part: "\"Can't sell these at home just yet. The army still treats every truck out of Zille like a smuggler's. But I'm working on it.\"",
             Lost: "\"We can't import these. Something about a war. Ring any bells?\""), new[] { "#895" });
         g.Register();
 
@@ -123,13 +123,19 @@ internal static class LateT10
         var f = new Talk(ForeignAffairs, "ZilleWar.Late.FA.");
         Swap(f, ForeignAffairs, "Unchanged", 227, new[] { 203 }, Narr, new S(
             Ongoing: "\"The war in Zille goes on. Neither army has moved the line in months, and both are losing men to it every week.\"",
-            Part: "\"The ceasefire line still runs through Zille. Zille city remains under our administration, while the hills and the northern ports stay in Wehzek hands. The Alliance's observers report violations by both sides.\"",
             Lost: "\"Zille remains under Wehzek occupation. Since the war, President Smolak has doubled the garrison and fortified the hills above the city.\""),
             new[] { "#916" });
+        // divided: Zille city ours, and the Auremina hills if Phase II took them; the ports of Isor and Nanta Wehzek
+        Swap(f, ForeignAffairs, "UnchangedLine", 227, new[] { 203 }, Narr, new S(
+                Part: "\"The ceasefire line still runs through Zille. Zille city remains under our administration, while the gold hills and the northern ports stay in Wehzek hands. The Alliance's observers report violations by both sides.\""),
+            new[] { "#916" }, when: $"not ({Auremina})");
+        Swap(f, ForeignAffairs, "UnchangedGold", 227, new[] { 203 }, Narr, new S(
+                Part: "\"The ceasefire line still runs through Zille. Zille city and the Auremina hills remain under our administration, while the ports of Isor and Nanta stay in Wehzek hands. The Alliance's observers report violations by both sides.\""),
+            new[] { "#916" }, when: Auremina);
         Swap(f, ForeignAffairs, "Crackdown", 205, new[] { 917 }, Narr, new S(
             Ongoing: "\"Behind the Wehzek lines, the military police are hunting anyone suspected of helping our army.\"",
             Part: "\"On the Wehzek side of the line, the military police are hunting down those who cheered our columns when they first crossed the river.\"",
-            Lost: "\"Wehzek military police are detaining the Zilleans who flew our colors when our columns reached the city. We estimate several hundred arrests.\""),
+            Lost: "\"Wehzek military police are detaining the Zilleans who flew our colors during the war. We estimate several hundred arrests.\""),
             new[] { "#920" });
         f.Register();
 
@@ -139,6 +145,10 @@ internal static class LateT10
             Part: "\"Your Majesty took Zille city and left the rest of it to Smolak. Brenas expected more for its sons.\"",
             Lost: "\"Yes, I know. None of us could have anticipated that Your Majesty would start a war for Zille and lose it. Brenas buried its sons for nothing.\""),
             new[] { "#1276" });
+        Swap(s, Sazon, "Losing1162", 1162, new[] { 1161 }, "Angelica Sazon", new S(
+                Part: "\"Especially after Zille. Our sons won back the city, and the rest of it still sits behind a line of trenches.\"",
+                Lost: "\"Especially after the disappointment in Zille.\""),
+            new[] { "#1264" });
         s.Register();
 
         var n = new Talk(NatDes, "ZilleWar.Late.NatDes.");
@@ -159,7 +169,7 @@ internal static class LateT10
         t.Logic("NotPeaceful", new[] { "#58" }, condition: War, hooks: Talk.From(54));
         // a lost war for Zille, with a weak army, is remembered as frailty
         t.Logic("Frailer", new[] { "#94" },
-            condition: And(WarFlags.L(WarFlags.Defeated), WarFlags.LNot(WarFlags.ZilleCityHeld), "Variable[\"RiziaDLC.Situation_Diplomacy_PowerProjection_Weak\"] == true"),
+            condition: And(Lost, "Variable[\"RiziaDLC.Situation_Diplomacy_PowerProjection_Weak\"] == true"),
             script: Set("RiziaDLC.Title_Frailer", "true"), hooks: Talk.From(62));
         t.Register();
     }

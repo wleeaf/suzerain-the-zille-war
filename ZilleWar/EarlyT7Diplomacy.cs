@@ -55,20 +55,85 @@ internal static class EarlyT7Diplomacy
             "\"I have never liked violence as a solution to the Zille question, Your Excellency. But with our soldiers already fighting " +
             "there, I can hardly object to the Bluds lending a hand.\"", new[] { "#1098", "#1094", "#1100", "#1351" });
 
+        // After the war. Liberated: Zille is ours, so Rumburg's pitch is that the Bluds keep Smolak too busy to take it back.
+        // Divided or lost: "the reclamation of Zille" still reads true (the rest of it, or all of it).
+        t.Variant("Pry868Lib", 868, new[] { 867 }, Lib, Beatrice,
+            "\"And who do you imagine was standing beside you while you pried Zille from the claws of the Wehzeks?\"",
+            new[] { "#897", "#882", "#885", "#886", "#888" });
+        t.Variant("Pry868Part", 868, new[] { 867 }, Part, Beatrice,
+            "\"And what of our ability to help you pry the rest of Zille from the claws of the Wehzeks?\"",
+            new[] { "#897", "#882", "#885", "#886", "#888" });
+        t.Variant("Contacts933Lib", 933, new[] { 886, 934 }, Lib, Beatrice,
+            "\"We have certain contacts within Wehlen who could keep Smolak far too busy at home to ever think of taking Zille back.\"",
+            new[] { "#935" });
+        t.Variant("Contacts933Part", 933, new[] { 886, 934 }, Part, Beatrice,
+            "\"We have certain contacts within Wehlen who could stir up trouble behind Smolak's line in Zille. Possibly enough to make him give up the rest of it.\"",
+            new[] { "#935" });
+        t.Variant("Monqiz908Lib", 908, new[] { 907 }, Lib, Laurento,
+            "\"As you should, Your Majesty. Giving away another part of Rizia just as Zille has come home would be most unwise.\"", new[] { "#917" });
+        t.Variant("Monqiz908Part", 908, new[] { 907 }, Part, Laurento,
+            "\"As you should, Your Majesty. Giving away another part of Rizia while half of Zille is still Wehzek would be most unwise.\"",
+            new[] { "#917" });
+        const string busy = "\"I have never liked paying for violence, Your Majesty. But a Smolak busy with the Bluds is a Smolak who leaves Zille alone.\"";
+        t.Variant("Laurento1081Lib", 1081, new[] { 1079 }, Lib, Laurento, busy, new[] { "#1098", "#1099", "#1100", "#1351" });
+        t.Variant("Laurento1082Lib", 1082, new[] { 1084 }, Lib, Laurento, busy, new[] { "#1098", "#1094", "#1100", "#1351" });
+        t.Variant("Laurento1082Over", 1082, new[] { 1084 }, $"{Over} and {WarFlags.LNot(WarFlags.Liberated)}", Laurento,
+            "\"I am still loathe to suggest violence as a solution to the Zille conundrum. But the army has done what it could, and Smolak " +
+            "will never give back a single village at a table. An internal resistance may be our last hope.\"",
+            new[] { "#1098", "#1094", "#1100", "#1351" });
+        t.Variant("Bff1076Lib", 1076, new[] { 1069 }, Lib, Romus, "\"Hmm. Is that how you help us keep Zille, then?\"", new[] { "#1077" });
+        t.Variant("Bff1088Lib", 1088, new[] { 1075 }, Lib, Beatrice,
+            "\"And while they keep Smolak busy at home, he will not be thinking about taking Zille back.\"", new[] { "#1090" });
+        t.Variant("Bff1089Lib", 1089, new[] { 1087 }, Lib, Beatrice,
+            "\"And a Smolak busy with his own rebels has no soldiers to spare for Zille.\"", new[] { "#1090" });
+        t.Variant("Bff1092Lib", 1092, new[] { 1091 }, Lib, Beatrice,
+            "\"A struggle that keeps Smolak far too busy to think about Zille.\"", new[] { "#1090" });
+        t.Variant("Bff1150Lib", 1150, new[] { 1077 }, Lib, Beatrice,
+            "\"Up to this point, we have been aiding the Bluds' liberation efforts in the north of Wehlen. A Smolak fighting for his own " +
+            "north has no soldiers to spare for Zille.\"", new[] { "#1090" });
+        t.Variant("Bff1151Lib", 1151, new[] { 1090 }, Lib, Laurento,
+            "\"If I may, Your Excellency... Zille is ours now. Why should Rizia pay for a war in the north of Wehlen?\"", new[] { "#1152" });
+        Vanilla.Require(conv, 1093, WarFlags.LNot(WarFlags.Liberated));   // "our existing resistance plans" in a Zille that is ours
+        t.Variant("Bff1097Lib", 1097, new[] { 1353 }, Lib, Romus,
+            "\"The Bluds would keep Smolak busy whether we pay them or not. We'd just be giving them a nudge.\"", new[] { "#1103" });
+        t.Variant("Bff1131Lib", 1131, new[] { 1128 }, Lib, Romus,
+            "\"I'll co-fund the Bludish Freedom Front along with Rumburg, as long as they keep Smolak away from Zille.\"", new[] { "#1133" },
+            cost: "-1 Budget");
+        t.Variant("Bff1142Lib", 1142, new[] { 1140 }, Lib, Romus,
+            "\"You don't have to twist my arm, Your Excellency. I'll fund the Bludish Freedom Front, if they keep Smolak too busy to look south.\"",
+            new[] { "#1133" }, cost: "-1 Budget");
+
         // --- "I have not yet broached the subject of Zille." (the car, no Pales war)
         int[] zilleParents = { 1473, 1477, 1486, 1492 };
         t.Variant("ZilleAct", 1300, zilleParents, Act, Beatrice, "\"Now. Zille.\"", new[] { "RAct" });
-        t.Variant("ZilleLib", 1300, zilleParents, Lib, Beatrice,
-            "\"And Zille. I confess I didn't think Smolak would fold so quickly. Congratulations, Romus. Truly.\"", new[] { "RLib" });
-        t.Variant("ZilleDef", 1300, zilleParents, Def, Beatrice,
-            "\"And Zille. I told my ministers the Wehzeks would not fold. I did not expect you to.\"", new[] { "RDef1", "RDef2", "RDef3" });
-        t.Variant("ZilleCf", 1300, zilleParents, Cf, Beatrice,
-            "\"And Zille. A ceasefire. How very Kyrutian of you. Smolak keeps what he holds and calls it peace, and you call it prudence.\"",
-            new[] { "RCf1", "RCf2" });
-        // "Now let's talk about how you can help us win Zille back" leads into the vanilla BFF conversation; at war it leads here.
+        // Beatrice's verdict on the war, either unprompted in the car (1300, "And Zille. ...") or when the King raises it after
+        // making amends (1326 answers "Now let's talk about Zille", which leads into the vanilla BFF offer in peacetime).
+        string partCf = $"{Part} and {KingCf}", partArm = $"{Part} and {NoKingCf}";
+        string lostCf = $"{Lost} and {KingCf}", lostArm = $"{Lost} and {NoKingCf}";
+        foreach ((string sfx, int entry, int[] parents, string lead) in new[]
+                 {
+                     ("", 1300, zilleParents, "And Zille. "),
+                     ("Ask", 1326, new[] { 1325 }, "Zille. "),
+                 })
+        {
+            t.Variant("ZilleLib" + sfx, entry, parents, Lib, Beatrice,
+                $"\"{lead}I confess I didn't think Smolak would fold so quickly. Congratulations, Romus. Truly.\"", new[] { "RLib" });
+            t.Variant("ZillePartArm" + sfx, entry, parents, partArm, Beatrice,
+                $"\"{lead}Half a loaf, I'm told. You have the city and its harbor, and Smolak sits behind an armistice line with the rest.\"",
+                new[] { "RPart1", "RPart2", "RDef3" });
+            t.Variant("ZillePartCf" + sfx, entry, parents, partCf, Beatrice,
+                $"\"{lead}A ceasefire, with the harbor in your pocket and the rest still in Smolak's. How very Kyrutian of you.\"",
+                new[] { "RCf1", "RCf2", "RPart2" });
+            t.Variant("ZilleLostArm" + sfx, entry, parents, lostArm, Beatrice,
+                $"\"{lead}I told my ministers Smolak would not give it up easily. I did not expect him to keep all of it.\"",
+                new[] { "RDef1", "RDef2", "RDef3" });
+            t.Variant("ZilleLostCf" + sfx, entry, parents, lostCf, Beatrice,
+                $"\"{lead}A ceasefire, before your army even reached the city. Smolak keeps what he holds and calls it peace, and you call it prudence.\"",
+                new[] { "RCf1", "RCf2", "RDef3" });
+        }
+
         t.Variant("Help1324", 1324, new[] { 1319 }, Over, Romus, "\"All right. Now let's talk about Zille.\"", new[] { "#1325" });
-        t.Logic("Help1326", new[] { "RAct", "RLibOrBack" }, condition: Declared, hooks: From(1326));
-        t.Logic("RLibOrBack", new[] { "RLib", "#1370" });
+        t.Logic("Help1326", new[] { "RAct" }, condition: Act, hooks: From(1326));
 
         // the war is on: the Bludish Freedom Front, then the bill
         t.Logic("RAct", new[] { "BffDone", "BffUsed", "BffOffer" }, condition: Act);
@@ -119,8 +184,8 @@ internal static class EarlyT7Diplomacy
 
         // liberated: the gold
         t.Line("RLib", Beatrice,
-            "\"Now. If you reclaim Zille but have nobody to sell its gold to, it's as good as useless. Rumburg would like first refusal on " +
-            "whatever comes out of those mines.\"", new[] { "Gold1", "Gold2", "Gold3" }, condition: Lib);
+            "\"Now. You have Zille back, but its gold is as good as useless if you have nobody to sell it to. Rumburg would like first " +
+            "refusal on whatever comes out of those mines.\"", new[] { "Gold1", "Gold2", "Gold3" }, condition: Lib);
         t.Choice("Gold1", "\"Rumburg will have first claim on Zille's gold.\"", new[] { "Gold1r" },
             script: Str(VarZilleGold, "rumburg") + Inc("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", 2));
         t.Line("Gold1r", Beatrice, "\"Now that is the brother-in-law I remember.\"", new[] { "#1370" });
@@ -130,10 +195,20 @@ internal static class EarlyT7Diplomacy
         t.Choice("Gold3", "\"Ask me again once the mines are working.\"", new[] { "Gold3r" }, script: Str(VarZilleGold, "later"));
         t.Line("Gold3r", Beatrice, "\"I shall. Frequently.\"", new[] { "#1370" });
 
+        // divided
+        t.Choice("RPart1", "\"The line will not hold forever. We'll finish what we started.\"", new[] { "RPart1r" });
+        t.Line("RPart1r", Beatrice,
+            "\"Then do finish it, dear. My ministers have little patience for wars that stop halfway, and even less for paying for them.\"",
+            new[] { "#1370" });
+        t.Choice("RPart2", "\"Zille's harbor is Rizian again. My father couldn't say as much.\"", new[] { "RPart2r" });
+        t.Line("RPart2r", Beatrice,
+            "\"No, he was the one who lent it out. Half of it back is something, I suppose. My ministers will want to know when they can " +
+            "expect the other half.\"", new[] { "#1370" });
+
         // lost
-        t.Choice("RDef1", "\"We lost a battle, Beatrice. Not the claim.\"", new[] { "RDef1r" });
+        t.Choice("RDef1", "\"We lost a campaign, Beatrice. Not the claim.\"", new[] { "RDef1r" });
         t.Line("RDef1r", Beatrice,
-            "\"Then I hope the next battle is better planned. Rumburg can't keep backing a horse that falls at the first fence.\"", new[] { "#1370" });
+            "\"Then I hope the next campaign is better planned. Rumburg can't keep backing a horse that falls at every fence.\"", new[] { "#1370" });
         t.Choice("RDef2", "\"Your help came late, and it came expensive.\"", new[] { "RDef2r" },
             script: Inc("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", -1));
         t.Line("RDef2r", Beatrice,
@@ -176,16 +251,30 @@ internal static class EarlyT7Diplomacy
         const string conv = "Rizia/Turn 7/FPnT_DukeVisit";
         var t = new Talk(conv, "ZilleWar.E7.Duke.");
 
-        // A defense pact with a kingdom that is fighting, or has just fought, Wehlen.
+        // A defense pact with a kingdom that is fighting, or has just fought, Wehlen: the Duke's verdict on the Rizian army
+        // (vanilla 362 when it is strong, 366 when it is not) speaks of what that army did in Zille.
         t.Line("AllianceAct", Axel,
             "\"With a kingdom that is at war with Wehlen as we speak? If Smolak's navy ever comes south, my harbors are the first thing it will see.\"",
             new[] { "#351" }, condition: Act, hooks: From(361));
-        t.Line("AllianceLib", Axel,
-            "\"From the king who just took Zille from Smolak? I admit that makes the offer sound less like a boast.\"",
-            new[] { "#351" }, condition: Lib, hooks: From(361));
-        t.Line("AllianceDef", Axel,
-            "\"From a king who couldn't hold Zille? Forgive me, Your Majesty, but I'll need to think about what your protection is worth.\"",
-            new[] { "#351" }, condition: Def, hooks: From(361));
+        int[] strong = { 364, 849 };
+        t.Variant("Strong362Lib", 362, strong, Lib, Axel,
+            "\"I must say, you took Zille from Smolak in a single campaign. Any other world leader would have to be a fool to mess with you.\"",
+            new[] { "#398" });
+        t.Variant("Strong362Part", 362, strong, Part, Axel,
+            "\"I must say, your army took Zille's harbor from Smolak and held it. Any other world leader would think twice before messing with you.\"",
+            new[] { "#398" });
+        t.Variant("Strong362Lost", 362, strong, Lost, Axel,
+            "\"Your army couldn't take Zille, I know. But it is still the strongest in the region, and any other world leader would think " +
+            "twice before messing with you.\"", new[] { "#398" });
+        t.Variant("Weak366Lib", 366, new[] { 850 }, Lib, Axel,
+            "\"You took Zille, I'll grant you that. But your army is spent, Your Majesty. How can it protect Pales when it can barely hold Rizia?\"",
+            new[] { "#367" });
+        t.Variant("Weak366Part", 366, new[] { 850 }, Part, Axel,
+            "\"Your army couldn't finish the job in Zille, Your Majesty. How can it protect Pales when it can barely protect Rizia?\"",
+            new[] { "#367" });
+        t.Variant("Weak366Lost", 366, new[] { 850 }, Lost, Axel,
+            "\"Your army couldn't take Zille from Smolak, Your Majesty. How can it protect Pales when it can barely protect Rizia?\"",
+            new[] { "#367" });
 
         // Intermerkopum: "Morella, Derdia and Wehlen."
         t.Variant("Members699", 699, new[] { 659, 662, 671, 682 }, Declared, Romus,
@@ -211,6 +300,19 @@ internal static class EarlyT7Diplomacy
         t.Variant("Strife447", 447, new[] { 446 }, Act, Romus,
             "\"We face no strife we cannot overcome, Supreme Wiseman. When Zille is ours again, Rizia will be stronger and more prosperous than ever.\"",
             new[] { "#451" });
+        t.Variant("Strife447Lib", 447, new[] { 446 }, Lib, Romus,
+            "\"We face no strife we cannot overcome, Supreme Wiseman. Zille is ours again, and Rizia will be stronger and more prosperous than ever.\"",
+            new[] { "#451" });
+        t.Variant("Strife447Part", 447, new[] { 446 }, Part, Romus,
+            "\"We face no strife we cannot overcome, Supreme Wiseman. When the rest of Zille is ours, Rizia will be stronger and more prosperous than ever.\"",
+            new[] { "#451" });
+        t.Variant("Strife447Lost", 447, new[] { 446 }, Lost, Romus,
+            "\"We face no strife we cannot overcome, Supreme Wiseman. Zille will be ours one day, and Rizia will be stronger and more prosperous than ever.\"",
+            new[] { "#451" });
+        // "You are placating Wiktor Smolak": the King has just fought him.
+        t.Variant("Placate368", 368, new[] { 358 }, Declared, Azmal,
+            "\"Even worse. You went to war with Wiktor Smolak, and still you keep the ban he asked of you. He denies Golcondists the right to exist in his country.\"",
+            new[] { "#383" });
         // "The ban is only in place as part of an agreement I made with Wehlen."
         Vanilla.Require(conv, 238, Peace);
         t.Variant("Sal249", 249, new[] { 244 }, Declared, Sal,
@@ -233,6 +335,17 @@ internal static class EarlyT7Diplomacy
         f.Variant("Why119", 119, new[] { 118 }, Act, Azmal,
             "\"But I am curious what Rizia means to do with such technology. You are at war with Wehlen, after all. Do you intend to aim it at Wraclawitz?\"",
             new[] { "Aim", "#125", "#126" });
+        // After the war: what the King asks Derdia for, and why Rizia wants missiles.
+        S7 ask = new(
+            "\"Zille is ours again, Supreme Wiseman, but Smolak will not forget it. I would humbly call upon your great warrior culture to help us hold it.\"",
+            "\"Smolak still holds half of Zille behind an armistice line, Supreme Wiseman. I would humbly call upon your great warrior culture for assistance.\"",
+            "\"Our army could not take Zille from Smolak, Supreme Wiseman. I would humbly call upon your great warrior culture for assistance.\"");
+        ask.Apply(f, "Ask7", 7, new[] { 178 }, Romus, new[] { "#103" });
+        f.Variant("Prayed77Lib", 77, new[] { 76 }, Lib, Azmal,
+            "\"Normally, Derdia would charge you for their services. But my Disciples are eager to help Rizia hold its land against the anti-Golcondist Wehzeks.\"",
+            new[] { "#79", "#82", "#85" });
+        const string notAtWar = "\"But I am curious what Rizia means to do with such technology. Your war with Wehlen is over, after all. Or is it?\"";
+        f.Variant("Why119Over", 119, new[] { 118 }, $"{Over} and {NoPales}", Azmal, notAtWar, new[] { "#120", "#125", "#121", "#126" });
         f.Choice("Aim", "\"At the Wehzek batteries above Zille's harbor. Nothing more.\"", new[] { "AimR" });
         f.Line("AimR", Azmal, "\"A war with limits. Derdia approves of limits, Your Majesty. They are so rarely respected.\"", new[] { "#144" });
         f.Register();
@@ -245,6 +358,16 @@ internal static class EarlyT7Diplomacy
         u.Variant("Why113", 113, new[] { 112 }, Act, Azmal,
             "\"But I am curious what Rizia means to do with such technology. You are at war with Wehlen, after all. Do you intend to aim it at Wraclawitz?\"",
             new[] { "Aim", "#128", "#115", "#119" });
+        ask.Apply(u, "Ask42", 42, new[] { 155 }, Romus, new[] { "#104" });
+        u.Variant("Why113Over", 113, new[] { 112 }, $"{Over} and {NoPales}", Azmal, notAtWar, new[] { "#114", "#128", "#115", "#119" });
+        u.Variant("Free38Lib", 38, new[] { 49 }, Lib, Romus, "\"Together, we will make sure Smolak never sets foot in Zille again.\"", new[] { "#41" });
+        u.Variant("Free38Part", 38, new[] { 49 }, Part, Romus, "\"Together, we will free the rest of Zille and humiliate Wehlen.\"", new[] { "#41" });
+        u.Variant("Never70Lib", 70, new[] { 41, 71, 95 }, Lib, Romus,
+            "\"Actually, please disregard my request. Zille needs peace now, not more soldiers.\"", new[] { "Appease52" });
+        // "You would rather continue to appease Smolak?" after a war with him.
+        u.Variant("Appease52", 52, new[] { 70 }, Declared, Azmal,
+            "\"You would rather leave Smolak be? 'It is easier to calm a storm with whispers than satisfy the whims of a madman.'\"",
+            new[] { "#96" });
         u.Choice("Aim", "\"At the Wehzek batteries above Zille's harbor. Nothing more.\"", new[] { "AimR" });
         u.Line("AimR", Azmal, "\"A war with limits. How unusual for a king.\"", new[] { "#140" });
         u.Register();
@@ -257,12 +380,17 @@ internal static class EarlyT7Diplomacy
         Widen(ef, "AtWar12", 9, 12, ZilleOnly);
         ef.Variant("Gulf60", 60, new[] { 12 }, Act, Azmal, gulf, new[] { "#89" });
         ef.Variant("Harbor90", 90, new[] { 85 }, Lib, Azmal, harbor, new[] { "#52", "#53" });
+        // "Once your Zille harbor is recovered": it is, when the city is ours (liberated or divided).
+        const string harborOurs = "\"Think about it. Now that your Zille harbor is free of that madman, the distance between our ports is practically nothing.\"";
+        string cityOurs = $"({Lib}) or ({Part})";
+        ef.Variant("Harbor89", 89, new[] { 60, 77 }, cityOurs, Azmal, harborOurs, new[] { "#52", "#53" });
         ef.Register();
         var eu = new Talk("Rizia/Turn 7/Energy Partnership Unfriendly", "ZilleWar.E7.EnergyU.");
         Vanilla.Require("Rizia/Turn 7/Energy Partnership Unfriendly", 62, Peace);
         Widen(eu, "AtWar15", 12, 15, ZilleOnly);
         eu.Variant("Gulf64", 64, new[] { 15 }, Act, Azmal, gulf, new[] { "#103" });
         eu.Variant("Harbor104", 104, new[] { 99 }, Lib, Azmal, harbor, new[] { "#56", "#57" });
+        eu.Variant("Harbor103", 103, new[] { 64, 90 }, cityOurs, Azmal, harborOurs, new[] { "#56", "#57" });
         eu.Register();
 
         // Morella discussion: "My country's fighting a war, Supreme Wiseman."
@@ -274,6 +402,17 @@ internal static class EarlyT7Diplomacy
         WidenByParent(mu, 379, "War32", 32);
         WidenByParent(mu, 379, "War79", 79);
         mu.Register();
+    }
+
+    /// <summary>One line in three post-war versions (liberated, divided, lost) replacing a vanilla line or choice.</summary>
+    private sealed record S7(string Lib, string Part, string Lost)
+    {
+        public void Apply(Talk t, string name, int entry, int[] parents, string speaker, string[] next)
+        {
+            t.Variant(name + "Lib", entry, parents, EarlyT7.Lib, speaker, Lib, next);
+            t.Variant(name + "Part", entry, parents, EarlyT7.Part, speaker, Part, next);
+            t.Variant(name + "Lost", entry, parents, EarlyT7.Lost, speaker, Lost, next);
+        }
     }
 
     // Hubs of the Morella discussion's Pales_War branches (checked with node.py: target <- condition <- hub).

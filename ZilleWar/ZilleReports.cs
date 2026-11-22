@@ -27,6 +27,20 @@ internal static class ZilleReports
     }
 
     /// <summary>
+    /// A phase set up on its own (no snapshot to resume from) is an operation of one phase for the game, which shows a result
+    /// report when it ends: give it a phase report (the after-action dispatch), not the whole operation's verdict.
+    /// </summary>
+    public static string RegisterPhase(int phase, string vanillaWon)
+    {
+        string name = $"Operation_Zille_Phase{phase}_Report";
+        Add(Clone(Find(vanillaWon), name, $"0x5A111E00000005{phase:X2}", $"{ZilleCampaign.PhaseTitle(phase)}: After-Action Report",
+            $"The General Staff's report on {ZilleCampaign.PhaseWords(phase)} of {ZilleCampaign.OperationCodename} is being written."));
+        return name;
+    }
+
+    public static bool IsRegistered(string name) => Created.ContainsKey(name);
+
+    /// <summary>
     /// After a reload the operation's reports are no longer registered (they live in memory only), but the save may refer to
     /// them: register them again, with the after-action text of the last phase kept in the save.
     /// </summary>

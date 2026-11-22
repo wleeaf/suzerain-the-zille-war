@@ -104,6 +104,9 @@ internal static class SweepMiddle
             "The invasion of Pales has triggered",
             "The invasion of Pales, coming while the war in Zille is still being fought, has triggered",
             "Coming on top of the war in Zille, the strain on ordinary households has doubled."));
+        Text("Turn07_Decision_War_Both_RefugeeStory", () => Declared && !Liberated && Variables.GetBool(WarFlags.Occupied("Mave Nortus")), Append(
+            "The shelters of Brenas are already full of families who fled the fighting in Zille and in Wehzek-held Mave Nortus, and " +
+            "the relief services are stretched thin."));
         Text("Turn07_Decision_War_Both_RefugeeStory", () => Declared && !Liberated, Append(
             "The shelters of Mave Nortus are already full of families who fled the fighting in Zille, and the relief services are " +
             "stretched thin."));
@@ -138,13 +141,22 @@ internal static class SweepMiddle
         Text("Turn07_Decision_RoyalYachtRestorationFinal", () => Lost, Append(
             "With the defeat in Zille still fresh, a celebration on the water would not go unnoticed, least of all by the families of " +
             "the fallen.", true));
+        // divided: Zille city is ours, the rest of the province behind an armistice line
+        Text("Turn07_Decision_RoyalYachtRestorationFinal", () => Over && !Liberated, Append(
+            "With half of Zille still behind the armistice line and the casualty lists still fresh in every parish, a celebration on the water " +
+            "would not go unnoticed, least of all by the families of the fallen.", true));
 
         // ---- Turn 8
 
         Text("Turn08_Decision_OP2_MilitiaJoinsWar", () => Active, Append(
             "The divisions still fighting in Zille cannot be spared for Pales."));
+        // From Turn 6 on the Zille war is over, but the army that fought it is the army now fighting Pales.
+        Text("Turn08_Decision_OP2_MilitiaJoinsWar", () => Over, Append(
+            "Many of the regular divisions have not yet recovered from the fighting in Zille."));
         Text("Turn08_Decision_War_Both_ConscriptionLaborShortages", () => Two, Append(
             "With two wars to man, in Zille and in Pales, the shortage is felt twice over."));
+        Text("Turn08_Decision_War_Both_ConscriptionLaborShortages", () => Over, Append(
+            "Many of the men called up for the war in Zille were never released back to their fields and factories."));
         Text("Turn08_Decision_War_Both_MothersWarProtest", () => Declared && PalesWar, Replace(
             "as their children are sent to war.",
             "as their children are sent to war, first to Zille and now to Pales.",
@@ -156,6 +168,10 @@ internal static class SweepMiddle
             "either by preparing for potential conflicts",
             "either by supplying the war in Zille",
             "The General Staff would like the new output sent to the Zille front."));
+        Text("Turn08_Decision_War_UpgradeProductionLinesThree", () => Over && !Liberated, Replace(
+            "either by preparing for potential conflicts",
+            "either by rearming the divisions that face Wehlen across the armistice line in Zille",
+            "The General Staff would like the new output sent to the divisions facing Wehlen across the armistice line."));
 
         // The army offered to the House of Delegates is the army fighting in Zille.
         Text("Turn08_Decision_HODMilitaryIntervention", () => Active, Append(
@@ -170,6 +186,7 @@ internal static class SweepMiddle
         {
             Text(rally, () => Active, Append("Among the banners are new ones calling for an end to the war in Zille."));
             Text(rally, () => Lost, Append("Many of the marchers also want to know who will answer for the defeat in Zille."));
+            Text(rally, () => Over && !Liberated, Append("Among the banners are some asking what the war in Zille was for."));
         }
 
         // The Auremina concession granted to RRG in the Turn 8 security brief comes with the company.
@@ -193,8 +210,8 @@ internal static class SweepMiddle
             "The liberation of Zille has only added to the mood, and the committee would be expected to find room among the guests " +
             "for a delegation from Zille.", true));
         Text("Turn08_Decision_WeddingCommittee", () => Lost, Append(
-            "With the defeat in Zille still fresh, the committee would have to strike a careful balance between celebration and " +
-            "mourning.", true));
+            "With the defeat in Zille still on everyone's mind, the committee would have to strike a careful balance between " +
+            "celebration and mourning.", true));
     }
 
     private static void ApplyDecisionTexts()

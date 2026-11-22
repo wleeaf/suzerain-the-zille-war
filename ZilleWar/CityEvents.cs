@@ -210,12 +210,25 @@ internal static class CityEvents
             });
 
         // --- Wehlen retakes a Zille city ---
-        foreach (string city in new[] { "Zille", "Nanta", "Isor", "Auremina" })
+        foreach ((string city, string title, string text) in new[]
+                 {
+                     ("Zille", "Zille Lost",
+                      "A Wehzek counterattack from the hills has driven our forces out of Zille. The harbor district fell first, then the old " +
+                      "town, and the Wehzek flag is back over the square we gave its old name. People who hung our colors from their windows " +
+                      "are taking them down in a hurry. Our officers ask for orders."),
+                     ("Nanta", "Nanta Lost",
+                      "Wehzek troops landed from the strait at night have retaken the port of Nanta. Our garrison was pushed back along the " +
+                      "coast road, and the dockers who worked for us are being rounded up on the quays. The garrison commander asks what he is to do."),
+                     ("Isor", "Isor Lost",
+                      "A Wehzek column has come down the coast and retaken Isor. The fishing boats that flew our colors are being searched one " +
+                      "by one, and the skippers have fled out to sea. Our officers want to know whether they are to go back."),
+                     ("Auremina", "Auremina Lost",
+                      "A Wehzek counterattack has driven our forces out of Auremina and back down the valley road. The miners who cheered us " +
+                      "have gone back underground, where, they say, nobody can find them. The battalion commanders on the valley road ask for orders."),
+                 })
         {
             string c = city;
-            yield return new WarEvent(LostName(c), $"{c} Lost",
-                $"A Wehzek counterattack has driven our forces out of {c}. Reports from the town speak of arrests among those who " +
-                "welcomed us. Our officers ask for orders.",
+            yield return new WarEvent(LostName(c), title, text,
                 new[]
                 {
                     new EventOption("Regroup and retake it. We do not abandon those who stood with us. (-250 Military Equipment)", Do("Counterattack", () =>
@@ -260,14 +273,16 @@ internal static class CityEvents
 
         foreach ((string city, string flavour) in new[]
                  {
-                     ("Dapalle", "The river crossing at Dapalle is in Wehzek hands, and with it the road into the heart of Brenas."),
-                     ("Balle", "Balle has fallen. Wehzek patrols are on the shores of Lake Jardim, deep inside Brenas."),
-                     ("Jales", "Jales has fallen. The enemy holds a Sudis Sea port on Rizian soil, the first in a generation."),
+                     ("Dapalle", "The river crossing at Dapalle is in Wehzek hands, and with it the road into the heart of Brenas. The prisoner " +
+                                 "cages outside the town were emptied in the night, and the Wehzek prisoners walked out to meet their own army."),
+                     ("Balle", "Balle has fallen. Wehzek patrols are on the shores of Lake Jardim, deep inside Brenas, and the fishermen have " +
+                               "pulled their boats up on the beach. Nobody in Porte Drazon thought the war could come this far south."),
+                     ("Jales", "Jales has fallen. The enemy holds a Sudis Sea port on Rizian soil, the first in a generation, and Wehzek " +
+                               "ships can now unload on our side of the strait."),
                  })
         {
             string c = city;
-            yield return new WarEvent(LostName(c), $"{c} Falls",
-                flavour + " The war has come to Rizia proper, and the nation will hold the Crown responsible.",
+            yield return new WarEvent(LostName(c), $"{c} Falls", flavour,
                 new[]
                 {
                     new EventOption("Rally the reserves and counterattack. (-250 Manpower, -250 Military Equipment)", Do("Counterattack", () =>
@@ -286,12 +301,20 @@ internal static class CityEvents
                 });
         }
 
-        foreach (string city in new[] { "Mave Nortus", "Dapalle", "Balle", "Jales" })
+        foreach ((string city, string text) in new[]
+                 {
+                     ("Mave Nortus", "Our troops have driven the Wehzek forces out of Mave Nortus. The railway station is a shell, but the " +
+                                     "stationmaster was on the platform before the smoke had cleared, chalking up the times of trains that do not yet run."),
+                     ("Dapalle", "Our troops have retaken the river crossing at Dapalle. The townspeople are coming out of their cellars, and " +
+                                 "the first of them are already clearing the rubble from the bridge approach."),
+                     ("Balle", "Our troops have driven the Wehzek patrols away from Lake Jardim and back out of Balle. The fishermen are " +
+                               "pushing their boats back into the water, and the sanctuary bell, silent for weeks, rang at noon."),
+                     ("Jales", "Our troops have retaken Jales and its harbor. The Wehzek ships that unloaded there have slipped away across " +
+                               "the Sudis Sea, leaving the quays piled with crates nobody has yet dared to open."),
+                 })
         {
             string c = city;
-            yield return new WarEvent(CapturedName(c), $"{c} Liberated",
-                $"Our troops have driven the Wehzek forces out of {c}. The townspeople are coming out of their cellars, and the " +
-                "first of them are already clearing the rubble from the main street.",
+            yield return new WarEvent(CapturedName(c), $"{c} Liberated", text,
                 new[]
                 {
                     new EventOption("Restore order and press on.", () => Add(Opinion, 1)),

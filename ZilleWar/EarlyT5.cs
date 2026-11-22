@@ -96,14 +96,21 @@ internal static class EarlyT5
                     "PlayLoopedMusic(\"R_GridlockLight\",\"R_GridlockLight_Loop\");");
         t.Line("Room", Narrator,
             "For the first time since my coronation, the Royal Council met under a map of Zille. Someone had pinned it over the " +
-            "fireplace and drawn the front line on it in red pencil.", new[] { "Room2" });
+            "fireplace and drawn the front line on it in red pencil.", new[] { "RoomWon", "RoomLost", "Room2" });
+        // The first phase of the offensive has been fought since Konstantium: the red line says how it went.
+        t.Line("RoomWon", Narrator,
+            "Since the battle, the red line ran north of Zille city. The harbor was ours, and most of the faces around the table looked " +
+            "as if they had finally slept.", new[] { "Room2" }, condition: AuditT45.City);
+        t.Line("RoomLost", Narrator,
+            "The red line still ran south of Zille city. Our first attack had not taken it, and nobody in the room needed reminding.",
+            new[] { "Room2" }, condition: $"not ({AuditT45.City}) and (Variable[\"{ZilleCampaign.VarOpsDone}\"] or 0) >= 1");
         t.Line("Room2", Narrator,
             "Laurento looked as if he had not slept since Konstantium. Perhaps he hadn't.", new[] { "AN1" });
 
         // the Alliance
         t.Line("AN1", Esquibel,
-            "\"The Security Committee sat until three in the morning, Your Majesty. It could not agree on Smolak's protocol, and it " +
-            "cannot agree on our declaration either.\"", new[] { "AN2Backs", "AN2" }, conversant: true);
+            "\"The Security Committee sat until three in the morning after Konstantium, Your Majesty. It could not agree on Smolak's " +
+            "protocol, and it has not agreed on our declaration since.\"", new[] { "AN2Backs", "AN2" }, conversant: true);
         t.Line("AN2Backs", Esquibel,
             "\"Lespia blocked a censure. Prime Minister Alvarez reminded the room that he had already called Wehlen's presence in Zille " +
             "an illegal occupation. Valgsland wanted us condemned. Rumburg and Derdia stood by us.\"", new[] { "AN3" }, condition: alvarezBacks);
@@ -153,7 +160,9 @@ internal static class EarlyT5
         // the House
         t.Line("House1", Hugo,
             "\"The House of Delegates is in uproar. Baroness de Rava's people cheered for ten minutes when the news came in.\"",
-            new[] { "House2" }, conversant: true);
+            new[] { "HouseCity", "House2" }, conversant: true);
+        t.Line("HouseCity", Hugo, "\"When word came that Zille city had fallen, they cheered all over again.\"", new[] { "House2" },
+            condition: AuditT45.City);
         t.Line("House2", Hugo,
             "\"The Brenas members did not. Half of them have cousins on the other side of the Zille line, and the other half have " +
             "sons in the reserve.\"", new[] { "Sal1" });
@@ -199,7 +208,7 @@ internal static class EarlyT5
         t.Choice("Q_R3", "\"Twenty-five years ago, Wehlen's soldiers hunted those mutineers for my father. Now we are at war with them.\"",
             new[] { "Q_R3a" });
         t.Line("Q_R3a", Lucita,
-            "\"Smolak's predecessor did us a favor, and Wehlen has been sending us the bill ever since. Today we stopped paying it.\"",
+            "\"Smolak's predecessor did us a favor, and Wehlen has been sending us the bill ever since. Now we have stopped paying it.\"",
             new[] { "Q4" });
         t.Line("Q4", Lucita,
             "\"Keep it as a reminder of what we have to lose. And what we've already lost.\"", new[] { "Q5" });
@@ -268,7 +277,7 @@ internal static class EarlyT5
             "\"After Zille, I would not put it past you. Which is exactly why I called.\"", new[] { "#459" }, condition: $"not ({Active})");
 
         // "As a member of GRACE, Rizia is obliged to stay uninvolved."
-        const string retort = "\"Uninvolved? Your army is shelling a city on the Strait of Kreleck, Mr. Toras. Spare me the GRACE catechism.\"";
+        const string retort = "\"Uninvolved? Your army is at war in Zille as we speak, Mr. Toras. Spare me the GRACE catechism.\"";
         t.Variant("Uninvolved1", 230, new[] { 222 }, Active, Hegel, retort, new[] { "#233" });
         t.Variant("Uninvolved2", 436, new[] { 432 }, Active, Hegel, retort, new[] { "#438" });
 
@@ -474,12 +483,18 @@ internal static class EarlyT5
         if (step >= 3 && !Variables.GetBool(VarWatchtower))
         {
             Variables.Set(VarWatchtower, true);
+            bool city = Variables.GetBool(ZilleOperation.CapturedVar("Zille"));
             NewsWire.Publish("E5_Watchtower", "G", "WHR Reports Abuses on Both Sides of the Zille Front", P(
                 "The Watchtower of Human Rights has published its first report on the war in Zille. On the Wehzek side, it lists the " +
-                "internment of Rizian-speaking men of fighting age, the closure of every Rizian-language newspaper in the region and " +
-                "a curfew enforced, in the words of one witness, \"with rifle butts.\"",
-                "The report is no kinder to Rizia. It documents shelling near residential streets on the outskirts of Zille city and " +
-                "attacks on Wehzek police posts by irregulars it describes as \"armed and directed from across the border.\"",
+                "internment of Rizian-speaking men of fighting age, the closure of every Rizian-language newspaper " +
+                (city ? "in the towns Wehlen still holds" : "in the region") + " and a curfew enforced, in the words of one witness, " +
+                "\"with rifle butts.\"",
+                city
+                    ? "The report is no kinder to Rizia. It documents the shelling of the harbor district during the battle for Zille " +
+                      "city, the detention of Wehzek municipal officials since the city came under Rizian military administration, and " +
+                      "attacks on Wehzek police posts by irregulars it describes as \"armed and directed from across the border.\""
+                    : "The report is no kinder to Rizia. It documents shelling near residential streets on the outskirts of Zille city " +
+                      "and attacks on Wehzek police posts by irregulars it describes as \"armed and directed from across the border.\"",
                 "WHR has called on both governments to allow observers into the region and to open safe corridors for civilians. " +
                 "Neither government has responded."));
         }
@@ -487,10 +502,18 @@ internal static class EarlyT5
         if (!Variables.GetBool(VarSaltanaReport) && Variables.GetBool("RiziaDLCSupport.Reports_Turn05_Morella_DemandsZilleReturn"))
         {
             Variables.Set(VarSaltanaReport, true);
-            NewsWire.Report("E5_SaltanaCommunique", SuzerainTokenName.RiziaCountryMorella, "Morella Calls for Ceasefire Talks Over Zille", P(
-                "In a diplomatic communique sent to both Porte Drazon and Wraclawitz, Prime Minister Alma Saltana has called for a " +
-                "ceasefire in Zille and talks under the auspices of the Alliance of Nations. The note places the blame for the war " +
-                "squarely on Wehlen's refusal to honor the 1927 lease.",
+            // The King may already have sought the ceasefire at this turn's War Council.
+            bool stopped = !WarFlow.AtWar || Variables.GetBool(WarFlags.Ceasefire);
+            NewsWire.Report("E5_SaltanaCommunique", SuzerainTokenName.RiziaCountryMorella,
+                stopped ? "Morella Calls for Talks Over Zille" : "Morella Calls for Ceasefire Talks Over Zille", P(
+                stopped
+                    ? "In a diplomatic communique sent to both Porte Drazon and Wraclawitz, Prime Minister Alma Saltana has welcomed the " +
+                      "end of the fighting in Zille and called for talks under the auspices of the Alliance of Nations before the line " +
+                      "of contact hardens into a border. The note places the blame for the war squarely on Wehlen's refusal to honor " +
+                      "the 1927 lease."
+                    : "In a diplomatic communique sent to both Porte Drazon and Wraclawitz, Prime Minister Alma Saltana has called for a " +
+                      "ceasefire in Zille and talks under the auspices of the Alliance of Nations. The note places the blame for the war " +
+                      "squarely on Wehlen's refusal to honor the 1927 lease.",
                 "Morella's Prime Minister also warned that her government \"will not accept the transformation of the Gulf of Moridia " +
                 "into a battlefield,\" and that any Wehzek attempt to annex the region outright would be met with heavy sanctions."));
         }
