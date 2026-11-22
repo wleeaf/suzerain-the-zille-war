@@ -1689,14 +1689,14 @@ internal static class NewsWire
                 Publish("End", "RH", "The Golden Banner Stays Over Zille", P(
                     "Operation Northern Crown is over. After three months of fighting, the Royal Army holds the city of Zille, its harbor " +
                     (Variables.GetBool(ZilleOperation.CapturedVar("Auremina")) ? "and the gold hills of Auremina, " : string.Empty) +
-                    "and an armistice signed under the eyes of the Alliance of Nations has fixed the line where our soldiers stand.",
+                    "and the guns have fallen silent on the line where our soldiers stand. Alliance observers have arrived, and peace talks with Wraclawitz are expected.",
                     "\"What was taken back will not be given back,\" the palace said in a statement. The Royal Herald adds that the rest of " +
                     "Zille is not forgotten, and neither are the men who fell for it."));
                 Publish("End", "G", "Armistice Divides Zille", P(
-                    "Rizia and Wehlen have signed an armistice along the line of contact in Zille, ending three months of fighting. Rizian " +
+                    "The fighting in Zille has stopped along the line of contact, after three months of war. Rizian " +
                     "troops keep the city of Zille and its harbor; Wehlen keeps the northern ports of Isor and Nanta" +
                     (Variables.GetBool(ZilleOperation.CapturedVar("Auremina")) ? "." : " and the hills around Auremina.") +
-                    " Alliance observers will patrol the line.",
+                    " Alliance observers will patrol the line until the two governments meet to negotiate a treaty.",
                     "Both capitals claim the outcome. President Smolak calls the city \"occupied, not lost,\" and the Security Committee is " +
                     "expected to discuss Rizia's conduct before it discusses the new line on the map."));
                 Publish("End", "V", "Half a Province, Full Price", P(
@@ -1706,7 +1706,7 @@ internal static class NewsWire
                     "the line, it looks like a border that moved a few miles and stayed."));
                 Report("End_Divided", SuzerainTokenName.RiziaCityPorteDrazon, "Armistice in Zille", P(
                     "With the last phase of Operation Northern Crown fought, the General Staff has advised that the army has reached the " +
-                    "limit of what it can take. An armistice has been signed along the line of contact under Alliance supervision.",
+                    "limit of what it can take. The army holds the line of contact under Alliance supervision until a treaty is negotiated.",
                     "Our troops hold the city of Zille and dig in around it. Military administration continues in the city, and the " +
                     "engineers are already fortifying the new line."));
                 Report("End_Wehlen", SuzerainTokenName.RiziaCountryWehlen, "Smolak Swears to Return", P(
@@ -1718,7 +1718,7 @@ internal static class NewsWire
                     "After hard fighting in Zille, the General Staff has ordered our forces back to defensive positions along the border. " +
                     "The Royal Herald reminds its readers that Rizia's claim to Zille is as just today as it was yesterday."));
                 Publish("End", "G", "Rizia's War in Zille Ends in Failure", P(
-                    "Rizia's offensive in Zille has collapsed, and an armistice has been signed under the supervision of the Alliance of " +
+                    "Rizia's offensive in Zille has collapsed, and the guns have fallen silent along the old border under the supervision of the Alliance of " +
                     "Nations along the old border. Wehlen keeps Zille. President Smolak has declared victory, and the Security Committee " +
                     "is expected to discuss sanctions against Rizia."));
                 Publish("End", "V", "Who Answers for This?", P(

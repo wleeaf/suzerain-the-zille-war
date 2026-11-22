@@ -229,7 +229,7 @@ internal static class EarlyT6
             "\"Smolak? He has only just lost Zille to you. I doubt he has the stomach for more. Though I grant you, nothing would please " +
             "him more than to see us at each other's throats.\"", new[] { "Suspect2", "Suspect3" }, condition: Liberated);
         t.Line("Suspect1Over", Axel,
-            "\"Smolak? He has only just signed an armistice with you. Though I grant you, nothing would please him more than to see us " +
+            "\"Smolak? He has only just stopped fighting you. Though I grant you, nothing would please him more than to see us " +
             "at each other's throats.\"", new[] { "Suspect2", "Suspect3" }, condition: AuditT6.NotLib);
         t.Choice("Suspect2", "\"Every division I send south is one he no longer has to face. Think about who that serves.\"", new[] { "Suspect4" });
         t.Choice("Suspect3", "\"Smolak has been trying to divide this region since the day he decided Zille's lease was his to keep.\"", new[] { "Suspect4" });

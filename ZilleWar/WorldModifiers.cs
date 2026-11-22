@@ -152,7 +152,7 @@ internal static class WorldModifiers
             "with its losses and its questions. \n\nAbroad, the failure is read as the limit of the Rizian crown's reach. At home, " +
             "it is read as the King's."),
         new("ZilleWar_Military_ZilleDividedArmistice", "Military", "Medium", SitDivided, "Armistice Line in Zille",
-            "An armistice signed under Alliance supervision fixes the line of contact. Rizian troops hold Zille city and its harbor, " +
+            "The armistice line, watched by Alliance observers, runs where the armies stopped. Rizian troops hold Zille city and its harbor, " +
             "and Wehzek forces hold the ports and the hills. \n\nNeither government calls this peace, and both armies are still " +
             "dug in within sight of each other."),
         new("ZilleWar_Military_ZilleArmistice", "Military", "Medium", WarFlow.VarCeasefire, "Armistice Line in Zille",

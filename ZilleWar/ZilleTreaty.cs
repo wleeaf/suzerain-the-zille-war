@@ -8,7 +8,7 @@ using static ZilleWar.Talk;
 namespace ZilleWar;
 
 /// <summary>
-/// The peace treaty with Wehlen (Turn 8, in place of vanilla's airship talks and our old meeting with Smolak). Every outcome
+/// The peace treaty with Wehlen (the turn after the war ends, late in it; replaces vanilla's airship talks). Every outcome
 /// ends at the negotiating table, built on vanilla's own negotiation panel: the paged decisions panel that the Turn 5 Wehlen
 /// talks use for the Zille Agreement amendment, with a Negotiation Leverage bar and pages of terms.
 /// - Victory (the Treaty of Kreleck): Rizia starts with leverage and spends it forcing terms on Wehlen: renunciation of Zille,
@@ -354,9 +354,52 @@ internal static class ZilleTreaty
     }
 
     /// <summary>Every step after the treaty: the towns it moves change hands on the map, once.</summary>
+    /// <summary>
+    /// The treaty table opens the turn after the war ends, once that turn's Derdian talks and Rumburg meeting are behind
+    /// (step 9 on: missiles and nerve agent may be in hand by then), or at once on any later turn.
+    /// </summary>
+    private static void Schedule()
+    {
+        if (!Variables.GetBool(WarFlags.Declared) || WarFlow.AtWar || Variables.GetBool(LateT8.VarSmolakT8))
+        {
+            return;
+        }
+
+        int turn = SuzerainModdingKit.GameState.CurrentTurnNum ?? 0, step = SuzerainModdingKit.GameState.CurrentStepNum ?? 0;
+        int end = Variables.GetInt(VictoryParade.VarEndTurn);
+        int target = end > 0 ? end + 1 : 7;
+        if (turn < target || (turn == target && step < 9))
+        {
+            return;
+        }
+
+        const string frag = "ZilleWar.Late_SmolakT8";
+        if (SuzerainModdingKit.GameState.StoryFragmentExistsInCurrentStep(frag))
+        {
+            return;
+        }
+
+        (string title, string sub) = LateState.Liberated ? ("The Treaty of Kreleck", "A Wehzek ferry, Strait of Kreleck")
+            : LateState.Partial ? ("The Mave Nortus Treaty", Variables.GetBool(WarFlags.Occupied("Mave Nortus")) ? "Schoolhouse on the armistice line" : "Schoolhouse north of Mave Nortus")
+            : ("The Terms of Wraclawitz", "Presidential Palace, Wraclawitz");
+        try
+        {
+            SuzerainModdingKit.GameState.AddCustomConversation(Conv);
+            SuzerainModdingKit.GameState.AddCustomStoryFragment(new CustomConversationFragment(frag, SuzerainStoryPackInfo.Rizia, "Rizia_Country_Wehlen", title, sub,
+                Il2Cpp.ConversationData.ConversationType.ForeignPolicyAndTrade, Conv));
+            Variables.Set(LateT8.VarSmolakT8, true);
+            Core.Log.Msg($"The peace talks with Wehlen open (turn {turn}, step {step}).");
+        }
+        catch (Exception ex)
+        {
+            Core.Log.Error($"Adding the treaty talks failed: {ex}");
+        }
+    }
+
     public static void OnStep()
     {
         Install();
+        Schedule();
         if (Variables.GetBool(LateT8.VarSmolakT8) && !Variables.GetBool(VarNewsDone) && Variables.GetString(VarKind) is { Length: > 0 } kind)
         {
             Variables.Set(VarNewsDone, true);

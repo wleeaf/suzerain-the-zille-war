@@ -267,12 +267,12 @@ internal static class LateT9
             new[] { "Hello" }, script: "AddConversant(\"Wiktor Smolak (R)\");");
         t.Line("Hello", Smolak, "\"Your Majesty! I hope I'm not interrupting. I can hear the sea. How lovely. All I can hear here is my cabinet.\"", new[] { "Pipe" });
         t.Line("Pipe", Narr, "There was a long, wet puff on the line. The khisha pipe, I assumed. I hoped.", new[] { "OnRefusedBefore", "On1", "On1b", "TreatyLost", "TreatyPart", "Lost1", "Lib1T", "Lib1", "Part1", "Part1Gold" });
-        // the Zille treaty (Turn 8, ZilleTreaty) already settled what these calls used to offer
+        // the Zille treaty (ZilleTreaty, the turn after the war) already settled what these calls used to offer
         string signed = $"{V(ZilleTreaty.VarKind)} == ";
-        t.Line("TreatyLost", Smolak, "\"I'm calling to be magnanimous. It's a new hobby. Our treaty is three weeks old and you have not broken it yet. In Wraclawitz they are calling it a miracle.\"",
+        t.Line("TreatyLost", Smolak, "\"I'm calling to be magnanimous. It's a new hobby. Our treaty is two months old and you have not broken it yet. In Wraclawitz they are calling it a miracle.\"",
             new[] { "TreatyLost2" }, condition: And(Lost, $"{signed}\"recognized\""));
         t.Line("TreatyLost2", Smolak, "\"No, I want nothing. That is the beauty of winning. Good night, Your Majesty. Give my regards to the house in Zille. Oh, wait.\"", new[] { "Bye" });
-        t.Line("TreatyPart", Smolak, "\"Our border is three weeks old, Your Majesty, and already my customs men have confiscated a goat. A Rizian goat. I'm calling to ask for instructions.\"",
+        t.Line("TreatyPart", Smolak, "\"Our border is two months old, Your Majesty, and already my customs men have confiscated a goat. A Rizian goat. I'm calling to ask for instructions.\"",
             new[] { "TreatyPart2" }, condition: And(Part, $"{signed}\"border\""));
         t.Line("TreatyPart2", Smolak, "\"I'm joking. I called to hear whether you regret it. You don't have to answer. Nobody ever does.\"", new[] { "Bye" });
         // the ceasefire he offered during the war (SupplyVoices) and was refused

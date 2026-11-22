@@ -88,7 +88,9 @@ internal static class LateT8
     public static void OnStep()
     {
         ZilleTreaty.OnStep();
-        if (LateState.Turn != 8 || LateState.Step < 11 || !LateState.Declared || Variables.GetBool(VarSmolakT8))
+        // After the war the treaty table is scheduled by ZilleTreaty (the turn after the war ends); this is only the
+        // back-channel meeting for a war still running on Turn 8, which the state model rules out.
+        if (!WarFlow.AtWar || LateState.Turn != 8 || LateState.Step < 11 || !LateState.Declared || Variables.GetBool(VarSmolakT8))
         {
             return;
         }

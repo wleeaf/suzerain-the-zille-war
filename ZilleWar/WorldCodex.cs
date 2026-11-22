@@ -331,7 +331,7 @@ internal static class WorldCodex
             NotRecognized + ".",
             "The war ended in a ceasefire supervised by the Alliance of Nations, with the region divided along the line of contact" +
             (WorldSystems.ZilleCityHeld ? " and the city of Zille in Rizian hands." : ". Wehlen continues to administer most of the region."),
-            "The war ended in an armistice signed under Alliance supervision, with Zille city in Rizian hands and the rest of the region in Wehzek hands.");
+            "The war ended in an armistice under Alliance supervision, with Zille city in Rizian hands and the rest of the region in Wehzek hands.");
 
         string twoWars = Variables.GetInt(WorldSystems.VarTwoWarsTurn) > 0
             ? "For part of the war, Rizia was also at war with the Grand Duchy of Pales, and the Royal Army fought on two fronts at once."
@@ -370,7 +370,7 @@ internal static class WorldCodex
                     "Fighting ended with a ceasefire supervised by the Alliance of Nations. The line of contact now runs through the " +
                     "region" + (WorldSystems.ZilleCityHeld ? ", with the city of Zille under Rizian control," : string.Empty) +
                     " and the rest of the territory remains under Wehzek administration, " + Pending,
-                    "Fighting ended with an armistice signed under Alliance supervision. The line of contact now runs through the " +
+                    "Fighting ended in an armistice under Alliance supervision. The line of contact now runs through the " +
                     "region, with the city of Zille under Rizian control, and the rest of the territory remains under Wehzek " +
                     "administration, " + Pending));
             case "Locations_Regions_ZilleTerritory_Brenas":

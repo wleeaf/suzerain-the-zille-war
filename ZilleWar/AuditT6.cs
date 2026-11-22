@@ -159,7 +159,7 @@ internal static class AuditT6
             "\"We have barely finished one war, Your Majesty. The ink on the Zille proclamations is not yet dry.\"",
             new[] { "#418" }, condition: Lib, hooks: From(442));
         t.Line("RecklessNotLib", Laurento,
-            "\"We have barely signed an armistice in the north, Your Majesty. Wehzek guns still face ours across it.\"",
+            "\"The guns in the north have barely fallen silent, Your Majesty. Wehzek guns still face ours across the line.\"",
             new[] { "#418" }, condition: NotLib, hooks: From(442));
         t.Register();
     }

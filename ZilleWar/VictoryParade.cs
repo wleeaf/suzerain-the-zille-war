@@ -13,7 +13,7 @@ namespace ZilleWar;
 /// - The Turn 6 House of Delegates election (vanilla c366, run inside the royal council) counts the war: a liberation gives the
 ///   Rizian National Coalition three more points, a divided Zille one; a lost war gives the RPP two (one after a ceasefire).
 ///   The council's results (SweepEarlyT6Home) say so.
-/// - The turn after a liberation, the King rides into Zille in a victory parade (R_ForThePeople, then R_Fruition), names the
+/// - After the peace talks that follow a liberation, the King rides into Zille in a victory parade (R_ForThePeople, then R_Fruition), names the
 ///   square that bore Smolak's name, and speaks to the crowd. After a divided war, a smaller homecoming to Zille city.
 /// </summary>
 internal static class VictoryParade
@@ -80,10 +80,18 @@ internal static class VictoryParade
         }
 
         int turn = GameState.CurrentTurnNum ?? 0, step = GameState.CurrentStepNum ?? 0;
+        // A save whose war ended under an older build never recorded it: book it now, as if it ended last turn.
+        if (!Variables.GetBool(VarOpinionApplied) && turn > 0)
+        {
+            OnWarEnded();
+            Variables.Set(VarEndTurn, Math.Max(1, turn - 1));
+        }
+
         int end = Variables.GetInt(VarEndTurn);
         bool lib = ZilleCampaign.Liberated;
         bool part = !lib && Variables.GetBool(ZilleOperation.CapturedVar("Zille"));
-        if ((!lib && !part) || end <= 0 || turn <= end || step < 1 || turn > end + 2)
+        string kind = Variables.GetString(ZilleTreaty.VarKind);
+        if ((!lib && !part) || end <= 0 || turn <= end || turn > 9 || string.IsNullOrEmpty(kind) || kind == "nil")
         {
             return;
         }
