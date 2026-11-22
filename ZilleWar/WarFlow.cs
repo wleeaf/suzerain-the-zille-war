@@ -42,7 +42,7 @@ internal static class WarFlow
                  {
                      ("war flags", WarFlags.Sync), ("war decrees", WarDecrees.OnStep), ("vanilla edits", Vanilla.Apply), ("lua check", LuaLint.RunOnce), ("turns 4-7", VanillaEarly.OnStep),
                      ("turns 8-10", VanillaLate.OnStep), ("world", WorldSystems.OnStep),
-                     ("sweep 4-6", SweepEarly.OnStep), ("sweep 7-8", SweepMiddle.OnStep), ("sweep 9-10", SweepLate.OnStep), ("strategic map", StrategicMap.OnStep), ("finish", Finish.OnStep),
+                     ("sweep 4-6", SweepEarly.OnStep), ("sweep 7-8", SweepMiddle.OnStep), ("sweep 9-10", SweepLate.OnStep), ("audit", Audit.OnStep), ("strategic map", StrategicMap.OnStep), ("finish", Finish.OnStep),
                  })
         {
             Run(what, step);
@@ -57,7 +57,9 @@ internal static class WarFlow
         if (!AtWar && Variables.GetBool(AnDeclaration.VarDeclared) && !Variables.GetBool(VarEndingShown))
         {
             Variables.Set(VarEndingShown, true);
-            Run("war end news", () => NewsWire.Batch(() => NewsWire.PublishWarEnd(ZilleCampaign.Liberated ? "victory" : ZilleCampaign.Defeated ? "defeat" : "ceasefire")));
+            Run("war end news", () => NewsWire.Batch(() => NewsWire.PublishWarEnd(ZilleCampaign.Liberated ? "victory"
+                : ZilleCampaign.Defeated ? (Variables.GetBool(ZilleOperation.CapturedVar("Zille")) ? "divided" : "defeat") : "ceasefire")));
+            Run("close the operation", WarSaveSlot.EndZilleOperation);
             // The war is over; vanilla's relation rule takes Wehlen from here, and it will not be friendly.
             Variables.Set("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower", Math.Min(-6, Variables.GetInt("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower")));
         }

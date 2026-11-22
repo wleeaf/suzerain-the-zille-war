@@ -15,14 +15,14 @@ namespace ZilleWar;
 internal static class ZilleOperation
 {
     public const string TokenName = "Rizia_Event_Zille";
-    private const string Prefix = "Operation_Zille_";
 
-    public static string OperationName(int k) => $"{Prefix}{k}";
-    public static string FragmentName(int k) => $"WarFragment_Zille_{k}";
+    /// <summary>The operation and its three phases (one war fragment each), as vanilla's Golden Shield.</summary>
+    public const string MainOperation = "Operation_Zille";
+    public static string FragmentName(int phase) => $"WarFragment_Zille_{phase}";
     public static string CapturedVar(string town) => $"ZilleWar.War_Objective_Captured_{town.Replace(" ", string.Empty)}";
 
-    /// <summary>The operation currently registered (index and objective).</summary>
-    public static int CurrentIndex { get; private set; }
+    /// <summary>The phase currently registered and its aim.</summary>
+    public static int CurrentPhase { get; private set; }
     public static Objective CurrentObjective { get; private set; }
 
     public static void RegisterVariables()
@@ -32,14 +32,23 @@ internal static class ZilleOperation
             Variables.Register(CapturedVar(t.Name));
             Vanilla.Expose(CapturedVar(t.Name));      // read by IsOperationFinishedEarly (articy:expresso)
         }
+
+        Variables.Register(ZilleCampaign.VarEnemyDeadTotal);
+        Variables.Register(ZilleCampaign.VarPlayerDeadTotal);
+        Vanilla.Expose(ZilleCampaign.VarEnemyDeadTotal, isBool: false);
+        Vanilla.Expose(ZilleCampaign.VarPlayerDeadTotal, isBool: false);
     }
 
     public static bool IsOurFragmentName(string name) => name != null && name.StartsWith("WarFragment_Zille_");
 
     public static bool IsOurFragment(WarFragmentData f) =>
-        f?.WarFragmentProperties?.Operation != null && f.WarFragmentProperties.Operation.StartsWith(Prefix);
+        f?.WarFragmentProperties?.Operation != null && f.WarFragmentProperties.Operation.StartsWith(MainOperation, StringComparison.Ordinal);
 
-    /// <summary>Build and register the next operation from the campaign state.</summary>
+    /// <summary>
+    /// Build and register this turn's phase from the campaign state. Phase I sets up the map fresh (deployment); Phases II and
+    /// III resume it from the snapshot the game took when the previous phase ended, with every unit where it stood. If that
+    /// snapshot is missing (an old save, or the game wiped it), the phase is set up fresh from the saved front instead.
+    /// </summary>
     public static bool BuildNext(out WarFragmentData fragment)
     {
         fragment = null;
@@ -56,16 +65,26 @@ internal static class ZilleOperation
         List<Objective> available = ZilleCampaign.Available();
         if (available.Count == 0)
         {
-            Core.Log.Warning("Nothing left to take: Zille is liberated. Ctrl+F12 resets the campaign.");
+            Core.Log.Warning("Nothing left to take: Zille is liberated.");
             return false;
         }
 
+        int turn = SuzerainModdingKit.GameState.CurrentTurnNum ?? 4;
+        int phase = ZilleCampaign.PhaseForTurn(turn);
         int k = ZilleCampaign.OperationsDone + 1;
         Objective objective = ZilleCampaign.NextObjective;
         ObjectiveInfo info = ZilleCampaign.Info(objective);
-        CurrentIndex = k;
+        bool resume = phase >= 2 && WarSaveSlot.HoldsZilleSnapshot();
+        string opName = phase == 1 || resume ? MainOperation : $"{MainOperation}_R{phase}";
+        if (phase >= 2 && !resume)
+        {
+            Core.Log.Warning($"Phase {phase}: no map snapshot from the previous phase in the save; this phase is set up fresh from the saved front.");
+        }
+
+        CurrentPhase = phase;
         CurrentObjective = objective;
-        Variables.Set(ZilleCampaign.VarCurrentOp, $"{k}:{objective}");
+        Variables.Set(ZilleCampaign.VarCurrentOp, $"{k}:{objective}:{phase}");
+        Variables.Set(ZilleCampaign.VarPhase, phase);
         ZilleCampaign.MarkOperationStart();
 
         DecisionData eventTemplate = WarEvents.FindVanilla("OP1_Decision_War_Played_FortAlesCaptured");
@@ -74,43 +93,54 @@ internal static class ZilleOperation
             WarEvents.Register(ev, eventTemplate);
         }
 
-        (string won, string lost) = ZilleReports.Register(k, info, vanillaOp.OperationProperties.WinReport, vanillaOp.OperationProperties.LoseReport);
+        (string won, string lost) = ZilleReports.Register(vanillaOp.OperationProperties.WinReport, vanillaOp.OperationProperties.LoseReport);
 
-        // --- story layer: OperationData ---
+        // --- story layer: OperationData, its phases in order (the game resumes a phase from the save when it is not the first)
         var phases = new Il2CppStringList();
-        phases.Add(FragmentName(k));
-        string targetsTaken = string.Join(" && ", info.Towns.Select(t => $"{CapturedVar(t)} == true"));
+        if (opName == MainOperation)
+        {
+            for (int p = 1; p <= ZilleCampaign.LastPhase; p++)
+            {
+                phases.Add(FragmentName(p));
+            }
+        }
+        else
+        {
+            phases.Add(FragmentName(phase));
+        }
+
+        string allTaken = string.Join(" && ", ZilleCampaign.Sequence.SelectMany(o => ZilleCampaign.Info(o).Towns).Select(t => $"{CapturedVar(t)} == true"));
         var op = new OperationData
         {
-            Id = $"0x5A111E00000001{k:X2}",
-            NameInDatabase = OperationName(k),
+            Id = opName == MainOperation ? "0x5A111E0000000100" : $"0x5A111E00000001{0x10 + phase:X2}",
+            NameInDatabase = opName,
             AppBundleProperties = vanillaOp.AppBundleProperties,
             OperationProperties = new OperationProperties
             {
-                OperationName = ZilleCampaign.Title(info),
+                OperationName = ZilleCampaign.OperationTitle,
                 // Vanilla's Golden Shield needs 8 land units; when the condition fails the engine silently finishes the
                 // operation without our finish hook and the campaign would wait for it forever.
                 OperationStartCondition = string.Empty,
                 IsOperationFinishedEarly =
-                    $"({targetsTaken}) || RiziaDLC.Army_Unit_GrandTotal_Deployed + RiziaDLC.Army_Unit_GrandTotal_Total <= 0",
-                ResultVariable = ZilleCampaign.ResultVar(k),
+                    $"({allTaken}) || RiziaDLC.Army_Unit_GrandTotal_Deployed + RiziaDLC.Army_Unit_GrandTotal_Total <= 0",
+                ResultVariable = ZilleCampaign.ResultVar(0),
                 IsTutorial = false,
                 WinReport = won,
                 LoseReport = lost,
                 ResultConditionalInstruction = string.Empty,
-                TotalEnemyDeadVariable = ZilleCampaign.EnemyDeadVar(k),
-                TotalPlayerDeadVariable = ZilleCampaign.PlayerDeadVar(k),
+                TotalEnemyDeadVariable = ZilleCampaign.VarEnemyDeadTotal,
+                TotalPlayerDeadVariable = ZilleCampaign.VarPlayerDeadTotal,
                 Phases = phases,
             },
         };
         AddByName(EntityDataManager.operationData, op, o => o.NameInDatabase);
         AddByName(EntityDataManager.OperationData, op, o => o.NameInDatabase);
 
-        // --- story layer: the war fragment (one phase per operation) ---
+        // --- story layer: this phase's war fragment
         var frag = new WarFragmentData
         {
-            Id = $"0x5A111E00000002{k:X2}",
-            NameInDatabase = FragmentName(k),
+            Id = $"0x5A111E00000002{phase:X2}",
+            NameInDatabase = FragmentName(phase),
             AppBundleProperties = vanillaFrag.AppBundleProperties,
             AssignedTokenProperties = new AssignedTokenProperties { AssignedToken = TokenName },
             StoryFragmentProperties = new StoryFragmentProperties
@@ -122,9 +152,9 @@ internal static class ZilleOperation
             },
             WarFragmentProperties = new WarFragmentProperties
             {
-                HubWarFragmentTitle = ZilleCampaign.Title(info),
-                HubWarFragmentSubtitle = "Liberation of Zille",
-                Operation = OperationName(k),
+                HubWarFragmentTitle = ZilleCampaign.PhaseTitle(phase),
+                HubWarFragmentSubtitle = $"Liberation of Zille: {info.Target}",
+                Operation = opName,
             },
             TagsProperties = vanillaFrag.TagsProperties,
         };
@@ -132,16 +162,16 @@ internal static class ZilleOperation
         AddByName(EntityDataManager.warFragmentData, frag, f => f.NameInDatabase);
         AddByName(EntityDataManager.WarFragmentsData, frag, f => f.NameInDatabase);
 
-        // --- war layer ---
+        // --- war layer
         RemoveOurWarOperations();
-        WarOperation warOp = BuildWarOperation(k, objective, vanillaWarOp.warOperationData);
+        WarOperation warOp = BuildWarOperation(opName, objective, vanillaWarOp.warOperationData);
         Managers.Instance.operations.Add(warOp);
         fragment = frag;
-        Core.Log.Msg($"Built {OperationName(k)} '{info.Codename}' ({objective}): {ZilleCampaign.Describe()}");
+        Core.Log.Msg($"Built {ZilleCampaign.PhaseTitle(phase)} ({opName}, {(resume ? "resumes the map" : "fresh setup")}), aim {info.Target}: {ZilleCampaign.Describe()}");
         return true;
     }
 
-    private static WarOperation BuildWarOperation(int k, Objective objective, WarOperationData vanilla)
+    private static WarOperation BuildWarOperation(string opName, Objective objective, WarOperationData vanilla)
     {
         Dictionary<string, bool> owners = ZilleCampaign.CurrentOwners();
         var by = ZilleData.ByName;
@@ -162,8 +192,8 @@ internal static class ZilleOperation
         }
 
         var data = ScriptableObject.CreateInstance<WarOperationData>();
-        data.name = OperationName(k);
-        data.operationNameInDatabase = OperationName(k);
+        data.name = opName;
+        data.operationNameInDatabase = opName;
         data.includedTileNames = new Il2CppStringList();
         foreach (TileSpec t in ZilleData.Tiles)
         {
@@ -281,7 +311,7 @@ internal static class ZilleOperation
         data.playerCityTokenOverrides = new Il2CppSystem.Collections.Generic.List<ConditionalWarTokenData>();
         data.enemyCityTokenOverrides = new Il2CppSystem.Collections.Generic.List<ConditionalWarTokenData>();
 
-        var go = new GameObject(OperationName(k));
+        var go = new GameObject(opName);
         UnityEngine.Object.DontDestroyOnLoad(go);
         WarOperation warOp = go.AddComponent<WarOperation>();
         warOp.warOperationData = data;
@@ -305,7 +335,7 @@ internal static class ZilleOperation
         for (int i = ops.Count - 1; i >= 0; i--)
         {
             WarOperation o = ops[i];
-            if (o?.warOperationData?.operationNameInDatabase?.StartsWith(Prefix) == true)
+            if (o?.warOperationData?.operationNameInDatabase?.StartsWith(MainOperation, StringComparison.Ordinal) == true)
             {
                 ops.RemoveAt(i);
                 UnityEngine.Object.Destroy(o.gameObject);

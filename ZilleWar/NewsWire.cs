@@ -810,6 +810,13 @@ internal static class NewsWire
                 "Now comes the difficult part. Winning Zille was a war. Keeping it will be politics, and you have never been as good " +
                 "at politics as you think. Come to Thornbourgh when it's over and I'll teach you.",
                 "Beatrice\"")
+            : kind == "divided"
+                ? P("\"Romus,",
+                    "Zille city and its harbor, and an armistice line drawn by tired generals. It is not what you promised the crowds, " +
+                    "but it is a great deal more than your father ever got back, and nobody in Thornbourgh thought you would get this much.",
+                    "Now hold on to it. An armistice is a promise to keep fighting later, made by people who hope they won't have to. " +
+                    "Make sure Smolak is one of them.",
+                    "Beatrice\"")
             : kind == "defeat"
                 ? P("\"Romus,",
                     "I'm sorry. I mean that, which you'll know is rare. Rumburg will say all the proper things at the Alliance, and I will " +
@@ -829,21 +836,27 @@ internal static class NewsWire
                         "Don't do anything rash for a while. A line on a map can be lived with. A second war over it rarely can.",
                         "Beatrice\""));
 
-        Report("End_Arcasia", "Rizia_Faction_Event_ATO", won ? "Arcasia Accepts the New Map" : "Arcasia Welcomes the Ceasefire", P(
+        Report("End_Arcasia", "Rizia_Faction_Event_ATO", won ? "Arcasia Accepts the New Map" : kind == "divided" ? "Arcasia Welcomes the Armistice" : "Arcasia Welcomes the Ceasefire", P(
             won
                 ? "President Walker's office has taken note of the end of hostilities in Zille. Arcasia expects the Kingdom of Rizia to " +
                   "guarantee the rights and safety of the region's Wehzek population, and says it \"stands ready to help rebuild\" the " +
                   "region's economy."
-                : "Arcasia has welcomed the ceasefire in Zille and commended the Alliance of Nations for its part in bringing the " +
-                  "fighting to an end.",
+                : kind == "divided"
+                    ? "Arcasia has welcomed the armistice in Zille and called the new line \"a basis for a lasting settlement,\" without " +
+                      "saying on whose side of it Zille city belongs."
+                    : "Arcasia has welcomed the ceasefire in Zille and commended the Alliance of Nations for its part in bringing the " +
+                      "fighting to an end.",
             won
                 ? "\"Ready to help rebuild\" means Arcasian banks and Arcasian contracts. Our embassy expects the first offers within the month."
                 : "Our embassy notes that Arcasia has not said a single word about Zille's future. It does not intend to."));
 
-        Report("End_Contana", "Rizia_Faction_Event_CSP", won ? "Contana Refuses to Recognize the Annexation" : "Contana Hails a Victory", P(
+        Report("End_Contana", "Rizia_Faction_Event_CSP", won ? "Contana Refuses to Recognize the Annexation" : kind == "divided" ? "Contana Rejects the Armistice Line" : "Contana Hails a Victory", P(
             won
                 ? "United Contana says it will never recognize the annexation of Zille by the Rizian monarchy, and the Contanan Security " +
                   "Pact has promised to raise the question at every session of the Alliance of Nations \"until justice is done.\""
+                : kind == "divided"
+                    ? "The Central Committee in Kyow says it will never recognize \"the occupation of Zille city\" and has promised Wehlen " +
+                      "new guns for the line. The Contanan Security Pact calls the armistice \"a pause imposed on a victim.\""
                 : kind == "defeat"
                     ? "The Central Committee in Kyow has called our defeat in Zille \"a victory for every free people,\" and promised that " +
                       "the Contanan Security Pact will go on standing with Wehlen."
@@ -877,6 +890,36 @@ internal static class NewsWire
                     "The General Staff reports that no Wehzek soldier remains under arms on the Rizian mainland. Military government " +
                     "has been established across Zille until the Crown decides how the region is to be governed.",
                     "In Porte Drazon, the crowds have not left the palace square since the news broke."));
+                break;
+            case "divided":
+                // The last phase of Northern Crown is over with Zille city Rizian and part of the region still Wehzek: the front
+                // stops where the armies stand, and an armistice is signed under Alliance supervision.
+                Publish("End", "RH", "The Golden Banner Stays Over Zille", P(
+                    "Operation Northern Crown is over. After three months of fighting, the Royal Army holds the city of Zille, its harbor " +
+                    (Variables.GetBool(ZilleOperation.CapturedVar("Auremina")) ? "and the gold hills of Auremina, " : string.Empty) +
+                    "and an armistice signed under the eyes of the Alliance of Nations has fixed the line where our soldiers stand.",
+                    "\"What was taken back will not be given back,\" the palace said in a statement. The Royal Herald adds that the rest of " +
+                    "Zille is not forgotten, and neither are the men who fell for it."));
+                Publish("End", "G", "Armistice Divides Zille", P(
+                    "Rizia and Wehlen have signed an armistice along the line of contact in Zille, ending three months of fighting. Rizian " +
+                    "troops keep the city of Zille and its harbor; Wehlen keeps the northern ports of Isor and Nanta" +
+                    (Variables.GetBool(ZilleOperation.CapturedVar("Auremina")) ? "." : " and the hills around Auremina.") +
+                    " Alliance observers will patrol the line.",
+                    "Both capitals claim the outcome. President Smolak calls the city \"occupied, not lost,\" and the Security Committee is " +
+                    "expected to discuss Rizia's conduct before it discusses the new line on the map."));
+                Publish("End", "V", "Half a Province, Full Price", P(
+                    "The King has Zille city. He does not have Zille. The war he declared alone in Kyrute has ended in an armistice, a line " +
+                    "of barbed wire through the middle of the region, and casualty lists the Ministry of War is still adding to.",
+                    "The palace will call this a victory, and in the harbor it may look like one. In the villages on the wrong side of " +
+                    "the line, it looks like a border that moved a few miles and stayed."));
+                Report("End_Divided", SuzerainTokenName.RiziaCityPorteDrazon, "Armistice in Zille", P(
+                    "With the last phase of Operation Northern Crown fought, the General Staff has advised that the army has reached the " +
+                    "limit of what it can take. An armistice has been signed along the line of contact under Alliance supervision.",
+                    "Our troops hold the city of Zille and dig in around it. Military administration continues in the city, and the " +
+                    "engineers are already fortifying the new line."));
+                Report("End_Wehlen", SuzerainTokenName.RiziaCountryWehlen, "Smolak Swears to Return", P(
+                    "President Smolak has toured the new front outside Zille city and promised the garrison that the city \"will be Wehzek " +
+                    "again before the next harvest.\" Wehzek reinforcements continue to cross the strait to man the line."));
                 break;
             case "defeat":
                 Publish("End", "RH", "The Army Regroups", P(

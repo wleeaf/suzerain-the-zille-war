@@ -68,7 +68,7 @@ internal static class WarDebug
             return;
         }
 
-        (int k, Objective objective) = ZilleCampaign.CurrentOperation();
+        (int k, Objective objective, _) = ZilleCampaign.CurrentOperation();
         ObjectiveInfo info = ZilleCampaign.Info(objective);
         WarTileManager tm = Managers.Instance.WarTileManager;
         var targets = new List<WarTile>();

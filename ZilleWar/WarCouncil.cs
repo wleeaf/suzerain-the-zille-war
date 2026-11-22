@@ -61,6 +61,7 @@ internal static class WarCouncil
     private const string VarAdapt = "ZilleWar.Council_PlanAdapt";           // why it differs from the plan ("" when it doesn't)
     private const string VarLastAdapt = "ZilleWar.Council_LastAdapt";       // the same for the operation just fought
     private const string VarMatter = "ZilleWar.Council_Matter";             // Rest | Morale | Supply | Reinforce
+    private const string VarPhase = "ZilleWar.Council_Phase";               // the phase this council sends the army into (1..3)
     private static string LostVar(string city) => $"ZilleWar.Council_Lost_{city.Replace(" ", string.Empty)}";
     private static readonly string[] RizianCities = { "Mave Nortus", "Dapalle", "Balle", "Jales" };
 
@@ -166,7 +167,7 @@ internal static class WarCouncil
                      VarApproach, VarBombard, VarDelegated, VarFleetRecalled, VarNavy, VarSubsOut, VarOpForm, VarOpAdapt, AskedNavyWhy,
                      VarDoneTurn, VarOrderTurn, VarHeldTurn, VarMeetings, VarToldEmbargo, VarToldRaids,
                      VarTurn, VarKind, VarObjective, VarCoastal, VarLastObjective, VarLossTier, VarSetback, VarWaited,
-                     VarExtraTaken, VarVinaAsked, VarFought, VarForm, VarAdapt, VarLastAdapt, VarMatter,
+                     VarExtraTaken, VarVinaAsked, VarFought, VarForm, VarAdapt, VarLastAdapt, VarMatter, VarPhase,
                      AskedForces, AskedGarrison, AskedFronts, HubVisited,
                  }.Concat(RizianCities.Select(LostVar)))
         {
@@ -269,9 +270,9 @@ internal static class WarCouncil
         {
             GameState.AddCustomConversation(Conv);
             GameState.AddCustomStoryFragment(new CustomConversationFragment(name, SuzerainStoryPackInfo.Rizia, SuzerainTokenName.RiziaCityPorteDrazon,
-                first ? "Briefing on the Liberation of Zille" : $"{ZilleCampaign.Title(next)} Briefing",
+                first ? "Briefing on the Liberation of Zille" : $"{ZilleCampaign.PhaseTitle(ZilleCampaign.PhaseForTurn(turn))} Briefing",
                 "Council Chambers, Palas Rezna", ConversationData.ConversationType.SecurityAndOrder, Conv));
-            Core.Log.Msg($"War Council offered: {name} ({(first ? "briefing" : "next steps")}, objective {next.Codename}).");
+            Core.Log.Msg($"War Council offered: {name} ({(first ? "briefing" : "next steps")}, phase {ZilleCampaign.PhaseForTurn(turn)}, aim {next.Target}).");
         }
         catch (Exception ex)
         {
@@ -283,6 +284,7 @@ internal static class WarCouncil
     private static void Prepare(int turn, bool first, ObjectiveInfo next)
     {
         Variables.Set(VarTurn, turn);
+        Variables.Set(VarPhase, ZilleCampaign.PhaseForTurn(turn));
         Variables.Set(VarKind, first ? 1 : 2);
         Variables.Set(VarObjective, next.Id.ToString());
         Variables.Set(VarCoastal, next.Id != Objective.Wall);
@@ -364,7 +366,7 @@ internal static class WarCouncil
         int k = ZilleCampaign.OperationsDone + 1;
         string key = $"{k}:{turn}";
         if (!Variables.GetBool(WarFlow.VarOperationReady) || Reinjected.Contains(key) ||
-            GameState.StoryFragmentExistsInCurrentStep(ZilleOperation.FragmentName(k)) || PrePending())
+            GameState.StoryFragmentExistsInCurrentStep(ZilleOperation.FragmentName(ZilleCampaign.PhaseForTurn(turn))) || PrePending())
         {
             return;
         }
@@ -442,6 +444,9 @@ internal static class WarCouncil
         "Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_AverageEnergyExport\"] == true or (Variable[\"ZilleWar.Lever_Embargo\"] or 0) > 0";
 
     private static string Strength => Num(ZilleCampaign.VarStrength);
+
+    /// <summary>Holding skips this turn's phase; there is nothing to wait for before the last one.</summary>
+    private static string CanHold => $"{Num(VarPhase)} < {ZilleCampaign.LastPhase}";
 
     // Turn 5, when EarlyT5 has not already held its own, fuller council scene: the Royal Council sits in.
     private const string T5Council = "Variable[\"ZilleWar.Council_Turn\"] == 5 and Variable[\"ZilleWar.E5_CouncilOffered\"] ~= true";
@@ -713,8 +718,8 @@ internal static class WarCouncil
             new[] { "PushTad" }, condition: IsNot(VarSetback));
         Opt("PushTad", Taddeus, "\"A complete victory is in sight, Lieutenant.\"", TaddeusHere, "PushMenu");
         t.Logic("PushMenu", new[] { "PushGo", "PushWait", "Cease1", "Cease2" });
-        t.Choice("PushGo", "\"Then we keep moving. Smolak doesn't get a week to recover.\"", new[] { "Intel" });
-        t.Choice("PushWait", "\"We'll hold for now. The men need their rest.\"", new[] { "PushWait2" });
+        t.Choice("PushGo", "\"Then we keep moving. Smolak doesn't get a month to recover.\"", new[] { "Intel" });
+        t.Choice("PushWait", "\"We'll hold for now. The men need their rest.\"", new[] { "PushWait2" }, condition: CanHold);
         Intel("PushWait2", "\"Wehlen will use the time too, Your Majesty. Every quiet week is another week of convoys across the strait.\"",
             new[] { "PushWaitYes", "PushWaitNo" });
         t.Choice("PushWaitYes", "\"I know. We hold.\"", new[] { "Hold" });
@@ -723,23 +728,29 @@ internal static class WarCouncil
         t.Line("PushSetback", Carlos,
             "\"We are not in a good position, Your Majesty. The divisions that went in last time are exhausted, and we have lost ground of our own.\"",
             new[] { "SetbackMenu" }, condition: Is(VarSetback));
-        t.Logic("SetbackMenu", new[] { "SbPush", "SbHold", "Cease1", "Cease2" });
+        t.Logic("SetbackMenu", new[] { "SbPush", "SbHold", "SbLast", "Cease1", "Cease2" });
         t.Choice("SbPush", "\"Simply holding the line is unacceptable. We push on, whatever it costs.\"", new[] { "SbObj1" });
         t.Line("SbObj1", Carlos, "\"Our hands are tied, Your Majesty. Those men are not ready to go in again.\"", new[] { "SbObj2" });
-        Intel("SbObj2", "\"If we push now and fail, Your Majesty, we lose the war. And everything we've taken with it.\"",
-            new[] { "SbObj3" }, carlosText: "\"If we push now and fail, we lose the war, Your Majesty. And everything we've taken with it.\"");
+        Intel("SbObj2", "\"If we push now and fail, Your Majesty, we lose the men we need to hold what we've already taken.\"",
+            new[] { "SbObj3" }, carlosText: "\"If we push now and fail, we lose the men we need to hold what we've already taken, Your Majesty.\"");
         Opt("SbObj3", Taddeus, "\"Please listen to them, Lieutenant. We can't overextend.\"", TaddeusHere, "SbMenu2");
         t.Logic("SbMenu2", new[] { "SbCoward", "SbRespect", "SbYield" });
         t.Choice("SbCoward", "\"Cowards, all of you! You will attack, or I will find generals who will.\"", new[] { "SbCoward2" });
         t.Line("SbCoward2", Narrator, "Everyone seemed taken aback, but nobody dared to protest.", new[] { "SbAsYouWish" });
         t.Choice("SbRespect", "\"Respectfully, General, I disagree. I order you to attack.\"", new[] { "SbAsYouWish" });
         t.Line("SbAsYouWish", Carlos, "\"As you wish, Your Majesty.\"", new[] { "Intel" });
-        t.Choice("SbYield", "\"You may have a point. Very well. We hold, for now.\"", new[] { "SbYield2" });
+        t.Choice("SbYield", "\"You may have a point. Very well. We hold, for now.\"", new[] { "SbYield2" }, condition: CanHold);
         t.Line("SbYield2", Carlos, "\"Agreed. We should wait for better conditions.\"", new[] { "Hold" });
-        t.Choice("SbHold", "\"Then be the wall that protects Brenas. Hold the line, and let nothing through.\"", new[] { "Hold" });
+        t.Choice("SbHold", "\"Then be the wall that protects Brenas. Hold the line, and let nothing through.\"", new[] { "Hold" }, condition: CanHold);
+        // Before the last phase there is no waiting for better weather: it is one more push, or talks.
+        t.Choice("SbLast", "\"Then this is the last push, General. Give the men what you can, and we go in one final time.\"", new[] { "SbLast2" },
+            condition: Not(CanHold));
+        t.Line("SbLast2", Carlos,
+            "\"One final time, then. I'll put the freshest divisions in front and keep the tired ones on the line we hold. If it fails, Your " +
+            "Majesty, the line we hold is where this war will end.\"", new[] { "Intel" });
 
         t.Line("Hold", Carlos, "\"Then we dig in and wait. I'll see that the men get their rest.\"", new[] { "Hold2" });
-        t.Line("Hold2", Narrator, "The generals saluted. For this week, at least, the war table would stay quiet.", new[] { "HoldEnd" });
+        t.Line("Hold2", Narrator, "The generals saluted. For this month, at least, the war table would stay quiet, and the next phase would wait.", new[] { "HoldEnd" });
         t.Logic("HoldEnd", new[] { "End" },
             script: Set(VarDoneTurn, V(VarTurn)) + Set(VarHeldTurn, V(VarTurn)) + Set(WarFlow.VarCouncilHeld, "true") + Met +
                     $"if {Strength} < 10 then {V(ZilleCampaign.VarStrength)} = {Strength} + 1 end; ");
@@ -879,24 +890,25 @@ internal static class WarCouncil
             "\"The objective is the city of Zille itself: the harbor, the railway station, and the Wehzek headquarters. Take Zille, and every " +
             "Wehzek soldier south of the hills is cut off from the sea.\"", new[] { "ObjHarbor2" }, condition: And(First, Obj(Objective.Harbor)));
         t.Line("ObjHarbor2", Carlos,
-            "\"After that, the hills and the gold mines at Auremina. Then the northern ports, Isor and Nanta, and the war is won. The Staff has " +
-            "named the first operation Golden Harbor.\"", new[] { "Command" });
+            "\"After that, the hills and the gold mines at Auremina. Then the northern ports, Isor and Nanta, and the war is won. The Staff calls " +
+            "the whole campaign Operation Northern Crown, in three phases, one each month, every phase starting from the ground the last one won. Zille is the first.\"", new[] { "Command" });
         t.Line("ObjHarborL", Carlos,
-            "\"The objective hasn't changed, Your Majesty. Zille, its harbor and its railway station. Golden Harbor goes ahead as soon as you give the word.\"",
+            "\"The objective hasn't changed, Your Majesty. Zille, its harbor and its railway station. The next phase goes in from the lines we hold " +
+            "now, as soon as you give the word.\"",
             new[] { "Command" }, condition: And(Later, Obj(Objective.Harbor)));
         t.Line("ObjWallL", Carlos,
             "\"With Zille taken, the campaign moves on as planned: up the valley to Auremina and its mines. Take the hills, and their garrison in " +
-            "the north is cut off from everything south of it. The Staff calls it Operation Lodestone.\"",
+            "the north is cut off from everything south of it. That is the next phase of Northern Crown.\"",
             new[] { "Command" }, condition: And(Later, Obj(Objective.Wall)));
         t.Line("ObjPortsL", Carlos,
             "\"And now the last step of the campaign: Isor and Nanta. Every Wehzek convoy lands at one or the other. Take both, and their garrison " +
-            "has nowhere left to go but home. Operation Northern Crown.\"", new[] { "Command" }, condition: And(Later, Obj(Objective.Ports)));
+            "has nowhere left to go but home. The last phase of Northern Crown.\"", new[] { "Command" }, condition: And(Later, Obj(Objective.Ports)));
         t.Line("ObjWall", Carlos,
             "\"The objective is Auremina. Take the hills and the mines, and their garrison in the north is cut off from everything south of " +
-            "it. The Staff calls it Operation Lodestone.\"", new[] { "Command" }, condition: Obj(Objective.Wall));
+            "it. That is the next phase of Northern Crown.\"", new[] { "Command" }, condition: Obj(Objective.Wall));
         t.Line("ObjPorts", Carlos,
             "\"The objective is the northern coast: Isor and Nanta. Every Wehzek convoy lands at one or the other. Take both, and their " +
-            "garrison has nowhere left to go but home. Operation Northern Crown.\"", new[] { "Command" });
+            "garrison has nowhere left to go but home. The last phase of Northern Crown.\"", new[] { "Command" });
         t.Logic("Command", new[] { "CommandPlan", "Carry" });
     }
 
@@ -925,7 +937,7 @@ internal static class WarCouncil
         string canMount = $"{mount} >= 1";
 
         t.Line("CommandPlan", Carlos,
-            "\"Now, the plan for the campaign. Whatever you decide today, the Staff will carry it through every operation until Zille is ours. " +
+            "\"Now, the plan for the campaign. Whatever you decide today, the Staff will carry it through every phase until Zille is ours. " +
             "And not every plan on paper is one this army can carry out.\"",
             new[] { "RFeint" }, condition: ChoosePlan);
 
@@ -1000,7 +1012,7 @@ internal static class WarCouncil
             "they'll keep to the heights on the flanks.\"", new[] { "PlanSet" });
 
         t.Line("PlanSet", Carlos,
-            "\"Then that is the plan for the campaign, Your Majesty, from the first shot to the last. The Staff will fit every operation to it.\"",
+            "\"Then that is the plan for the campaign, Your Majesty, from the first shot to the last. The Staff will fit every phase to it.\"",
             new[] { "Fleet" });
     }
 
@@ -1210,7 +1222,7 @@ internal static class WarCouncil
         string m(string x) => Eq(VarMatter, x);
         t.Logic("Matter", new[] { "MRest", "MMorale", "MSupply", "MReinforcePales", "MReinforce", "Obj" });
         t.Line("MRest", Carlos,
-            "\"The week's rest did the men good, Your Majesty. The mail caught up with them, and the field kitchens found something other than beans.\"",
+            "\"The month's rest did the men good, Your Majesty. The mail caught up with them, and the field kitchens found something other than beans.\"",
             new[] { "Obj" }, condition: m("Rest"));
 
         t.Line("MMorale", Carlos,

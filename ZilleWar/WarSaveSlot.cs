@@ -3,10 +3,14 @@ using Il2Cpp;
 namespace ZilleWar;
 
 /// <summary>
-/// The game keeps one war-map snapshot in the save (SaveData.warSaveData), meant for the next phase of the
-/// same operation, and re-applies it by tile name to every war map it sets up. Our tiles share names with
-/// the Pales map, so a leftover snapshot could redraw the Zille front. Before a Zille operation the slot is
-/// emptied (a Pales snapshot is put aside), and once the Zille operation is over the Pales snapshot goes back.
+/// The game keeps one war-map snapshot in the save (SaveData.warSaveData). It writes it when a phase of an operation ends
+/// (not the last), resumes the next phase of the same operation from it, and re-applies its tiles by name to every war map
+/// it sets up. The Zille operation uses it exactly like vanilla's Golden Shield: Phases II and III resume from it. Around
+/// that:
+/// - Phase I (or a phase that must be set up fresh) starts from an empty slot, so a leftover snapshot can't redraw the front
+///   (a Pales snapshot, which can't exist this early in vanilla's calendar, would be put aside and given back afterwards).
+/// - When the Zille war ends, the Zille snapshot is cleared and the operation marked finished, so nothing of the Zille map
+///   leaks into the Pales war's maps later (the tiles share names).
 /// </summary>
 internal static class WarSaveSlot
 {
@@ -15,8 +19,26 @@ internal static class WarSaveSlot
 
     private static SaveData Save => Singleton<PersistenceManager>.Instance?.activeSaveFile?.saveData;
 
-    /// <summary>Called right before a Zille war fragment is set up.</summary>
-    public static void ClearForZille(WarFragmentData fragment)
+    /// <summary>True when the save holds the map of a Zille phase that ended (with its units), ready for the next phase.</summary>
+    public static bool HoldsZilleSnapshot()
+    {
+        try
+        {
+            WarSaveData current = Save?.warSaveData;
+            return current != null && ZilleOperation.IsOurFragmentName(current.warFragmentName) && (current.warTokenSaveData?.Count ?? 0) > 0;
+        }
+        catch (Exception ex)
+        {
+            Core.Log.Warning($"Could not read the war save slot: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Called right before a Zille war fragment is set up. A phase that resumes keeps the slot; a phase that starts fresh
+    /// gets an empty one.
+    /// </summary>
+    public static void PrepareForZille(WarFragmentData fragment)
     {
         try
         {
@@ -29,12 +51,21 @@ internal static class WarSaveSlot
             WarSaveData current = save.warSaveData;
             string owner = current?.warFragmentName;
             int tiles = current?.warTileSaveData?.Count ?? 0;
+            int tokens = current?.warTokenSaveData?.Count ?? 0;
+            OperationData op = ZilleOperation.FindStoryOperation(fragment?.WarFragmentProperties?.Operation);
+            int index = op?.OperationProperties?.Phases?.IndexOf(fragment?.NameInDatabase) ?? -1;
+            if (index >= 1)
+            {
+                Core.Log.Msg($"Phase {index + 1} resumes the map saved by '{owner}' ({tokens} tokens, {tiles} tiles).");
+                return;
+            }
+
             if (!string.IsNullOrEmpty(owner) && !ZilleOperation.IsOurFragmentName(owner))
             {
                 _stashed = new WarSaveData(current);
-                Core.Log.Msg($"War save slot held '{owner}' ({tiles} tiles); set aside until the Zille operation ends.");
+                Core.Log.Msg($"War save slot held '{owner}' ({tiles} tiles); set aside until the Zille phase ends.");
             }
-            else if (tiles > 0)
+            else if (tiles > 0 || tokens > 0)
             {
                 Core.Log.Msg($"War save slot held a stale map ({tiles} tiles, '{owner}'); cleared.");
             }
@@ -43,14 +74,14 @@ internal static class WarSaveSlot
         }
         catch (Exception ex)
         {
-            Core.Log.Warning($"Could not clear the war save slot: {ex.Message}");
+            Core.Log.Warning($"Could not prepare the war save slot: {ex.Message}");
         }
     }
 
-    /// <summary>Called when the base map loads again: give a Pales operation its snapshot back.</summary>
+    /// <summary>Called when the base map loads again: give a Pales operation its snapshot back, unless a Zille phase is waiting.</summary>
     public static void RestoreAfterZille()
     {
-        if (_stashed == null)
+        if (_stashed == null || (HoldsZilleSnapshot() && WarFlow.AtWar))
         {
             return;
         }
@@ -67,5 +98,38 @@ internal static class WarSaveSlot
         }
 
         _stashed = null;
+    }
+
+    /// <summary>
+    /// The Zille war is over (last phase played, every objective taken, or a ceasefire before the last phase): clear the Zille
+    /// snapshot and mark the operation finished, as the game does when an operation ends. Idempotent.
+    /// </summary>
+    public static void EndZilleOperation()
+    {
+        try
+        {
+            if (HoldsZilleSnapshot() || ZilleOperation.IsOurFragmentName(Save?.warSaveData?.warFragmentName))
+            {
+                Singleton<PersistenceManager>.Instance.SetWarSaveData(new WarSaveData());
+                Core.Log.Msg("The Zille war is over: its war map snapshot was cleared.");
+                if (_stashed == null)
+                {
+                    SuzerainModdingKit.Variables.Set(AnyOperationInProgress, false);
+                }
+            }
+
+            OperationData op = ZilleOperation.FindStoryOperation(ZilleOperation.MainOperation);
+            if (op?.OperationProperties != null && !op.OperationProperties.IsFinished)
+            {
+                op.FinishOperation();
+                Core.Log.Msg("Operation Northern Crown marked finished.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Core.Log.Warning($"Could not close the Zille operation: {ex.Message}");
+        }
+
+        RestoreAfterZille();
     }
 }

@@ -22,7 +22,8 @@ internal static class Patch_WarFlowManager_SetupWarFragment
         if (ZilleOperation.IsOurFragment(warFragmentData))
         {
             OwnershipCheck.Reset();
-            WarSaveSlot.ClearForZille(warFragmentData);
+            WarSaveSlot.PrepareForZille(warFragmentData);
+            ZilleCampaign.MarkPhaseStart();
         }
     }
 }
@@ -350,15 +351,22 @@ internal static class Trace_MapManager_LoadMap
         if (mapType != MapConfiguration.MapType.War)
         {
             ZilleMapSwap.SetTableProps(true);
-            WarSaveSlot.RestoreAfterZille();
+            if (SuzerainModdingKit.Variables.GetBool(WarFlags.Declared) && !WarFlow.AtWar)
+            {
+                WarSaveSlot.EndZilleOperation();
+            }
+            else
+            {
+                WarSaveSlot.RestoreAfterZille();
+            }
         }
     }
 }
 
 /// <summary>
-/// Decide the Zille operation's result just before the game finishes it. Vanilla does this with a
-/// conditional instruction (articy:expresso), which can't see custom variables, so we set it here.
-/// Victory = the operation's target city taken (Clear: no Wehlen-held land left).
+/// The game finishes the operation (after its last phase, or early when every objective is taken): book the phase's result
+/// before the result report is shown. Vanilla decides results with a conditional instruction (articy:expresso), which can't
+/// see custom variables, so it is set here.
 /// </summary>
 [HarmonyPatch(typeof(WarFlowManager._FinishOperationCoroutine_d__111), nameof(WarFlowManager._FinishOperationCoroutine_d__111.MoveNext))]
 internal static class Patch_FinishOperation_MoveNext
@@ -370,9 +378,38 @@ internal static class Patch_FinishOperation_MoveNext
             return;
         }
 
-        (int k, Objective objective) = ZilleCampaign.CurrentOperation();
-        ArmyCarry.Record();
-        ZilleCampaign.OnOperationFinished(k, objective);
-        WarFlow.OnOperationFinished();
+        PhaseEnd.Book("finish");
+    }
+}
+
+/// <summary>The player ends a phase ("end operation phase"): book it while the map and the units still exist.</summary>
+[HarmonyPatch(typeof(WarFlowManager._EndWarFragmentButtonClickCoroutine_d__110), nameof(WarFlowManager._EndWarFragmentButtonClickCoroutine_d__110.MoveNext))]
+internal static class Patch_EndWarFragment_MoveNext
+{
+    private static void Prefix(WarFlowManager._EndWarFragmentButtonClickCoroutine_d__110 __instance)
+    {
+        if (__instance.__1__state != 0 || !ZilleOperation.IsOurFragment(Patch_WarFlowManager_SetupWarFragment.Current))
+        {
+            return;
+        }
+
+        PhaseEnd.Book("end of phase");
+    }
+}
+
+internal static class PhaseEnd
+{
+    public static void Book(string where)
+    {
+        try
+        {
+            ArmyCarry.Record();
+            ZilleCampaign.OnPhaseEnded();
+            WarFlow.OnOperationFinished();
+        }
+        catch (Exception ex)
+        {
+            Core.Log.Error($"Booking the phase ({where}) failed: {ex}");
+        }
     }
 }

@@ -44,6 +44,11 @@ internal static class ArmyCarry
                 parts.Add($"{t.warUnitTypeData.name}|{t.currentWarTile.currentWarTileData.tileName}|{t.remainingOrganization}");
             }
 
+            if (parts.Count == 0)
+            {
+                return;     // the map is already being torn down: keep what an earlier call recorded
+            }
+
             Variables.Set(VarArmy, string.Join(";", parts));
             Core.Log.Msg($"Army carried over: {parts.Count} unit(s) recorded where they stand.");
         }

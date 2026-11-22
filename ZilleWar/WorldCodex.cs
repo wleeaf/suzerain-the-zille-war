@@ -168,9 +168,6 @@ internal static class WorldCodex
 
     // ------------------------------------------------------------------ state, in words
 
-    private static string Harbor => ZilleCampaign.Info(Objective.Harbor).Codename;
-    private static string Hills => ZilleCampaign.Info(Objective.Wall).Codename;
-    private static string Ports => ZilleCampaign.Info(Objective.Ports).Codename;
 
     private static bool Taken(string town) => Variables.GetBool(ZilleOperation.CapturedVar(town));
     private static bool Flag(string f) => Variables.GetBool(CityEvents.Flag(f));
@@ -178,19 +175,24 @@ internal static class WorldCodex
 
     private static string P(params string[] paragraphs) => string.Join("\n\n", paragraphs.Where(p => !string.IsNullOrEmpty(p)));
 
+    /// <summary>An armistice after the last phase with Zille city held reads like the divided ceasefire, not like a defeat.</summary>
     private static string Outcome(string active, string liberated, string defeated, string ceasefire) =>
-        WorldSystems.Liberated ? liberated : WorldSystems.Defeated ? defeated : WorldSystems.Ceasefire ? ceasefire : active;
+        WorldSystems.Liberated ? liberated
+        : WorldSystems.Defeated ? (WorldSystems.ZilleCityHeld ? ceasefire : defeated)
+        : WorldSystems.Ceasefire ? ceasefire : active;
 
-    /// <summary>Operations fought, in order, from the campaign history ("Harbor:won;Wall:lost").</summary>
-    private static List<(string codename, bool won)> History()
+    /// <summary>The phases fought, in order, from the campaign history ("Harbor:won;Wall:lost"): phase, aim, result.</summary>
+    private static List<(int phase, string target, bool won)> History()
     {
-        var list = new List<(string, bool)>();
-        foreach (string item in (Variables.GetString(ZilleCampaign.VarHistory) ?? string.Empty).Split(';', StringSplitOptions.RemoveEmptyEntries))
+        var list = new List<(int, string, bool)>();
+        string[] items = (Variables.GetString(ZilleCampaign.VarHistory) ?? string.Empty).Split(';', StringSplitOptions.RemoveEmptyEntries);
+        for (int k = 1; k <= items.Length; k++)
         {
-            string[] kv = item.Split(':');
-            if (kv.Length == 2 && Enum.TryParse(kv[0], out Objective o))
+            string[] kv = items[k - 1].Split(':');
+            if (kv.Length >= 2 && Enum.TryParse(kv[0], out Objective o))
             {
-                list.Add((ZilleCampaign.Info(o).Codename, kv[1] == "won"));
+                int p = Variables.GetInt(ZilleCampaign.PhaseOfVar(k));
+                list.Add((p > 0 ? p : k, ZilleCampaign.Info(o).Target, kv[1] == "won"));
             }
         }
 
@@ -239,19 +241,19 @@ internal static class WorldCodex
             "Many of Auremina's miners are ethnic Rizians whose families stayed on through the years of the lease, working the same " +
             "pits under Wehzek overseers.",
             Taken("Auremina")
-                ? $"During the Zille War, Auremina was taken by Rizian forces in {Hills}." +
+                ? "During the Zille War, Auremina was taken by Rizian forces in Operation Northern Crown." +
                   (Flag("Auremina_MinersFreed") ? " The miners came out of the pits to greet the soldiers." : string.Empty) +
                   (Flag("Auremina_MinesSecured") ? " The mines were placed under military guard until the end of the fighting." : string.Empty)
-                : WorldSystems.Declared ? $"During the Zille War, the town and its mines were the objective of {Hills}." : null),
+                : WorldSystems.Declared ? "During the Zille War, the town and its mines were the objective of the second phase of Operation Northern Crown." : null),
         "Locations_Cities_Isor" => P(
             "Isor is a fishing port on the western coast of the Zille region, facing the Strait of Kreleck. Its fishing families are " +
             "among the oldest Rizian communities in the region, and many kept Rizian names and customs throughout the years of " +
             "Wehzek administration.",
             "The port's small boats have long carried passengers, fish and, by reputation, contraband across the strait.",
             Taken("Isor")
-                ? $"Isor was taken by Rizian forces during {Ports}." +
+                ? "Isor was taken by Rizian forces during Operation Northern Crown." +
                   (Flag("Isor_Fishermen") ? " Its fishermen hung the old Rizian colors from their boats on the day the troops arrived." : string.Empty)
-                : WorldSystems.Declared ? $"During the Zille War, Isor and Nanta were the objectives of {Ports}." : null),
+                : WorldSystems.Declared ? "During the Zille War, Isor and Nanta were the objectives of the last phase of Operation Northern Crown." : null),
         _ => null,
     };
 
@@ -265,10 +267,10 @@ internal static class WorldCodex
             "would not return the territory at the end of its lease.";
 
         string plan =
-            $"The Rizian General Staff planned the campaign in three phases: the assault on the city of Zille and its harbor ({Harbor}), " +
-            $"the advance into the gold-mining hills around Auremina ({Hills}), and the push to the northern ports of Isor and Nanta " +
-            $"({Ports}). The Wehzek garrison depended on supplies shipped across the Strait of Kreleck, which made the strait a decisive " +
-            "theater of the war.";
+            "The Rizian General Staff fought the war as a single operation, Operation Northern Crown, in three phases a month apart: the " +
+            "assault on the city of Zille and its harbor, the advance into the gold-mining hills around Auremina, and the push to the " +
+            "northern ports of Isor and Nanta. The Wehzek garrison depended on supplies shipped across the Strait of Kreleck, which made " +
+            "the strait a decisive theater of the war.";
 
         var allies = new List<string>();
         if (SupplyWar.RumburgEmbargo)
@@ -298,7 +300,9 @@ internal static class WorldCodex
         var ops = History();
         string course = ops.Count == 0
             ? null
-            : string.Join(" ", ops.Select(o => o.won ? $"{o.codename} achieved its objectives." : $"{o.codename} failed."));
+            : string.Join(" ", ops.Select(o => o.won
+                ? $"Phase {ZilleCampaign.Roman(o.phase)} took {o.target}."
+                : $"Phase {ZilleCampaign.Roman(o.phase)} failed to take {o.target}."));
 
         string end = Outcome(
             WorldSystems.ZilleCityHeld ? "The city of Zille is under Rizian military administration, and fighting continues in the rest of the region." : null,
@@ -335,7 +339,7 @@ internal static class WorldCodex
                 return P(original, Declaration, Outcome(
                     "The territory has since become a front line, with Wehzek garrisons supplied across the Strait of Kreleck and " +
                     "Rizian forces advancing from Mave Nortus." +
-                    (WorldSystems.ZilleCityHeld ? $" The city of Zille has been under Rizian military administration since {Harbor}." : string.Empty),
+                    (WorldSystems.ZilleCityHeld ? " The city of Zille has been under Rizian military administration since its capture." : string.Empty),
                     "The war ended with the surrender of the last Wehzek garrisons, and the territory returned to Rizian sovereignty for " +
                     "the first time since 1927.",
                     "The Rizian offensive failed, and Wehlen continues to administer the territory. The Wehzek government has since " +

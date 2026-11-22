@@ -8,59 +8,41 @@ namespace ZilleWar;
 /// </summary>
 internal static class ZilleReports
 {
-    public static (string won, string lost) Register(int k, ObjectiveInfo info, string vanillaWon, string vanillaLost)
+    public const string WonName = "Operation_Zille_Result_Won";
+    public const string LostName = "Operation_Zille_Result_Lost";
+
+    /// <summary>The operation's two result reports (shown by the game when the operation ends, after its last phase).</summary>
+    public static (string won, string lost) Register(string vanillaWon, string vanillaLost)
     {
         ReportData vw = Find(vanillaWon);
         ReportData vl = Find(vanillaLost);
-        string won = $"Operation_Zille_{k}_Result_Won", lost = $"Operation_Zille_{k}_Result_Lost";
-        string name = ZilleCampaign.Title(info);
-        (string winText, string loseText) = info.Id switch
-        {
-            Objective.Harbor => (
-                $"{name}, the offensive to retake the city of Zille and its harbor, has been declared a success by the General Staff. " +
-                "The Golden Banner flies over the harbor for the first time since the lease, and Wehlen has lost both its headquarters and " +
-                "its main port on the Rizian coast.",
-                $"{name}, the offensive to retake the city of Zille and its harbor, has not met its objectives. The General Staff reports " +
-                "fierce resistance on the approaches to the city, which remains in Wehzek hands."),
-            Objective.Wall => (
-                $"{name}, the push into the hills around Auremina, has been declared a success by the General Staff. The town and its gold " +
-                "mines are in Rizian hands, and the roads to the northern coast lie open.",
-                $"{name}, the push into the hills around Auremina, has not met its objectives. The General Staff reports that Rizian " +
-                "troops were thrown back from the ridges with heavy losses."),
-            _ => (
-                $"{name}, the final offensive against the ports of Isor and Nanta, has been declared a success by the General Staff. " +
-                "With nowhere left to land its convoys, Wehlen's last garrisons in Zille are laying down their arms.",
-                $"{name}, the final offensive against the ports of Isor and Nanta, has not met its objectives. Through the two harbors, " +
-                "Wehlen continues to supply its garrison across the Strait of Kreleck."),
-        };
-        Add(Clone(vw, won, $"0x5A111E00000003{k:X2}", $"{name} Successful", winText));
-        Add(Clone(vl ?? vw, lost, $"0x5A111E00000004{k:X2}", $"{name} Failed", loseText));
-        return (won, lost);
+        string name = ZilleCampaign.OperationTitle;
+        Add(Clone(vw, WonName, "0x5A111E0000000301", $"{name} Successful",
+            $"{name}, the campaign to return Zille to the Crown, has been declared a success by the General Staff. The Golden Banner " +
+            "flies over Zille, Auremina, Isor and Nanta, and the last Wehzek garrisons are laying down their arms."));
+        Add(Clone(vl ?? vw, LostName, "0x5A111E0000000401", $"{name} Ends Short of Its Objectives",
+            $"{name}, the campaign to return Zille to the Crown, has ended short of its objectives. The front has settled where the " +
+            "last phase left it, and Wehlen still holds part of the region."));
+        return (WonName, LostName);
     }
 
     /// <summary>
-    /// After a reload the reports of finished operations are no longer registered (they live in memory only), but the
-    /// save still refers to them: register them again, with the after-action text kept in the save.
+    /// After a reload the operation's reports are no longer registered (they live in memory only), but the save may refer to
+    /// them: register them again, with the after-action text of the last phase kept in the save.
     /// </summary>
     public static void Restore()
     {
-        string[] hist = ZilleCampaign.Str(ZilleCampaign.VarHistory).Split(';', StringSplitOptions.RemoveEmptyEntries);
-        for (int k = 1; k <= hist.Length && k <= ZilleCampaign.MaxOperations; k++)
+        if (Created.ContainsKey(WonName) || ZilleCampaign.OperationsDone <= 0)
         {
-            string won = $"Operation_Zille_{k}_Result_Won";
-            if (Created.ContainsKey(won) || !Enum.TryParse(hist[k - 1].Split(':')[0], out Objective o) ||
-                !ZilleCampaign.Objectives.Any(x => x.Id == o))
-            {
-                continue;
-            }
+            return;
+        }
 
-            Register(k, ZilleCampaign.Info(o), "Operation_1_Result_Won", "Operation_1_Result_Lost");
-            string text = ZilleCampaign.Str(ZilleCampaign.ReportTextVar(k));
-            if (text.Length > 0)
-            {
-                SetDescription(won, text);
-                SetDescription($"Operation_Zille_{k}_Result_Lost", text);
-            }
+        Register("Operation_1_Result_Won", "Operation_1_Result_Lost");
+        string text = ZilleCampaign.Str(ZilleCampaign.ReportTextVar(ZilleCampaign.OperationsDone));
+        if (text.Length > 0 && (ZilleCampaign.Liberated || ZilleCampaign.Defeated))
+        {
+            SetDescription(WonName, text);
+            SetDescription(LostName, text);
         }
     }
 

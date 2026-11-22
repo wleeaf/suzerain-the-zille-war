@@ -28,7 +28,7 @@ internal static class ZilleCampaign
     public const string VarStrength = "ZilleWar.War_Zille_Strength";    // 3..10, starts at 8
     public const string VarLiberated = "ZilleWar.War_Zille_Liberated";
     public const string VarHistory = "ZilleWar.State_History";          // "Wall:won;Harbor:lost"
-    public const string VarCurrentOp = "ZilleWar.State_CurrentOperation"; // "k:Objective" while an operation is set up
+    public const string VarCurrentOp = "ZilleWar.State_CurrentOperation"; // "k:Objective:phase" while a phase is set up
     public const string VarOwnersAtStart = "ZilleWar.State_OwnersAtStart";
     public const string VarDefeated = "ZilleWar.War_Zille_Defeated";      // an operation failed: the war is lost
 
@@ -47,10 +47,33 @@ internal static class ZilleCampaign
 
     public static readonly ObjectiveInfo[] Objectives =
     {
-        new(Objective.Harbor, "Operation Golden Harbor", "Zille", "Drive down the river to the Gulf of Moridia and take the city of Zille and its harbor.", new[] { "Zille" }),
-        new(Objective.Wall, "Operation Lodestone", "Auremina", "Break into the hills and take Auremina and its gold mines.", new[] { "Auremina" }),
-        new(Objective.Ports, "Operation Northern Crown", "Isor and Nanta", "Take the ports of Isor and Nanta and cut Wehlen's last lifelines across the strait.", new[] { "Isor", "Nanta" }),
+        new(Objective.Harbor, "the battle for Zille", "Zille", "Drive down the river to the Gulf of Moridia and take the city of Zille and its harbor.", new[] { "Zille" }),
+        new(Objective.Wall, "the battle for Auremina", "Auremina", "Break into the hills and take Auremina and its gold mines.", new[] { "Auremina" }),
+        new(Objective.Ports, "the battle for the ports", "Isor and Nanta", "Take the ports of Isor and Nanta and cut Wehlen's last lifelines across the strait.", new[] { "Isor", "Nanta" }),
     };
+
+    // ---- one operation in three phases, like vanilla's Golden Shield: Phase I on Turn 4, II on Turn 5, III on Turn 6.
+    public const string OperationCodename = "Operation Northern Crown";
+    public const string OperationTitle = "Operation: Northern Crown";
+    public const int LastPhase = 3;
+    public const string VarPhase = "ZilleWar.State_Phase";                  // the phase being fought / last fought (0 before the first)
+    public static string PhaseOfVar(int k) => $"ZilleWar.State_Phase{k}";  // which phase the k-th offensive was
+
+    /// <summary>The phase a War Council on this turn sends the army into: I on Turn 4, II on Turn 5, III on Turn 6 (and after).</summary>
+    public static int PhaseForTurn(int turn) => Math.Clamp(turn - 3, 1, LastPhase);
+
+    public static int Phase => Variables.GetInt(VarPhase);
+
+    public static string Roman(int p) => p switch { 1 => "I", 2 => "II", 3 => "III", _ => p.ToString() };
+
+    /// <summary>"Operation: Northern Crown - Phase II", as vanilla titles its phases.</summary>
+    public static string PhaseTitle(int p) => $"{OperationTitle} - Phase {Roman(p)}";
+
+    /// <summary>"Phase II of Operation Northern Crown", for prose.</summary>
+    public static string PhaseName(int p) => $"Phase {Roman(p)} of {OperationCodename}";
+
+    /// <summary>"the opening phase", "the second phase", "the final phase", for prose.</summary>
+    public static string PhaseWords(int p) => p switch { 1 => "the opening phase", 2 => "the second phase", _ => "the final phase" };
 
     /// <summary>The campaign is fought in this order. A failed operation loses the war.</summary>
     public static readonly Objective[] Sequence = { Objective.Harbor, Objective.Wall, Objective.Ports };
@@ -60,22 +83,27 @@ internal static class ZilleCampaign
         foreach (string v in new[]
                  {
                      VarOwners, VarOpsDone, VarNextObjective, VarStrength, VarLiberated, VarHistory, VarCurrentOp, VarOwnersAtStart, VarDefeated,
-                     AfterAction.VarNotesTold,
+                     AfterAction.VarNotesTold, VarPhase, VarPhaseDone, PhaseResume.VarLanded, VarEnemyDeadTotal, VarPlayerDeadTotal, VarEnemyDeadAtStart, VarPlayerDeadAtStart,
                  })
         {
             Variables.Register(v);
         }
 
+        Variables.Register(ResultVar(0));
         for (int k = 1; k <= MaxOperations; k++)
         {
             Variables.Register(ResultVar(k));
             Variables.Register(EnemyDeadVar(k));
             Variables.Register(PlayerDeadVar(k));
             Variables.Register(ReportTextVar(k));
+            Variables.Register(PhaseOfVar(k));
         }
+
+        Vanilla.Expose(VarPhase, isBool: false);
     }
 
-    public static string ResultVar(int k) => $"ZilleWar.War_Zille_Operation{k}_Won";
+    /// <summary>The k-th offensive (phase fought) reached its aim; k = 0 is the whole operation (Zille liberated).</summary>
+    public static string ResultVar(int k) => k == 0 ? "ZilleWar.War_Zille_Operation_Won" : $"ZilleWar.War_Zille_Operation{k}_Won";
     public static string EnemyDeadVar(int k) => $"ZilleWar.War_Zille_Operation{k}_TotalEnemy_Dead";
     public static string PlayerDeadVar(int k) => $"ZilleWar.War_Zille_Operation{k}_TotalPlayer_Dead";
 
@@ -117,17 +145,22 @@ internal static class ZilleCampaign
         }
     }
 
-    /// <summary>"Operation Golden Harbor" as vanilla writes it in titles: "Operation: Golden Harbor".</summary>
-    public static string Title(ObjectiveInfo info) =>
-        info.Codename.StartsWith("Operation ", StringComparison.Ordinal) ? "Operation: " + info.Codename.Substring(10) : info.Codename;
+    /// <summary>The title of the phase being fought (or last fought): "Operation: Northern Crown - Phase II".</summary>
+    public static string Title(ObjectiveInfo info) => PhaseTitle(Math.Max(1, CurrentOperation().phase));
 
     public static ObjectiveInfo Info(Objective o) => Objectives.First(x => x.Id == o);
 
-    /// <summary>The operation that is set up / being fought, from the saved "k:Objective".</summary>
-    public static (int k, Objective objective) CurrentOperation()
+    /// <summary>The offensive that is set up / being fought, from the saved "k:Objective:phase" (k counts the phases fought).</summary>
+    public static (int k, Objective objective, int phase) CurrentOperation()
     {
         string[] s = Str(VarCurrentOp).Split(':');
-        return s.Length == 2 && int.TryParse(s[0], out int k) && Enum.TryParse(s[1], out Objective o) ? (k, o) : (0, Objective.Wall);
+        if (s.Length >= 2 && int.TryParse(s[0], out int k) && Enum.TryParse(s[1], out Objective o))
+        {
+            int p = s.Length >= 3 && int.TryParse(s[2], out int pp) ? pp : Math.Min(k, LastPhase);
+            return (k, o, p);
+        }
+
+        return (0, Objective.Harbor, 0);
     }
 
     public static Objective NextObjective
@@ -226,6 +259,8 @@ internal static class ZilleCampaign
         Variables.Set(VarLiberated, false);
         Variables.Set(VarDefeated, false);
         Variables.Set(VarHistory, string.Empty);
+        Variables.Set(VarPhase, 0);
+        Variables.Set(VarPhaseDone, 0);
         Variables.Set(AfterAction.VarNotesTold, string.Empty);
         foreach (TownSpec t in ZilleData.Towns.Where(t => t.Role == "city"))
         {
@@ -241,14 +276,51 @@ internal static class ZilleCampaign
         int zilleHeld = o.Count(kv => kv.Value && ZilleData.ByName[kv.Key].Region == "zille");
         int zilleTotal = ZilleData.Tiles.Count(t => t.Region == "zille" && t.Type == "Land");
         int riziaLost = o.Count(kv => !kv.Value && ZilleData.ByName[kv.Key].Region == "rizia");
-        return $"ops done={OperationsDone}, next={(Available().Count > 0 ? Info(NextObjective).Codename : "none")}, defeated={Defeated}, " +
+        return $"phases fought={OperationsDone}, phase={Phase}, next={(Available().Count > 0 ? Info(NextObjective).Target : "none")}, defeated={Defeated}, " +
                $"strength={Strength} ({Tier}), Zille tiles held {zilleHeld}/{zilleTotal}, Rizian tiles lost {riziaLost}, " +
                $"history='{Str(VarHistory)}', liberated={Variables.GetBool(VarLiberated)}";
     }
 
-    /// <summary>Called right before the game finishes one of our operations: snapshot the map, decide the result.</summary>
-    public static void OnOperationFinished(int k, Objective objective)
+    // ---- casualties: the engine counts the whole operation's dead; each phase's share is the difference since it began
+    public const string VarEnemyDeadTotal = "ZilleWar.War_Zille_TotalEnemy_Dead";
+    public const string VarPlayerDeadTotal = "ZilleWar.War_Zille_TotalPlayer_Dead";
+    private const string VarEnemyDeadAtStart = "ZilleWar.State_EnemyDeadAtPhaseStart";
+    private const string VarPlayerDeadAtStart = "ZilleWar.State_PlayerDeadAtPhaseStart";
+    public const string VarPhaseDone = "ZilleWar.State_PhaseDone";          // the last phase whose end was booked
+
+    /// <summary>A phase is being set up: remember the dead counts so far, so the phase's own losses can be told apart.</summary>
+    public static void MarkPhaseStart()
     {
+        Variables.Set(VarEnemyDeadAtStart, Variables.GetInt(VarEnemyDeadTotal));
+        Variables.Set(VarPlayerDeadAtStart, Variables.GetInt(VarPlayerDeadTotal));
+    }
+
+    private static int PhaseDead(string total, string atStart)
+    {
+        int t = Variables.GetInt(total), s = Variables.GetInt(atStart);
+        return t >= s ? t - s : t;     // the engine may reset the total when the operation starts
+    }
+
+    /// <summary>True when the operation must end now whatever the phase: every objective taken, or the army gone.</summary>
+    public static bool EndsEarly(Dictionary<string, bool> owners) =>
+        Sequence.All(o => AllTaken(Info(o), owners)) || !owners.Any(kv => !kv.Value && ZilleData.ByName[kv.Key].Region == "zille") ||
+        Variables.GetInt("RiziaDLC.Army_Unit_GrandTotal_Deployed") + Variables.GetInt("RiziaDLC.Army_Unit_GrandTotal_Total") <= 0;
+
+    /// <summary>
+    /// Called when a phase of the operation ends (the player ends the phase, or the game finishes the operation): snapshot the
+    /// map, book the phase's result and losses, publish the coverage. The war ends with the last phase, or earlier when every
+    /// objective is taken; a phase that misses its aim is a setback, and the next phase goes for the same aim. Safe to call
+    /// twice for the same phase (the engine's finish and end-of-phase hooks both call it on the last phase).
+    /// </summary>
+    public static void OnPhaseEnded()
+    {
+        (int k, Objective objective, int phase) = CurrentOperation();
+        if (k <= 0 || Variables.GetInt(VarPhaseDone) >= k)
+        {
+            return;
+        }
+
+        Variables.Set(VarPhaseDone, k);
         Dictionary<string, bool> owners = CurrentOwners();
         WarTileManager tm = Managers.Instance?.WarTileManager;
         int read = 0;
@@ -279,17 +351,20 @@ internal static class ZilleCampaign
         ObjectiveInfo info = Info(objective);
         bool won = AllTaken(info, owners);
         Variables.Set(ResultVar(k), won);
+        Variables.Set(PhaseOfVar(k), phase);
+        Variables.Set(EnemyDeadVar(k), PhaseDead(VarEnemyDeadTotal, VarEnemyDeadAtStart));
+        Variables.Set(PlayerDeadVar(k), PhaseDead(VarPlayerDeadTotal, VarPlayerDeadAtStart));
         foreach (TownSpec town in ZilleData.Towns.Where(t => t.Role == "city" && t.Side == "zille" && t.Tile != null))
         {
             Variables.Set(ZilleOperation.CapturedVar(town.Name), !IsEnemy(owners, town.Tile));
         }
 
-        // The war ends here if Zille is cleared, if the last operation succeeds or every objective of the campaign
-        // is already held (the remaining garrisons surrender), or if an operation fails. Without the last check an
-        // offensive that overran later objectives would leave nothing to order and the war could never end.
+        // The war ends here when Zille is cleared or every objective is held (the remaining garrisons surrender), or when the
+        // last phase is over: whatever is not taken by then stays Wehzek behind an armistice line.
         bool cleared = !owners.Any(kv => !kv.Value && ZilleData.ByName[kv.Key].Region == "zille");
         bool allObjectives = Sequence.All(o => AllTaken(Info(o), owners));
-        bool liberated = won && (cleared || objective == Sequence[^1] || allObjectives);
+        bool final = phase >= LastPhase || EndsEarly(owners);
+        bool liberated = cleared || allObjectives;
         if (liberated && !cleared)
         {
             foreach (string t in owners.Keys.Where(t => ZilleData.ByName[t].Region == "zille").ToList())
@@ -298,20 +373,34 @@ internal static class ZilleCampaign
             }
 
             SaveOwners(owners);
+            foreach (TownSpec town in ZilleData.Towns.Where(t => t.Role == "city" && t.Side == "zille"))
+            {
+                Variables.Set(ZilleOperation.CapturedVar(town.Name), true);
+            }
         }
 
-        Variables.Set(VarLiberated, liberated);
-        Variables.Set(VarDefeated, !won);
+        if (final)
+        {
+            Variables.Set(VarLiberated, liberated);
+            Variables.Set(VarDefeated, !liberated);
+            Variables.Set(ResultVar(0), liberated);
+        }
+
         Variables.Set(VarOpsDone, Math.Max(OperationsDone, k));
         string hist = Str(VarHistory);
         Variables.Set(VarHistory, $"{hist}{(string.IsNullOrEmpty(hist) ? "" : ";")}{objective}:{(won ? "won" : "lost")}");
         AfterAction a = AfterAction.Compute(k, OwnersAtStart(), owners);
         string report = a.FullReport(info, won);
         Variables.Set(ReportTextVar(k), report);
-        ZilleReports.SetDescription($"Operation_Zille_{k}_Result_Won", report);
-        ZilleReports.SetDescription($"Operation_Zille_{k}_Result_Lost", report);
+        if (final)
+        {
+            ZilleReports.SetDescription(ZilleReports.WonName, report);
+            ZilleReports.SetDescription(ZilleReports.LostName, report);
+        }
+
         NewsWire.Batch(() => NewsWire.PublishOperationResult(k, info, won, a));
         NewsWire.OperationReports(k, info, won, a);
-        Core.Log.Msg($"Operation {k} ({info.Codename}) finished: read {read} tiles, won={won}, liberated={liberated}. {Describe()}\n{report}");
+        Core.Log.Msg($"Phase {phase} (offensive {k}, aim {info.Target}) ended: read {read} tiles, aim reached={won}, final={final}, " +
+                     $"liberated={liberated && final}. {Describe()}\n{report}");
     }
 }

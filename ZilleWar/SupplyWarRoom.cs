@@ -234,8 +234,8 @@ internal static partial class SupplyWar
         // ---- later councils: the standing orders, to keep or change
         t.Logic("WROrders", new[] { "WROrdStrait", "WROrdCoastInland", "WROrdCoast", "WROrdHome", "WRMenu" });
         Say("WROrdStrait", $"{later} and {inStrait}",
-            "\"It's still in the strait on your orders, hunting their convoys. Every week out there costs us a ship. Do we keep it there?\"",
-            "\"It's still in the strait on your orders, Your Majesty. Every week out there costs us a ship. Do we keep it there?\"", "WRMenu");
+            "\"It's still in the strait on your orders, hunting their convoys. Every month out there costs us a ship. Do we keep it there?\"",
+            "\"It's still in the strait on your orders, Your Majesty. Every month out there costs us a ship. Do we keep it there?\"", "WRMenu");
         Say("WROrdCoastInland", $"{later} and {offCoast} and not ({coastal})",
             "\"The destroyers are still off the coast, but Auremina is far out of reach of their guns. They can wait there for Nanta, or go " +
             "somewhere more useful.\"",
@@ -317,8 +317,8 @@ internal static partial class SupplyWar
         string patrolLoss = T(WarCouncil.VarSubsOut) + Inc(Count(Lever.Submarines), 1) + Inc(Subs, -1) + $"{V(VarSubPatrols)} = 0; " + Talk.Weaken(1);
         t.Logic("WRSubs", new[] { "WRSubsOutLucky", "WRSubsOut", "WRSubsLucky", "WRSubsFresh", exit });
         Say("WRSubsOutLucky", $"{subsOut} and {subs} > 0 and {Not(VarSubsGrounded)} and {N(VarSubPatrols)} >= 1",
-            "\"The submarines are still out. They've been lucky so far, but the convoys have escorts now. Another week out there will cost us a boat.\"",
-            "\"The submarines are still out, Your Majesty. The convoys have escorts now. Another week will cost us a boat.\"",
+            "\"The submarines are still out. They've been lucky so far, but the convoys have escorts now. Another month out there will cost us a boat.\"",
+            "\"The submarines are still out, Your Majesty. The convoys have escorts now. Another month will cost us a boat.\"",
             "WRSubsKeepLoss", "WRSubsRecall");
         Say("WRSubsOut", $"{subsOut} and {subs} > 0 and {Not(VarSubsGrounded)}",
             "\"The submarines are still out in the strait, and the Wehzek captains have learned to dread the dark.\"",
