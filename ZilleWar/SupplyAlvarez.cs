@@ -278,7 +278,7 @@ internal static partial class SupplyWar
             "Laurento covered the mouthpiece. \"Fifty years, Your Majesty. Your father signed twenty-five on Zille, and we are at war " +
             "to get it back.\"", "MenuLease");
         d.Branch("MenuLease", "Lease", "RefuseLease");
-        d.Opt("Lease", null, "\"Fifty years. Draw up the lease.\"", "-2 Authority, +1 Budget Per Turn, Caleqabiz Leased to Lespia for 50 Years",
+        d.Opt("Lease", null, "\"Fifty years. Draw up the lease.\"", "-2 Authority, -1 Authority Per Turn, +1 Budget Per Turn, Caleqabiz Leased to Lespia for 50 Years",
             dealScript + Talk.Weaken(1) + T(VarLespiaCaleqabiz) + T(VarLespiaLease) + Inc(Authority, -2) +
             $"{V(WorldModifiers.CaleqabizRent)} = 1; ", "DealLease");
         d.Say("DealLease", Alvarez,
@@ -319,9 +319,9 @@ internal static partial class SupplyWar
         d.Branch("MenuHarbor", Gate("Free"), Gate("Harbor"), Gate("HarborG"), Gate("Money3"), Gate("Money4"), "Refuse");
         const string harborText = "\"Fifty years of Caleqabiz. Draw up the lease.\"";
         string harborDeal = dealScript + Inc(Authority, -2) + T(VarLespiaCaleqabiz) + T(VarLespiaLease);
-        d.Opt("Harbor", fair, harborText, "-2 Authority, +1 Budget Per Turn, Caleqabiz Leased to Lespia for 50 Years",
+        d.Opt("Harbor", fair, harborText, "-2 Authority, -1 Authority Per Turn, +1 Budget Per Turn, Caleqabiz Leased to Lespia for 50 Years",
             harborDeal + $"{V(WorldModifiers.CaleqabizRent)} = 1; ", "Deal2");
-        d.Opt("HarborG", dear, harborText, "-2 Authority, Caleqabiz Leased to Lespia for 50 Years Without Rent", harborDeal, "Deal2");
+        d.Opt("HarborG", dear, harborText, "-2 Authority, -1 Authority Per Turn, Caleqabiz Leased to Lespia for 50 Years Without Rent", harborDeal, "Deal2");
         const string money = "\"Not Caleqabiz. I'll pay for your ships instead.\"";
         string paid = dealScript + T(VarLespiaPaid);
         d.Opt("Money3", fair, money, "-3 Budget Per Turn While the War Lasts", paid + $"{V(WorldModifiers.LespiaEscort)} = -3; ", "Money");

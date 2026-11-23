@@ -52,11 +52,12 @@ internal static class WorldModifiers
     private const string Humiliation = "ZilleWar.Mod_Humiliation";
     private const string Victory = "ZilleWar.Mod_Victory";
     private const string Tutelage = "ZilleWar.Mod_RumburgTutelage";
+    private const string LeaseShame = "ZilleWar.Mod_CaleqabizLeaseAuthority";   // authority, negative: a Lespian flag over Caleqabiz
 
     private static readonly string[] Computed =
     {
         WarExpenditures, Occupation, Reconstruction, ZilleGold, ZillePort, ZilleEnergy, Refugees, Shipping, WarBonds, WarFuel,
-        Fervor, Weariness, TwoFronts, Humiliation, Victory, Tutelage,
+        Fervor, Weariness, TwoFronts, Humiliation, Victory, Tutelage, LeaseShame,
     };
 
     // ---- situation / policy switches
@@ -114,6 +115,7 @@ internal static class WorldModifiers
         new("Rizia_Authority_Modifier_ZilleWarWeariness", Authority, Weariness, Neg(Weariness), "{0} per turn from War Weariness"),
         new("Rizia_Authority_Modifier_TwoFrontWar", Authority, TwoFronts, Neg(TwoFronts), "{0} per turn from Two-Front War Strain"),
         new("Rizia_Authority_Modifier_ZilleDefeat", Authority, Humiliation, Neg(Humiliation), "{0} per turn from the Defeat in Zille"),
+        new("Rizia_Authority_Modifier_CaleqabizLease", Authority, LeaseShame, Neg(LeaseShame), "{0} per turn from the Lespian Flag over Caleqabiz"),
         new("Rizia_Authority_Modifier_RumburgTutelage", Authority, Tutelage, Neg(Tutelage), "{0} per turn from Rumburgian Tutelage"),
     };
 
@@ -318,6 +320,7 @@ internal static class WorldModifiers
         Set(Humiliation, defeated && !cityHeld && since >= 0 ? (since <= 1 ? -2 : since <= 3 ? -1 : 0) : 0);
         Set(Victory, liberated && since is >= 0 and <= 1 ? 1 : 0);
         Set(Tutelage, suzerain ? -1 : 0);
+        Set(LeaseShame, Variables.GetBool(SupplyWar.VarLespiaLease) ? -1 : 0);
         // decrees may have changed some of these (WarDecrees.Adjust): the Overview cards follow the adjusted values
         occupation = Variables.GetInt(Occupation);
         refugees = Variables.GetInt(Refugees);
