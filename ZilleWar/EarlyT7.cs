@@ -124,7 +124,7 @@ internal static class EarlyT7
             "\"Zille has come home, and Brenas thanks the army for it. But it is difficult for my party to support another war so soon, this time against the Grand Duchy.\"",
             new[] { "#11" });
         t.Variant("Doubt18Part", 18, new[] { 17, 19, 23 }, Part, "Manus Sazon",
-            "\"Zille's harbor flies our flag again, and Brenas thanks the army for it. But half of the region is still behind Wehzek guns, and it is difficult for my party to support another war, this time against the Grand Duchy.\"",
+            "\"Zille's harbor flies our flag again, and Brenas thanks the army for it. But part of the region is still behind Wehzek guns, and it is difficult for my party to support another war, this time against the Grand Duchy.\"",
             new[] { "#11" });
         t.Variant("Doubt18Lost", 18, new[] { 17, 19, 23 }, Lost, "Manus Sazon",
             "\"We have only just failed to bring Zille home by force. It is difficult for my party to support another war, this time against the Grand Duchy.\"",
@@ -277,38 +277,45 @@ internal static class EarlyT7
         t.Choice("LibA2", "\"Those who served Smolak will answer for it. The rest have nothing to fear.\"", new[] { "LibA2r" });
         t.Line("LibA2r", Narrator, "Applause rose from the RNC benches. Manus wrote something down.", new[] { "Tax" });
 
-        // --- divided: Zille city is ours, Isor and Nanta (and perhaps Auremina) are not
-        t.Logic("Part", new[] { "PartCfM", "PartCfD", "PartArmM", "PartArmD" }, condition: Part);
-        t.Line("PartCfM", manus,
-            "\"Your Majesty, Zille's harbor flies our flag again, and Brenas is grateful to the army for it. But the ceasefire has left a " +
-            "line across the region. Isor and Nanta are still Wehzek, and our constituents have cousins on the far side of it.\"",
-            new[] { "PartCfM2" }, condition: $"{Rpp} and {KingCf}");
-        t.Line("PartCfM2", daria,
-            "\"The RNC accepted the ceasefire because His Majesty agreed to it, Madame Speaker. We will not accept that line as a border, nor " +
-            "one drawn in Konstantium by people who have never set foot in Zille.\"", new[] { "PartRef" });
-        t.Line("PartCfD", daria,
-            "\"Your Majesty, Zille's harbor flies our flag again. The RNC accepted the ceasefire because you agreed to it. But we will not " +
-            "accept that line as a border, nor one drawn in Konstantium by people who have never set foot in Zille.\"",
-            new[] { "PartCfD2" }, condition: $"{NotRpp} and {KingCf}");
-        t.Line("PartCfD2", manus,
-            "\"A ceasefire is not a peace, Madame Speaker. Isor and Nanta are still Wehzek, and our constituents have cousins on the far " +
-            "side of that line.\"", new[] { "PartRef" });
-        t.Line("PartArmM", manus,
-            "\"Your Majesty, Zille's harbor flies our flag again, and Brenas is grateful to the army for it. But the offensive stopped " +
-            "short of Isor and Nanta, and the armistice has frozen the line where our soldiers stood when their strength ran out.\"",
-            new[] { "PartArmM2" }, condition: $"{Rpp} and {NoKingCf}");
-        t.Line("PartArmM2", daria,
-            "\"The RNC will never accept that line as a border, Madame Speaker. The army took Zille's harbor. Given time, it can finish the work.\"",
-            new[] { "PartRef" });
-        t.Line("PartArmD", daria,
-            "\"Your Majesty, Zille's harbor flies our flag again, and the RNC salutes the army for it. But we will never accept the " +
-            "armistice line as a border. Given time, the army can finish the work.\"", new[] { "PartArmD2" }, condition: $"{NotRpp} and {NoKingCf}");
-        t.Line("PartArmD2", manus,
-            "\"Finish it with whose sons, Madame Speaker? The offensive ran out short of Isor and Nanta, and Brenas has buried enough of " +
-            "them already.\"", new[] { "PartRef" });
-        t.Line("PartRef", manus,
-            "\"Then let the people on the other side of the line decide where they belong. A referendum in Isor and Nanta, under " +
-            "international supervision.\"", new[] { "PartH" });
+        // --- divided: Zille city is ours; the cities Wehlen still holds are named (any of Auremina, Isor and Nanta)
+        var parts = new List<string>();
+        SweepEarlyKit.ForDivided((id, cond, ours, theirs, be) =>
+        {
+            parts.Add("Part" + id);
+            t.Logic("Part" + id, new[] { "PartCfM" + id, "PartCfD" + id, "PartArmM" + id, "PartArmD" + id }, condition: cond);
+            t.Line("PartCfM" + id, manus,
+                "\"Your Majesty, Zille's harbor flies our flag again, and Brenas is grateful to the army for it. But the ceasefire has left a " +
+                $"line across the region. {theirs} {be} still Wehzek, and our constituents have cousins on the far side of it.\"",
+                new[] { "PartCfM2" + id }, condition: $"{Rpp} and {KingCf}");
+            t.Line("PartCfM2" + id, daria,
+                "\"The RNC accepted the ceasefire because His Majesty agreed to it, Madame Speaker. We will not accept that line as a border, nor " +
+                "one drawn in Konstantium by people who have never set foot in Zille.\"", new[] { "PartRef" + id });
+            t.Line("PartCfD" + id, daria,
+                "\"Your Majesty, Zille's harbor flies our flag again. The RNC accepted the ceasefire because you agreed to it. But we will not " +
+                "accept that line as a border, nor one drawn in Konstantium by people who have never set foot in Zille.\"",
+                new[] { "PartCfD2" + id }, condition: $"{NotRpp} and {KingCf}");
+            t.Line("PartCfD2" + id, manus,
+                $"\"A ceasefire is not a peace, Madame Speaker. {theirs} {be} still Wehzek, and our constituents have cousins on the far " +
+                "side of that line.\"", new[] { "PartRef" + id });
+            t.Line("PartArmM" + id, manus,
+                "\"Your Majesty, Zille's harbor flies our flag again, and Brenas is grateful to the army for it. But the offensive stopped " +
+                $"short of {theirs}, and the armistice has frozen the line where our soldiers stood when their strength ran out.\"",
+                new[] { "PartArmM2" + id }, condition: $"{Rpp} and {NoKingCf}");
+            t.Line("PartArmM2" + id, daria,
+                "\"The RNC will never accept that line as a border, Madame Speaker. The army took Zille's harbor. Given time, it can finish the work.\"",
+                new[] { "PartRef" + id });
+            t.Line("PartArmD" + id, daria,
+                "\"Your Majesty, Zille's harbor flies our flag again, and the RNC salutes the army for it. But we will never accept the " +
+                "armistice line as a border. Given time, the army can finish the work.\"", new[] { "PartArmD2" + id }, condition: $"{NotRpp} and {NoKingCf}");
+            t.Line("PartArmD2" + id, manus,
+                $"\"Finish it with whose sons, Madame Speaker? The offensive ran out short of {theirs}, and Brenas has buried enough of " +
+                "them already.\"", new[] { "PartRef" + id });
+            t.Line("PartRef" + id, manus,
+                $"\"Then let the people on the other side of the line decide where they belong. A referendum in {theirs}, under " +
+                "international supervision.\"", new[] { "PartH" });
+        });
+        t.Logic("Part", parts.ToArray(), condition: Part);
+
         t.Line("PartH", hugo,
             "\"Don't go down that road, Your Majesty. Any vote across that line is an open door for Wehlen, and Smolak will walk through it.\"",
             new[] { "CfA1", "CfA2" });

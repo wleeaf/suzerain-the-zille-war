@@ -211,9 +211,13 @@ internal static class PhaseResume
         }
 
         Variables.Set(VarLanded, landed);
+        Variables.Set(VarLandedAt, landed > 0 ? ZilleData.Towns.FirstOrDefault(t => t.Tile == anchor)?.Name ?? string.Empty : string.Empty);
         Core.Log.Msg($"  Wehzek reinforcements: {landed} unit(s) landed (strait {orders.Reinforcements}, replacements {refill}) near tile {anchor}.");
     }
 
     /// <summary>Wehzek units landed before the phase being fought (for the reports).</summary>
     public const string VarLanded = "ZilleWar.State_ReinforcementsLanded";
+
+    /// <summary>The port they landed at ("Nanta", "Isor", "Zille"), so the council names the one Wehlen really holds.</summary>
+    public const string VarLandedAt = "ZilleWar.State_ReinforcementsLandedAt";
 }

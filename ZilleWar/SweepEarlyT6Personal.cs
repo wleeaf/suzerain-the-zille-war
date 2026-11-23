@@ -67,10 +67,10 @@ internal static class SweepEarlyT6Personal
             "This year, Hugo had added a new line to the program: a minute of silence for the soldiers who had fallen in Zille. Nobody " +
             "at the palace had yet found a way to say what they had fallen for.",
             new[] { "#184" }, condition: AuditT6.Lost, hooks: From(4));
-        t.Line("SilencePart", Narrator,
+        ForDivided((id, cond, ours, theirs, _) => t.Line("SilencePart" + id, Narrator,
             "This year, Hugo had added a new line to the program: a minute of silence for the soldiers who had fallen in Zille. They had " +
-            "brought Zille city home. The rest of the province still lay beyond an armistice line, and the list of their names was long.",
-            new[] { "#184" }, condition: AuditT6.Part, hooks: From(4));
+            $"brought {ours} home. {theirs} still lay beyond an armistice line, and the list of their names was long.",
+            new[] { "#184" }, condition: cond, hooks: From(4)));
 
         // [291] "To think... if only she was around to talk to Wiktor Smolak now."
         t.Variant("Smolak", 291, new[] { 290 }, Declared, Estela,
@@ -155,7 +155,7 @@ internal static class SweepEarlyT6Personal
             "\"A needless war is one you lose, Your Majesty. Make sure Zille isn't one of them.\"", new[] { "#284" }, condition: Active);
         t.Line("CourseLib", Lucita, "\"Spoken like a man who won his, Your Majesty.\"", new[] { "#284" }, condition: Liberated);
         t.Line("CoursePart", Lucita,
-            "\"Half of Zille came home, Your Majesty. History will decide whether the other half makes it needless.\"", new[] { "#284" },
+            "\"Part of Zille came home, Your Majesty. History will decide whether the rest makes it needless.\"", new[] { "#284" },
             condition: AuditT6.Part);
         t.Line("CourseLost", Lucita,
             "\"Zille was not needless, Your Majesty. It was badly finished. That is a different sin.\"", new[] { "#284" },
@@ -240,8 +240,8 @@ internal static class SweepEarlyT6Personal
                         "bandages, stood in the front rows.",
                         "The roll of kings was followed by a minute of silence for the soldiers who fell in Zille. Fewer members of the " +
                         "public attended than in previous years, and the palace asked the press not to photograph the families of the fallen.",
-                        "The roll of kings was followed by a minute of silence for the soldiers who brought Zille city home. The rest of the " +
-                        "province still lies behind the armistice line, and the families of the fallen stood at the back of the crowd."),
+                        $"The roll of kings was followed by a minute of silence for the soldiers who brought {Front.HeldWords} home. " +
+                        $"{Front.WehzekWords} still {(Front.Wehzek.Count > 1 ? "lie" : "lies")} behind the armistice line, and the families of the fallen stood at the back of the crowd."),
                     "A notable moment of the ceremony was the presence of former queen Estela Toras, who attended for the first time since " +
                     "the passing of her late husband, the king. Her participation reflects her strength and resilience, considering the deep " +
                     "bond they shared over the years." +

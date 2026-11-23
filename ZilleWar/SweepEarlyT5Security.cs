@@ -59,23 +59,95 @@ internal static class SweepEarlyT5Security
         // The seating ([278] with Titus, [956] without) -> [1288]: the war council's folder comes first.
         // The security council is Turn 5 step 4, after the War Council (which briefs Phase II): by now Phase II has been fought,
         // held or stopped (AuditT45's front states). FrontFree cannot occur on Turn 5 (Zille is liberated only in Phase III); it is a guard.
+        const string first = "\"The front first, Your Majesty, since everything else in this room depends on it. ";
+        var front = new List<string>();
+        string fought = $"{AuditT45.Fighting} and {AuditT45.PhaseTwoFought}";
+        void Read(string name, string cond, string text)
+        {
+            front.Add(name);
+            t.Line(name, Lucita, first + text + "\"", new[] { "FrontHugo" }, condition: $"{fought} and {cond}");
+        }
+
+        string Kind(Front.Kind k) => Front.LastKind(k);
+        string Aim(string aim) => Front.Last(k => Front.LAim(k, aim));
+
+        // Phase II took its aim.
+        Read("FrontCitySecond", $"{Kind(Front.Kind.Won)} and {Aim("Zille")}",
+            "Zille city is ours at the second attempt. It cost us more than the first, but our flag is over the harbor.");
+        Read("FrontAuremina", $"{Kind(Front.Kind.Won)} and {Aim("Auremina")} and not {Front.LHeld("Isor")} and not {Front.LHeld("Nanta")}",
+            "Auremina is ours, and the gold hills with it. The Wehzeks have fallen back on Isor and Nanta to defend the ports.");
+        foreach ((string port, string ours) in new[] { ("Isor", "Nanta"), ("Nanta", "Isor") })
+        {
+            Read("FrontAuremina" + port, $"{Kind(Front.Kind.Won)} and {Aim("Auremina")} and not {Front.LHeld(port)} and {Front.LHeld(ours)}",
+                $"Auremina is ours, and the gold hills with it. With {ours} ours too, the Wehzeks have fallen back on {port}, the last port they hold.");
+        }
+
+        foreach (string aim in new[] { "Isor and Nanta", "Isor", "Nanta" })
+        {
+            Read("FrontPorts" + aim.Replace(" ", ""), $"{Kind(Front.Kind.Won)} and {Aim(aim)}",
+                $"{aim} {(aim.Contains(" and ") ? "are" : "is")} ours, and Smolak's convoys have nowhere left to land.");
+        }
+
+        // One port of the two: a gain, not a failure.
+        foreach ((string got, string other) in new[] { ("Nanta", "Isor"), ("Isor", "Nanta") })
+        {
+            Read("FrontPart" + got, $"{Kind(Front.Kind.Partial)} and {Front.LHeld(got)} and not {Front.LHeld(other)}",
+                $"{got} is ours, its port and its stores with it. {other} held, and the Wehzeks are pouring everything they have left into it.");
+        }
+
+        // The aim missed, another city taken.
+        string[] aims = { "Zille", "Auremina", "Isor and Nanta", "Isor", "Nanta" };
+        foreach (string aim in aims)
+        {
+            foreach (string c in Front.Cities.Concat(WarFlags.RizianTowns).Where(c => !aim.Contains(c)))
+            {
+                Read("FrontOther" + aim.Replace(" ", "") + c.Replace(" ", ""),
+                    $"{Kind(Front.Kind.Other)} and {Aim(aim)} and {Front.Last(k => Front.LGainedOnly(k, c))}",
+                    Array.IndexOf(Front.Cities, c) >= 0
+                        ? $"We did not take {aim}, but {c} is ours. The Wehzeks were watching the wrong road."
+                        : $"We did not take {aim}, but {c} is ours again. The Wehzeks will not sit in Rizian houses this winter.");
+            }
+
+            Read("FrontOther" + aim.Replace(" ", ""), $"{Kind(Front.Kind.Other)} and {Aim(aim)}",
+                $"We did not take {aim}, but the army took ground and towns elsewhere. The Wehzeks were watching the wrong road.");
+        }
+
+        // A city lost: with the aim taken, with other gains, or with nothing gained.
+        foreach (string c in Front.Cities.Concat(WarFlags.RizianTowns))
+        {
+            string id = c.Replace(" ", "");
+            string lost = Front.Last(k => Front.LLostOnly(k, c));
+            string where = Array.IndexOf(Front.Cities, c) >= 0 ? c : $"{c}, on our side of the border";
+            Read("FrontWonLoss" + id, $"{Kind(Front.Kind.WonLoss)} and {lost}",
+                $"We took what we went for, but a Wehzek counterattack took {where}. Wraclawitz will call it a draw.");
+            Read("FrontMixed" + id, $"{Kind(Front.Kind.Mixed)} and {lost}",
+                $"We gained ground in one place and lost {where} in another. The Wehzeks are counterattacking wherever we are thin.");
+            Read("FrontLost" + id, $"{Kind(Front.Kind.Lost)} and {lost}",
+                $"The Wehzeks counterattacked and took {where}. Every disturbance at home will be read in Wraclawitz as a sign that we are tiring.");
+        }
+
+        Read("FrontLossMany", Front.LastKind(Front.Kind.WonLoss, Front.Kind.Mixed, Front.Kind.Lost),
+            "The Wehzeks counterattacked, and we lost ground we had taken. Every disturbance at home will be read in Wraclawitz as a sign that we are tiring.");
+
+        // Phase II took nothing and lost nothing.
+        Read("FrontCityTwice", $"{Kind(Front.Kind.Missed)} and {Aim("Zille")}",
+            "The Wehzek garrison has held Zille city a second time. Every disturbance at home will be read in Wraclawitz as a sign " +
+            "that we are tiring.");
+        Read("FrontHills", $"{Kind(Front.Kind.Missed)} and {Aim("Auremina")}",
+            "Zille city is still ours, but the hills held. The attack on Auremina has stalled, and the Wehzeks are digging in above the mines.");
+        foreach (string aim in new[] { "Isor and Nanta", "Isor", "Nanta" })
+        {
+            Read("FrontPortsHeld" + aim.Replace(" ", ""), $"{Kind(Front.Kind.Missed)} and {Aim(aim)}",
+                $"Zille city and Auremina are still ours, but {aim} held. The Wehzeks are digging in along the coast.");
+        }
+
+        Read("FrontStill", Kind(Front.Kind.Missed),
+            "The front has barely moved since the last attack. Both sides are digging in.");
+
         t.Line("Front", Narrator,
             "Lucita laid one more folder on the table before she sat down. It bore the seal of the war council.",
-            new[] { "FrontAuremina", "FrontCitySecond", "FrontHills", "FrontCityTwice", "FrontHold", "FrontHeld", "FrontNot", "FrontFree", "FrontStopped" },
+            front.Concat(new[] { "FrontHold", "FrontHeld", "FrontNot", "FrontFree", "FrontStopped" }).ToArray(),
             condition: Declared, hooks: From(278, 956));
-        const string first = "\"The front first, Your Majesty, since everything else in this room depends on it. ";
-        t.Line("FrontAuremina", Lucita, first +
-            "Auremina is ours, and the gold hills with it. The Wehzeks have fallen back on Isor and Nanta to defend the ports.\"",
-            new[] { "FrontHugo" }, condition: AuditT45.FrontAuremina);
-        t.Line("FrontCitySecond", Lucita, first +
-            "Zille city is ours at the second attempt. It cost us more than the first, but our flag is over the harbor.\"",
-            new[] { "FrontHugo" }, condition: AuditT45.FrontCitySecond);
-        t.Line("FrontHills", Lucita, first +
-            "Zille city is still ours, but the hills held. The attack on Auremina has stalled, and the Wehzeks are digging in above " +
-            "the mines.\"", new[] { "FrontHugo" }, condition: AuditT45.FrontHillsHeld);
-        t.Line("FrontCityTwice", Lucita, first +
-            "The Wehzek garrison has held Zille city a second time. Every disturbance at home will be read in Wraclawitz as a sign " +
-            "that we are tiring.\"", new[] { "FrontHugo" }, condition: AuditT45.FrontCityHeldTwice);
         t.Line("FrontHold", Lucita, first +
             "It has been quiet since you ordered the army to hold. Both sides are using the time to dig.\"",
             new[] { "FrontHugo" }, condition: AuditT45.FrontHolding);

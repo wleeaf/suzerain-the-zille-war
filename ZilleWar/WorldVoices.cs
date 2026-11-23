@@ -81,6 +81,8 @@ internal static class WorldVoices
         }
     }
 
+    private static Front.Phase FirstPhase() => Front.Of(1);
+
     private static bool Taken(string town) => Variables.GetBool(ZilleOperation.CapturedVar(town));
     private static bool Flag(string f) => Variables.GetBool(CityEvents.Flag(f));
     private static int Lever(SupplyWar.Lever l) => Variables.GetInt(SupplyWar.Count(l));
@@ -208,11 +210,14 @@ internal static class WorldVoices
                 Variables.GetBool("ZilleWar.Decree_WarCensorship")
                     ? "Meanwhile the censors decide which figures from the front we may print, and they have not yet decided on any. We would " +
                       "like to see the cost of the war and the cost of the shells side by side. So, we suspect, would the censors."
-                    : Variables.GetBool(ZilleCampaign.ResultVar(1))
+                    : FirstPhase() is { Won: true }
                         ? "Meanwhile the palace prints its victory in Zille on the front page and its casualty lists on its railings. We would " +
                           "like to see both on the same page, next to the price of bread."
-                        : "Meanwhile the palace explains that the first phase was never meant to take Zille. We would like to see the plan it " +
-                          "was meant to follow, next to the bill for it."));
+                        : FirstPhase() is { CitiesGained.Count: > 0 } first
+                            ? $"Meanwhile the palace prints the capture of {Front.Join(first.CitiesGained)} on the front page and says little of Zille " +
+                              "city, which the first phase was sent to take. We would like to see the casualty lists on the same page."
+                            : "Meanwhile the palace explains that the first phase was never meant to take Zille in a single stroke. We would like " +
+                              "to see the plan it was meant to follow, next to the bill for it."));
         }
         else if (w == 3)
         {
@@ -550,7 +555,7 @@ internal static class WorldVoices
                 Dispatch("ArmyHolds", WorldSystems.ZilleToken, "Digging In on the Armistice Line", P(
                     hills
                         ? "The Royal Army is turning the line it reached into a frontier: trenches on the ridges north of Auremina, wire across " +
-                          "the coast road, and observation posts from which Wehzek sentries can be seen changing the guard outside Isor and Nanta."
+                          $"the coast road, and observation posts from which Wehzek sentries can be seen changing the guard outside {Front.WehzekWords}."
                         : "The Royal Army is turning the line it reached into a frontier: a ring of trenches beyond the last tram stop of Zille " +
                           "city, wire across the valley road, and observation posts from which the Wehzek positions in the hills can be watched.",
                     "Refugees from the villages beyond the line, who cheered our columns a few weeks ago, now crowd the warehouses on the " +
@@ -584,7 +589,10 @@ internal static class WorldVoices
                     "former organizers are being sought by name, and the families of Su Omina members have been ordered out of the region.",
                     "Smolak Square has been cleaned and repainted, and the President's portrait hangs over it again."));
                 News("Defeat", "V", "The Price of Pride", P(
-                    "Zille is further away today than it was before the war. Wehlen calls the lease void, the Alliance calls us aggressors, " +
+                    (Front.Held.Count > 0
+                        ? $"Our soldiers hold {Front.HeldWords}, but Zille city, the prize the King promised, is further away today than it " +
+                          "was before the war. Wehlen calls the lease void, the Alliance calls us aggressors, "
+                        : "Zille is further away today than it was before the war. Wehlen calls the lease void, the Alliance calls us aggressors, ") +
                     "and the families of Zille who hung out our flag are paying for it in Wehzek prisons.",
                     "The King owes the nation an explanation. He also owes it to the people of Zille not to forget them."));
             }

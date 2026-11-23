@@ -28,6 +28,22 @@ internal static class SweepEarlyKit
         $"{WarFlags.L(WarFlags.Ceasefire)} and {WarFlags.LNot(WarFlags.Defeated)} and {WarFlags.LNot(WarFlags.Active)} and {WarFlags.LNot(WarFlags.Liberated)}";
     public static readonly string CityHeld = WarFlags.L(WarFlags.ZilleCityHeld);
 
+    /// <summary>
+    /// A divided Zille, one set of cities at a time: Zille city is Rizian, and <c>wehzek</c> (a non-empty set of Auremina, Isor
+    /// and Nanta) is still behind the armistice line. Calls <paramref name="add"/> with a name suffix, the Lua condition (the
+    /// divided state and exactly that set), the cities held in words ("Zille city and Nanta"), the cities Wehlen keeps
+    /// ("Isor", "Auremina and Isor"), and "is"/"are" for them.
+    /// </summary>
+    public static void ForDivided(Action<string, string, string, string, string> add)
+    {
+        foreach (List<string> wehzek in Front.Subsets("Auremina", "Isor", "Nanta"))
+        {
+            var held = new[] { "Zille city" }.Concat(new[] { "Auremina", "Isor", "Nanta" }.Where(c => !wehzek.Contains(c))).ToList();
+            add(string.Concat(wehzek), $"{AuditT6.Part} and {Front.LWehzekExactly(wehzek)}", Front.Join(held), Front.Join(wehzek),
+                wehzek.Count > 1 ? "are" : "is");
+        }
+    }
+
     public static string NotSet(string v) => $"Variable[\"{v}\"] ~= true";
 
     /// <summary>Nil-safe increment of a vanilla number.</summary>

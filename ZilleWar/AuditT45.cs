@@ -30,16 +30,11 @@ internal static class AuditT45
 
     /// <summary>Phase II has been fought (two phases on the books).</summary>
     public static readonly string PhaseTwoFought = $"{Num(ZilleCampaign.VarOpsDone)} >= 2";
-    private static readonly string PhaseTwoWon = WarFlags.L(ZilleCampaign.ResultVar(2));
 
     /// <summary>At the Turn 5 council the King ordered the army to hold: no Phase II this turn.</summary>
     public static readonly string HeldThisTurn = $"{Num(WarCouncil.VarHeldTurn)} == 5";
 
-    // Turn 5, while the war is fought: one of these holds at any time.
-    public static readonly string FrontAuremina = $"{Fighting} and {PhaseTwoFought} and {Auremina} and {City}";
-    public static readonly string FrontCitySecond = $"{Fighting} and {PhaseTwoFought} and {PhaseTwoWon} and {City} and not ({Auremina})";
-    public static readonly string FrontHillsHeld = $"{Fighting} and {PhaseTwoFought} and not ({PhaseTwoWon}) and {City}";
-    public static readonly string FrontCityHeldTwice = $"{Fighting} and {PhaseTwoFought} and not ({City})";
+    // Turn 5, while the war is fought and before Phase II (after it, the scenes read Phase II itself through Front.Last).
     public static readonly string FrontHolding = $"{Fighting} and not ({PhaseTwoFought}) and {HeldThisTurn}";
     public static readonly string FrontBeforeCity = $"{Fighting} and not ({PhaseTwoFought}) and not ({HeldThisTurn}) and {City}";
     public static readonly string FrontBeforeNoCity = $"{Fighting} and not ({PhaseTwoFought}) and not ({HeldThisTurn}) and not ({City})";

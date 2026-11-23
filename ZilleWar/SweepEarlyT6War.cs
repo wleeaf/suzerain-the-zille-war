@@ -87,9 +87,9 @@ internal static class SweepEarlyT6War
             "And there it was. Zille was ours, and the Invasion of Pales was about to begin.", new[] { "#576" });
         t.Variant("BeginLost", 469, new[] { 468 }, AuditT6.Lost, Narrator,
             "And there it was. The Invasion of Pales was about to begin, before the country had finished mourning Zille.", new[] { "#576" });
-        t.Variant("BeginPart", 469, new[] { 468 }, AuditT6.Part, Narrator,
-            "And there it was. The Invasion of Pales was about to begin, with Zille city ours again and the rest of the province " +
-            "still behind the armistice line.", new[] { "#576" });
+        ForDivided((id, cond, ours, theirs, be) => t.Variant("BeginPart" + id, 469, new[] { 468 }, cond, Narrator,
+            $"And there it was. The Invasion of Pales was about to begin, with {ours} ours again and {theirs} still behind the " +
+            "armistice line.", new[] { "#576" }));
         t.Register();
     }
 
@@ -195,7 +195,7 @@ internal static class SweepEarlyT6War
                 "foundation to replace what was lost and scale up production of Land and Air Units, either to keep the army ready " +
                 "for the next conflict or to sell what Rizia has shown it can build on the international arms market.");
             Decision(name, _ => !AuditT6.CityHeldNow || WarFlow.AtWar ? null :
-                "The war in Zille ended in an armistice, with Zille city won back and the rest of the province still in Wehzek hands, and " +
+                $"The war in Zille ended in an armistice, with {Front.HeldWords} won back and {Front.WehzekWords} still in Wehzek hands, and " +
                 "the army must replace the tanks, aircraft and equipment it spent in the north. The kingdom's modern military factories " +
                 "offer a solid foundation to rebuild, and the General Staff wants the armistice line held by an army that is never short " +
                 "of anything.");
@@ -265,7 +265,7 @@ internal static class SweepEarlyT6War
                 ? P(o, AuditT6.ByP(s, "",
                     "The King's war in Zille is not yet a season old, and already he has found another. The families who buried their " +
                     "sons for Zille will now watch the trains leave for the south.",
-                    "The guns in Zille have barely fallen silent, half of the province is still behind Wehzek lines, and already the King has " +
+                    $"The guns in Zille have barely fallen silent, {Front.WehzekWords} {Front.Is(Front.Wehzek)} still behind Wehzek lines, and already the King has " +
                     "found another war. The families who buried their sons for Zille city will now watch the trains leave for the south.",
                     "The King lost one war this year and has decided to start another. The families who buried their sons for Zille, for " +
                     "nothing, will now watch the trains leave for the south."))
@@ -284,8 +284,8 @@ internal static class SweepEarlyT6War
                 ? P(o, AuditT6.ByP(s, "",
                     "The invasion comes only weeks after Rizia took Zille from Wehlen by force. \"Konstantium had hoped one war would " +
                     "satisfy the King,\" one diplomat told Geopolitico. \"It seems to have given him a taste for it.\"",
-                    "The invasion comes only weeks after Rizia's war with Wehlen over Zille ended in an armistice that left Zille city " +
-                    "in Rizian hands and the rest of the province with Wehlen. In Wraclawitz, President Wiktor Smolak's office said only " +
+                    "The invasion comes only weeks after Rizia's war with Wehlen over Zille ended in an armistice that left " +
+                    $"{Front.HeldWords} in Rizian hands and {Front.WehzekWords} with Wehlen. In Wraclawitz, President Wiktor Smolak's office said only " +
                     "that Wehlen \"takes note\" of where the Rizian army is going.",
                     "The invasion comes only weeks after Rizia's war with Wehlen over Zille ended without the Kingdom taking the city. " +
                     "\"A king who could not win in the north is looking for a victory in the south,\" one diplomat in Konstantium said."))

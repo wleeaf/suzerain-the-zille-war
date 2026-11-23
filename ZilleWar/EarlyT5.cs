@@ -98,16 +98,55 @@ internal static class EarlyT5
         t.Logic("Start", new[] { "Room" }, hooks: AtStart(CouncilConv),
             script: "SetRichPresence(\"Holding a war council\",\"Palace Rezna\",\"Porte Drazon\"); " +
                     "PlayLoopedMusic(\"R_GridlockLight\",\"R_GridlockLight_Loop\");");
-        t.Line("Room", Narrator,
-            "For the first time since my coronation, the Royal Council met under a map of Zille. Someone had pinned it over the " +
-            "fireplace and drawn the front line on it in red pencil.", new[] { "RoomWon", "RoomLost", "Room2" });
-        // The first phase of the offensive has been fought since Konstantium: the red line says how it went.
+        // The first phase of the offensive has been fought since Konstantium: the red line says how it went (the map now is the
+        // map Phase I left, since nothing else has moved since).
+        var room = new List<string>();
+        string ops1 = $"(Variable[\"{ZilleCampaign.VarOpsDone}\"] or 0) >= 1";
+        foreach (List<string> extra in Front.Subsets("Auremina", "Isor", "Nanta").Where(x => x.Count < 3))
+        {
+            string name = "RoomWon" + string.Concat(extra);
+            room.Add(name);
+            t.Line(name, Narrator,
+                $"Since the battle, the red line ran north of Zille city and around {Front.Join(extra)} as well. The harbor was ours, and " +
+                "most of the faces around the table looked as if they had finally slept.", new[] { "RoomTown" },
+                condition: $"{AuditT45.City} and " + string.Join(" and ", new[] { "Auremina", "Isor", "Nanta" }
+                    .Select(c => extra.Contains(c) ? Front.LHeld(c) : $"not {Front.LHeld(c)}")));
+        }
+
+        room.Add("RoomWon");
         t.Line("RoomWon", Narrator,
             "Since the battle, the red line ran north of Zille city. The harbor was ours, and most of the faces around the table looked " +
-            "as if they had finally slept.", new[] { "Room2" }, condition: AuditT45.City);
+            "as if they had finally slept.", new[] { "RoomTown" }, condition: AuditT45.City);
+        foreach (List<string> got in Front.Subsets("Auremina", "Isor", "Nanta"))
+        {
+            string name = "RoomOther" + string.Concat(got);
+            room.Add(name);
+            t.Line(name, Narrator,
+                $"The red line still ran south of Zille city, though it now looped around {Front.Join(got)}. Our first attack had " +
+                "taken ground, but not the harbor it was sent for.", new[] { "RoomTown" },
+                condition: $"not ({AuditT45.City}) and {ops1} and " + string.Join(" and ", new[] { "Auremina", "Isor", "Nanta" }
+                    .Select(c => got.Contains(c) ? Front.LHeld(c) : $"not {Front.LHeld(c)}")));
+        }
+
+        room.Add("RoomLost");
         t.Line("RoomLost", Narrator,
             "The red line still ran south of Zille city. Our first attack had not taken it, and nobody in the room needed reminding.",
-            new[] { "Room2" }, condition: $"not ({AuditT45.City}) and (Variable[\"{ZilleCampaign.VarOpsDone}\"] or 0) >= 1");
+            new[] { "RoomTown" }, condition: $"not ({AuditT45.City}) and {ops1}");
+        room.Add("Room2");
+        t.Line("Room", Narrator,
+            "For the first time since my coronation, the Royal Council met under a map of Zille. Someone had pinned it over the " +
+            "fireplace and drawn the front line on it in red pencil.", room.ToArray());
+        // A Rizian town the Wehzeks took in Phase I.
+        var towns = new List<string>();
+        foreach (string c in WarFlags.RizianTowns)
+        {
+            towns.Add("RoomTown" + c.Replace(" ", ""));
+            t.Line("RoomTown" + c.Replace(" ", ""), Narrator,
+                $"Only one stretch of it bent the wrong way. Around {c}, the pencil had crossed onto our side of the border.", new[] { "Room2" },
+                condition: Front.LLostOnly(1, c));
+        }
+
+        t.Logic("RoomTown", towns.Concat(new[] { "Room2" }).ToArray());
         t.Line("Room2", Narrator,
             "Laurento looked as if he had not slept since Konstantium. Perhaps he hadn't.", new[] { "AN1" });
 
@@ -164,9 +203,18 @@ internal static class EarlyT5
         // the House
         t.Line("House1", Hugo,
             "\"The House of Delegates is in uproar. Baroness de Rava's people cheered for ten minutes when the first guns sounded in Zille.\"",
-            new[] { "HouseCity", "House2" }, conversant: true);
+            new[] { "HouseCity" }.Concat(Front.Subsets("Auremina", "Isor", "Nanta").Select(x => "HouseOther" + string.Concat(x)))
+                .Concat(new[] { "House2" }).ToArray(), conversant: true);
         t.Line("HouseCity", Hugo, "\"When word came that Zille city had fallen, they cheered all over again.\"", new[] { "House2" },
             condition: AuditT45.City);
+        // Phase I missed Zille city but took other cities: the benches cheered those.
+        foreach (List<string> got in Front.Subsets("Auremina", "Isor", "Nanta"))
+        {
+            t.Line("HouseOther" + string.Concat(got), Hugo,
+                $"\"When word came that {Front.Join(got)} had fallen, they cheered all over again, even if Zille city had not.\"", new[] { "House2" },
+                condition: $"not ({AuditT45.City}) and " + string.Join(" and ", new[] { "Auremina", "Isor", "Nanta" }
+                    .Select(c => got.Contains(c) ? Front.LHeld(c) : $"not {Front.LHeld(c)}")));
+        }
         t.Line("House2", Hugo,
             "\"The Brenas members did not. Half of them have cousins on the other side of the Zille line, and the other half have " +
             "sons in the reserve.\"", new[] { "Sal1" });

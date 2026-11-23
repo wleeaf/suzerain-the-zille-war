@@ -229,9 +229,9 @@ internal static class SweepEarly
                 "with returning soldiers, and in Valenqir one of them took the stage in his reserve officer's uniform.",
                 "The outcome in Zille hangs over the last weeks of the campaign. RNC candidates speak of honor and sacrifice and very " +
                 "little of the war itself, while widows' black is a common sight in the front rows of every rally.",
-                "The armistice in Zille hangs over the last weeks of the campaign. RNC candidates promise that the city of Zille will " +
-                "never be given back and say little about the rest of the region, while widows' black is a common sight in the front " +
-                "rows of every rally."),
+                "The armistice in Zille hangs over the last weeks of the campaign. RNC candidates promise that " +
+                $"{Front.HeldWords} will never be given back and say little about {Front.WehzekWords}, while widows' black is a common " +
+                "sight in the front rows of every rally."),
             By(s,
                 "The RPP has been more careful. Manus Sazon told a crowd in Iza that his party \"stands with every soldier in Zille, " +
                 "and with every mother who wants him home,\" but RPP canvassers in Porte Drazon report doors being shut in their faces.",

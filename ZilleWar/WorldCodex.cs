@@ -188,6 +188,18 @@ internal static class WorldCodex
         ? "the line having been made the border by the Mave Nortus Treaty."
         : "pending a final settlement.";
 
+    private static string Cap(string s) => s.Length == 0 ? s : char.ToUpperInvariant(s[0]) + s.Substring(1);
+
+    /// <summary>The phase that took the city, in words ("the opening phase"), or null.</summary>
+    private static string TakenIn(string city)
+    {
+        Front.Phase p = Front.All.LastOrDefault(x => x.Gained.Contains(city));
+        return p == null ? null : ZilleCampaign.PhaseWords(p.Number);
+    }
+
+    /// <summary>The city was taken in this war and Wehlen won it back.</summary>
+    private static bool Retaken(string city) => !Taken(city) && Front.EverTaken(city);
+
     private static string P(params string[] paragraphs) => string.Join("\n\n", paragraphs.Where(p => !string.IsNullOrEmpty(p)));
 
     /// <summary>An armistice after the last phase with Zille city held is "divided" (its own words; the ceasefire text when none is given), not a defeat.</summary>
@@ -195,24 +207,6 @@ internal static class WorldCodex
         WorldSystems.Liberated ? liberated
         : WorldSystems.Defeated ? (WorldSystems.ZilleCityHeld ? divided ?? ceasefire : defeated)
         : WorldSystems.Ceasefire ? ceasefire : active;
-
-    /// <summary>The phases fought, in order, from the campaign history ("Harbor:won;Wall:lost"): phase, aim, result.</summary>
-    private static List<(int phase, string target, bool won)> History()
-    {
-        var list = new List<(int, string, bool)>();
-        string[] items = (Variables.GetString(ZilleCampaign.VarHistory) ?? string.Empty).Split(';', StringSplitOptions.RemoveEmptyEntries);
-        for (int k = 1; k <= items.Length; k++)
-        {
-            string[] kv = items[k - 1].Split(':');
-            if (kv.Length >= 2 && Enum.TryParse(kv[0], out Objective o))
-            {
-                int p = Variables.GetInt(ZilleCampaign.PhaseOfVar(k));
-                list.Add((p > 0 ? p : k, ZilleCampaign.Info(o).Target, kv[1] == "won"));
-            }
-        }
-
-        return list;
-    }
 
     // ------------------------------------------------------------------ new entries
 
@@ -258,19 +252,21 @@ internal static class WorldCodex
             Taken("Auremina") && Variables.GetBool(ZilleTreaty.VarSigned) && Variables.GetBool(ZilleTreaty.Term("Aure"))
                 ? "After the Zille War, Wehlen withdrew from Auremina and its gold hills under the Mave Nortus Treaty, and the town passed to Rizia."
                 : Taken("Auremina")
-                ? "During the Zille War, Auremina was taken by Rizian forces in Operation Northern Crown." +
+                ? $"During the Zille War, Auremina was taken by Rizian forces in {TakenIn("Auremina") ?? "one of the phases"} of Operation Northern Crown." +
                   (Flag("Auremina_MinersFreed") ? " The miners came out of the pits to greet the soldiers." : string.Empty) +
                   (Flag("Auremina_MinesSecured") ? " The mines were placed under military guard until the end of the fighting." : string.Empty)
-                : WorldSystems.Declared ? "During the Zille War, the town and its mines were the objective of the second phase of Operation Northern Crown." : null),
+                : Retaken("Auremina") ? "During the Zille War, Rizian forces took Auremina, but a Wehzek counterattack won the town back."
+                : WorldSystems.Declared ? "During the Zille War, the town and its mines were one of the objectives of Operation Northern Crown." : null),
         "Locations_Cities_Isor" => P(
             "Isor is a fishing port on the western coast of the Zille region, facing the Strait of Kreleck. Its fishing families are " +
             "among the oldest Rizian communities in the region, and many kept Rizian names and customs throughout the years of " +
             "Wehzek administration.",
             "The port's small boats have long carried passengers, fish and, by reputation, contraband across the strait.",
             Taken("Isor")
-                ? "Isor was taken by Rizian forces during Operation Northern Crown." +
+                ? $"Isor was taken by Rizian forces in {TakenIn("Isor") ?? "one of the phases"} of Operation Northern Crown." +
                   (Flag("Isor_Fishermen") ? " Its fishermen hung the old Rizian colors from their boats on the day the troops arrived." : string.Empty)
-                : WorldSystems.Declared ? "During the Zille War, Isor and Nanta were the objectives of the last phase of Operation Northern Crown." : null),
+                : Retaken("Isor") ? "During the Zille War, Rizian forces took Isor, but a Wehzek counterattack won the port back."
+                : WorldSystems.Declared ? "During the Zille War, Isor and Nanta were the last objectives of Operation Northern Crown." : null),
         _ => null,
     };
 
@@ -314,28 +310,47 @@ internal static class WorldCodex
             ? "Rizia fought largely alone. United Contana and Valgsland condemned the war and supported Wehlen with money and arms."
             : $"During the war, {JoinAnd(allies)}. United Contana and Valgsland condemned the war and supported Wehlen with money and arms.";
 
-        var ops = History();
-        string course = ops.Count == 0
-            ? null
-            : string.Join(" ", ops.Select(o => o.won
-                ? $"Phase {ZilleCampaign.Roman(o.phase)} took {o.target}."
-                : $"Phase {ZilleCampaign.Roman(o.phase)} failed to take {o.target}."));
+        var phases = Front.All.ToList();
+        string course = phases.Count == 0 ? null : string.Join(" ", phases.Select(PhaseSentence));
 
+        List<string> held = Front.Held;
+        string heldWords = Front.HeldWords;
         string end = Outcome(
-            WorldSystems.ZilleCityHeld ? "The city of Zille is under Rizian military administration, and fighting continues in the rest of the region." : null,
+            held.Count > 0 ? $"{Cap(heldWords)} {Front.Is(held)} under Rizian military administration, and fighting continues in the rest of the region." : null,
             "The war ended with the surrender of the last Wehzek garrisons and the return of the entire region to Rizian sovereignty, " +
             "ending thirty years of Wehzek administration.",
-            "The war ended in a Rizian defeat. Wehlen continues to administer the region and has since declared the Zille Agreement void. " +
+            (held.Count > 0
+                ? $"The war ended in a Rizian defeat. Wehlen kept the city of Zille and continues to administer {Front.WehzekWords}, though {heldWords} " +
+                  $"remained in Rizian hands behind the armistice line. Wehlen has since declared the Zille Agreement void. "
+                : "The war ended in a Rizian defeat. Wehlen continues to administer the region and has since declared the Zille Agreement void. ") +
             (TreatyKind == "recognized" ? "Rizia has since accepted that claim in the treaty signed at Wraclawitz." : "Rizia does not recognize that claim."),
             "The war ended in a ceasefire supervised by the Alliance of Nations, with the region divided along the line of contact" +
-            (WorldSystems.ZilleCityHeld ? " and the city of Zille in Rizian hands." : ". Wehlen continues to administer most of the region."),
-            "The war ended in an armistice under Alliance supervision, with Zille city in Rizian hands and the rest of the region in Wehzek hands.");
+            (held.Count > 0 ? $" and {heldWords} in Rizian hands." : ". Wehlen continues to administer the region."),
+            $"The war ended in an armistice under Alliance supervision, with {heldWords} in Rizian hands and {Front.WehzekWords} in Wehzek hands.");
 
         string twoWars = Variables.GetInt(WorldSystems.VarTwoWarsTurn) > 0
             ? "For part of the war, Rizia was also at war with the Grand Duchy of Pales, and the Royal Army fought on two fronts at once."
             : null;
 
         return P(opening, plan, support, course, twoWars, end);
+    }
+
+    /// <summary>One phase of the operation in the history's words: what it took, what it missed, what it lost.</summary>
+    internal static string PhaseSentence(Front.Phase p)
+    {
+        string phase = $"Phase {ZilleCampaign.Roman(p.Number)}";
+        string took = p.Won
+            ? $"took {Front.Join(p.AimTaken.Count > 0 ? p.AimTaken : p.AimTowns)}" + (p.Extra.Count > 0 ? $", and {Front.Join(p.Extra)} with it" : string.Empty)
+            : p.AimTaken.Count > 0
+                ? $"took {Front.Join(p.AimTaken)} but not {Front.Join(p.AimMissed)}" + (p.Extra.Count > 0 ? $", and {Front.Join(p.Extra)} besides" : string.Empty)
+                : p.CitiesGained.Count > 0
+                    ? $"failed to take {p.Aim} but took {Front.Join(p.CitiesGained)}"
+                    : $"failed to take {p.Aim}";
+        string retook = p.TownsRetaken.Count > 0 ? $", retaking {Front.Join(p.TownsRetaken)}" : string.Empty;
+        string lost = p.Lost.Count > 0
+            ? $"{(p.Gained.Count > 0 ? ", while" : ", and")} Wehzek counterattacks took {Front.Join(p.Lost)}"
+            : string.Empty;
+        return $"{phase} {took}{retook}{lost}.";
     }
 
     private static string JoinAnd(List<string> l) =>
@@ -351,25 +366,30 @@ internal static class WorldCodex
     private static string Edit(string name, string original)
     {
         bool lespiaPublic = WorldSystems.LespiaExposed;
+        List<string> held = Front.Held;
+        string heldWords = Front.HeldWords;
         switch (name)
         {
             case "Locations_Regions_ZilleTerritory":
                 return P(original, Declaration, Outcome(
                     "The territory has since become a front line, with Wehzek garrisons supplied across the Strait of Kreleck and " +
                     "Rizian forces advancing from Mave Nortus." +
-                    (WorldSystems.ZilleCityHeld ? " The city of Zille has been under Rizian military administration since its capture." : string.Empty),
+                    (held.Count > 0 ? $" {Cap(heldWords)} {(held.Count > 1 ? "have" : "has")} been under Rizian military administration since {(held.Count > 1 ? "their" : "its")} capture." : string.Empty),
                     "The war ended with the surrender of the last Wehzek garrisons, and the territory returned to Rizian sovereignty for " +
                     "the first time since 1927.",
-                    "The Rizian offensive failed, and Wehlen continues to administer the territory. The Wehzek government has since " +
+                    (held.Count > 0
+                        ? $"The Rizian offensive failed to take the city of Zille. Wehlen continues to administer it and {Front.WehzekWords}, while {heldWords} " +
+                          $"{Front.Is(held)} held by Rizian troops behind the armistice line. The Wehzek government has since "
+                        : "The Rizian offensive failed, and Wehlen continues to administer the territory. The Wehzek government has since ") +
                     "declared the Zille Agreement void, arguing that Rizia forfeited its claim by resorting to war. " +
                     (TreatyKind == "recognized"
                         ? "Rizia has since recognized Wehzek sovereignty over Zille in a treaty signed at Wraclawitz."
                         : "Rizia does not recognize the claim."),
                     "Fighting ended with a ceasefire supervised by the Alliance of Nations. The line of contact now runs through the " +
-                    "region" + (WorldSystems.ZilleCityHeld ? ", with the city of Zille under Rizian control," : string.Empty) +
+                    "region" + (held.Count > 0 ? $", with {heldWords} under Rizian control," : string.Empty) +
                     " and the rest of the territory remains under Wehzek administration, " + Pending,
                     "Fighting ended in an armistice under Alliance supervision. The line of contact now runs through the " +
-                    "region, with the city of Zille under Rizian control, and the rest of the territory remains under Wehzek " +
+                    $"region, with {heldWords} under Rizian control, and {Front.WehzekWords} {Front.Is(Front.Wehzek)} still under Wehzek " +
                     "administration, " + Pending));
             case "Locations_Regions_ZilleTerritory_Brenas":
             case "Locations_Regions_ZilleTerritory_RiziaImperii":
@@ -389,10 +409,16 @@ internal static class WorldCodex
                         "Recently the city was reincorporated back into Rizia after decades of Wehzek occupation, leading to a rapid growth " +
                         "as many ethnic Rizians from other parts of the country returned to their ancestral home.",
                         WorldSystems.ZilleCityHeld
-                            ? "Rizian troops have held the city since the Zille War, while Wehzek forces hold the rest of the region."
+                            ? (WorldSystems.Active
+                                ? "Rizian troops took the city during the Zille War and hold it under military administration while the fighting goes on."
+                                : $"Rizian troops have held the city since the Zille War, while Wehzek forces hold {Front.WehzekWords}.")
                             : WorldSystems.Defeated || WorldSystems.Ceasefire
-                                ? "Wehlen has kept the city since the Zille War, after the army's campaign to take it failed."
-                                : "Wehlen still holds the city, which the Royal Army is fighting to take.");
+                                ? (Retaken("Zille")
+                                    ? "Rizian troops took the city during the Zille War, but a Wehzek counterattack won it back, and Wehlen has kept it since."
+                                    : "Wehlen has kept the city since the Zille War, after the army's campaign to take it failed.")
+                                : Retaken("Zille")
+                                    ? "Rizian troops took the city early in the Zille War, but a Wehzek counterattack won it back, and the Royal Army is fighting to retake it."
+                                    : "Wehlen still holds the city, which the Royal Army is fighting to take.");
             case "Locations_Cities_Nanta":
                 return WorldSystems.Liberated
                     ? original.Replace(
@@ -405,8 +431,15 @@ internal static class WorldCodex
                     : original.Replace(
                         "Like the rest of the area, Nanta was only recently reunified with the rest of Rizia, after spending several " +
                         "decades under Wehzek occupation, a result of the 1927 Zille Agreement.",
-                        "Like the rest of the area, Nanta has been under Wehzek administration since the 1927 Zille Agreement, and its port " +
-                        "was one of Wehlen's lifelines across the strait during the Zille War.");
+                        Taken("Nanta")
+                            ? $"Like the rest of the area, Nanta passed under Wehzek administration with the 1927 Zille Agreement. Rizian forces took " +
+                              $"the city and its port in {TakenIn("Nanta") ?? "one of the phases"} of Operation Northern Crown, cutting one of Wehlen's " +
+                              "lifelines across the strait."
+                            : Retaken("Nanta")
+                                ? "Like the rest of the area, Nanta has been under Wehzek administration since the 1927 Zille Agreement. Rizian forces " +
+                                  "took it during the Zille War, but a Wehzek counterattack won the port back."
+                                : "Like the rest of the area, Nanta has been under Wehzek administration since the 1927 Zille Agreement, and its port " +
+                                  "was one of Wehlen's lifelines across the strait during the Zille War.");
             case "History_ImportantEvents_ZilleAgreement":
                 return P(original,
                     "The agreement's term expired without a handover. President Smolak's invocation of the AN Threat Mitigation Protocol " +
@@ -432,7 +465,7 @@ internal static class WorldCodex
                     "After refusing to return the Zille region at the end of its lease, Wehlen found itself at war with the Kingdom of " +
                     "Rizia. The conflict strained an economy still recovering from the civil war and coincided with renewed operations " +
                     "against the Bludish Freedom Front in the northeast." +
-                    Outcome(string.Empty, " It ended with the loss of Zille.", " Wehlen emerged from it holding Zille more firmly than before.",
+                    Outcome(string.Empty, " It ended with the loss of Zille.", held.Count > 0 ? $" Wehlen emerged from it holding the city of Zille, though {heldWords} stayed behind Rizian lines." : " Wehlen emerged from it holding Zille more firmly than before.",
                         " It ended in a ceasefire that left the region divided.", " It ended in an armistice that left Zille divided."));
             case "Characters_ForeignLeaders_WiktorSmolak":
                 return P(original,

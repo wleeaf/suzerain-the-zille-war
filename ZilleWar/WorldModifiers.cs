@@ -189,6 +189,9 @@ internal static class WorldModifiers
         ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Liberated == true && ZilleWar.Treaty_Signed == true && ZilleWar.Treaty_T_Army == true", "RiziaDLC.Country_Military_PowerProjection += 2;"),
         ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Liberated == true && ZilleWar.Treaty_Signed == true && ZilleWar.Treaty_T_Demil == true", "RiziaDLC.Country_Military_PowerProjection += 1;"),
         ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Defeated == true", "RiziaDLC.Country_Military_PowerProjection -= 4;"),
+        // turning down Smolak's ceasefire shows nerve, unless the war is then lost
+        ("PowerProjection_War_Outcome", "ZilleWar.Smolak_RefusedCeasefire == true", "RiziaDLC.Country_Military_PowerProjection += 1;"),
+        ("PowerProjection_War_Outcome", "ZilleWar.Smolak_RefusedCeasefire == true && ZilleWar.War_Zille_Defeated == true", "RiziaDLC.Country_Military_PowerProjection -= 1;"),
         ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Ceasefire == true && ZilleWar.ZilleCity_Held == true && ZilleWar.Treaty_Signed == false", "RiziaDLC.Country_Military_PowerProjection += 1;"),
     };
 

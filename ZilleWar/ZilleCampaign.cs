@@ -83,7 +83,7 @@ internal static class ZilleCampaign
         foreach (string v in new[]
                  {
                      VarOwners, VarOpsDone, VarNextObjective, VarStrength, VarLiberated, VarHistory, VarCurrentOp, VarOwnersAtStart, VarDefeated,
-                     AfterAction.VarNotesTold, VarPhase, VarPhaseDone, PhaseResume.VarLanded, VarEnemyDeadTotal, VarPlayerDeadTotal, VarEnemyDeadAtStart, VarPlayerDeadAtStart,
+                     AfterAction.VarNotesTold, VarPhase, VarPhaseDone, PhaseResume.VarLanded, PhaseResume.VarLandedAt, VarEnemyDeadTotal, VarPlayerDeadTotal, VarEnemyDeadAtStart, VarPlayerDeadAtStart,
                  })
         {
             Variables.Register(v);
@@ -97,6 +97,14 @@ internal static class ZilleCampaign
             Variables.Register(PlayerDeadVar(k));
             Variables.Register(ReportTextVar(k));
             Variables.Register(PhaseOfVar(k));
+            foreach (string v in new[] { PartialVar(k), GainedVar(k), LostVar(k), AimVar(k), GainsVar(k), LossesVar(k) })
+            {
+                Variables.Register(v);
+            }
+
+            Vanilla.Expose(PartialVar(k));
+            Vanilla.Expose(GainsVar(k), isBool: false);
+            Vanilla.Expose(LossesVar(k), isBool: false);
         }
 
         Vanilla.Expose(VarPhase, isBool: false);
@@ -106,6 +114,44 @@ internal static class ZilleCampaign
     public static string ResultVar(int k) => k == 0 ? "ZilleWar.War_Zille_Operation_Won" : $"ZilleWar.War_Zille_Operation{k}_Won";
     public static string EnemyDeadVar(int k) => $"ZilleWar.War_Zille_Operation{k}_TotalEnemy_Dead";
     public static string PlayerDeadVar(int k) => $"ZilleWar.War_Zille_Operation{k}_TotalPlayer_Dead";
+
+    // ---- what each phase did, city by city (set in OnPhaseEnded; read by the reports, the press, the councils and the calls)
+    /// <summary>Bool: the k-th phase took part of a two-city aim but not all of it (e.g. Nanta, not Isor).</summary>
+    public static string PartialVar(int k) => $"ZilleWar.War_Zille_Operation{k}_Partial";
+    /// <summary>String: the cities the k-th phase won, comma-separated (Zille cities taken, and Rizian towns won back).</summary>
+    public static string GainedVar(int k) => $"ZilleWar.War_Zille_Operation{k}_Gained";
+    /// <summary>String: the cities the k-th phase lost to Wehzek counterattacks, comma-separated (Zille cities and Rizian towns).</summary>
+    public static string LostVar(int k) => $"ZilleWar.War_Zille_Operation{k}_Lost";
+    /// <summary>String: the aim as it stood when the k-th phase began ("Isor and Nanta", or "Isor" once Nanta is held).</summary>
+    public static string AimVar(int k) => $"ZilleWar.War_Zille_Operation{k}_Aim";
+    /// <summary>Int: how many cities the k-th phase gained, and lost (for Lua conditions).</summary>
+    public static string GainsVar(int k) => $"ZilleWar.War_Zille_Operation{k}_Gains";
+    public static string LossesVar(int k) => $"ZilleWar.War_Zille_Operation{k}_Losses";
+
+    /// <summary>"Isor", "Isor and Nanta", "Zille, Auremina and Nanta".</summary>
+    public static string JoinNames(IList<string> names) =>
+        names.Count <= 1 ? names.FirstOrDefault() ?? string.Empty : $"{string.Join(", ", names.Take(names.Count - 1))} and {names[^1]}";
+
+    public static List<string> Gained(int k) => SplitList(Str(GainedVar(k)));
+    public static List<string> Lost(int k) => SplitList(Str(LostVar(k)));
+    public static bool Partial(int k) => Variables.GetBool(PartialVar(k));
+
+    private static List<string> SplitList(string s) =>
+        s.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+
+    /// <summary>The towns of an aim that Wehlen still holds ("Isor" once Nanta is ours), or the full target when none is left.</summary>
+    public static List<string> TownsLeft(ObjectiveInfo info, Dictionary<string, bool> owners) =>
+        info.Towns.Where(t => IsEnemy(owners, TownTile(t))).ToList();
+
+    /// <summary>The aim's display name as it stands now: "Isor and Nanta", "Isor", "Zille".</summary>
+    public static string AimName(ObjectiveInfo info, Dictionary<string, bool> owners)
+    {
+        List<string> left = TownsLeft(info, owners);
+        return left.Count == 0 || left.Count == info.Towns.Length ? info.Target : string.Join(" and ", left);
+    }
+
+    /// <summary>The aim's display name now, from the saved map.</summary>
+    public static string AimName(ObjectiveInfo info) => AimName(info, CurrentOwners());
 
     public static int OperationsDone => Variables.GetInt(VarOpsDone);
 
@@ -311,7 +357,7 @@ internal static class ZilleCampaign
         int zilleHeld = o.Count(kv => kv.Value && ZilleData.ByName[kv.Key].Region == "zille");
         int zilleTotal = ZilleData.Tiles.Count(t => t.Region == "zille" && t.Type == "Land");
         int riziaLost = o.Count(kv => !kv.Value && ZilleData.ByName[kv.Key].Region == "rizia");
-        return $"phases fought={OperationsDone}, phase={Phase}, next={(Available().Count > 0 ? Info(NextObjective).Target : "none")}, defeated={Defeated}, " +
+        return $"phases fought={OperationsDone}, phase={Phase}, next={(Available().Count > 0 ? AimName(Info(NextObjective)) : "none")}, defeated={Defeated}, " +
                $"strength={Strength} ({Tier}), Zille tiles held {zilleHeld}/{zilleTotal}, Rizian tiles lost {riziaLost}, " +
                $"history='{Str(VarHistory)}', liberated={Variables.GetBool(VarLiberated)}";
     }
@@ -330,6 +376,7 @@ internal static class ZilleCampaign
         Variables.Set(VarPlayerDeadAtStart, Variables.GetInt(VarPlayerDeadTotal));
         // Only a resumed phase lands Wehzek reinforcements (PhaseResume); never report an earlier phase's landing again.
         Variables.Set(PhaseResume.VarLanded, 0);
+        Variables.Set(PhaseResume.VarLandedAt, string.Empty);
     }
 
     private static int PhaseDead(string total, string atStart)
@@ -386,9 +433,10 @@ internal static class ZilleCampaign
 
         SaveOwners(owners);
         ObjectiveInfo info = Info(objective);
+        Dictionary<string, bool> before = OwnersAtStart();
+        Variables.Set(AimVar(k), AimName(info, before));
         bool won = AllTaken(info, owners);
         Variables.Set(ResultVar(k), won);
-        VictoryParade.OnPhaseResult(won);   // booked once per phase (VarPhaseDone above)
         Variables.Set(PhaseOfVar(k), phase);
         Variables.Set(EnemyDeadVar(k), PhaseDead(VarEnemyDeadTotal, VarEnemyDeadAtStart));
         Variables.Set(PlayerDeadVar(k), PhaseDead(VarPlayerDeadTotal, VarPlayerDeadAtStart));
@@ -427,7 +475,14 @@ internal static class ZilleCampaign
         Variables.Set(VarOpsDone, Math.Max(OperationsDone, k));
         string hist = Str(VarHistory);
         Variables.Set(VarHistory, $"{hist}{(string.IsNullOrEmpty(hist) ? "" : ";")}{objective}:{(won ? "won" : "lost")}");
-        AfterAction a = AfterAction.Compute(k, OwnersAtStart(), owners);
+        AfterAction a = AfterAction.Compute(k, before, owners);
+        var gained = a.CitiesTaken.Concat(a.CitiesRetaken).ToList();
+        Variables.Set(GainedVar(k), string.Join(",", gained));
+        Variables.Set(LostVar(k), string.Join(",", a.CitiesLost));
+        Variables.Set(GainsVar(k), gained.Count);
+        Variables.Set(LossesVar(k), a.CitiesLost.Count);
+        Variables.Set(PartialVar(k), !won && info.Towns.Any(t => IsEnemy(before, TownTile(t)) && !IsEnemy(owners, TownTile(t))));
+        VictoryParade.OnPhaseResult(won, gained.Count, a.CitiesLost.Count);   // booked once per phase (VarPhaseDone above)
         string report = a.FullReport(info, won);
         Variables.Set(ReportTextVar(k), report);
         if (final)
@@ -440,7 +495,7 @@ internal static class ZilleCampaign
 
         NewsWire.Batch(() => NewsWire.PublishOperationResult(k, info, won, a));
         NewsWire.OperationReports(k, info, won, a);
-        Core.Log.Msg($"Phase {phase} (offensive {k}, aim {info.Target}) ended: read {read} tiles, aim reached={won}, final={final}, " +
+        Core.Log.Msg($"Phase {phase} (offensive {k}, aim {Str(AimVar(k))}) ended: read {read} tiles, aim reached={won}, final={final}, " +
                      $"liberated={liberated && final}. {Describe()}\n{report}");
     }
 }

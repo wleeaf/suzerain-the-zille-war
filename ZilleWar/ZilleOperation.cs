@@ -163,7 +163,7 @@ internal static class ZilleOperation
             WarFragmentProperties = new WarFragmentProperties
             {
                 HubWarFragmentTitle = ZilleCampaign.PhaseTitle(phase),
-                HubWarFragmentSubtitle = $"Objective: {info.Target}",
+                HubWarFragmentSubtitle = $"Objective: {ZilleCampaign.AimName(info)}",
                 Operation = opName,
             },
             TagsProperties = vanillaFrag.TagsProperties,
@@ -179,7 +179,7 @@ internal static class ZilleOperation
         FreshDropZone = resume ? null : dropZone;
         Managers.Instance.operations.Add(warOp);
         fragment = frag;
-        Core.Log.Msg($"Built {ZilleCampaign.PhaseTitle(phase)} ({opName}, {(resume ? "resumes the map" : "fresh setup")}), aim {info.Target}: {ZilleCampaign.Describe()}");
+        Core.Log.Msg($"Built {ZilleCampaign.PhaseTitle(phase)} ({opName}, {(resume ? "resumes the map" : "fresh setup")}), aim {ZilleCampaign.AimName(info)}: {ZilleCampaign.Describe()}");
         return true;
     }
 

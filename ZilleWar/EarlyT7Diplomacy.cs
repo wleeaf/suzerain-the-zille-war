@@ -78,7 +78,7 @@ internal static class EarlyT7Diplomacy
         t.Variant("Monqiz908Lib", 908, new[] { 907 }, Lib, Laurento,
             "\"As you should, Your Majesty. Giving away another part of Rizia just as Zille has come home would be most unwise.\"", new[] { "#917" });
         t.Variant("Monqiz908Part", 908, new[] { 907 }, Part, Laurento,
-            "\"As you should, Your Majesty. Giving away another part of Rizia while half of Zille is still Wehzek would be most unwise.\"",
+            "\"As you should, Your Majesty. Giving away another part of Rizia while part of Zille is still Wehzek would be most unwise.\"",
             new[] { "#917" });
         const string busy = "\"I have never liked paying for violence, Your Majesty. But a Smolak busy with the Bluds is a Smolak who leaves Zille alone.\"";
         t.Variant("Laurento1081Lib", 1081, new[] { 1079 }, Lib, Laurento, busy, new[] { "#1098", "#1099", "#1100", "#1351" });
@@ -208,8 +208,8 @@ internal static class EarlyT7Diplomacy
             new[] { "#1370" });
         t.Choice("RPart2", "\"Zille's harbor is Rizian again. My father couldn't say as much.\"", new[] { "RPart2r" });
         t.Line("RPart2r", Beatrice,
-            "\"No, he was the one who lent it out. Half of it back is something, I suppose. My ministers will want to know when they can " +
-            "expect the other half.\"", new[] { "#1370" });
+            "\"No, he was the one who lent it out. Part of it back is something, I suppose. My ministers will want to know when they can " +
+            "expect the rest.\"", new[] { "#1370" });
 
         // lost
         t.Choice("RDef1", "\"We lost a campaign, Beatrice. Not the claim.\"", new[] { "RDef1r" });
@@ -348,7 +348,7 @@ internal static class EarlyT7Diplomacy
         // After the war: what the King asks Derdia for, and why Rizia wants missiles.
         S7 ask = new(
             "\"Zille is ours again, Supreme Wiseman, but Smolak will not forget it. I would humbly call upon your great warrior culture to help us hold it.\"",
-            "\"Smolak still holds half of Zille behind an armistice line, Supreme Wiseman. I would humbly call upon your great warrior culture for assistance.\"",
+            "\"Smolak still holds part of Zille behind an armistice line, Supreme Wiseman. I would humbly call upon your great warrior culture for assistance.\"",
             "\"Our army could not take Zille from Smolak, Supreme Wiseman. I would humbly call upon your great warrior culture for assistance.\"");
         ask.Apply(f, "Ask7", 7, new[] { 178 }, Romus, new[] { "#103" });
         f.Variant("Prayed77Lib", 77, new[] { 76 }, Lib, Azmal,

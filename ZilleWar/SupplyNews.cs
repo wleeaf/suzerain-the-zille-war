@@ -215,11 +215,15 @@ internal static class SupplyNews
                 "at least in part, by us. The palace has not said a word.",
                 "The Voice of Rizia asks a simple question. Who decided this, and when were the people of Rizia going to be told?");
             Paper("Dossier", "RH", "Wraclawitz Turns to Forgery",
-                "With its army stalled before Zille, the Smolak government has turned to paper. Its so-called Thornbourgh Dossier, two hundred " +
+                (new[] { "Zille", "Auremina", "Isor", "Nanta" }.Any(c => Variables.GetBool(ZilleOperation.CapturedVar(c)))
+                    ? "With its army giving ground in Zille, the Smolak government has turned to paper. "
+                    : "Unable to win the argument any other way, the Smolak government has turned to paper. ") +
+                "Its so-called Thornbourgh Dossier, two hundred " +
                 "pages of photographs of crates, has been dismissed by Rumburg as a forgery, and the Royal Herald sees no reason to " +
                 "doubt the word of Her Majesty Queen Beatrice.",
                 "A crate proves only that Wehzek propagandists own crates. The soldiers of the Royal Army need no help from anyone to " +
-                "beat Mr. Smolak's, and they are proving it every day.");
+                "beat Mr. Smolak's" + (new[] { "Zille", "Auremina", "Isor", "Nanta" }.Any(c => Variables.GetBool(ZilleOperation.CapturedVar(c)))
+                    ? ", and they are proving it every day." : ", and they will prove it."));
             Rep("Dossier", SuzerainTokenName.RiziaCountryRumburg, "Thornbourgh Embarrassed",
                 "The dossier has landed badly in Thornbourgh. Opposition members are demanding to know how much of the Exchequer's money " +
                 "has gone to the Bludish Freedom Front, and the Sordish ambassador has been seen leaving the Foreign Office twice in a day.",
@@ -400,7 +404,7 @@ internal static class SupplyNews
             Paper("RamiroRecalled", "G", "Lespian Diplomat Recalled from Zille",
                 "Lespia has recalled Héctor Ramiro, a political officer at its consulate in Zille, \"for family reasons,\" the Lespian " +
                 "Foreign Ministry said. No successor has been named.",
-                "Mr. Ramiro's departure follows weeks of fighting around the consulate. Diplomats in Konstantium note, without " +
+                "Mr. Ramiro's departure follows weeks of fighting in Zille. Diplomats in Konstantium note, without " +
                 "elaborating, that Prime Minister Alvarez spoke to the King of Rizia by telephone the day before."));
         Once("RamiroComp", outcome == "compensated", () =>
             Rep("RamiroComp", SuzerainTokenName.RiziaCountryLespia, "A Quiet Payment from Perla",
@@ -530,6 +534,9 @@ internal static class SupplyNews
         {
             var heldTowns = new[] { "Zille", "Auremina", "Isor", "Nanta" }
                 .Where(c => Variables.GetBool(ZilleOperation.CapturedVar(c))).ToList();
+            Dictionary<string, bool> owners = ZilleCampaign.CurrentOwners();
+            var occupied = ZilleData.Towns.Where(t => t.Side != "zille" && t.Role == "city" && ZilleCampaign.IsEnemy(owners, t.Tile))
+                .Select(t => t.Name).ToList();
             string terms = Str(SupplyWar.VarCeasefireTerms) switch
             {
                 "full" => "the extradition of Ricardus Toras to Wehlen to answer for the Smolak Square bombing, the closure of Rizia's " +
@@ -548,11 +555,12 @@ internal static class SupplyNews
                 $"aloud, so here it is: {terms}. The people of Rizia were not asked about any of it.");
             Paper("SmolakAccepted", "RH", "The Guns Fall Silent in Zille",
                 heldTowns.Count == 0
-                    ? "At His Majesty's word, the Royal Army has ceased fire in Zille. The offensive gained no ground, and the Herald asks " +
+                    ? "At His Majesty's word, the Royal Army has ceased fire in Zille. The offensive took no city, and the Herald asks " +
                       "only that the terms be read in full."
                     : "At His Majesty's word, the Royal Army has ceased fire in Zille. It holds every inch of the ground it won, and Rizian " +
                       "flags fly over " + (heldTowns.Count == 1 ? heldTowns[0] : string.Join(", ", heldTowns.Take(heldTowns.Count - 1)) +
-                      " and " + heldTowns[^1]) + ", which had not seen one in a generation.",
+                      " and " + heldTowns[^1]) + ", which had not seen one in a generation." +
+                      (occupied.Count > 0 ? $" Wehzek troops remain in {string.Join(" and ", occupied)}, and the Herald trusts they will not stay long." : string.Empty),
                 (smolak == "countered" ? $"His Majesty named the price for the quiet: {terms}. Wraclawitz agreed. " : $"Wraclawitz asked a price for the quiet: {terms}. ") +
                 "The Royal Herald will not pretend the price was nothing. It was less than the lives it spares.");
         });

@@ -219,7 +219,7 @@ internal static class EarlyT6
         t.Variant("StandLost", 257, new[] { 239 }, AuditT6.Lost, Axel,
             "\"Your army has only just come home from Zille without it, Your Majesty. I would not be in a hurry to start another war, in your place.\"", after257);
         t.Variant("StandPart", 257, new[] { 239 }, AuditT6.Part, Axel,
-            "\"Half of Zille is still behind Smolak's line, Your Majesty. Your army has a long border to watch already. I would think twice before adding the Alca to it.\"",
+            "\"Part of Zille is still behind Smolak's line, Your Majesty. Your army has a long border to watch already. I would think twice before adding the Alca to it.\"",
             after257);
 
         // The suspects.
@@ -375,7 +375,7 @@ internal static class EarlyT6
         t.Choice("Smolak", "\"Wiktor Smolak thought he could keep what was ours. Ask him how that turned out.\"", new[] { "SmolakActive", "SmolakWon" },
             condition: $"({Active} or {Liberated}) and {NotSet(AskedSmolakTaunt)}", script: Set(AskedSmolakTaunt, "true"), hooks: From(45));
         t.Line("SmolakActive", Axel,
-            "\"Smolak is still holding most of it, last I heard. And your army is still in the mud trying to take it from him.\"",
+            "\"Smolak is still holding part of it, last I heard. And your army is still in the mud trying to take it from him.\"",
             new[] { "#48" }, condition: Active);
         t.Line("SmolakWon", Axel,
             "There was a pause on the line. \"Smolak was not ready for you. Pales is.\"", new[] { "#48" }, condition: Liberated);
@@ -568,7 +568,7 @@ internal static class EarlyT6
 
         // "Wehlen, despite years of alliance, refrained from standing by us when it mattered most."
         t.Variant("WehlenPart", 200, new[] { 51 }, AuditT6.Part, Romus,
-            "\"Wehlen, which still holds half of Zille behind an armistice line, stood against us once again. It will not hold it forever.\"",
+            "\"Wehlen, which still holds part of Zille behind an armistice line, stood against us once again. It will not hold it forever.\"",
             new[] { "#341" });
         t.Variant("Wehlen", 200, new[] { 51 }, $"{Declared} and not ({Liberated}) and not ({AuditT6.Part})", Romus,
             "\"Wehlen, which still holds our people in Zille by force, stood against us once again. It will not stand for long.\"",

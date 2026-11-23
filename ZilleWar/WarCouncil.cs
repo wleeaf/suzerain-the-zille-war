@@ -73,6 +73,25 @@ internal static class WarCouncil
     private static string LostVar(string city) => $"ZilleWar.Council_Lost_{city.Replace(" ", string.Empty)}";
     private static readonly string[] RizianCities = { "Mave Nortus", "Dapalle", "Balle", "Jales" };
 
+    // ---- what the phase just fought really did, city by city (ZilleCampaign's per-phase record; Prepare sets them)
+    private const string VarLastResult = "ZilleWar.Council_LastResult";    // won | partial | other (aim missed, a city won elsewhere) | missed
+    private const string VarLastAim = "ZilleWar.Council_LastAim";          // the aim as it stood: "Isor and Nanta", "Isor", "Zille"
+    private const string VarLastPart = "ZilleWar.Council_LastPart";        // partial: the aim's city taken ("Nanta")
+    private const string VarExtraList = "ZilleWar.Council_ExtraList";      // Zille cities won outside the aim: "Auremina and Nanta"
+    private const string VarLostZList = "ZilleWar.Council_LostZList";      // Zille cities lost back to Wehlen: "Zille"
+    private const string VarGainedAny = "ZilleWar.Council_GainedAny";      // any city won (Rizian towns retaken included)
+    private const string VarLostAny = "ZilleWar.Council_LostAny";          // any city lost
+    private const string VarLastGround = "ZilleWar.Council_LastGround";    // gained | lost | none (districts, net)
+    private const string VarSetbackWhy = "ZilleWar.Council_SetbackWhy";    // town (a Rizian town held by Wehlen) | city (a Zille city lost) | men
+    private const string VarNextAim = "ZilleWar.Council_NextAim";          // the next aim's name now: "Isor" once Nanta is ours
+    private const string VarNextRetake = "ZilleWar.Council_NextRetake";    // the next aim is a city we took once and lost
+    private const string VarPortsLeft = "ZilleWar.Council_PortsLeft";      // the ports Wehlen holds: "Isor and Nanta" | "Isor" | "Nanta" | ""
+    private const string VarLandedAt = "ZilleWar.Council_LandedAt";        // where Wehzek reinforcements came ashore before the last phase
+    private static string LostNowVar(string city) => $"ZilleWar.Council_LostNow_{city.Replace(" ", string.Empty)}";
+    private static string BackVar(string city) => $"ZilleWar.Council_Retaken_{city.Replace(" ", string.Empty)}";
+    private static readonly string[] ZilleCities = AfterAction.ZilleCities;
+    private static readonly string[] AimNames = { "Zille", "Auremina", "Isor and Nanta", "Isor", "Nanta" };
+
     // ---- asked this council (reset at start)
     private const string AskedForces = "ZilleWar.Council_Asked_Forces";
     private const string AskedGarrison = "ZilleWar.Council_Asked_Garrison";
@@ -182,7 +201,9 @@ internal static class WarCouncil
                      VarExtraTaken, VarVinaAsked, VarFought, VarForm, VarAdapt, VarLastAdapt, VarMatter, VarPhase, VarLastWon, VarLastPhase,
                      VarGarrTold, VarBarrages,
                      AskedForces, AskedGarrison, AskedFronts, HubVisited,
-                 }.Concat(RizianCities.Select(LostVar)))
+                     VarLastResult, VarLastAim, VarLastPart, VarExtraList, VarLostZList, VarGainedAny, VarLostAny, VarLastGround,
+                     VarSetbackWhy, VarNextAim, VarNextRetake, VarPortsLeft, VarLandedAt,
+                 }.Concat(RizianCities.Select(LostVar)).Concat(RizianCities.Concat(ZilleCities).SelectMany(c => new[] { LostNowVar(c), BackVar(c) })))
         {
             Variables.Register(v);
         }
@@ -291,7 +312,7 @@ internal static class WarCouncil
             GameState.AddCustomStoryFragment(new CustomConversationFragment(name, SuzerainStoryPackInfo.Rizia, SuzerainTokenName.RiziaCityPorteDrazon,
                 first ? "Briefing on the Liberation of Zille" : $"{ZilleCampaign.PhaseTitle(ZilleCampaign.PhaseForTurn(turn))} Briefing",
                 "Council Chambers, Palas Rezna", ConversationData.ConversationType.SecurityAndOrder, Conv));
-            Core.Log.Msg($"War Council offered: {name} ({(first ? "briefing" : "next steps")}, phase {ZilleCampaign.PhaseForTurn(turn)}, aim {next.Target}).");
+            Core.Log.Msg($"War Council offered: {name} ({(first ? "briefing" : "next steps")}, phase {ZilleCampaign.PhaseForTurn(turn)}, aim {ZilleCampaign.AimName(next)}).");
         }
         catch (Exception ex)
         {
@@ -357,6 +378,8 @@ internal static class WarCouncil
 
         int k = ZilleCampaign.OperationsDone;
         Variables.Set(VarFought, k);
+        Variables.Set(VarNextAim, ZilleCampaign.AimName(next, owners));
+        Variables.Set(VarPortsLeft, string.Join(" and ", ZilleCampaign.TownsLeft(ZilleCampaign.Info(Objective.Ports), owners)));
         string[] hist = ZilleCampaign.Str(ZilleCampaign.VarHistory).Split(';', StringSplitOptions.RemoveEmptyEntries);
         string lastObjective = hist.Length > 0 ? hist[^1].Split(':')[0] : string.Empty;
         Variables.Set(VarLastObjective, lastObjective);
@@ -367,13 +390,45 @@ internal static class WarCouncil
         int enemyDead = k > 0 ? Variables.GetInt(ZilleCampaign.EnemyDeadVar(k)) : 0;
         int tier = playerDead >= 6 || (playerDead >= 3 && playerDead > enemyDead) ? 2 : playerDead >= 3 || playerDead > enemyDead ? 1 : 0;
         Variables.Set(VarLossTier, tier);
+
+        // What the phase just fought really did: the aim taken whole, in part, missed with a city won elsewhere, or missed;
+        // the cities won and lost; the ground.
+        ObjectiveInfo lastInfo = Enum.TryParse(lastObjective, out Objective lo) ? ZilleCampaign.Info(lo) : null;
+        bool lastWon = Variables.GetBool(VarLastWon);
+        (List<string> gained, List<string> lost, string lastAim, int tilesGained, int tilesLost) = LastPhaseFacts(k, lastInfo, lastWon);
+        string[] aimTowns = lastAim.Split(" and ", StringSplitOptions.RemoveEmptyEntries);
+        List<string> aimPart = gained.Where(aimTowns.Contains).ToList();
+        List<string> extras = ZilleCities.Where(c => gained.Contains(c) && !aimTowns.Contains(c)).ToList();
+        Variables.Set(VarLastAim, lastAim);
+        Variables.Set(VarLastResult, k <= 0 ? string.Empty : lastWon ? "won" : aimPart.Count > 0 ? "partial" : gained.Count > 0 ? "other" : "missed");
+        Variables.Set(VarLastPart, ZilleCampaign.JoinNames(aimPart));
+        Variables.Set(VarExtraList, ZilleCampaign.JoinNames(extras));
+        Variables.Set(VarLostZList, ZilleCampaign.JoinNames(ZilleCities.Where(lost.Contains).ToList()));
+        Variables.Set(VarGainedAny, gained.Count > 0);
+        Variables.Set(VarLostAny, lost.Count > 0);
+        Variables.Set(VarLastGround, tilesLost > tilesGained ? "lost" : tilesGained == 0 && tilesLost == 0 ? "none" : "gained");
+        foreach (string c in RizianCities.Concat(ZilleCities))
+        {
+            Variables.Set(LostNowVar(c), lost.Contains(c));
+            Variables.Set(BackVar(c), gained.Contains(c) && RizianCities.Contains(c));
+        }
+
+        // A city we took once and lost again is a retaking, not a first attempt.
+        var lostEver = new HashSet<string>(lost);
+        for (int j = 1; j < k; j++)
+        {
+            lostEver.UnionWith(ZilleCampaign.Lost(j));
+        }
+
+        Variables.Set(VarNextRetake, k > 0 && ZilleCampaign.TownsLeft(next, owners).Any(lostEver.Contains));
+        string landedAt = ZilleCampaign.Str(PhaseResume.VarLandedAt);
+        Variables.Set(VarLandedAt, landedAt);
+
         bool lostOurOwn = RizianCities.Any(c => Variables.GetBool(LostVar(c)));
-        Variables.Set(VarSetback, !first && (lostOurOwn || tier == 2));
-        bool extra = Enum.TryParse(lastObjective, out Objective lo) &&
-                     ZilleData.Towns.Any(tw => tw.Role == "city" && tw.Side == "zille" && !ZilleCampaign.Info(lo).Towns.Contains(tw.Name) &&
-                                               Variables.GetBool(ZilleOperation.CapturedVar(tw.Name)) &&
-                                               ZilleCampaign.Sequence.SkipWhile(o => o != lo).Skip(1).Any(o => ZilleCampaign.Info(o).Towns.Contains(tw.Name)));
-        Variables.Set(VarExtraTaken, extra);
+        bool lostCity = lost.Any(ZilleCities.Contains);
+        Variables.Set(VarSetback, !first && (lostOurOwn || lostCity || tier == 2));
+        Variables.Set(VarSetbackWhy, lostOurOwn ? "town" : lostCity ? "city" : "men");
+        Variables.Set(VarExtraTaken, (lastWon || aimPart.Count > 0) && extras.Count > 0);
 
         // The war plan, carried onto the next objective (and how it was carried onto the last one).
         Approach form = Form(WarPlan, next.Id, out string adapt);
@@ -386,6 +441,56 @@ internal static class WarCouncil
         Variables.Set(VarMatter, Variables.GetBool(VarWaited) ? "Rest" : (n % 3) switch { 1 => "Morale", 2 => "Supply", _ => "Reinforce" });
 
         LapseStandingOrders();
+    }
+
+    /// <summary>
+    /// The k-th phase's cities won and lost, its aim as it stood, and the districts won and lost. The cities and the aim come from
+    /// ZilleCampaign's per-phase record; a save from before it had none, so they are worked out from the map the phase started from
+    /// (kept until the next phase is set up) or, failing that, from the result alone. The districts always come from the map.
+    /// </summary>
+    private static (List<string> gained, List<string> lost, string aim, int tilesGained, int tilesLost) LastPhaseFacts(int k, ObjectiveInfo info, bool won)
+    {
+        if (k <= 0)
+        {
+            return (new List<string>(), new List<string>(), string.Empty, 0, 0);
+        }
+
+        // The start map is the last phase's while no later phase has been set up.
+        bool mapFits = ZilleCampaign.CurrentOperation().k == k;
+        Dictionary<string, bool> before = ZilleCampaign.OwnersAtStart(), now = ZilleCampaign.CurrentOwners();
+        int tg = 0, tl = 0;
+        if (mapFits)
+        {
+            foreach ((string tile, bool ours) in now)
+            {
+                bool was = before.TryGetValue(tile, out bool w) && w;
+                tg += ours && !was ? 1 : 0;
+                tl += !ours && was ? 1 : 0;
+            }
+        }
+
+        string aim = ZilleCampaign.Str(ZilleCampaign.AimVar(k));
+        if (!string.IsNullOrEmpty(aim))
+        {
+            return (ZilleCampaign.Gained(k), ZilleCampaign.Lost(k), aim, tg, tl);
+        }
+
+        var gained = new List<string>();
+        var lost = new List<string>();
+        if (mapFits)
+        {
+            foreach (TownSpec t in ZilleData.Towns.Where(t => t.Role == "city" && t.Tile != null))
+            {
+                bool was = before.TryGetValue(t.Tile, out bool w) && w, isOurs = now.TryGetValue(t.Tile, out bool n) && n;
+                (isOurs && !was ? gained : !isOurs && was ? lost : null)?.Add(t.Name);
+            }
+        }
+        else if (won && info != null)
+        {
+            gained.AddRange(info.Towns);
+        }
+
+        return (gained, lost, info == null ? string.Empty : mapFits ? ZilleCampaign.AimName(info, before) : info.Target, tg, tl);
     }
 
     /// <summary>The council has given its order and nothing that belongs before the war is left: open the war table.</summary>
@@ -539,6 +644,24 @@ internal static class WarCouncil
         }
     }
 
+    /// <summary>Every non-empty subset of the items, each in the items' order.</summary>
+    private static IEnumerable<List<string>> Subsets(IList<string> items)
+    {
+        for (int mask = 1; mask < 1 << items.Count; mask++)
+        {
+            yield return items.Where((_, i) => (mask & (1 << i)) != 0).ToList();
+        }
+    }
+
+    /// <summary>A node-name-safe key for a city list ("Auremina and Nanta" becomes "AureminaNanta").</summary>
+    private static string Key(string names) => new string(names.Replace(" and ", string.Empty).Where(char.IsLetter).ToArray());
+
+    private static string Plural(string names) => names.Contains(" and ") ? "are" : "is";
+
+    private static string Result(string r) => Eq(VarLastResult, r);
+    private static string AimWas(string aim) => Eq(VarLastAim, aim);
+    private static string AimIs(string aim) => Eq(VarNextAim, aim);
+
     // ------------------------------------------------------------------ the conversation
 
     private static void BuildConversation()
@@ -556,7 +679,7 @@ internal static class WarCouncil
             $"if {HugoHere} then AddConversant(\"{Hugo}\") end; if {ElenaHere} then AddConversant(\"{Elena}\") end; " +
             $"if {VinaHere} then AddConversant(\"{Vina}\") end; end; " +
             $"if {LaurentoHere} then AddConversant(\"{Laurento}\") end; ";
-        t.Logic("Start", new[] { "Truce", "Open1", "Open2Quiet", "Open2Held", "Open2Setback", "Open2Extra", "Open2MissedZ", "Open2MissedA", "Open2Aure", "Open2" }, hooks: AtStart(Conv), script: reset + conversants);
+        t.Logic("Start", new[] { "Truce", "Open1", "Open2Quiet", "Open2Held" }.Concat(OpenMap()).ToArray(), hooks: AtStart(Conv), script: reset + conversants);
 
         // The war ended earlier this turn (a ceasefire was accepted on the telephone): the briefing becomes a short stand-down.
         t.Line("Truce", Narrator,
@@ -586,6 +709,93 @@ internal static class WarCouncil
         t.Register();
     }
 
+    /// <summary>
+    /// The map at a progress meeting, as the last phase really left it: cities lost back, our own towns overrun, part of the aim
+    /// taken, a city won off the plan, the aim missed (with ground gained, lost or neither), the hills taken, or a plain advance.
+    /// Returns the lines' names in the order they are tried.
+    /// </summary>
+    private static IEnumerable<string> OpenMap()
+    {
+        var names = new List<string>();
+        const string music = "PlaySceneMusic(Security);";
+        string fought = And(Later, Fought, IsNot(VarWaited));
+        void L(string name, string cond, string text)
+        {
+            names.Add(name);
+            t.Line(name, Narrator, text, new[] { "Open2b" }, condition: cond == null ? fought : And(fought, cond), sequence: music);
+        }
+
+        foreach (string lost in Subsets(ZilleCities).Select(ZilleCampaign.JoinNames))
+        {
+            L($"Open2LostG{Key(lost)}", And(Eq(VarLostZList, lost), Is(VarGainedAny)),
+                $"The map in the Council Chambers had been redrawn, and not all of it in our favor. Our golden tokens had gone forward in " +
+                $"places, but silver ones stood in {lost} again.");
+            L($"Open2Lost{Key(lost)}", Eq(VarLostZList, lost),
+                $"The map in the Council Chambers had been redrawn against us. Silver tokens stood in {lost} again, and nobody in the room " +
+                "was looking at that part of the table.");
+        }
+
+        string ourTownLost = string.Join(" or ", RizianCities.Select(c => $"({Is(LostNowVar(c))})"));
+        L("Open2SetbackG", And(ourTownLost, Is(VarGainedAny)),
+            "The map in the Council Chambers had been redrawn since I last saw it. Some of the golden tokens had gone forward. " +
+            "Others had been swept off the table, and a few silver ones now stood on our side of the line.");
+        L("Open2Setback", ourTownLost,
+            "The map in the Council Chambers had been redrawn since I last saw it, and not in our favor. A few silver tokens now stood on " +
+            "our side of the border.");
+        L("Open2PartNanta", And(Result("partial"), Eq(VarLastPart, "Nanta")),
+            "On the map in the Council Chambers, a golden flag stood over Nanta at last. Isor, on the west coast, was still ringed with silver.");
+        L("Open2PartIsor", And(Result("partial"), Eq(VarLastPart, "Isor")),
+            "On the map in the Council Chambers, a golden flag stood over Isor at last. Nanta, on the north coast, was still ringed with silver.");
+        foreach (string extra in Subsets(ZilleCities).Select(ZilleCampaign.JoinNames))
+        {
+            L($"Open2Other{Key(extra)}", And(Result("other"), Eq(VarExtraList, extra)),
+                $"The map in the Council Chambers had been redrawn, though not where the Staff had planned. Golden flags stood over {extra}, " +
+                "but the objective itself was still ringed with silver.");
+        }
+
+        L("Open2OtherOwn", Result("other"),
+            "The map in the Council Chambers had been redrawn. Our golden tokens had won back ground on our own side of the border, but the " +
+            "objective itself was still ringed with silver.");
+        L("Open2Extra", Is(VarExtraTaken),
+            "The map in the Council Chambers had been redrawn twice since I last saw it: once for the objective, and once more for everything " +
+            "our columns had taken beyond it.");
+        L("Open2Pushed", And(Result("missed"), Eq(VarLastGround, "lost")),
+            "The map in the Council Chambers had been redrawn, and not in our favor. The golden tokens stood farther back than I had left " +
+            "them, and not one town had changed hands.");
+        L("Open2Still", And(Result("missed"), Eq(VarLastGround, "none")),
+            "The map in the Council Chambers had hardly changed since I last saw it. The front ran where it had run a month before, and every " +
+            "town on it still flew the same flag.");
+        L("Open2MissedZ", And(Result("missed"), Eq(VarLastObjective, "Harbor")),
+            "The map in the Council Chambers had hardly changed. The golden tokens had reached the river below Zille, " +
+            "and there they had stopped. The silver ones still ringed the city.");
+        L("Open2MissedA", And(Result("missed"), Eq(VarLastObjective, "Wall")),
+            "On the map in the Council Chambers, the golden tokens had climbed into the foothills and stopped short of Auremina. Someone had " +
+            "drawn the new line in pencil, as if nobody quite trusted it yet.");
+        foreach (string aim in new[] { "Isor and Nanta", "Isor", "Nanta" })
+        {
+            L($"Open2MissedP{Key(aim)}", And(Result("missed"), AimWas(aim)),
+                $"On the map in the Council Chambers, the golden tokens had come up the coast road and stopped short of {aim}. The silver ones " +
+                $"still held {(aim.Contains(" and ") ? "both ports" : "the port")}.");
+        }
+
+        string wallWon = And(Result("won"), Eq(VarLastObjective, "Wall"));
+        L("Open2Aure", And(wallWon, Eq(VarPortsLeft, "Isor and Nanta")),
+            "Someone had moved the golden tokens up into the hills on the map in the Council Chambers. The silver ones that were left stood " +
+            "along the northern coast, around Isor and Nanta.");
+        L("Open2AureIsor", And(wallWon, Eq(VarPortsLeft, "Isor")),
+            "Someone had moved the golden tokens up into the hills on the map in the Council Chambers. The silver ones that were left stood " +
+            "on the west coast, around Isor.");
+        L("Open2AureNanta", And(wallWon, Eq(VarPortsLeft, "Nanta")),
+            "Someone had moved the golden tokens up into the hills on the map in the Council Chambers. The silver ones that were left stood " +
+            "around Nanta, on the north coast.");
+        names.Add("Open2");
+        t.Line("Open2", Narrator,
+            "The map in the Council Chambers had been redrawn since I last saw it. The golden tokens had crossed the border, and the " +
+            "silver ones had been pushed back toward the northern coast.",
+            new[] { "Open2b" }, sequence: music);
+        return names;
+    }
+
     private static void Arrival()
     {
         // The first council: straight back from Konstantium.
@@ -602,38 +812,11 @@ internal static class WarCouncil
             "The map in the Council Chambers looked exactly as I had left it. The golden tokens still stood on our side of the border, " +
             "and the silver ones had not moved an inch.",
             new[] { "Open2b" }, condition: And(Later, Not(Fought)), sequence: "PlaySceneMusic(Security);");
-        t.Line("Open2", Narrator,
-            "The map in the Council Chambers had been redrawn since I last saw it. The golden tokens had crossed the border, and the " +
-            "silver ones had been pushed back toward the sea.",
-            new[] { "Open2b" }, sequence: "PlaySceneMusic(Security);");
-        t.Line("Open2Setback", Narrator,
-            "The map in the Council Chambers had been redrawn since I last saw it. Some of the golden tokens had crossed the border. " +
-            "Others had been swept off the table, and a few silver ones now stood on our side of the line.",
-            new[] { "Open2b" }, condition: And(Later, Is(VarSetback)), sequence: "PlaySceneMusic(Security);",
-            hooks: null);
         // Each progress meeting finds the map changed in its own way: held, overrun, short of the aim, or past it.
         t.Line("Open2Held", Narrator,
             "Nothing on the map in the Council Chambers had moved in a month. Someone had dusted the tokens, and the golden ones still stood " +
             "exactly where the last phase had left them.",
             new[] { "Open2b" }, condition: And(Later, Fought, Is(VarWaited)), sequence: "PlaySceneMusic(Security);");
-        t.Line("Open2Extra", Narrator,
-            "The map in the Council Chambers had been redrawn twice since I last saw it: once for the objective, and once more for everything " +
-            "our columns had taken beyond it.",
-            new[] { "Open2b" }, condition: And(Later, Is(VarExtraTaken)), sequence: "PlaySceneMusic(Security);");
-        t.Line("Open2MissedZ", Narrator,
-            "The map in the Council Chambers had hardly changed. The golden tokens had reached the river below Zille, " +
-            "and there they had stopped. The silver ones still ringed the city.",
-            new[] { "Open2b" }, condition: And(Later, Fought, IsNot(VarLastWon), $"{V(VarLastObjective)} == \"Harbor\""),
-            sequence: "PlaySceneMusic(Security);");
-        t.Line("Open2MissedA", Narrator,
-            "On the map in the Council Chambers, the golden tokens had climbed into the foothills and stopped short of Auremina. Someone had " +
-            "drawn the new line in pencil, as if nobody quite trusted it yet.",
-            new[] { "Open2b" }, condition: And(Later, Fought, IsNot(VarLastWon), $"{V(VarLastObjective)} == \"Wall\""),
-            sequence: "PlaySceneMusic(Security);");
-        t.Line("Open2Aure", Narrator,
-            "Someone had moved the golden tokens up into the hills on the map in the Council Chambers. The silver ones that were left stood " +
-            "along the northern coast, around Isor and Nanta.",
-            new[] { "Open2b" }, condition: And(Later, Fought, $"{V(VarLastObjective)} == \"Wall\""), sequence: "PlaySceneMusic(Security);");
         t.Logic("Open2b", new[] { "Open2Laurento3", "Open2Laurento", "Salute" });
         t.Line("Open2Laurento3", Narrator,
             "Laurento Esquibel sat at the far end of the table. His folder of cables from Konstantium had grown a good deal thicker since last month.",
@@ -770,44 +953,124 @@ internal static class WarCouncil
             ($"{Num(VarLastPhase)} >= 2", "\"Your Majesty. The second phase is over, and here is where it left us.\""),
             (null, "\"Your Majesty. The reports from the first phase are in.\""));
         string lastObj(string o) => $"{V(VarLastObjective)} == \"{o}\"";
-        string missedAim = IsNot(VarLastWon);
-        t.Logic("ResWhat", new[] { "ResMissZ2", "ResMissZ", "ResMissA", "ResMissP", "ResHarborLate", "ResHarbor", "ResWall", "ResOther" });
-        // A missed aim is a setback in a war that goes on: the next phase goes in from the ground we hold.
-        t.Line("ResMissZ2", Carlos,
+        string won = Result("won"), missedAim = And(Not(Result("won")), Not(Result("partial")));
+        string again = $"{Num(VarFought)} >= 2";
+        var what = new List<string>();
+        void R(string name, string cond, string text)
+        {
+            what.Add(name);
+            t.Line(name, Carlos, text, new[] { "ResExtra" }, condition: cond);
+        }
+
+        // The whole aim taken.
+        R("ResHarborLate", And(won, lastObj("Harbor"), again),
+            "\"Zille is ours at last. It took two phases instead of one, but the harbor, the station and their headquarters are in our hands.\"");
+        R("ResHarbor", And(won, lastObj("Harbor")),
+            "\"Zille is ours. The harbor, the railway station and the Wehzek headquarters. Their whole southern front has lost its port.\"");
+        string wallWon = And(won, lastObj("Wall"));
+        R("ResWall", And(wallWon, Eq(VarPortsLeft, "Isor and Nanta")),
+            "\"Auremina has fallen, and the gold hills with it. The roads north to Isor and Nanta are open.\"");
+        R("ResWallIsor", And(wallWon, Eq(VarPortsLeft, "Isor")),
+            "\"Auremina has fallen, and the gold hills with it. The road west to Isor is open, and Isor is the last port they have.\"");
+        R("ResWallNanta", And(wallWon, Eq(VarPortsLeft, "Nanta")),
+            "\"Auremina has fallen, and the gold hills with it. The road north to Nanta is open, and Nanta is the last port they have.\"");
+        R("ResWallAll", wallWon, "\"Auremina has fallen, and the gold hills with it. The mines are ours.\"");
+        foreach (string aim in new[] { "Isor and Nanta", "Isor", "Nanta" })
+        {
+            R($"ResPorts{Key(aim)}", And(won, AimWas(aim)),
+                $"\"{aim} {Plural(aim)} ours, Your Majesty. Wehlen has no port left on that coast to land its convoys.\"");
+        }
+
+        // Part of the aim.
+        R("ResPartNanta", And(Result("partial"), Eq(VarLastPart, "Nanta")),
+            "\"Nanta is ours, Your Majesty, and with it the harbor where their convoys landed. Isor held out. Its garrison is still dug in on " +
+            "the west coast.\"");
+        R("ResPartIsor", And(Result("partial"), Eq(VarLastPart, "Isor")),
+            "\"Isor is ours, Your Majesty. Nanta held out, and its coastal guns are still firing. Their convoys still have one port to land at.\"");
+
+        // The aim missed, but a city won off the plan.
+        foreach (string aim in AimNames)
+        {
+            string[] aimTowns = aim.Split(" and ");
+            foreach (string extra in Subsets(ZilleCities.Where(c => !aimTowns.Contains(c)).ToList()).Select(ZilleCampaign.JoinNames))
+            {
+                R($"ResOther{Key(aim)}_{Key(extra)}", And(Result("other"), AimWas(aim), Eq(VarExtraList, extra)),
+                    $"\"We did not take {aim}, Your Majesty. But {extra} fell to us instead, and {(Plural(extra) == "are" ? "they are" : "it is")} ours now.\"");
+            }
+        }
+
+        // The aim missed: the line pushed back, or not moved at all. A missed aim is a setback in a war that goes on.
+        foreach (string aim in AimNames)
+        {
+            R($"ResBack{Key(aim)}", And(missedAim, AimWas(aim), Eq(VarLastGround, "lost")),
+                $"\"We did not take {aim}, Your Majesty. Their counterattacks drove us back, and our line is behind where it stood a month ago.\"");
+            R($"ResStill{Key(aim)}", And(Result("missed"), AimWas(aim), Eq(VarLastGround, "none")),
+                $"\"We did not take {aim}, Your Majesty. The front has hardly moved, and not one town on it has changed hands.\"");
+        }
+
+        R("ResMissZ2", And(missedAim, lastObj("Harbor"), again),
             "\"We have failed to take Zille a second time, Your Majesty. Our lines are closer than they were, but the harbor and the station " +
-            "are still theirs.\"", new[] { "ResExtra" }, condition: And(missedAim, lastObj("Harbor"), $"{Num(VarFought)} >= 2"));
-        t.Line("ResMissZ", Carlos,
+            "are still theirs.\"");
+        R("ResMissZ", And(missedAim, lastObj("Harbor")),
             "\"We did not take Zille. The columns reached the river crossings and the outskirts, but the harbor and the station are still in " +
-            "Wehzek hands. The next phase goes in from the ground we hold.\"", new[] { "ResExtra" }, condition: And(missedAim, lastObj("Harbor")));
-        t.Line("ResMissA", Carlos,
-            "\"We did not take Auremina. We are in the foothills and among the first mine heads, but the town and the ridges above it are still theirs.\"",
-            new[] { "ResExtra" }, condition: And(missedAim, lastObj("Wall")));
-        t.Line("ResMissP", Carlos,
-            "\"The ports are still theirs, Your Majesty. Our columns are on the coast road, but Isor and Nanta are still in Wehzek hands.\"",
-            new[] { "ResExtra" }, condition: missedAim);
-        t.Line("ResHarborLate", Carlos,
-            "\"Zille is ours at last. It took two phases instead of one, but the harbor, the station and their headquarters are in our hands.\"",
-            new[] { "ResExtra" }, condition: And(lastObj("Harbor"), $"{Num(VarFought)} >= 2"));
-        t.Line("ResHarbor", Carlos,
-            "\"Zille is ours. The harbor, the railway station and the Wehzek headquarters. Their whole southern front has lost its port.\"",
-            new[] { "ResExtra" }, condition: $"{V(VarLastObjective)} == \"Harbor\"");
-        t.Line("ResWall", Carlos,
-            "\"Auremina has fallen, and the gold hills with it. The roads north to Isor and Nanta are open.\"",
-            new[] { "ResExtra" }, condition: $"{V(VarLastObjective)} == \"Wall\"");
-        t.Line("ResOther", Carlos, "\"Our last offensive took everything we asked of it.\"", new[] { "ResExtra" });
-        Opt("ResExtra", Carlos,
-            "\"And we took more than the Staff had planned for. Some of the towns beyond the objective gave up as soon as they saw our flags.\"",
-            Is(VarExtraTaken), "ResLostMave");
-        Opt("ResLostMave", Carlos,
-            "\"But while we were pushing west, the enemy took Mave Nortus. Their flag is flying over our own border town.\"",
-            Is(LostVar("Mave Nortus")), "ResLostDapalle");
-        Opt("ResLostDapalle", Carlos,
-            "\"They have also broken into Dapalle. Our headquarters had to fall back to Balle.\"",
-            Is(LostVar("Dapalle")), "ResLostBalle");
-        Opt("ResLostBalle", Carlos, "\"Balle is in Wehzek hands. They are closer to the heart of Brenas than they have ever been.\"",
-            Is(LostVar("Balle")), "ResLostJales");
-        Opt("ResLostJales", Carlos, "\"And they have landed at Jales. I don't yet know how they got past the fleet.\"",
-            Is(LostVar("Jales")), "ResLosses");
+            "Wehzek hands. The next phase goes in from the ground we hold.\"");
+        R("ResMissA", And(missedAim, lastObj("Wall")),
+            "\"We did not take Auremina. We are in the foothills and among the first mine heads, but the town and the ridges above it are still theirs.\"");
+        R("ResMissPIsor", And(missedAim, AimWas("Isor")),
+            "\"Isor is still theirs, Your Majesty. Our columns are on the coast road, but the port is still in Wehzek hands.\"");
+        R("ResMissPNanta", And(missedAim, AimWas("Nanta")),
+            "\"Nanta is still theirs, Your Majesty. Our columns are on the coast road, but the port and its guns are still in Wehzek hands.\"");
+        R("ResMissP", missedAim,
+            "\"The ports are still theirs, Your Majesty. Our columns are on the coast road, but Isor and Nanta are still in Wehzek hands.\"");
+        R("ResOther", null, "\"Our last offensive took everything we asked of it.\"");
+        t.Logic("ResWhat", what.ToArray());
+
+        // Beyond the aim: the cities taken past it, the Zille cities lost back, and our own towns lost, taken back or still occupied.
+        var extraNames = new List<string>();
+        foreach (string extra in Subsets(ZilleCities).Select(ZilleCampaign.JoinNames))
+        {
+            string name = $"ResExtra{Key(extra)}";
+            extraNames.Add(name);
+            bool many = Plural(extra) == "are";
+            t.Line(name, Carlos,
+                $"\"And we took more than the Staff had planned for. The garrison{(many ? "s" : "")} of {extra} gave up as soon as " +
+                $"{(many ? "they" : "it")} saw our flags.\"", new[] { "ResLostZZille" }, condition: And(Is(VarExtraTaken), Eq(VarExtraList, extra)));
+        }
+
+        t.Logic("ResExtra", extraNames.Append("ResLostZZille").ToArray());
+        var lostTexts = new Dictionary<string, string>
+        {
+            ["Zille"] = "we have lost Zille, Your Majesty. They counterattacked into the city, and the harbor is theirs again.",
+            ["Auremina"] = "we have lost Auremina. They came back over the ridges, and the mines are theirs again.",
+            ["Isor"] = "we have lost Isor. They came back along the coast road, and the port is theirs again.",
+            ["Nanta"] = "we have lost Nanta. Fresh troops came off their ships, and the port is theirs again.",
+        };
+        for (int i = 0; i < ZilleCities.Length; i++)
+        {
+            string c = ZilleCities[i], name = $"ResLostZ{Key(c)}";
+            string next = i + 1 < ZilleCities.Length ? $"ResLostZ{Key(ZilleCities[i + 1])}" : "ResOwnMaveNortus";
+            t.Logic(name, new[] { name + "G", name + "N", next });
+            t.Line(name + "G", Carlos, $"\"But {lostTexts[c]}\"", new[] { next }, condition: And(Is(LostNowVar(c)), Is(VarGainedAny)));
+            t.Line(name + "N", Carlos, $"\"And {lostTexts[c]}\"", new[] { next }, condition: Is(LostNowVar(c)));
+        }
+
+        var ownLost = new Dictionary<string, string>
+        {
+            ["Mave Nortus"] = "\"While our columns were pushing west, the enemy took Mave Nortus. Their flag is flying over our own border town.\"",
+            ["Dapalle"] = "\"They have also broken into Dapalle. Our headquarters had to fall back to Balle.\"",
+            ["Balle"] = "\"Balle is in Wehzek hands. They are closer to the heart of Brenas than they have ever been.\"",
+            ["Jales"] = "\"And they have landed at Jales. I don't yet know how they got past the fleet.\"",
+        };
+        for (int i = 0; i < RizianCities.Length; i++)
+        {
+            string c = RizianCities[i], name = $"ResOwn{Key(c)}";
+            string next = i + 1 < RizianCities.Length ? $"ResOwn{Key(RizianCities[i + 1])}" : "ResLosses";
+            t.Logic(name, new[] { name + "Lost", name + "Back", name + "Still", next });
+            t.Line(name + "Lost", Carlos, ownLost[c], new[] { next }, condition: Is(LostNowVar(c)));
+            t.Line(name + "Back", Carlos, $"\"And we have {c} back. Our flag is over the town hall again.\"", new[] { next }, condition: Is(BackVar(c)));
+            t.Line(name + "Still", Carlos, $"\"{c} is still in Wehzek hands, Your Majesty.\"", new[] { next }, condition: Is(LostVar(c)));
+        }
+
         string second = $"{Num(VarLastPhase)} >= 2";
         Pick("ResLosses", Carlos, "ResWaited",
             (And($"{V(VarLossTier)} == 2", second),
@@ -841,7 +1104,7 @@ internal static class WarCouncil
     /// <summary>Push on, hold for a turn, or seek a ceasefire. On a setback the generals push back, as in c412.</summary>
     private static void PushOrHold()
     {
-        t.Logic("Push", new[] { "PushSetback", "PushGood" });
+        t.Logic("Push", new[] { "PushSetback", "PushSetbackCity", "PushSetbackWon", "PushSetbackMen", "PushGood" });
         string missed = And(Fought, IsNot(VarLastWon), IsNot(VarWaited));
         string last = $"{Num(VarPhase)} >= {ZilleCampaign.LastPhase}";
         t.Logic("PushGood", new[] { "PushGoodHeld", "PushGoodMissed", "PushGoodLast", "PushGood0" }, condition: $"(({IsNot(VarSetback)}) or ({Is(VarWaited)}))");
@@ -857,7 +1120,7 @@ internal static class WarCouncil
             new[] { "PushTad" });
         t.Logic("PushTad", new[] { "PushTadMissed", "PushTadLast", "PushTad0", "PushMenu" });
         t.Line("PushTadMissed", Taddeus, "\"We were close, Lieutenant. Closer than the newspapers say.\"", new[] { "PushMenu" },
-            condition: And(TaddeusHere, missed));
+            condition: And(TaddeusHere, missed, $"{V(VarLastGround)} ~= \"lost\""));
         t.Line("PushTadLast", Taddeus, "\"One more push, Lieutenant. Finish it, and finish it properly.\"", new[] { "PushMenu" },
             condition: And(TaddeusHere, last));
         t.Line("PushTad0", Taddeus, "\"A complete victory is in sight, Lieutenant.\"", new[] { "PushMenu" }, condition: TaddeusHere);
@@ -875,7 +1138,16 @@ internal static class WarCouncil
 
         t.Line("PushSetback", Carlos,
             "\"We are not in a good position, Your Majesty. The divisions that went in last time are exhausted, and we have lost ground of our own.\"",
-            new[] { "SetbackMenu" }, condition: And(Is(VarSetback), IsNot(VarWaited)));
+            new[] { "SetbackMenu" }, condition: And(Is(VarSetback), IsNot(VarWaited), Eq(VarSetbackWhy, "town")));
+        t.Line("PushSetbackCity", Carlos,
+            "\"We are not in a good position, Your Majesty. The divisions that went in last time are exhausted, and they have just given back " +
+            "ground we had won.\"", new[] { "SetbackMenu" }, condition: And(Is(VarSetback), IsNot(VarWaited), Eq(VarSetbackWhy, "city")));
+        t.Line("PushSetbackWon", Carlos,
+            "\"The divisions that went in last time are exhausted, Your Majesty. We have the ground, but we paid for it with men this army " +
+            "cannot replace in a month.\"", new[] { "SetbackMenu" }, condition: And(Is(VarSetback), IsNot(VarWaited), Is(VarGainedAny)));
+        t.Line("PushSetbackMen", Carlos,
+            "\"We are not in a good position, Your Majesty. The divisions that went in last time are exhausted, and they paid dearly for " +
+            "very little.\"", new[] { "SetbackMenu" }, condition: And(Is(VarSetback), IsNot(VarWaited)));
         t.Logic("SetbackMenu", new[] { "SbPush", "SbHold", "SbLast", "Cease1", "Cease2" });
         t.Choice("SbPush", "\"Simply holding the line is unacceptable. We push on, whatever it costs.\"", new[] { "SbObj1" });
         t.Line("SbObj1", Carlos, "\"Our hands are tied, Your Majesty. Those men are not ready to go in again.\"", new[] { "SbObj2" });
@@ -966,8 +1238,18 @@ internal static class WarCouncil
             "\"The Bludish Freedom Front has been busy in the north of Wehlen. Every battalion Smolak keeps at home to guard his ports is one he " +
             "can't send to Zille.\"", And(Lever(SupplyWar.Lever.BffRaids), IsNot(VarToldRaids)), "SupLanded", script: Set(VarToldRaids, "true"));
         // What the strait let through just before the last phase (PhaseResume landed it on the map).
-        IntelOpt("SupLanded", "\"And they put fresh battalions ashore at Nanta just before our last push. We met them on the line within the day.\"",
-            And(Later, Fought, IsNot(VarWaited), $"{Num(PhaseResume.VarLanded)} >= 1"), "Surprise");
+        // At the port they really used: the first of Nanta, Isor and Zille that was still theirs.
+        string landed = And(Later, Fought, IsNot(VarWaited), $"{Num(PhaseResume.VarLanded)} >= 1");
+        t.Logic("SupLanded", new[] { "SupLandedNanta", "SupLandedIsor", "SupLandedZille", "SupLandedAny", "SupLandedNone" });
+        foreach (string port in new[] { "Nanta", "Isor", "Zille" })
+        {
+            Intel($"SupLanded{port}", $"\"And they put fresh battalions ashore at {port} just before our last push. We met them on the line within the day.\"",
+                new[] { "Surprise" }, And(landed, Eq(VarLandedAt, port)));
+        }
+
+        Intel("SupLandedAny", "\"And they put fresh battalions ashore just before our last push. We met them on the line within the day.\"",
+            new[] { "Surprise" }, landed);
+        t.Logic("SupLandedNone", new[] { "Surprise" });
 
         // At most one disruption (the Bludish companies, the Lespian cameras, a defector); the strait itself comes with the orders.
         SupplyWar.CouncilSurprise(t, "Surprise", "Brief", LucitaHere);
@@ -1044,7 +1326,7 @@ internal static class WarCouncil
         t.Line("GarrisonWall2", Carlos, "\"Their border wall is broken where we went through. What is left of it won't stop us.\"", new[] { "Hub" });
 
         // The fronts, per objective.
-        t.Logic("Fronts", new[] { "FrontHarbor", "FrontWall", "FrontPorts" });
+        t.Logic("Fronts", new[] { "FrontHarbor", "FrontWall", "FrontIsor", "FrontNanta", "FrontPorts" });
         t.Line("FrontHarbor", Carlos,
             "\"Zille sits on its bay. The main road and the railway come down the river valley from Dapalle. The harbor is covered by coastal " +
             "guns, and the city has the only anti-aircraft batteries in the territory. Until those are silenced, our planes will stay away.\"",
@@ -1053,6 +1335,12 @@ internal static class WarCouncil
         t.Line("FrontWall", Carlos,
             "\"Auremina is up in the hills. Mining country: narrow roads, ridges, old tunnels where a battalion can hide. Our tanks won't " +
             "be much use up there. It will be infantry work.\"", new[] { "FrontHome" }, condition: Obj(Objective.Wall));
+        t.Line("FrontIsor", Carlos,
+            "\"Isor is on the west coast, and with Nanta ours it is the last port they have. Every convoy that still crosses lands there. " +
+            "Take it, and Wehlen has nowhere left to bring its men ashore.\"", new[] { "FrontHome" }, condition: And(Obj(Objective.Ports), AimIs("Isor")));
+        t.Line("FrontNanta", Carlos,
+            "\"Nanta is on the north coast, with coastal guns of its own, and with Isor ours it is the last port they have. Take it, and " +
+            "Wehlen has nowhere left to bring its men ashore.\"", new[] { "FrontHome" }, condition: And(Obj(Objective.Ports), AimIs("Nanta")));
         t.Line("FrontPorts", Carlos,
             "\"Isor is on the west coast, Nanta on the north. Nanta is where their convoys land, and it has coastal guns of its own. Take both, " +
             "and Wehlen has nowhere left to bring its men ashore.\"", new[] { "FrontHome" }, condition: Obj(Objective.Ports));
@@ -1066,53 +1354,110 @@ internal static class WarCouncil
     {
         string phase3 = $"{Num(VarPhase)} >= 3";
         string lastMissed(string o) => And(Fought, IsNot(VarLastWon), $"{V(VarLastObjective)} == \"{o}\"");
-        t.Logic("Obj", new[]
+        string retake = And(Later, Is(VarNextRetake));
+        var objs = new List<string>();
+        void O(string name, string cond, string text, string next = "Command")
         {
-            "ObjHarbor", "ObjHarborLast", "ObjHarborL", "ObjPortsEarly", "ObjPortsAgain", "ObjPortsL", "ObjWallAgain", "ObjWallLastHeld",
-            "ObjWallLast", "ObjWallL", "ObjWall", "ObjPorts",
-        });
-        t.Line("ObjHarborLast", Carlos,
-            "\"It is still Zille, Your Majesty. This is the last phase of Northern Crown. If Zille is not ours when it ends, the line we hold " +
-            "is the line the diplomats will draw.\"", new[] { "Command" }, condition: And(Later, Obj(Objective.Harbor), phase3));
-        t.Line("ObjPortsEarly", Carlos,
-            "\"We are ahead of the plan, Your Majesty. With Auremina already ours, the Staff goes straight for Isor and Nanta. Take them in " +
-            "this phase, and the war ends a month early.\"", new[] { "Command" }, condition: And(Later, Obj(Objective.Ports), Not(phase3)));
-        t.Line("ObjPortsAgain", Carlos,
-            "\"Isor and Nanta, still. This is the last phase, Your Majesty. Whatever we hold on that coast when it ends, we keep. Whatever we " +
-            "don't, Wehlen keeps.\"", new[] { "Command" }, condition: And(Later, Obj(Objective.Ports), lastMissed("Ports")));
-        t.Line("ObjWallAgain", Carlos,
-            "\"Auremina again, Your Majesty. The hills cost us last time, but this time we go in knowing where their guns are. And it is the " +
-            "last phase: whatever we hold when the guns stop is where the observers will draw the line.\"",
-            new[] { "Command" }, condition: And(Later, Obj(Objective.Wall), lastMissed("Wall")));
-        t.Line("ObjWallLastHeld", Carlos,
-            "\"We held for a month, so the last phase goes for Auremina and its mines. Isor and Nanta will have to wait for the diplomats.\"",
-            new[] { "Command" }, condition: And(Later, Obj(Objective.Wall), phase3, Is(VarWaited)));
-        t.Line("ObjWallLast", Carlos,
-            "\"Zille cost us more time than the plan allowed, so the last phase goes for Auremina and its mines. Isor and Nanta will have to " +
-            "wait for the diplomats.\"", new[] { "Command" }, condition: And(Later, Obj(Objective.Wall), phase3));
-        t.Line("ObjHarbor", Carlos,
+            objs.Add(name);
+            t.Line(name, Carlos, text, new[] { next }, condition: cond);
+        }
+
+        O("ObjHarbor", And(First, Obj(Objective.Harbor)),
             "\"The objective is the city of Zille itself: the harbor, the railway station, and the Wehzek headquarters. Take Zille, and every " +
-            "Wehzek soldier south of the hills is cut off from the sea.\"", new[] { "ObjHarbor2" }, condition: And(First, Obj(Objective.Harbor)));
+            "Wehzek soldier south of the hills is cut off from the sea.\"", "ObjHarbor2");
         t.Line("ObjHarbor2", Carlos,
             "\"After that, the hills and the gold mines at Auremina. Then the northern ports, Isor and Nanta, and the war can be won. The Staff calls " +
             "the whole campaign Operation Northern Crown, in three phases, one each month, every phase starting from the ground the last one won. Zille is the first.\"", new[] { "Command" });
-        t.Line("ObjHarborL", Carlos,
+
+        // A city we took and lost again comes first: the order of the campaign does not change, only what is left of it.
+        O("ObjHarborBackLast", And(retake, Obj(Objective.Harbor), phase3),
+            "\"Zille first, Your Majesty. We took it once and lost it, and this is the last phase of Northern Crown. If Zille is not ours " +
+            "when it ends, the line we hold is the line the diplomats will draw.\"");
+        O("ObjHarborBack", And(retake, Obj(Objective.Harbor)),
+            "\"Zille first, Your Majesty. We took it once and lost it, and nothing else we hold is safe until the harbor is ours again.\"");
+        O("ObjWallBackLast", And(retake, Obj(Objective.Wall), phase3),
+            "\"Auremina again, Your Majesty. They took it back from us, and from those ridges their guns reach half of what we hold. It is " +
+            "the last phase: whatever we hold when the guns stop is where the observers will draw the line.\"");
+        O("ObjWallBack", And(retake, Obj(Objective.Wall)),
+            "\"Auremina again, Your Majesty. They took it back from us, and from those ridges their guns reach half of what we hold.\"");
+        foreach (string aim in new[] { "Isor and Nanta", "Isor", "Nanta" })
+        {
+            bool many = aim.Contains(" and ");
+            O($"ObjPortsBack{Key(aim)}", And(retake, Obj(Objective.Ports), AimIs(aim), phase3),
+                $"\"{aim} again, Your Majesty. We took {(many ? "them" : "it")} once and lost {(many ? "them" : "it")}. This is the last phase: " +
+                "whatever we hold on that coast when it ends, we keep.\"");
+        }
+
+        O("ObjHarborLast", And(Later, Obj(Objective.Harbor), phase3),
+            "\"It is still Zille, Your Majesty. This is the last phase of Northern Crown. If Zille is not ours when it ends, the line we hold " +
+            "is the line the diplomats will draw.\"");
+        O("ObjHarborL", And(Later, Obj(Objective.Harbor)),
             "\"The objective hasn't changed, Your Majesty. Zille, its harbor and its railway station. The next phase goes in from the lines we hold " +
-            "now, as soon as you give the word.\"",
-            new[] { "Command" }, condition: And(Later, Obj(Objective.Harbor)));
-        t.Line("ObjWallL", Carlos,
-            "\"With Zille taken, the campaign moves on as planned: up the valley to Auremina and its mines. Take the hills, and their garrison in " +
-            "the north is cut off from everything south of it. That is the next phase of Northern Crown.\"",
-            new[] { "Command" }, condition: And(Later, Obj(Objective.Wall)));
-        t.Line("ObjPortsL", Carlos,
+            "now, as soon as you give the word.\"");
+
+        // The ports, named as they stand: "Isor" once Nanta is ours.
+        string ports = And(Later, Obj(Objective.Ports));
+        O("ObjPortsEarly", And(ports, Not(phase3), AimIs("Isor and Nanta")),
+            "\"We are ahead of the plan, Your Majesty. With Auremina already ours, the Staff goes straight for Isor and Nanta. Take them in " +
+            "this phase, and the war ends a month early.\"");
+        foreach ((string port, string other) in new[] { ("Isor", "Nanta"), ("Nanta", "Isor") })
+        {
+            O($"ObjPortsEarly{port}", And(ports, Not(phase3), AimIs(port)),
+                $"\"We are ahead of the plan, Your Majesty. With Auremina and {other} already ours, the Staff goes straight for {port}. Take it " +
+                "in this phase, and the war ends a month early.\"");
+        }
+
+        O("ObjPortsAgain", And(ports, lastMissed("Ports"), AimIs("Isor and Nanta")),
+            "\"Isor and Nanta, still. This is the last phase, Your Majesty. Whatever we hold on that coast when it ends, we keep. Whatever we " +
+            "don't, Wehlen keeps.\"");
+        foreach ((string port, string other) in new[] { ("Isor", "Nanta"), ("Nanta", "Isor") })
+        {
+            O($"ObjPortsAgain{port}", And(ports, lastMissed("Ports"), AimIs(port)),
+                $"\"{port}, Your Majesty. {other} is ours, so {port} is the last port they have. This is the last phase: whatever we hold on " +
+                "that coast when it ends, we keep.\"");
+        }
+
+        O("ObjPortsL", And(ports, AimIs("Isor and Nanta")),
             "\"And now the last step of the campaign: Isor and Nanta. Every Wehzek convoy lands at one or the other. Take both, and their garrison " +
-            "has nowhere left to go but home. The last phase of Northern Crown.\"", new[] { "Command" }, condition: And(Later, Obj(Objective.Ports)));
-        t.Line("ObjWall", Carlos,
+            "has nowhere left to go but home. The last phase of Northern Crown.\"");
+        foreach ((string port, string other) in new[] { ("Isor", "Nanta"), ("Nanta", "Isor") })
+        {
+            O($"ObjPortsL{port}", And(ports, AimIs(port)),
+                $"\"And now the last step of the campaign: {port}. With {other} ours, every Wehzek convoy lands there. Take it, and their " +
+                "garrison has nowhere left to go but home. The last phase of Northern Crown.\"");
+        }
+
+        O("ObjWallAgain", And(Later, Obj(Objective.Wall), lastMissed("Wall")),
+            "\"Auremina again, Your Majesty. The hills cost us last time, but this time we go in knowing where their guns are. And it is the " +
+            "last phase: whatever we hold when the guns stop is where the observers will draw the line.\"");
+        // The last phase goes for Auremina: the ports still Wehzek wait for the diplomats.
+        string wallLast = And(Later, Obj(Objective.Wall), phase3);
+        foreach (string left in new[] { "Isor and Nanta", "Isor", "Nanta", "" })
+        {
+            string wait = left == string.Empty ? "The ports are ours already." : $"{left} will have to wait for the diplomats.";
+            O($"ObjWallLastHeld{Key(left)}", And(wallLast, Is(VarWaited), Eq(VarPortsLeft, left)),
+                $"\"We held for a month, so the last phase goes for Auremina and its mines. {wait}\"");
+            O($"ObjWallLast{Key(left)}", And(wallLast, Eq(VarPortsLeft, left)),
+                $"\"Zille cost us more time than the plan allowed, so the last phase goes for Auremina and its mines. {wait}\"");
+        }
+
+        O("ObjWallL", And(Later, Obj(Objective.Wall)),
+            "\"With Zille taken, the campaign moves on as planned: up the valley to Auremina and its mines. Take the hills, and their garrison in " +
+            "the north is cut off from everything south of it. That is the next phase of Northern Crown.\"");
+        O("ObjWall", Obj(Objective.Wall),
             "\"The objective is Auremina. Take the hills and the mines, and their garrison in the north is cut off from everything south of " +
-            "it. That is the next phase of Northern Crown.\"", new[] { "Command" }, condition: Obj(Objective.Wall));
-        t.Line("ObjPorts", Carlos,
+            "it. That is the next phase of Northern Crown.\"");
+        foreach ((string port, string other) in new[] { ("Isor", "Nanta"), ("Nanta", "Isor") })
+        {
+            O($"ObjPorts{port}", AimIs(port),
+                $"\"The objective is {port}. With {other} ours, every Wehzek convoy lands there. Take it, and their garrison has nowhere left to " +
+                "go but home. The last phase of Northern Crown.\"");
+        }
+
+        O("ObjPorts", null,
             "\"The objective is the northern coast: Isor and Nanta. Every Wehzek convoy lands at one or the other. Take both, and their " +
-            "garrison has nowhere left to go but home. The last phase of Northern Crown.\"", new[] { "Command" });
+            "garrison has nowhere left to go but home. The last phase of Northern Crown.\"");
+        t.Logic("Obj", objs.ToArray());
         t.Logic("Command", new[] { "CommandPlan", "Carry" });
     }
 
@@ -1255,23 +1600,52 @@ internal static class WarCouncil
             "\"The paratroopers are spent, Your Majesty. There is nobody left to drop. The Staff will carry the plan on as a direct assault.\"");
         C("CUnitsMount", Carlos, And(units, PlanIs(Approach.Mountain)),
             "\"The mountaineers are spent, Your Majesty. The ridges will be ordinary infantry work this time, and the plan becomes a direct assault.\"");
+        string held(string city) => Is(ZilleOperation.CapturedVar(city));
+        string both = AimIs("Isor and Nanta");
+        C("CFeintWallCoast", Carlos, And(FormIs(Approach.Feint), Obj(Objective.Wall), held("Isor")),
+            "\"We feint first, as you ordered at the start. This time the noise goes along the coast, and they'll have to pull men out of " +
+            "the hills to cover it.\"");
         C("CFeintWall", Carlos, And(FormIs(Approach.Feint), Obj(Objective.Wall)),
             "\"We feint first, as you ordered at the start. This time the noise goes toward the coast road to Isor, and they'll have to pull men " +
             "out of the hills to cover it.\"");
-        C("CFeintPorts", Carlos, And(FormIs(Approach.Feint), Obj(Objective.Ports)),
+        C("CFeintPorts", Carlos, And(FormIs(Approach.Feint), Obj(Objective.Ports), both),
             "\"We feint first, as always. A great deal of noise in front of Nanta, and we'll see how much they leave behind in Isor.\"");
+        C("CFeintIsor", Carlos, And(FormIs(Approach.Feint), Obj(Objective.Ports), AimIs("Isor")),
+            "\"We feint first, as always. A great deal of noise on the coast north of Isor, and we'll see how much they leave in the town.\"");
+        C("CFeintNanta", Carlos, And(FormIs(Approach.Feint), Obj(Objective.Ports), AimIs("Nanta")),
+            "\"We feint first, as always. A great deal of noise on the hills south of Nanta, and we'll see how much they leave in the port.\"");
+        C("CFeintHarborHills", Carlos, And(FormIs(Approach.Feint), Obj(Objective.Harbor), held("Auremina")),
+            "\"We feint first, as you ordered. A show along the coast road toward Isor, and if they take the bait, Zille is left with its garrison.\"");
         C("CFeint", Carlos, FormIs(Approach.Feint),
             "\"We feint first, as you ordered. A show toward Auremina and the hills, and if they take the bait, Zille is left with its garrison.\"");
+        foreach (string aim in new[] { "Isor and Nanta", "Isor", "Nanta" })
+        {
+            C($"CArmorPorts{Key(aim)}", Carlos, And(FormIs(Approach.Armor), Obj(Objective.Ports), AimIs(aim)),
+                $"\"Out of the hills, the tanks lead again, as you ordered. The coast road to {aim} is good tank country.\"");
+        }
+
         C("CArmorPorts", Carlos, And(FormIs(Approach.Armor), Obj(Objective.Ports)),
-            "\"Out of the hills, the tanks lead again, as you ordered. The coast road to Isor and Nanta is good tank country.\"");
+            "\"Out of the hills, the tanks lead again, as you ordered. The coast road is good tank country.\"");
         C("CArmor", Carlos, FormIs(Approach.Armor),
             "\"The tanks lead, as you ordered. Massed on the river road, straight for the harbor.\"");
+        foreach (string port in new[] { "Isor", "Nanta" })
+        {
+            C($"CLanding{port}", null, And(FormIs(Approach.Landing), Obj(Objective.Ports), AimIs(port)),
+                $"\"The landing goes in as you planned it, Your Majesty. The marines come ashore beside {port} and cut the coast road behind it.\"");
+        }
+
         C("CLandingPorts", null, And(FormIs(Approach.Landing), Obj(Objective.Ports)),
             "\"The landing goes in as you planned it, Your Majesty. The marines come ashore between Isor and Nanta and cut the coast road.\"");
         C("CLanding", null, FormIs(Approach.Landing),
             "\"The landing goes in as you planned it. The marines go into the bay while the army comes down the river.\"");
         C("CDropWall", null, And(FormIs(Approach.Airborne), Obj(Objective.Wall)),
             "\"The paratroopers go in the night before, as planned. This time on the ridges behind Auremina, to hold the road until the army comes up.\"");
+        foreach (string port in new[] { "Isor", "Nanta" })
+        {
+            C($"CDrop{port}", null, And(FormIs(Approach.Airborne), Obj(Objective.Ports), AimIs(port)),
+                $"\"The paratroopers go in the night before, as planned. They'll drop on the road behind {port} and hold it until the army comes up.\"");
+        }
+
         C("CDropPorts", null, And(FormIs(Approach.Airborne), Obj(Objective.Ports)),
             "\"The paratroopers go in the night before, as planned. They'll drop between Isor and Nanta and cut the coast road.\"");
         C("CDrop", null, FormIs(Approach.Airborne),
@@ -1286,6 +1660,12 @@ internal static class WarCouncil
             "\"The same plan, Your Majesty, and the same road. Straight at Zille, harder and faster than last time.\"");
         C("CDirectWall", Carlos, Obj(Objective.Wall),
             "\"The plan stays as you set it, Your Majesty. Straight up the valley road, as fast as the hills allow.\"");
+        foreach (string port in new[] { "Isor", "Nanta" })
+        {
+            C($"CDirect{port}", Carlos, And(Obj(Objective.Ports), AimIs(port)),
+                $"\"Straight at them again, as you ordered at the start. Down the coast road to {port}, and into the port.\"");
+        }
+
         C("CDirectPorts", Carlos, Obj(Objective.Ports),
             "\"Straight at them again, as you ordered at the start. Down the coast road to Isor, and on to Nanta.\"");
         C("CDirect", Carlos, null,
@@ -1371,6 +1751,8 @@ internal static class WarCouncil
         Pick("CloseLater", Carlos, "CloseLater2",
             (lastPhase, "\"The orders go out tonight. This is the last phase of Northern Crown, Your Majesty. Whatever happens, the next time we " +
                         "meet in this room, it will be to talk about the peace.\""),
+            (And(Obj(Objective.Ports), AimIs("Isor")), "\"The orders go out tonight, Your Majesty. If Isor falls, the next time we meet in this room, it will be to talk about the peace.\""),
+            (And(Obj(Objective.Ports), AimIs("Nanta")), "\"The orders go out tonight, Your Majesty. If Nanta falls, the next time we meet in this room, it will be to talk about the peace.\""),
             (Obj(Objective.Ports), "\"The orders go out tonight, Your Majesty. If the ports fall, the next time we meet in this room, it will be to talk about the peace.\""),
             (And(Obj(Objective.Harbor), Fought), "\"The orders go out tonight, Your Majesty. Zille again, and this time the men know the streets.\""),
             (Obj(Objective.Wall), "\"The orders go out tonight. By morning the columns will be on the valley road.\""),

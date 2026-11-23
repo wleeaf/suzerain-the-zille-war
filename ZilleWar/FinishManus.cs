@@ -345,7 +345,9 @@ internal static class FinishManus
         if (done > sent)
         {
             int k = sent + 1;
-            bool won = Variables.GetBool(ZilleCampaign.ResultVar(k));
+            // a phase that took a city and lost none counts as a success here, even if it missed part of its aim (Nanta, not Isor)
+            ZilleWar.Front.Phase phase = ZilleWar.Front.Of(k);
+            bool won = Variables.GetBool(ZilleCampaign.ResultVar(k)) && (phase == null || phase.Lost.Count == 0) || phase is { Gain: true };
             int dead = Variables.GetInt(ZilleCampaign.PlayerDeadVar(k));
             // As in vanilla, Manus lives and dies with the House Sazon unit: if it was destroyed, so was he. Otherwise the
             // operation decides: a victory decorates him (or wounds him if it was costly), a defeat sends him back wounded

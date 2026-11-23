@@ -193,19 +193,34 @@ internal static partial class SupplyWar
         // ---- where the strait stands
         // A month after the last council, the strait is told as what changed (or didn't), not word for word again.
         string again = $"{N(VarWarRoomMeetings)} >= 3";
-        t.Logic(entry, new[] { "WRGone", "WRThin", "WRClosedAgain", "WRClosed", "WROpenFleet", "WROpenAgain", "WROpen" });
+        // The convoys land at the first port Wehlen still holds: Nanta, then Isor, then Zille (as PhaseResume.Reinforce lands them).
+        string nantaOurs = Is(ZilleOperation.CapturedVar("Nanta")), isorOurs = Is(ZilleOperation.CapturedVar("Isor"));
+        var landings = new[]
+        {
+            ("Nanta", $"not {nantaOurs}"), ("Isor", $"{nantaOurs} and not {isorOurs}"), ("Zille", $"{nantaOurs} and {isorOurs}"),
+        };
+        string[] Each(string name) => landings.Select(l => name + l.Item1).ToArray();
+        t.Logic(entry, new[] { "WRGone", "WRThin", "WRClosedAgain", "WRClosed" }.Concat(Each("WROpenFleet")).Concat(Each("WROpenAgain"))
+            .Concat(Each("WROpen")).ToArray());
         Say("WRClosedAgain", $"{closed} and {again}",
             "\"The strait, then. Another month of Lespian inspections. Their captains get slower every week, and the Wehzek night runners " +
             "bolder.\"",
             "\"The strait, Your Majesty. Another month of Lespian inspections, slower every week, and the Wehzek night runners bolder.\"",
             "WRState");
-        Say("WROpenFleet", $"{open} and {inStrait}",
-            "\"Now the strait. Nobody guards it but us, Your Majesty. What crosses to Nanta tonight crosses under our guns, and it costs them.\"",
-            "\"Now the strait, Your Majesty. The Lespians are not there, and we are. What crosses to Nanta tonight crosses under our guns.\"",
-            "WRState");
-        Say("WROpenAgain", $"{open} and not {inStrait} and {again}",
-            "\"The strait is still open, Your Majesty. Every night we leave it alone, Nanta gets another trainload of men off the ships.\"",
-            "\"The strait is still open, Your Majesty. Every night we leave it alone, Nanta takes in another battalion.\"", "WROpen2");
+        foreach ((string port, string lands) in landings)
+        {
+            Say("WROpenFleet" + port, $"{open} and {inStrait} and {lands}",
+                $"\"Now the strait. Nobody guards it but us, Your Majesty. What crosses to {port} tonight crosses under our guns, and it costs them.\"",
+                $"\"Now the strait, Your Majesty. The Lespians are not there, and we are. What crosses to {port} tonight crosses under our guns.\"",
+                "WRState");
+            Say("WROpenAgain" + port, $"{open} and not {inStrait} and {again} and {lands}",
+                $"\"The strait is still open, Your Majesty. Every night we leave it alone, {port} gets another trainload of men off the ships.\"",
+                $"\"The strait is still open, Your Majesty. Every night we leave it alone, {port} takes in another battalion.\"", "WROpen2");
+            Say("WROpen" + port, $"not {inStrait} and {lands}",
+                $"\"Now the strait. Nobody is closing it, Your Majesty. Not Lespia, not us. Wehlen brings men and shells across to {port} every night.\"",
+                $"\"Now the strait, Your Majesty. Nobody is closing it. Wehlen brings men and shells across to {port} every night.\"", "WROpen2");
+        }
+
         Say("WRGone", $"{open} and not {inStrait} and {Is(VarLespiaWithdrawn)} and {N(Count(Lever.Lespia))} > 0",
             "\"Now the strait. The Lespian ships are gone, and the convoys came back the same week. As if someone had sent them a telegram.\"",
             "\"Now the strait, Your Majesty. The Lespian ships have left, and the convoys came back within the week.\"", "WROpen2");
@@ -217,9 +232,6 @@ internal static partial class SupplyWar
             "with a destroyer for escort.\"",
             "\"Now the strait, Your Majesty. The Lespians stop most of what crosses. What slips past them runs at night along the Wehzek " +
             "coast, under escort.\"", "WRState");
-        Say("WROpen", $"not {inStrait}",
-            "\"Now the strait. Nobody is closing it, Your Majesty. Not Lespia, not us. Wehlen brings men and shells across to Nanta every night.\"",
-            "\"Now the strait, Your Majesty. Nobody is closing it. Wehlen brings men and shells across to Nanta every night.\"", "WROpen2");
         Say("WROpen2", null,
             "\"If our ships stay in port, we will meet more of them in Zille than we counted today.\"",
             "\"If our ships stay in port, we will find more of them in Zille than we counted today.\"", "WRState");
@@ -248,7 +260,7 @@ internal static partial class SupplyWar
             "\"The fleet is in good order, Your Majesty, and the crews are eager. Where do you want it?\"", "WROrders");
 
         // ---- later councils: the standing orders, to keep or change
-        t.Logic("WROrders", new[] { "WROrdStraitAgain", "WROrdStrait", "WROrdCoastInland", "WROrdCoastAgain", "WROrdCoast", "WROrdHomeAgain",
+        t.Logic("WROrders", new[] { "WROrdStraitAgain", "WROrdStrait", "WROrdCoastInlandNanta", "WROrdCoastInlandIsor", "WROrdCoastInland", "WROrdCoastAgain", "WROrdCoast", "WROrdHomeAgain",
             "WROrdHome", "WRMenu" });
         Say("WROrdStraitAgain", $"{later} and {inStrait} and {again}",
             "\"The fleet has been hunting in the strait for two months now. It's thinner for it, and so are their convoys. One more month " +
@@ -264,10 +276,18 @@ internal static partial class SupplyWar
         Say("WROrdStrait", $"{later} and {inStrait}",
             "\"It's still in the strait on your orders, hunting their convoys. Every month out there costs us a ship. Do we keep it there?\"",
             "\"It's still in the strait on your orders, Your Majesty. Every month out there costs us a ship. Do we keep it there?\"", "WRMenu");
+        foreach ((string port, string waits) in new[] { ("Nanta", $"not {nantaOurs}"), ("Isor", $"{nantaOurs} and not {isorOurs}") })
+        {
+            Say("WROrdCoastInland" + port, $"{later} and {offCoast} and not ({coastal}) and {waits}",
+                $"\"The destroyers are still off the coast, but Auremina is far out of reach of their guns. They can wait there for {port}, or go " +
+                "somewhere more useful.\"",
+                $"\"The destroyers are still off the coast, Your Majesty, but Auremina is out of their reach. They can wait for {port}, or go elsewhere.\"",
+                "WRMenu");
+        }
+
         Say("WROrdCoastInland", $"{later} and {offCoast} and not ({coastal})",
-            "\"The destroyers are still off the coast, but Auremina is far out of reach of their guns. They can wait there for Nanta, or go " +
-            "somewhere more useful.\"",
-            "\"The destroyers are still off the coast, Your Majesty, but Auremina is out of their reach. They can wait for Nanta, or go elsewhere.\"",
+            "\"The destroyers are still off the coast, but Auremina is far out of reach of their guns. They would be more use somewhere else.\"",
+            "\"The destroyers are still off the coast, Your Majesty, but Auremina is out of their reach. They would be more use elsewhere.\"",
             "WRMenu");
         Say("WROrdCoast", $"{later} and {offCoast}",
             "\"The destroyers are still off the coast on your orders. Their batteries have learned to keep their heads down.\"",
@@ -287,9 +307,13 @@ internal static partial class SupplyWar
             "waters, under escort, and the Lespian captains let them pass.\"", "WRWhy2");
         Say("WRWhy2", null, "\"Our captains won't. We can hunt those escorts, and whatever they're escorting.\"",
             "\"Our captains won't. We can hunt those escorts, and whatever they're escorting.\"", "WRWhy3");
-        t.Logic("WRWhy3", new[] { "WRWhyHarbor", "WRWhyPorts", "WRWhyHome" });
+        t.Logic("WRWhy3", new[] { "WRWhyHarbor", "WRWhyPortsIsor", "WRWhyPorts", "WRWhyHome" });
         Say("WRWhyHarbor", harbor,
             "\"Or the fleet stands off Zille and shells the coastal batteries, so the army doesn't have to take them with bayonets.\"",
+            null, "WRWhyHome");
+        // Isor has no coastal battery: with Nanta ours, the fleet can only keep the transports off its quays.
+        Say("WRWhyPortsIsor", $"({ports}) and {nantaOurs}",
+            "\"Or the fleet stands off Isor and keeps their transports away from the quays, so the garrison fights on what it already has.\"",
             null, "WRWhyHome");
         Say("WRWhyPorts", ports,
             "\"Or the fleet stands off Nanta and shells the coastal batteries, so the army doesn't have to take them with bayonets.\"",

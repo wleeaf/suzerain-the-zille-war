@@ -96,13 +96,20 @@ internal static class CityEvents
 
     // ------------------------------------------------------------------ the events
 
+    /// <summary>The city was Rizian in an earlier phase (lost since): its capture event tells a return, not a first entry.</summary>
+    private static bool Again(string city) => AfterAction.HeldBefore(city, Math.Max(1, ZilleCampaign.CurrentOperation().k));
+
     public static IEnumerable<WarEvent> All()
     {
         // --- Wehlen-held cities taken by Rizia ---
         yield return new WarEvent(CapturedName("Zille"), "The Golden Banner over Zille",
-            "Our columns are in the old town. The Wehzek garrison has fallen back from the harbor, and crowds are gathering in " +
-            "Smolak Square, which was Fedo Square before the lease. Some cheer. Many watch in silence from behind shuttered " +
-            "windows. The foreign correspondents have their cameras ready, and the world is waiting to see what Rizia does next in Zille.",
+            Again("Zille")
+                ? "Our columns are back in the old town. The Wehzek garrison that drove us out has fallen back from the harbor, and crowds " +
+                  "are gathering again in the main square, Fedo Square before the lease. Fewer cheer this time. The foreign correspondents " +
+                  "have their cameras ready, and the world is waiting to see what Rizia does in Zille now."
+                : "Our columns are in the old town. The Wehzek garrison has fallen back from the harbor, and crowds are gathering in " +
+                  "Smolak Square, which was Fedo Square before the lease. Some cheer. Many watch in silence from behind shuttered " +
+                  "windows. The foreign correspondents have their cameras ready, and the world is waiting to see what Rizia does next in Zille.",
             new[]
             {
                 new EventOption("Raise the Golden Banner over the square and give it back its old name (+1 Authority, +2 Public Opinion, -1 Valgsland Negotiating Power).", Do("Zille_BannerRaised", () =>
@@ -135,8 +142,11 @@ internal static class CityEvents
             });
 
         yield return new WarEvent(CapturedName("Nanta"), "The Port of Nanta",
-            "Nanta's harbor is ours. Wehzek supply ships still sit at the piers, half unloaded. The harbormaster reports that " +
-            "Wehlen's convoys across the Strait of Kreleck came through here every night.",
+            Again("Nanta")
+                ? "Nanta's harbor is ours again. The Wehzek supply ships that came in behind their counterattack sit at the quays, half " +
+                  "unloaded. The harbormaster, who stayed through both changes of flag, reports that the convoys never stopped coming."
+                : "Nanta's harbor is ours. Wehzek supply ships still sit at the piers, half unloaded. The harbormaster reports that " +
+                  "Wehlen's convoys across the Strait of Kreleck came through here every night.",
             new[]
             {
                 new EventOption("Seize the ships and the stores. They will feed our own men (+1 Budget, +250 Military Equipment).", Do("Nanta_PortSeized", () =>
@@ -159,9 +169,12 @@ internal static class CityEvents
             });
 
         yield return new WarEvent(CapturedName("Isor"), "Isor Taken",
-            "Isor has fallen with little resistance. The fishing families of the west coast, Rizian before the lease and Rizian " +
-            "still in their own minds, have hung the old colors from their boats. Their skippers know every shoal and channel of the " +
-            "strait, and they are already asking what they can do.",
+            (Again("Isor")
+                ? "Isor is ours again. The fishing families of the west coast, who hid their flags when the Wehzeks came back, have hung " +
+                  "the old colors from their boats once more. "
+                : "Isor has fallen with little resistance. The fishing families of the west coast, Rizian before the lease and Rizian " +
+                  "still in their own minds, have hung the old colors from their boats. ") +
+            "Their skippers know every shoal and channel of the strait, and they are already asking what they can do.",
             new[]
             {
                 new EventOption("Let them be seen. Word will travel up the coast (+1 Public Opinion).", Do("Isor_Fishermen", () =>
@@ -183,9 +196,12 @@ internal static class CityEvents
             });
 
         yield return new WarEvent(CapturedName("Auremina"), "The Gold Hills of Auremina",
-            "Auremina is ours, and with it the mines that drew Rizian Royal Gold north decades ago. The Wehzek overseers fled " +
-            "before our vanguard arrived, leaving the strongroom of the refinery locked behind them. The miners, many of them " +
-            "Rizian, wait at the pit heads to see what kind of masters we are.",
+            (Again("Auremina")
+                ? "Auremina is ours again, and with it the mines. The Wehzek overseers who came back behind their army have fled a " +
+                  "second time, leaving the strongroom of the refinery locked behind them. "
+                : "Auremina is ours, and with it the mines that drew Rizian Royal Gold north decades ago. The Wehzek overseers fled " +
+                  "before our vanguard arrived, leaving the strongroom of the refinery locked behind them. ") +
+            "The miners, many of them Rizian, wait at the pit heads to see what kind of masters we are.",
             new[]
             {
                 new EventOption("Secure the mines and open the strongroom for the treasury (+1 Budget, -1 Public Opinion).", Do("Auremina_MinesSecured", () =>
@@ -213,7 +229,7 @@ internal static class CityEvents
                  {
                      ("Zille", "Zille Lost",
                       "A Wehzek counterattack from the hills has driven our forces out of Zille. The harbor district fell first, then the old " +
-                      "town, and the Wehzek flag is back over the square we gave its old name. People who hung our colors from their windows " +
+                      "town, and the Wehzek flag is back over the main square. People who hung our colors from their windows " +
                       "are taking them down in a hurry. Our officers ask for orders."),
                      ("Nanta", "Nanta Lost",
                       "Wehzek troops landed from the strait at night have retaken the port of Nanta. Our garrison was pushed back along the " +

@@ -9,7 +9,8 @@ namespace ZilleWar;
 /// <summary>
 /// What a won war feels like.
 /// - The end of the war moves public opinion: a liberation is a national celebration (+6), a divided Zille a relief (+2), a lost
-///   war a grievance (-3, or -1 when the King sought the ceasefire himself). Each phase that reaches its aim lifts it by one.
+///   war a grievance (-3, or -1 when the King sought the ceasefire himself). Each phase that wins a city lifts it by one, and each
+///   phase that loses one costs one.
 /// - The Turn 6 House of Delegates election (vanilla c366, run inside the royal council) counts the war: a liberation gives the
 ///   Rizian National Coalition three more points, a divided Zille one; a lost war gives the RPP two (one after a ceasefire).
 ///   The council's results (SweepEarlyT6Home) say so.
@@ -69,8 +70,16 @@ internal static class VictoryParade
         Core.Log.Msg($"The end of the war moves public opinion by {delta:+0;-0}.");
     }
 
-    /// <summary>A phase that reached its aim lifts the country by one point.</summary>
-    public static void OnPhaseResult(bool won) => Variables.Set(Opinion, Variables.GetInt(Opinion) + (won ? 1 : 0));
+    /// <summary>
+    /// A phase moves the country by what it did: a city won (the whole aim, part of it, or a city off the plan, Rizian towns
+    /// taken back included) lifts it by one, a city lost costs one, and a phase that won one and lost another leaves it where it was.
+    /// </summary>
+    public static void OnPhaseResult(bool won, int gains, int losses)
+    {
+        int delta = (won || gains > 0 ? 1 : 0) - (losses > 0 ? 1 : 0);
+        Variables.Set(Opinion, Variables.GetInt(Opinion) + delta);
+        Core.Log.Msg($"The phase moves public opinion by {delta:+0;-0;0} (aim reached={won}, cities won {gains}, lost {losses}).");
+    }
 
     /// <summary>Every step: offer the parade on the turn after a liberation (or the homecoming after a divided war).</summary>
     public static void OnStep()

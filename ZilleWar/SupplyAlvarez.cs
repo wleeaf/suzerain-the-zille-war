@@ -75,34 +75,72 @@ internal static partial class SupplyWar
         // He reads the front like a market report: one line on the latest phase, then on to business.
         void Front(string name, string exit)
         {
-            d.Branch(name, name + "Held", name + "Extra", name + "ZilleR", name + "Zille", name + "Aur", name + "MissedW", name + "Missed", exit);
+            var branches = new List<string> { name + "Held", name + "Extra", name + "ZilleR", name + "Zille", name + "Aur" };
+            string won = CallKind("won");
             d.SayIf(name + "Held", Is(VarCallHeld), Alvarez,
                 "\"A quiet month at the front, I hear. Quiet months make my admirals nervous. They start asking what exactly they're being " +
                 "paid for.\"", exit);
-            d.SayIf(name + "Extra", $"{N(VarCallFought)} >= 1 and {Is(VarCallLastWon)} and {Is(VarCallExtra)}", Alvarez,
-                "\"And two cities in a single phase. My admirals have started a sweepstake on the day Smolak asks for terms. I've put my " +
-                "money on next month.\"", exit);
-            d.SayIf(name + "ZilleR", $"{N(VarCallFought)} >= 1 and {Is(VarCallLastWon)} and {Eq(VarCallLastAim, "Harbor")} and {Not(VarRamiroFound)}",
+            d.SayIf(name + "Extra", $"{won} and {Is(VarCallExtra)}", Alvarez,
+                "\"And more cities in one phase than your generals asked for. My admirals have started a sweepstake on the day Smolak asks " +
+                "for terms. I've put my money on next month.\"", exit);
+            d.SayIf(name + "ZilleR", $"{won} and {Eq(VarCallLastAim, "Harbor")} and {Not(VarRamiroFound)}",
                 Alvarez, "\"And congratulations on Zille. I trust my consulate there was treated with every courtesy. Diplomats are such " +
                          "delicate creatures.\"", exit);
-            d.SayIf(name + "Zille", $"{N(VarCallFought)} >= 1 and {Is(VarCallLastWon)} and {Eq(VarCallLastAim, "Harbor")}", Alvarez,
+            d.SayIf(name + "Zille", $"{won} and {Eq(VarCallLastAim, "Harbor")}", Alvarez,
                 "\"And congratulations on Zille. A beautiful harbor. I always said it was wasted on the Wehzeks.\"", exit);
-            d.SayIf(name + "Aur", $"{N(VarCallFought)} >= 1 and {Is(VarCallLastWon)} and {Eq(VarCallLastAim, "Wall")}", Alvarez,
+            d.SayIf(name + "Aur", $"{won} and {Eq(VarCallLastAim, "Wall")}", Alvarez,
                 "\"Auremina, I read. Gold. You'll forgive a Lespian for taking an interest. Gold has a way of becoming everybody's " +
                 "business.\"", exit);
-            d.SayIf(name + "MissedW", $"{N(VarCallFought)} >= 1 and {Not(VarCallLastWon)} and {Eq(VarCallLastAim, "Wall")}", Alvarez,
+            // one port of the two: a gain, and he prices it as one
+            foreach ((string got, string other) in new[] { ("Nanta", "Isor"), ("Isor", "Nanta") })
+            {
+                branches.Add(name + "Part" + got);
+                d.SayIf(name + "Part" + got, $"{CallKind("partial")} and {Eq(VarCallGain, got)}", Alvarez,
+                    $"\"{got}, I read, but not {other}. Half a coastline, Your Majesty. Smolak's convoys only ever needed the other half.\"", exit);
+            }
+
+            // the aim missed, another city taken instead
+            foreach (string c in CallPlaces)
+            {
+                branches.Add(name + "Other" + c.Replace(" ", ""));
+                d.SayIf(name + "Other" + c.Replace(" ", ""), $"{CallKind("other")} and {Eq(VarCallGain, c)}", Alvarez, IsZilleCity(c)
+                    ? $"\"{c}, I read. Not the city your generals were aiming at, but Lespia never minds a detour that pays.\""
+                    : $"\"You took back {c}, I read. Not the city your generals were aiming at, but your own. A sensible place to start.\"", exit);
+            }
+
+            // a city lost: with the aim taken, with other gains, or with nothing to show for it
+            foreach (string c in CallPlaces)
+            {
+                string id = c.Replace(" ", "");
+                string where = IsZilleCity(c) ? c : $"{c}, on your own soil";
+                branches.Add(name + "WonLoss" + id);
+                d.SayIf(name + "WonLoss" + id, $"{CallKind("wonLoss")} and {Eq(VarCallLoss, c)}", Alvarez,
+                    $"\"You took what you went for, I read, and lost {where} doing it. Perla's markets dislike a seesaw, Your Majesty.\"", exit);
+                branches.Add(name + "Mixed" + id);
+                d.SayIf(name + "Mixed" + id, $"{CallKind("mixed")} and {Eq(VarCallLoss, c)}", Alvarez,
+                    $"\"Ground won in one place and {where} lost in another, I read. Perla's markets dislike a seesaw, Your Majesty.\"", exit);
+                branches.Add(name + "Lost" + id);
+                d.SayIf(name + "Lost" + id, $"{CallKind("lost")} and {Eq(VarCallLoss, c)}", Alvarez,
+                    $"\"Smolak has {where} back, I read. Perla's markets dislike a retreat even more than a stalemate, Your Majesty.\"", exit);
+            }
+
+            branches.AddRange(new[] { name + "MissedW", name + "MissedP", name + "Missed", exit });
+            string missedNothing = CallKind("missed");
+            d.SayIf(name + "MissedW", $"{missedNothing} and {Eq(VarCallLastAim, "Wall")}", Alvarez,
                 "\"The hills held, I read. Hills do that. It's why nobody has ever built a navy for them.\"", exit);
-            d.SayIf(name + "Missed", $"{N(VarCallFought)} >= 1 and {Not(VarCallLastWon)}", Alvarez,
+            d.SayIf(name + "MissedP", $"{missedNothing} and {Eq(VarCallLastAim, "Ports")}", Alvarez,
+                "\"The ports held, I read. Ports are my business, Your Majesty. You'll find they're easier to blockade than to storm.\"", exit);
+            d.SayIf(name + "Missed", missedNothing, Alvarez,
                 "\"I read about the river crossings. Unfortunate. Perla's markets dislike a stalemate, Your Majesty, and so do I. " +
                 "Stalemates are very bad for business.\"", exit);
+            d.Branch(name, branches.ToArray());
         }
 
         // The war since his last call (SupplyWar.PrepareCallState).
-        string fought = $"{N(VarCallFought)} >= 1";
-        string won = $"({fought} and {Is(VarCallLastWon)})";
+        // a phase that took nothing (he has read the casualty lists); one that gained a city and lost none; a held month
+        string missed = CallKind("missed", "lost");
+        string gained = CallKind("won", "partial", "other");
         string held = Is(VarCallHeld);
-        string missed = $"({fought} and {Not(VarCallLastWon)} and not {held})";
-        string aim(string a) => Eq(VarCallLastAim, a);
         string invoices = N(VarAlvInvoices);
 
         d.Start(AlvarezConv, ResetAsked + Inc(VarAlvarezCalls, 1) + Music, "Phone");
@@ -462,7 +500,7 @@ internal static partial class SupplyWar
         d.SayIf("InvNothingMissed", missed, Alvarez,
             "\"I only called to check on my investment. My parliament reads the same newspapers you do, Your Majesty, and it has " +
             "started asking what exactly it bought.\"", "Hangup");
-        d.SayIf("InvNothingWon", won, Alvarez,
+        d.SayIf("InvNothingWon", gained, Alvarez,
             "\"I only called to check on my investment. It seems to be doing nicely. Do finish soon, Your Majesty. My parliament has " +
             "started asking what else it could buy.\"", "Hangup");
         d.Say("InvNothing", Alvarez,

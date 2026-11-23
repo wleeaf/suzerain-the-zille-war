@@ -85,7 +85,16 @@ internal static partial class SupplyWar
             "An assistant brought in the blue telephone. The operator announced Valgsland, and the line went so quiet I could hear " +
             "the Chancellor breathing before he spoke.", null, Music + $"AddConversant(\"{Hegel}\");", "Front");
         d.Say("Call1", Hegel, "\"Mr. Toras. I will be brief, since you are busy.\"", "Why");
-        d.Branch("Front", "FrontAur", "FrontZille", "Call1");
+        d.Branch("Front", "FrontZilleLost", "FrontPortNanta", "FrontPortIsor", "FrontAur", "FrontZille", "Call1");
+        d.SayIf("FrontZilleLost", $"{CallKind("lost", "mixed", "wonLoss")} and {Eq(VarCallLoss, "Zille")}", Hegel,
+            "\"Mr. Toras. I hear President Smolak has Zille back. Perhaps you are now in a mood to listen.\"", "Why");
+        foreach (string port in new[] { "Nanta", "Isor" })
+        {
+            d.SayIf("FrontPort" + port, Is(ZilleOperation.CapturedVar(port)), Hegel,
+                $"\"Mr. Toras. Your army is in {port}. Valgslandian ships have called there for a hundred years, and Valgsland has not " +
+                "forgotten the way.\"", "Why");
+        }
+
         d.SayIf("FrontAur", Is(ZilleOperation.CapturedVar("Auremina")), Hegel,
             "\"Mr. Toras. Your army is in the Auremina hills. The miners of Isor can hear its guns from their pitheads.\"", "Why");
         d.SayIf("FrontZille", Is(WarFlags.ZilleCityHeld), Hegel,
@@ -157,14 +166,43 @@ internal static partial class SupplyWar
         d.SayDo("Phone", Esquibel,
             "\"President Smolak, Your Majesty. Through the Kyrutian embassy. He asked for you by name, and then by several other names.\"",
             $"AddConversant(\"{Esquibel}\"); AddConversant(\"{Smolak}\");", "Open");
-        d.Branch("Open", "OpenAgain", "OpenQuiet", "OpenAuremina", "OpenHeldFedo", "OpenHeld", "OpenMissed", "OpenStrong", "OpenPlain");
+        // The last phase, as Smolak tells it: one port of two, a city taken off the aim, a city of his taken back.
+        var news = new List<string>();
+        foreach ((string got, string other) in new[] { ("Nanta", "Isor"), ("Isor", "Nanta") })
+        {
+            news.Add("OpenPart" + got);
+            d.SayIf("OpenPart" + got, $"{CallKind("partial")} and {Eq(VarCallGain, got)}", Smolak,
+                $"\"Your Majesty. You have {got}. Enjoy the sea air. {other} is still mine, and so is the strait it looks across.\"", "Offer");
+        }
+
+        foreach (string c in CallPlaces)
+        {
+            string id = c.Replace(" ", "");
+            bool city = IsZilleCity(c);
+            news.Add("OpenOther" + id);
+            d.SayIf("OpenOther" + id, $"{CallKind("other")} and {Eq(VarCallGain, c)}", Smolak, city
+                ? $"\"Your Majesty. Your generals missed what they were aiming at and took {c} instead. I am told this is called flexibility.\""
+                : $"\"Your Majesty. You have {c} back. I hope it was worth what it cost you. Perhaps now we can talk.\"", "Offer");
+            news.Add("OpenTraded" + id);
+            d.SayIf("OpenTraded" + id, $"{CallKind("wonLoss", "mixed")} and {Eq(VarCallLoss, c)}", Smolak,
+                $"\"Your Majesty. You took ground from me, and I took {c} from you. At this rate we will have traded the whole region by " +
+                "winter. I suggest we stop.\"", "Offer");
+            news.Add("OpenRetook" + id);
+            d.SayIf("OpenRetook" + id, $"{CallKind("lost")} and {Eq(VarCallLoss, c)}", Smolak, city
+                ? $"\"Your Majesty. My soldiers are back in {c}. I thought I would call while you are still counting what it cost you.\""
+                : $"\"Your Majesty. My soldiers are in {c}, on your side of the old border. I thought this might be a good moment to talk.\"",
+                "Offer");
+        }
+
+        d.Branch("Open", new[] { "OpenAgain", "OpenQuiet" }.Concat(news)
+            .Concat(new[] { "OpenAuremina", "OpenHeldFedo", "OpenHeld", "OpenMissed", "OpenStrong", "OpenPlain" }).ToArray());
         d.SayIf("OpenQuiet", Is(VarCallHeld), Smolak,
             "\"Your Majesty. Your guns have been quiet for a month. Either you are tired or you are thinking, and I am calling in case it " +
             "is the second.\"", "Offer");
         d.SayIf("OpenAuremina", Is(ZilleOperation.CapturedVar("Auremina")), Smolak,
             "\"Your Majesty. You have my gold hills, and the miners of Auremina are learning your anthem with a Wehzek accent. Enjoy " +
             "them. Gold is heavy to carry home.\"", "Offer");
-        d.SayIf("OpenMissed", $"not {held} and {N(VarCallFought)} >= 1 and {Not(VarCallLastWon)}", Smolak,
+        d.SayIf("OpenMissed", $"not {held} and {CallKind("missed")} and {Eq(VarCallLastAim, "Harbor")}", Smolak,
             "\"Your Majesty. Your army came down the river, looked at Zille, and went back up it. I thought that, while you are " +
             "counting, you might listen.\"", "Offer");
         d.SayIf("OpenHeldFedo", $"{held} and {Is(CityEvents.Flag("Zille_BannerRaised"))}", Smolak,
@@ -238,8 +276,8 @@ internal static partial class SupplyWar
             ceasefire + Inc(Authority, -1) + T(WehzekRights) + S(VarSmolakAnswer, "countered") + S(VarCeasefireTerms, "rights"), "Close");
         d.Say("CounterNo", Smolak,
             "\"No. You are not winning enough to dictate, Your Majesty. My terms, or none.\"", "Answer");
-        d.Opt("Refuse", null, "\"Zille isn't for sale, Mr. President. Not even for peace.\"", "+1 Authority",
-            Inc(Authority, 1) + Inc(NpWehlen, -1) + S(VarSmolakAnswer, "refused") + $"if {s} >= 5 then {Strengthen(1)} end; ",
+        d.Opt("Refuse", null, "\"Zille isn't for sale, Mr. President. Not even for peace.\"", "+1 Authority, +1 Power Projection",
+            Inc(Authority, 1) + Inc(NpWehlen, -1) + S(VarSmolakAnswer, "refused") + T(VarSmolakRefused) + $"if {s} >= 5 then {Strengthen(1)} end; ",
             "Refused");
         d.Branch("Refused", "RefusedReserves", "RefusedStarving");
         d.SayIf("RefusedReserves", $"{s} >= 6", Smolak,

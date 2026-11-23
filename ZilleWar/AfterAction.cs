@@ -11,6 +11,20 @@ internal sealed class AfterAction
     public List<string> CitiesTaken = new(), CitiesLost = new(), CitiesRetaken = new(), EnemyCitiesLeft = new();
     public string Headline = string.Empty, CitiesTakenSentence = string.Empty, LossesSentence = string.Empty;
 
+    /// <summary>The Zille cities that were Rizian when the phase began, and the Rizian towns still in Wehzek hands at its end.</summary>
+    public List<string> ZilleHeldBefore = new(), RizianHeld = new();
+
+    // ---- the phase against its aim (set by Classify): what every report and paper tells
+    /// <summary>The aim's towns still Wehzek when the phase began ("Isor" once Nanta is ours), those taken, those missed.</summary>
+    public List<string> AimStart = new(), AimTaken = new(), AimMissed = new();
+    /// <summary>Zille cities taken beyond the aim; everything won (Zille cities and Rizian towns); losses split by side.</summary>
+    public List<string> Extra = new(), Gained = new(), BackLost = new(), OwnLost = new();
+    /// <summary>Won: the aim (as it stood) fully taken. Partial: part of a two-city aim. Gain / Loss: any city won / lost.</summary>
+    public bool Won, Partial, Gain, Loss;
+    /// <summary>The aim's name as it stood when the phase began: "Isor and Nanta", or "Isor" once Nanta is held.</summary>
+    public string AimName = string.Empty;
+    public Objective AimId;
+
     /// <summary>The four Wehzek-held cities of the Zille region.</summary>
     public static readonly string[] ZilleCities = { "Zille", "Auremina", "Isor", "Nanta" };
 
@@ -51,13 +65,117 @@ internal sealed class AfterAction
             {
                 a.EnemyCitiesLeft.Add(t.Name);
             }
+
+            if (was && t.Side == "zille")
+            {
+                a.ZilleHeldBefore.Add(t.Name);
+            }
+
+            if (!now && t.Side != "zille")
+            {
+                a.RizianHeld.Add(t.Name);
+            }
         }
 
         a.Headline = a.HeadlineSentence();
         a.CitiesTakenSentence = a.CitiesTaken.Count > 0 ? $"The Golden Banner now flies over {Join(a.CitiesTaken)}." : string.Empty;
-        a.LossesSentence = a.CitiesLost.Count > 0 ? $"{Join(a.CitiesLost)} {(a.CitiesLost.Count > 1 ? "have" : "has")} fallen to the enemy." : string.Empty;
+        a.LossesSentence = a.CitiesLost.Count > 0 ? $"{Join(a.CitiesLost)} {Has(a.CitiesLost)} fallen to the enemy." : string.Empty;
         return a;
     }
+
+    /// <summary>Tell the phase against its aim: the aim as it stood, what of it was taken and missed, and what else was won or lost.</summary>
+    public AfterAction Classify(ObjectiveInfo info)
+    {
+        AimId = info.Id;
+        AimStart = info.Towns.Where(t => !ZilleHeldBefore.Contains(t)).ToList();
+        if (AimStart.Count == 0)
+        {
+            AimStart = info.Towns.ToList();
+        }
+
+        AimTaken = AimStart.Where(CitiesTaken.Contains).ToList();
+        AimMissed = AimStart.Where(t => !CitiesTaken.Contains(t)).ToList();
+        Won = AimMissed.Count == 0;
+        Partial = !Won && AimTaken.Count > 0;
+        Extra = CitiesTaken.Where(c => !info.Towns.Contains(c)).ToList();
+        Gained = CitiesTaken.Concat(CitiesRetaken).ToList();
+        BackLost = CitiesLost.Where(ZilleCities.Contains).ToList();
+        OwnLost = CitiesLost.Where(c => !ZilleCities.Contains(c)).ToList();
+        Gain = Gained.Count > 0;
+        Loss = CitiesLost.Count > 0;
+        AimName = AimStart.Count == info.Towns.Length ? info.Target : Join(AimStart);
+        return this;
+    }
+
+    // ---- earlier phases, from the history ("Harbor:won;Ports:lost") and the per-phase lists (older saves have only the history)
+
+    /// <summary>The objective of the j-th phase fought and whether it reached it, or null when the history has no such entry.</summary>
+    public static (Objective obj, bool won)? HistoryEntry(int j)
+    {
+        string[] hist = ZilleCampaign.Str(ZilleCampaign.VarHistory).Split(';', StringSplitOptions.RemoveEmptyEntries);
+        if (j < 1 || j > hist.Length)
+        {
+            return null;
+        }
+
+        string[] h = hist[j - 1].Split(':');
+        return h.Length == 2 && Enum.TryParse(h[0], out Objective o) ? (o, h[1] == "won") : null;
+    }
+
+    /// <summary>The phases fought in a row against this objective, ending with the k-th (1 the first try, 2 the second...).</summary>
+    public static int Tries(int k, Objective o)
+    {
+        int n = 1;
+        for (int j = k - 1; j >= 1 && HistoryEntry(j) is { } h && h.obj == o; j--)
+        {
+            n++;
+        }
+
+        return n;
+    }
+
+    private static bool Captured(string c) => Variables.GetBool(ZilleOperation.CapturedVar(c));
+    private static bool HasLists(int j) => ZilleCampaign.Str(ZilleCampaign.AimVar(j)).Length > 0;
+
+    /// <summary>The j-th phase won a city (an older save, without the lists: it reached its aim, or holds part of it now).</summary>
+    public static bool PhaseGained(int j)
+    {
+        if (HasLists(j))
+        {
+            return ZilleCampaign.Gained(j).Count > 0;
+        }
+
+        return HistoryEntry(j) is { } h && (h.won || ZilleCampaign.Info(h.obj).Towns.Any(Captured));
+    }
+
+    /// <summary>The j-th phase took part of a two-city aim (an older save: missed its aim but holds part of it now).</summary>
+    public static bool PhasePartial(int j)
+    {
+        if (HasLists(j))
+        {
+            return ZilleCampaign.Partial(j);
+        }
+
+        return HistoryEntry(j) is { } h && !h.won && ZilleCampaign.Info(h.obj).Towns.Any(Captured);
+    }
+
+    /// <summary>The city was Rizian at some point before the k-th phase (so taking it now is winning it back).</summary>
+    public static bool HeldBefore(string city, int k)
+    {
+        for (int j = 1; j < k; j++)
+        {
+            if (HasLists(j) ? ZilleCampaign.Gained(j).Contains(city)
+                : HistoryEntry(j) is { } h && h.won && ZilleCampaign.Info(h.obj).Towns.Contains(city))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>The Zille cities in Rizian hands now.</summary>
+    public static List<string> HeldNow() => ZilleCities.Where(Captured).ToList();
 
     private string HeadlineSentence()
     {
@@ -90,6 +208,7 @@ internal sealed class AfterAction
     /// </summary>
     public string FullReport(ObjectiveInfo info, bool won)
     {
+        Classify(info);
         (int k, _, int phase) = ZilleCampaign.CurrentOperation();
         int p = Math.Clamp(phase <= 0 ? Math.Max(1, k) : phase, 1, ZilleCampaign.LastPhase);
         bool liberated = ZilleCampaign.Liberated, endLost = ZilleCampaign.Defeated;
@@ -97,17 +216,16 @@ internal sealed class AfterAction
         bool zilleHeld = Variables.GetBool(ZilleOperation.CapturedVar("Zille"));
         WarCouncil.Orders orders = WarCouncil.CurrentOrders();
         string name = ZilleCampaign.PhaseName(p);
-        bool plural = info.Towns.Length > 1;
-        bool carried = p <= ZilleCampaign.Sequence.Length && ZilleCampaign.Sequence[p - 1] != info.Id;
-        var extra = CitiesTaken.Where(c => !info.Towns.Contains(c)).ToList();
+        int tries = Tries(Math.Max(1, k), info.Id);
+        bool wonBack = AimStart.Any(t => HeldBefore(t, k));
 
-        string opening = Opening(p, won, final, liberated, zilleHeld, carried, info, name, plural, k) + " " + FrontSentence(p);
-        string plan = PlanSentence(orders, info, won, p);
-        string cities = CitiesParagraph(info, extra);
-        string losses = LossesParagraph(p, won, final, k);
+        string opening = Opening(p, k, final, liberated, zilleHeld, tries, wonBack, name) + " " + FrontSentence(p);
+        string plan = PlanSentence(orders, Won || Partial, p);
+        string cities = CitiesParagraph(liberated);
+        string losses = LossesParagraph(p, Won, final, k);
         List<string> notes = EventNotes();
         string landed = LandedSentence(p, orders);
-        string closing = Closing(p, won, final, liberated, zilleHeld, carried, info);
+        string closing = Closing(p, final, liberated, zilleHeld, info);
 
         var paragraphs = new List<string>();
         void Add(params string[] parts)
@@ -151,18 +269,60 @@ internal sealed class AfterAction
         return string.Join("\n\n", paragraphs);
     }
 
-    private static string Is(bool plural) => plural ? "are" : "is";
+    public static string Is(List<string> l) => l.Count > 1 ? "are" : "is";
+    public static string Has(List<string> l) => l.Count > 1 ? "have" : "has";
+    public static string Was(List<string> l) => l.Count > 1 ? "were" : "was";
+    public static string Nth(int n) => n switch { <= 1 => "first", 2 => "second", 3 => "third", _ => "fourth" };
 
-    private string Opening(int p, bool won, bool final, bool liberated, bool zilleHeld, bool carried, ObjectiveInfo info, string name, bool plural,
-        int k)
+    /// <summary>A city as prose: "the city of Zille", "Auremina", "the port of Nanta", or a Rizian town's name.</summary>
+    public static string Place(string c) => c switch
     {
-        string target = info.Target;
+        "Zille" => "the city of Zille",
+        "Isor" or "Nanta" => $"the port of {c}",
+        _ => c,
+    };
+
+    /// <summary>Cities as prose, the two ports together: "the city of Zille and the ports of Isor and Nanta".</summary>
+    public static string Places(List<string> cities)
+    {
+        bool bothPorts = cities.Contains("Isor") && cities.Contains("Nanta");
+        var parts = new List<string>();
+        foreach (string c in cities)
+        {
+            if (bothPorts && c is "Isor" or "Nanta")
+            {
+                if (!parts.Contains("the ports of Isor and Nanta"))
+                {
+                    parts.Add("the ports of Isor and Nanta");
+                }
+            }
+            else
+            {
+                parts.Add(Place(c));
+            }
+        }
+
+        return Join(parts);
+    }
+
+    /// <summary>
+    /// The dispatch's first sentences: what the phase did against its aim (all of it, part of it, none of it but other cities, or
+    /// nothing), or how the war ended. Gains outside the aim and losses are named in <see cref="CitiesParagraph"/>.
+    /// </summary>
+    private string Opening(int p, int k, bool final, bool liberated, bool zilleHeld, int tries, bool wonBack, string name)
+    {
+        string aim = AimName;
+        string has = Has(AimStart), isAre = Is(AimStart);
+        string taken = CitiesTaken.Count > 0 ? Join(CitiesTaken) : aim;
+        string takenIs = CitiesTaken.Count > 1 || (CitiesTaken.Count == 0 && AimStart.Count > 1) ? "are" : "is";
+        string gained = Join(Gained);
+        string struck = Loss ? " Elsewhere on the line, the enemy struck back." : string.Empty;
         if (liberated && p < ZilleCampaign.LastPhase)
         {
             return p == 1
-                ? $"{name} has done in a single month what the General Staff had planned to do in three. {target} {Is(plural)} in Rizian " +
-                  "hands, the Wehzek line has broken behind it, and the garrisons still holding out have asked for terms."
-                : $"{name} has finished the work the General Staff expected to leave to a third phase. {target} {Is(plural)} Rizian, and what " +
+                ? $"{name} has done in a single month what the General Staff had planned to do in three. {taken} {takenIs} in Rizian " +
+                  "hands, the Wehzek line has broken behind them, and the garrisons still holding out have asked for terms."
+                : $"{name} has finished the work the General Staff expected to leave to a third phase. {taken} {takenIs} Rizian, and what " +
                   "remained of the Wehzek garrison has stopped fighting.";
         }
 
@@ -170,51 +330,110 @@ internal sealed class AfterAction
         {
             if (liberated)
             {
-                return $"The final phase of {ZilleCampaign.OperationCodename} is over, and so is Wehlen's hold on Zille. {target} {Is(plural)} " +
-                       "in Rizian hands, the General Staff reports, and no Wehzek unit on the mainland is still fighting.";
+                return $"The final phase of {ZilleCampaign.OperationCodename} is over, and so is Wehlen's hold on Zille. {taken} {takenIs} " +
+                       "in Rizian hands, the General Staff reports, and no Wehzek unit in the region is still fighting.";
             }
 
+            string last = p >= ZilleCampaign.LastPhase ? $"The final phase of {ZilleCampaign.OperationCodename}" : name;
             if (zilleHeld)
             {
-                return won
-                    ? $"The final phase of {ZilleCampaign.OperationCodename} has been fought to its end, and its last days gave the army " +
-                      $"what the first two phases had not: {target} {Is(plural)} Rizian. The rest of the region is not."
-                    : $"The final phase of {ZilleCampaign.OperationCodename} has been fought to its end without reaching {target}, the General " +
-                      "Staff has reported to the Crown. The army holds what it took in the earlier phases, and no more.";
-            }
-
-            return $"The final phase of {ZilleCampaign.OperationCodename} has ended with the city of Zille still in Wehzek hands. " +
-                   "The General Staff has informed the Crown that the army has nothing left with which to try again.";
-        }
-
-        switch (p)
-        {
-            case 1:
-                return won
-                    ? $"{name} has reached its aim, the General Staff reports from its field headquarters behind the front. {target} {Is(plural)} " +
-                      "in Rizian hands."
-                    : $"{name} has ended without taking {target}, the General Staff has informed the Crown. {target} {(plural ? "remain" : "remains")} " +
-                      "in Wehzek hands, and the next phase will go for it again.";
-            case 2:
-                if (carried)
+                if (Won)
                 {
-                    return won
-                        ? $"At the second attempt, {target} has fallen. The General Staff reports that {name}, sent against the objective the " +
-                          "opening phase could not take, has carried it."
-                        : $"For the second time, {target} has held. {name} went for the objective the opening phase had missed, and the " +
-                          "General Staff reports that it has missed it too.";
+                    return wonBack
+                        ? $"{last} has been fought to its end, and it has won back {aim}. The rest of the region is still Wehzek.{struck}"
+                        : $"{last} has been fought to its end, and its last days gave the army what the earlier phases had not: {aim} " +
+                          $"{isAre} Rizian. The rest of the region is not.{struck}";
                 }
 
-                return won
-                    ? $"By the last evening of {name}, Rizian troops stood in {target}. The General Staff's dispatch from the front calls " +
-                      "the aim of the phase reached."
-                    : $"{name} has been halted short of {target}. The General Staff's dispatch speaks of hard fighting and ground taken, " +
-                      "but not of the objective.";
-            default:
-                return won
-                    ? $"{name} has taken {target}, the General Staff reports."
-                    : $"{name} has not taken {target}, the General Staff reports.";
+                if (Partial)
+                {
+                    return $"{last} has been fought to its end. It took {Join(AimTaken)} but not {Join(AimMissed)}, the General Staff has " +
+                           $"reported to the Crown.{struck}";
+                }
+
+                if (Gain)
+                {
+                    return $"{last} has been fought to its end without reaching {aim}, the General Staff has reported to the Crown, though " +
+                           $"it took {gained} on the way.{struck}";
+                }
+
+                return $"{last} has been fought to its end without reaching {aim}, the General Staff has reported to the Crown. " +
+                       (Loss || TilesLost > TilesGained
+                           ? "The army still holds the city of Zille, and less around it than when the phase began."
+                           : "The army holds what it took in the earlier phases, and no more.");
+            }
+
+            return $"{last} has ended with the city of Zille {(BackLost.Contains("Zille") ? "back" : "still")} in Wehzek hands. " +
+                   (Gain
+                       ? $"{gained} {Was(Gained)} taken on the way, but the General Staff has informed the Crown that the army has nothing " +
+                         "left with which to go for the city again."
+                       : "The General Staff has informed the Crown that the army has nothing left with which to try again.");
         }
+
+        if (p == 1)
+        {
+            // Phase I always goes for the city of Zille.
+            if (Won)
+            {
+                return $"{name} has reached its aim, the General Staff reports from its field headquarters behind the front. {aim} {isAre} " +
+                       $"in Rizian hands.{struck}";
+            }
+
+            return Gain
+                ? $"{name} has ended without taking {aim}, the General Staff has informed the Crown, though the army took {gained} on " +
+                  $"the way. {aim} {(AimStart.Count > 1 ? "remain" : "remains")} in Wehzek hands, and the next phase will go for it again.{struck}"
+                : $"{name} has ended without taking {aim}, the General Staff has informed the Crown. {aim} {(AimStart.Count > 1 ? "remain" : "remains")} " +
+                  "in Wehzek hands, and the next phase will go for it again.";
+        }
+
+        if (tries > 1)
+        {
+            // The same objective as the phase before: the aim it missed (or the part of it still Wehzek).
+            string before = tries > 2 ? "every phase before it" : k == 2 ? "the opening phase" : "the last phase";
+            if (Won)
+            {
+                return $"At the {Nth(tries)} attempt, {aim} {has} fallen. The General Staff reports that {name}, sent against the objective " +
+                       $"{before} could not take, has carried it.{struck}";
+            }
+
+            if (Partial)
+            {
+                return $"At the {Nth(tries)} attempt, {Join(AimTaken)} {Has(AimTaken)} fallen, but {Join(AimMissed)} {Has(AimMissed)} held. " +
+                       $"{name} went for the objective {before} had missed, and has carried part of it.{struck}";
+            }
+
+            if (Gain)
+            {
+                return $"{aim} {has} held again, the General Staff reports, but {name} did not come back empty-handed: it took {gained} " +
+                       $"instead.{struck}";
+            }
+
+            return $"For the {Nth(tries)} time, {aim} {has} held. {name} went for the objective {before} had missed, and the General " +
+                   "Staff reports that it has missed it too.";
+        }
+
+        if (Won)
+        {
+            return wonBack
+                ? $"By the last evening of {name}, Rizian troops were back in {aim}. The General Staff's dispatch from the front calls the " +
+                  $"aim of the phase reached.{struck}"
+                : $"By the last evening of {name}, Rizian troops stood in {aim}. The General Staff's dispatch from the front calls the aim " +
+                  $"of the phase reached.{struck}";
+        }
+
+        if (Partial)
+        {
+            return $"{name} has taken {Join(AimTaken)}, but not {Join(AimMissed)}, the General Staff reports. Its dispatch calls the aim " +
+                   $"of the phase half reached.{struck}";
+        }
+
+        if (Gain)
+        {
+            return $"{name} has been halted short of {aim}, the General Staff reports, but not before taking {gained}.{struck}";
+        }
+
+        return $"{name} has been halted short of {aim}. The General Staff's dispatch speaks of hard fighting" +
+               (TilesGained > 0 ? " and ground taken" : string.Empty) + ", but not of the objective.";
     }
 
     private string FrontSentence(int p)
@@ -263,35 +482,32 @@ internal sealed class AfterAction
         };
     }
 
-    private string CitiesParagraph(ObjectiveInfo info, List<string> extra)
+    /// <summary>
+    /// The cities beyond what the opening told: cities taken beyond an aim that was reached (in part or in full), Rizian towns won
+    /// back, and every city lost. When the aim was missed, the opening already names what was won instead.
+    /// </summary>
+    private string CitiesParagraph(bool liberated)
     {
         var s = new List<string>();
-        if (extra.Count > 0)
+        bool aimTold = Won || Partial;
+        if (aimTold && !liberated && Extra.Count > 0)
         {
-            s.Add($"Beyond the aim of the phase, the Golden Banner now flies over {Join(extra)} as well.");
+            s.Add($"Beyond the aim of the phase, the Golden Banner now flies over {Join(Extra)} as well.");
         }
 
-        var partOfAim = CitiesTaken.Where(info.Towns.Contains).ToList();
-        if (partOfAim.Count > 0 && partOfAim.Count < info.Towns.Length)
+        if ((aimTold || liberated) && CitiesRetaken.Count > 0)
         {
-            s.Add($"{Join(partOfAim)} {(partOfAim.Count > 1 ? "were" : "was")} taken, but not the rest of the objective.");
+            s.Add($"{Join(CitiesRetaken)} {Is(CitiesRetaken)} Rizian again.");
         }
 
-        if (CitiesRetaken.Count > 0)
+        if (BackLost.Count > 0)
         {
-            s.Add($"{Join(CitiesRetaken)} {(CitiesRetaken.Count > 1 ? "are" : "is")} Rizian again.");
+            s.Add($"{Join(BackLost)}, taken earlier in the operation, {Has(BackLost)} been lost to a Wehzek counterattack.");
         }
 
-        var backLost = CitiesLost.Where(ZilleCities.Contains).ToList();
-        var ownLost = CitiesLost.Where(c => !ZilleCities.Contains(c)).ToList();
-        if (backLost.Count > 0)
+        if (OwnLost.Count > 0)
         {
-            s.Add($"{Join(backLost)}, taken earlier in the operation, {(backLost.Count > 1 ? "have" : "has")} been lost to a Wehzek counterattack.");
-        }
-
-        if (ownLost.Count > 0)
-        {
-            s.Add($"On our own side of the old border, {Join(ownLost)} {(ownLost.Count > 1 ? "have" : "has")} fallen to the enemy.");
+            s.Add($"On our own side of the old border, {Join(OwnLost)} {Has(OwnLost)} fallen to the enemy.");
         }
 
         return string.Join(" ", s);
@@ -388,9 +604,11 @@ internal sealed class AfterAction
         string how = o.Navy == "Strait"
             ? "despite the fleet in the strait"
             : WorldSystems.StraitClosedNow ? "despite the patrols in the strait" : "with nothing at sea to stop them";
+        string at = ZilleCampaign.Str(PhaseResume.VarLandedAt);
+        string where = at.Length > 0 ? $"at {at}" : "near its ports";   // older saves do not know the port
         return landed == 1
-            ? $"Between the phases Wehlen landed a fresh formation near its ports, {how}, and it was waiting for us."
-            : $"Between the phases Wehlen landed {landed} fresh formations near its ports, {how}, and they were waiting for us.";
+            ? $"Between the phases Wehlen landed a fresh formation {where}, {how}, and it was waiting for us."
+            : $"Between the phases Wehlen landed {landed} fresh formations {where}, {how}, and they were waiting for us.";
     }
 
     private static string Noun(WarCouncil.Approach a) => a switch
@@ -414,8 +632,9 @@ internal sealed class AfterAction
     private static string Cap(string s) => s.Length == 0 ? s : char.ToUpperInvariant(s[0]) + s.Substring(1);
 
     /// <summary>How the war plan the King set at the first council, and his other orders, played out in this phase.</summary>
-    private static string PlanSentence(WarCouncil.Orders o, ObjectiveInfo info, bool won, int p)
+    private string PlanSentence(WarCouncil.Orders o, bool won, int p)
     {
+        // won: the plan carried at least part of the aim; a partial success says where it ran out of strength.
         var s = new List<string>();
         string by = o.Delegated ? "the General Staff" : "the King";
         if (o.Bombard)
@@ -435,7 +654,8 @@ internal sealed class AfterAction
         }
 
         string chosen = p == 1 ? $"the {Noun(o.Plan)} the King chose for the campaign" : $"the King's {Noun(o.Plan)}";
-        string target = info.Target;
+        string target = Partial ? Join(AimTaken) : AimName;
+        bool plural = (Partial ? AimTaken : AimStart).Count > 1;
         switch (o.Adapt)
         {
             case "hills":
@@ -449,16 +669,21 @@ internal sealed class AfterAction
             case "units":
                 s.Add(p == 1
                     ? $"With {Spent(o.Plan)} already lost, the Staff fought the phase as a direct assault" +
-                      (won ? ", and it was enough." : ", and it ran straight into prepared Wehzek positions.")
+                      (Partial ? ", and it carried part of the way." : won ? ", and it was enough." : ", and it ran straight into prepared Wehzek positions.")
                     : $"With {Spent(o.Plan)} spent in the earlier fighting, {chosen} gave way to a plain assault" +
                       (won ? ", which the enemy had not expected from us any more." : ", which is what the enemy had been waiting for."));
                 break;
             default:
-                s.Add(p == 1 ? FirstPlan(o.Approach, chosen, target, won) : p == 2 ? SecondPlan(o.Approach, target, won) : LastPlan(o.Approach, target, won));
+                s.Add(p == 1 ? FirstPlan(o.Approach, chosen, target, won) : p == 2 ? SecondPlan(o.Approach, target, won, plural) : LastPlan(o.Approach, target, won, plural));
                 break;
         }
 
-        s.Add(NavySentence(o, info, won, p));
+        if (Partial)
+        {
+            s.Add($"It ran out of strength short of {Join(AimMissed)}.");
+        }
+
+        s.Add(NavySentence(o, AimId, AimName, won, p));
         if (o.FleetRecalled && p == 1)
         {
             s.Add("The squadron recalled from the Aureus field kept the Wehzek navy out of the gulf.");
@@ -489,13 +714,13 @@ internal sealed class AfterAction
             : $"{Cap(chosen)} ran straight into prepared Wehzek positions.",
     };
 
-    private static string SecondPlan(WarCouncil.Approach a, string target, bool won) => a switch
+    private static string SecondPlan(WarCouncil.Approach a, string target, bool won, bool plural) => a switch
     {
         WarCouncil.Approach.Feint => won
             ? $"The Wehzeks had learned to expect a feint, so the Staff made the feint the real attack, and {target} fell to the blow they had been told to ignore."
             : "The Wehzek commanders had read the first phase too well, and this time they kept their reserves where they were.",
         WarCouncil.Approach.Landing => won
-            ? $"The marines went ashore again, on a beach the Wehzeks had not thought worth mining, and took {target} from the side it did not face."
+            ? $"The marines went ashore again, on a beach the Wehzeks had not thought worth mining, and took {target} from the side {(plural ? "they" : "it")} did not face."
             : "The marines went ashore again, but the Wehzeks had mined every beach within a day's march, and the landing never got off the sand.",
         WarCouncil.Approach.Armor => won
             ? "The tanks led again, and the Wehzek anti-tank guns, moved up during the lull, were in the wrong valley."
@@ -511,13 +736,13 @@ internal sealed class AfterAction
             : "The assault went in on a broad front, and the Wehzek line bent everywhere and broke nowhere.",
     };
 
-    private static string LastPlan(WarCouncil.Approach a, string target, bool won) => a switch
+    private static string LastPlan(WarCouncil.Approach a, string target, bool won, bool plural) => a switch
     {
         WarCouncil.Approach.Feint => won
             ? "The last feint of the war worked as well as the first."
             : "By the last phase the Wehzeks no longer believed anything the army showed them, and the feint drew nobody away.",
         WarCouncil.Approach.Landing => won
-            ? $"The marines made their last landing of the war on the beaches below {target}, and walked into the town by the harbor road."
+            ? $"The marines made their last landing of the war on the beaches below {target}, and walked into {(plural ? "both towns" : "the town")} by the harbor road."
             : $"The last landing went in under the guns of {target}, and the boats that came back were carrying wounded.",
         WarCouncil.Approach.Armor => won
             ? "What was left of the tanks led the final push, and it was enough."
@@ -534,7 +759,7 @@ internal sealed class AfterAction
     };
 
     /// <summary>The navy's part. Its orders carry over between phases, so each phase tells it in its own words.</summary>
-    private static string NavySentence(WarCouncil.Orders o, ObjectiveInfo info, bool won, int p)
+    private static string NavySentence(WarCouncil.Orders o, Objective aimId, string aim, bool won, int p)
     {
         switch (o.Navy)
         {
@@ -555,14 +780,16 @@ internal sealed class AfterAction
                     1 => won
                         ? "Offshore, the fleet's guns silenced the Wehzek coastal batteries before the first wave went in."
                         : "The fleet shelled the coast for two days; the batteries it could not see did the rest.",
-                    2 => info.Id == Objective.Wall
+                    2 => aimId == Objective.Wall
                         ? "The fleet's guns were of little use so far from the sea, and the Staff kept the ships offshore to cover the coast road."
                         : won
-                            ? $"The fleet came back inshore and shelled the batteries at {info.Target} again, and this time the guns stayed silent."
-                            : $"The fleet came back inshore, but the batteries at {info.Target} had been moved since the first phase, and the ships shelled empty emplacements.",
-                    _ => won
-                        ? $"The fleet came close inshore for the last phase and shelled the harbor batteries at {info.Target} until they fell silent."
-                        : $"The fleet came close inshore for the last phase, and a destroyer was hit by the batteries at {info.Target} before it could pull back.",
+                            ? $"The fleet came back inshore and shelled the batteries at {aim} again, and this time the guns stayed silent."
+                            : $"The fleet came back inshore, but the batteries at {aim} had been moved since the first phase, and the ships shelled empty emplacements.",
+                    _ => aimId == Objective.Wall
+                        ? "The fleet's guns could not reach the hills, and for the last phase the ships covered the coast road instead."
+                        : won
+                        ? $"The fleet came close inshore for the last phase and shelled the harbor batteries at {aim} until they fell silent."
+                        : $"The fleet came close inshore for the last phase, and a destroyer was hit by the batteries at {aim} before it could pull back.",
                 };
             default:
                 return p switch
@@ -586,45 +813,61 @@ internal sealed class AfterAction
         _ => "Deserters now come over every night. They say the garrison eats once a day and has stopped expecting the convoys.",
     };
 
-    private static string Closing(int p, bool won, bool final, bool liberated, bool zilleHeld, bool carried, ObjectiveInfo info)
+    private string Closing(int p, bool final, bool liberated, bool zilleHeld, ObjectiveInfo info)
     {
         if (liberated)
         {
+            string stragglers = RizianHeld.Count > 0
+                ? $" The Wehzek units still in {Join(RizianHeld)} have been ordered by their own commanders to lay down their arms as well."
+                : string.Empty;
             return p < ZilleCampaign.LastPhase
                 ? "Officers of the Wehzek garrison have come through the lines under a white flag to ask how their men may lay down their " +
-                  "arms. \"I had a third phase planned to the last detail,\" General Robles Azaro said. \"I am very happy to put it in a drawer.\""
+                  $"arms.{stragglers} \"I had {(p == 1 ? "two more phases" : "a third phase")} planned to the last detail,\" General Robles Azaro " +
+                  "said. \"I am very happy to put them in a drawer.\""
                 : "Officers of the last Wehzek garrisons have come through the lines under a white flag, and the Staff is arranging their " +
-                  "surrender. \"For the first time since the lease, there is no foreign army on Rizian soil,\" General Robles Azaro said. " +
+                  $"surrender.{stragglers} \"For the first time since the lease, Zille has no foreign army in it,\" General Robles Azaro said. " +
                   "\"The men are singing, and I have not had the heart to stop them.\"";
         }
 
         if (final)
         {
             return zilleHeld
-                ? "The Staff has advised the Royal Council that the army has no fourth push in it this year. The men are exhausted, the " +
+                ? "The Staff has advised the Royal Council that the army has no further push in it this year. The men are exhausted, the " +
                   "stocks of shells are spent, and the Alliance's observers are already asking both armies where they stand. \"We hold the " +
                   "city and the harbor,\" General Robles Azaro said. \"The rest will be decided by people who were not there.\""
                 : "The Staff has advised the Royal Council that the army cannot mount another offensive, and has urged that the fighting stop " +
-                  "before it is carried onto the Rizian side of the border. \"The army has given everything it had,\" General Robles Azaro " +
-                  "said. \"The failure is mine, and I will answer for it.\"";
+                  $"before it is carried {(RizianHeld.Count > 0 ? "any further onto" : "onto")} the Rizian side of the border. \"The army has given " +
+                  "everything it had,\" General Robles Azaro said. \"The failure is mine, and I will answer for it.\"";
         }
 
-        string next = ZilleCampaign.Available().Count > 0 ? ZilleCampaign.Info(ZilleCampaign.NextObjective).Target : null;
+        // The next aim as it stands now ("Isor" once Nanta is ours); a city lost this phase comes back as the aim.
+        bool any = ZilleCampaign.Available().Count > 0;
+        ObjectiveInfo nextInfo = any ? ZilleCampaign.Info(ZilleCampaign.NextObjective) : null;
+        string next = nextInfo == null ? null : ZilleCampaign.AimName(nextInfo);
         string garrison = GarrisonSentence(p);
         if (next == null)
         {
             return $"{garrison} The Staff awaits the King's orders.";
         }
 
-        bool again = next == info.Target;
+        bool again = nextInfo.Id == info.Id && !BackLost.Any(nextInfo.Towns.Contains);
+        bool winBack = BackLost.Any(nextInfo.Towns.Contains);
         return p switch
         {
-            1 => $"{garrison} " + (again
+            1 => $"{garrison} " + (winBack
+                ? $"The second phase must first win back {next}. \"We took {(next.Contains(" and ") ? "them" : "it")} once,\" General Robles Azaro said. \"The men know the way.\""
+                : again
                 ? $"The Staff asks to go for {next} again in the second phase. \"We know their positions now,\" General Robles Azaro said. " +
                   "\"They know ours. Next month it comes down to who has used the time better.\""
                 : $"The second phase, against {next}, can begin as soon as the King gives the order. \"The Wehzeks will use every night we " +
                   "give them,\" General Robles Azaro said. \"Their convoys do not keep office hours.\""),
-            _ => $"{garrison} " + (again
+            _ => $"{garrison} " + (winBack
+                ? $"One phase remains, and it must win back {next}. \"The men know it is the last push,\" General Robles Azaro said. " +
+                  "\"I have told them it is, and I mean to keep my word.\""
+                : again && Partial
+                ? $"The final phase will go for {next}, the part of the objective still in Wehzek hands. \"One more try is all the army has " +
+                  "in it,\" General Robles Azaro told the Royal Council, \"so it had better be the right one.\""
+                : again
                 ? $"The final phase will have to go for {next} once more. \"One more try is all the army has in it,\" General Robles Azaro " +
                   "told the Royal Council, \"so it had better be the right one.\""
                 : $"One phase remains, against {next}. \"The men know it is the last push,\" General Robles Azaro said. \"I have told " +
@@ -663,6 +906,6 @@ internal sealed class AfterAction
         return notes;
     }
 
-    private static string Join(List<string> l) =>
+    public static string Join(List<string> l) =>
         l.Count <= 1 ? string.Join("", l) : string.Join(", ", l.Take(l.Count - 1)) + " and " + l[^1];
 }

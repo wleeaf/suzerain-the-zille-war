@@ -127,6 +127,8 @@ internal static partial class SupplyWar
 
     /// <summary>Smolak's offer: "accepted" | "countered" | "refused".</summary>
     public const string VarSmolakAnswer = "ZilleWar.Smolak_CeasefireAnswer";
+    /// <summary>The King turned down Smolak's ceasefire: +1 power projection (WorldModifiers), unless the war is then lost.</summary>
+    public const string VarSmolakRefused = "ZilleWar.Smolak_RefusedCeasefire";
     /// <summary>Terms of an accepted ceasefire: "full" (Rico, Bludish ban, Wehzek rights) | "reduced" (ban, rights) | "rights".</summary>
     public const string VarCeasefireTerms = "ZilleWar.Ceasefire_Terms";
     /// <summary>Morellan aircraft bought without markings.</summary>
@@ -185,6 +187,14 @@ internal static partial class SupplyWar
     internal const string VarCallCities = "ZilleWar.Call_Cities";
     /// <summary>A Rizian border town is in Wehzek hands.</summary>
     internal const string VarCallOwnLost = "ZilleWar.Call_OwnLost";
+    /// <summary>How the last phase went (Front.Kind): "won" | "wonLoss" | "partial" | "other" | "mixed" | "missed" | "lost".</summary>
+    internal const string VarCallKind = "ZilleWar.Call_Kind";
+    /// <summary>The city the last phase won, to name on the phone: the part of the aim taken, else the first city taken.</summary>
+    internal const string VarCallGain = "ZilleWar.Call_Gain";
+    /// <summary>The city the last phase lost, to name on the phone ("" when none).</summary>
+    internal const string VarCallLoss = "ZilleWar.Call_Loss";
+    /// <summary>The part of the last phase's aim it did not take ("Isor"; "" when the aim was taken).</summary>
+    internal const string VarCallMissed = "ZilleWar.Call_Missed";
 
     // ---- what was said on the previous calls (read back on the next one)
     private const string VarBeaGave = "ZilleWar.Call_Beatrice_Gave";             // "" | "none" | "embargo" | "credit" | "raids" | "fighters"
@@ -254,13 +264,14 @@ internal static partial class SupplyWar
         VarMorellaAircraft, VarSaltanaCalled, VarSaltanaGulf, VarDefector, VarPriorityApplied, VarWarnedApplied, VarGrudgeApplied,
         VarCallLastWon, VarCallHeld, VarCallExtra, VarCallOwnLost, VarBeaToldDossier, VarBeaToldBluds, VarBeaNoEmbargo, VarBeaNoCredit,
         VarBeaNoRaids, VarBeaNoFighters, VarBeaAskedEmbWhy, VarBeaAskedInterest, VarBeaAskedRaidWhy, VarBeaAskedFigWhy, VarAlvRefusedStrait,
-        VarAlvRefusedMitz, VarAlvAskedWhy, VarAlvAskedMitzWhy, VarAlvJabbed,
+        VarAlvRefusedMitz, VarAlvAskedWhy, VarAlvAskedMitzWhy, VarAlvJabbed, VarSmolakRefused,
     };
 
     private static readonly string[] StringVars =
     {
         VarRamiro, VarRamiroOutcome, VarAlvarezPalesDone, VarAlvarezGasDone, VarValgslandCable, VarValgslandCall,
         VarSmolakAnswer, VarCeasefireTerms, VarPhotoBoats, VarBludsIncident, VarPhotoPayoff, VarCallLastAim, VarBeaGave, VarBeaGavePrev,
+        VarCallKind, VarCallGain, VarCallLoss, VarCallMissed,
         VarBeaPromise, VarBeaPromisePrev,
     };
 
@@ -389,6 +400,12 @@ internal static partial class SupplyWar
     /// </summary>
     private static void Grudges()
     {
+        // the refusal of Smolak's ceasefire (also for saves made before the flag existed)
+        if (Str(VarSmolakAnswer) == "refused" && !Variables.GetBool(VarSmolakRefused))
+        {
+            Variables.Set(VarSmolakRefused, true);
+        }
+
         if (Str(VarAlvarezGasPriceT6) == "refused" && !Variables.GetBool(VarGrudgeApplied) && Variables.GetBool(VarLespiaStrait))
         {
             Variables.Set(VarGrudgeApplied, true);
@@ -539,26 +556,32 @@ internal static partial class SupplyWar
     {
         int k = ZilleCampaign.OperationsDone;
         Variables.Set(VarCallFought, k);
-        string[] hist = ZilleCampaign.Str(ZilleCampaign.VarHistory).Split(';', StringSplitOptions.RemoveEmptyEntries);
-        string[] last = hist.Length > 0 ? hist[^1].Split(':') : Array.Empty<string>();
-        string aim = last.Length > 0 ? last[0] : string.Empty;
-        bool won = k > 0 && (Variables.GetBool(ZilleCampaign.ResultVar(k)) || (last.Length > 1 && last[1] == "won"));
+        Front.Phase last = Front.Of(k);
+        string aim = last?.Objective.ToString() ?? string.Empty;
+        bool won = last?.Won ?? false;
         Variables.Set(VarCallLastAim, aim);
         Variables.Set(VarCallLastWon, won);
-        int phase = k > 0 ? Variables.GetInt(ZilleCampaign.PhaseOfVar(k)) : 0;
-        Variables.Set(VarCallLastPhase, phase > 0 ? phase : Math.Min(k, ZilleCampaign.LastPhase));
+        Variables.Set(VarCallLastPhase, last?.Number ?? 0);
         int playerDead = k > 0 ? Variables.GetInt(ZilleCampaign.PlayerDeadVar(k)) : 0;
         int enemyDead = k > 0 ? Variables.GetInt(ZilleCampaign.EnemyDeadVar(k)) : 0;
         Variables.Set(VarCallLossTier, playerDead >= 6 || (playerDead >= 3 && playerDead > enemyDead) ? 2 : playerDead >= 3 || playerDead > enemyDead ? 1 : 0);
         int held = Variables.GetInt(WarCouncil.VarHeldTurn);
         Variables.Set(VarCallHeld, held > 0 && held == turn - 1);
 
-        string[] cities = { "Zille", "Auremina", "Isor", "Nanta" };
-        int taken = cities.Count(c => Variables.GetBool(ZilleOperation.CapturedVar(c)));
-        Variables.Set(VarCallCities, taken);
-        int idx = Array.IndexOf(ZilleCampaign.Sequence.Select(o => o.ToString()).ToArray(), aim);
-        int expected = idx < 0 ? 0 : ZilleCampaign.Sequence.Take(idx + 1).Sum(o => ZilleCampaign.Info(o).Towns.Length);
-        Variables.Set(VarCallExtra, won && taken > expected);
+        Variables.Set(VarCallCities, Front.Held.Count);
+        // More cities than the aim, in a phase that took its aim and lost nothing ("two cities for the price of one").
+        Variables.Set(VarCallExtra, last != null && last.Kind == Front.Kind.Won && last.Extra.Count > 0);
+        string kind = last == null ? string.Empty : last.Kind switch
+        {
+            Front.Kind.Won => "won", Front.Kind.WonLoss => "wonLoss", Front.Kind.Partial => "partial", Front.Kind.Other => "other",
+            Front.Kind.Mixed => "mixed", Front.Kind.Missed => "missed", _ => "lost",
+        };
+        Variables.Set(VarCallKind, kind);
+        string gain = last == null ? string.Empty
+            : last.AimTaken.FirstOrDefault() ?? last.CitiesGained.FirstOrDefault() ?? last.TownsRetaken.FirstOrDefault() ?? string.Empty;
+        Variables.Set(VarCallGain, gain);
+        Variables.Set(VarCallLoss, last == null ? string.Empty : last.CitiesLost.FirstOrDefault() ?? last.TownsLost.FirstOrDefault() ?? string.Empty);
+        Variables.Set(VarCallMissed, last == null || last.Won ? string.Empty : Front.Join(last.AimMissed));
 
         Dictionary<string, bool> owners = ZilleCampaign.CurrentOwners();
         Variables.Set(VarCallOwnLost, RizianTowns.Any(c => ZilleCampaign.TownTile(c) is { } tile && ZilleCampaign.IsEnemy(owners, tile)));
@@ -735,6 +758,14 @@ internal static partial class SupplyWar
     internal static string Is(string v) => $"(Variable[\"{v}\"] == true)";
     internal static string Not(string v) => $"(Variable[\"{v}\"] ~= true)";
     internal static string Eq(string v, string s) => $"(Variable[\"{v}\"] == \"{s}\")";
+
+    // ---- the last phase as the calls read it (PrepareCallState): one class per outcome, so no call misreads a gain
+    internal static string CallFought => $"{N(VarCallFought)} >= 1";
+    internal static string CallKind(params string[] kinds) =>
+        $"({CallFought} and {Not(VarCallHeld)} and (" + string.Join(" or ", kinds.Select(k => Eq(VarCallKind, k))) + "))";
+    /// <summary>Every city a call can name as won or lost: the four Zille cities and the Rizian border towns.</summary>
+    internal static readonly string[] CallPlaces = { "Zille", "Auremina", "Isor", "Nanta", "Mave Nortus", "Dapalle", "Balle", "Jales" };
+    internal static bool IsZilleCity(string c) => Array.IndexOf(AfterAction.ZilleCities, c) >= 0;
     internal static string Inc(string v, int d) => $"Variable[\"{v}\"] = (Variable[\"{v}\"] or 0) + ({d}); ";
     internal static string T(string v) => $"Variable[\"{v}\"] = true; ";
     internal static string F(string v) => $"Variable[\"{v}\"] = false; ";

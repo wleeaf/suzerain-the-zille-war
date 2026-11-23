@@ -176,7 +176,7 @@ internal static class AuditT6
 
         // [152] Reinhart: "We defended ourselves against Rizia once. We are ready to do so again." -> [153]
         t.Line("ReinhartLib", Axel, "\"You took Zille from Smolak, I know. We are not Smolak.\"", new[] { "#153" }, condition: Lib, hooks: From(152));
-        t.Line("ReinhartPart", Axel, "\"Your army came back from Zille with half of it, Your Majesty. Do not ask me to believe it is ready for more.\"",
+        t.Line("ReinhartPart", Axel, "\"Your army came back from Zille with only part of it, Your Majesty. Do not ask me to believe it is ready for more.\"",
             new[] { "#153" }, condition: Part, hooks: From(152));
         t.Line("ReinhartLost", Axel, "\"You had the army for Zille, Your Majesty, and it was not enough. Do not ask me to believe the army is ready for more.\"",
             new[] { "#153" }, condition: Lost, hooks: From(152));
@@ -271,13 +271,14 @@ internal static class AuditT6
 
         // [255] and [623] Estela: "your attention should be on the rightful restoration of Zille, not Pales!"
         t.Variant("Zille255Lib", 255, new[] { 622 }, Lib, Estela, "\"You have Zille back, Romus! Isn't one war enough for a lifetime?\"", new[] { "#259" });
-        t.Variant("Zille255Part", 255, new[] { 622 }, Part, Estela, "\"Half of Zille is still behind Smolak's line, and you want Pales now?\"", new[] { "#259" });
+        ForDivided((id, cond, _, theirs, be) => t.Variant("Zille255Part" + id, 255, new[] { 622 }, cond, Estela,
+            $"\"{theirs} {be} still behind Smolak's line, and you want Pales now?\"", new[] { "#259" }));
         t.Variant("Zille255Lost", 255, new[] { 622 }, Lost, Estela, "\"You could not take Zille, Romus, and now you want Pales?\"", new[] { "#259" });
         t.Variant("Zille623Lib", 623, new[] { 98 }, Lib, Estela,
             "\"Relying solely on divine intervention is misguided. And you have Zille back already. Is one war not enough for you?\"", new[] { "#259" });
-        t.Variant("Zille623Part", 623, new[] { 98 }, Part, Estela,
-            "\"Relying solely on divine intervention is misguided. Speaking of which, half of Zille is still in Smolak's hands, and you are " +
-            "looking at Pales.\"", new[] { "#259" });
+        ForDivided((id, cond, _, theirs, be) => t.Variant("Zille623Part" + id, 623, new[] { 98 }, cond, Estela,
+            $"\"Relying solely on divine intervention is misguided. Speaking of which, {theirs} {be} still in Smolak's hands, and you are " +
+            "looking at Pales.\"", new[] { "#259" }));
         t.Variant("Zille623Lost", 623, new[] { 98 }, Lost, Estela,
             "\"Relying solely on divine intervention is misguided. Speaking of which, Zille is still Wehzek, and you are looking at Pales.\"",
             new[] { "#259" });
@@ -296,7 +297,7 @@ internal static class AuditT6
         t.Variant("Lost262", 262, new[] { 265 }, Lost, Romus,
             "\"I fought for Zille, and God did not grant it to us. Not yet.\"", new[] { "#273" });
         t.Variant("Part263", 263, new[] { 269 }, Part, Romus,
-            "\"Surrendering Zille was one of Rizia's greatest tragedies. I went to war to take it back, and half of it is ours again.\"",
+            "\"Surrendering Zille was one of Rizia's greatest tragedies. I went to war to take it back, and part of it is ours again.\"",
             new[] { "#272" });
         t.Variant("Lost263", 263, new[] { 269 }, Lost, Romus,
             "\"Surrendering Zille was one of Rizia's greatest tragedies. I went to war to take it back, and I failed. That is not the end of it.\"",

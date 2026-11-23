@@ -86,7 +86,7 @@ internal static class SweepEarlyT6Council
             "And all this while our sons are still dying in Zille. How many wars does one King need?",
             "Zille was not enough, it seems. The King has found another war to send our sons to.",
             "Zille taught the King nothing. He has found another war to send our sons to.",
-            "Half of Zille is still behind Smolak's line, and the King wants a second war. Our sons did not finish the first."));
+            $"{Front.WehzekWords} {Front.Is(Front.Wehzek)} still behind Smolak's line, and the King wants a second war. Our sons did not finish the first."));
 
         News("Turn06_RH_RecruitementDrive", (s, _) => P(
             "Citizens! Patriots!",
@@ -131,7 +131,7 @@ internal static class SweepEarlyT6Council
                 "I am afraid, am I.",
                 "And congratulations on Zille, of course. An election and a war in one season. Some would call that showing off. I " +
                 "call it a good year.",
-                "As for Zille, half a province is better than none, I suppose. Do hold on to the half you have, my dear. Maps are so " +
+                "As for Zille, part of a province is better than none, I suppose. Do hold on to the part you have, my dear. Maps are so " +
                 "tiresome to redraw.",
                 "As for Zille, I am told it was not your fault. I am told a great many things.") + "”"));
     }

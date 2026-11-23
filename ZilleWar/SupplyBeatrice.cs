@@ -33,9 +33,8 @@ internal static partial class SupplyWar
         string turn = TurnLua;
 
         // ---- the war since her last call (SupplyWar.PrepareCallState) and what was said on it
-        string fought = $"{N(VarCallFought)} >= 1";
-        string won = $"({fought} and {Is(VarCallLastWon)})";
-        string missed = $"({fought} and {Not(VarCallLastWon)} and {Not(VarCallHeld)})";
+        string won = CallKind("won");            // the aim taken, nothing lost
+        string missed = CallKind("missed");      // nothing taken, nothing lost
         string held = Is(VarCallHeld);
         string aim(string a) => Eq(VarCallLastAim, a);
         string zille = Is(ZilleOperation.CapturedVar("Zille"));
@@ -58,8 +57,43 @@ internal static partial class SupplyWar
             "let it ring.", null, $"AddConversant(\"{Beatrice}\");", "Open");
 
         // ---- openings: the first call, then whatever the front did since the last one
-        d.Branch("Open", "NoMore", "Hello1", "HelloHeld", "HelloExtra", "HelloZilleLate", "HelloZille", "HelloAuremina", "HelloDossier", "HelloMissedZ2",
-            "HelloMissedZ", "HelloMissedA", "HelloMissed", "HelloTwoWars", "HelloLater");
+        // Every other outcome of the last phase, naming the city: one port of two, another city than the aim, a city lost.
+        var outcomes = new List<string>();
+        foreach ((string got, string other) in new[] { ("Nanta", "Isor"), ("Isor", "Nanta") })
+        {
+            outcomes.Add("HelloPart" + got);
+            d.SayIf("HelloPart" + got, $"{CallKind("partial")} and {Eq(VarCallGain, got)}", Beatrice,
+                $"\"Romus. {got}, my Exchequer tells me, and not {other}. They asked whether half a coastline counts as a victory. I told " +
+                "them it counts as half of one.\"", "GreetWon");
+        }
+
+        foreach (string c in CallPlaces)
+        {
+            string id = c.Replace(" ", "");
+            bool city = IsZilleCity(c);
+            outcomes.Add("HelloOther" + id);
+            d.SayIf("HelloOther" + id, $"{CallKind("other")} and {Eq(VarCallGain, c)}", Beatrice, city
+                ? $"\"Romus. The papers say your army went for one city and came home with {c}. My ministers call it luck. I call it initiative.\""
+                : $"\"Romus. {c} is Rizian again, I read. Good. A king should never have to ask twice for his own towns.\"", "GreetWon");
+            outcomes.Add("HelloWonLoss" + id);
+            d.SayIf("HelloWonLoss" + id, $"{CallKind("wonLoss")} and {Eq(VarCallLoss, c)}", Beatrice,
+                $"\"Romus. You took what you went for, and lost {c} the same week. My ministers have stopped reading the war news past the " +
+                "first column.\"", "GreetMissed");
+            outcomes.Add("HelloMixed" + id);
+            d.SayIf("HelloMixed" + id, $"{CallKind("mixed")} and {Eq(VarCallLoss, c)}", Beatrice,
+                $"\"Romus. Ground won in one place and {c} lost in another. My Exchequer drew me a chart of your war. It looks like a seesaw.\"",
+                "GreetMissed");
+            outcomes.Add("HelloLost" + id);
+            d.SayIf("HelloLost" + id, $"{CallKind("lost")} and {Eq(VarCallLoss, c)}", Beatrice, city
+                ? $"\"Romus. The Wehzek radio says Smolak has {c} back. I'd rather have heard it from you, and rather not have heard it at all.\""
+                : $"\"Romus. Wehzek soldiers in {c}. On Rizian soil. My ministers ask whether you can still keep what you already had.\"",
+                "GreetMissed");
+        }
+
+        d.Branch("Open", new[] { "NoMore", "Hello1", "HelloHeld", "HelloExtra", "HelloZilleLate", "HelloZille", "HelloAuremina" }
+            .Concat(outcomes)
+            .Concat(new[] { "HelloDossier", "HelloMissedZ2", "HelloMissedZ", "HelloMissedA", "HelloMissedP", "HelloMissed", "HelloTwoWars", "HelloLater" })
+            .ToArray());
         d.SayIf("Hello1", first, Beatrice,
             "\"Romus. I was beginning to think you'd lost my number. Then I remembered you've started a war, and I forgave you.\"",
             "Greet1", "Greet2", "Greet3");
@@ -80,7 +114,7 @@ internal static partial class SupplyWar
             "\"Romus. A whole month without a shot fired. My ministers were beginning to hope you'd come to your senses. I told them not " +
             "to be silly.\"", "GreetHeld");
         d.SayIf("HelloExtra", $"{won} and {Is(VarCallExtra)}", Beatrice,
-            "\"Romus. I'm told your army didn't stop where it was told to. Two cities for the price of one. Even my Exchequer was " +
+            "\"Romus. I'm told your army didn't stop where it was told to. More cities than it was sent for. Even my Exchequer was " +
             "impressed, and my Exchequer is never impressed.\"", "GreetWon");
         d.SayIf("HelloZilleLate", $"{won} and {aim("Harbor")} and {again}", Beatrice,
             "\"Zille, at the second attempt. The Thornbourgh Gazette printed your flag over the harbor this morning, and my ministers " +
@@ -99,6 +133,8 @@ internal static partial class SupplyWar
             "something shorter.\"", "GreetMissed");
         d.SayIf("HelloMissedA", $"{missed} and {aim("Wall")}", Beatrice,
             "\"Romus. I hear the hills around Auremina held. The Wehzek radio has been unbearable about it all week.\"", "GreetMissed");
+        d.SayIf("HelloMissedP", $"{missed} and {aim("Ports")}", Beatrice,
+            "\"Romus. I hear the ports held. Smolak's ships are still unloading at them, and the Wehzek radio has made a song of it.\"", "GreetMissed");
         d.SayIf("HelloMissed", missed, Beatrice,
             "\"Romus. The Wehzek radio is very cheerful this week, which I take personally.\"", "GreetMissed");
         d.SayIfDo("HelloDossier", $"{dossier} and {Not(VarBeaToldDossier)}", Beatrice,
