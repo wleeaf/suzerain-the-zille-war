@@ -5,8 +5,8 @@ namespace ZilleWar;
 /// in any order across calls:
 /// - the Strait of Kreleck: the Lespian navy closes Wehlen's sea road to its Zille garrison. Priced in Aureus gas if Rizia
 ///   bought the field from Pales (Diplomacy_Pales_GasField_Buy, not cancelled): six units to LesPower every turn for the price
-///   of two once the gas flows (SupplyWar.GasContract). Otherwise naval rights at Caleqabiz, or money (cheaper if he already
-///   spoke for Rizia, Diplomacy_Lespia_WehlenHelp). A broken Turn 5 MITZ promise adds a surcharge to every price, until the King
+///   of two once the gas flows (SupplyWar.GasContract). Otherwise a fifty-year lease of Caleqabiz (with a token rent, or
+///   none if Lespia holds a grievance), or an escort fee paid every turn the war lasts (-3 Budget, -4 with a grievance). A broken Turn 5 MITZ promise adds a surcharge to every price, until the King
 ///   gives him the final vote. The Ramiro file can get the strait for nothing.
 /// - the Meftiem: Rizia's vote with Lespia on the MITZ board (vanilla Diplomacy_Lespia_PromiseITZSupport, or the _Late promise
 ///   for the final vote if the Turn 5 board has already voted). In return Lespia votes against sanctions on Rizia at the
@@ -59,7 +59,6 @@ internal static partial class SupplyWar
         string grudge = $"({broke} and {Not(MitzPromiseLate)})";
         string friendly = $"(not {grudge})";
         string mitzOpen = MitzBargainOpen;
-        string help = Is("RiziaDLC.Diplomacy_Lespia_WehlenHelp");
         string budget = N(Budget);
         // Lespia's rival Valgsland takes every Lespian favour to Rizia badly.
         string dealScript = $"{V(Count(Lever.Lespia))} = 1; " + T(VarLespiaStrait) + Talk.Weaken(2) + Inc(NpLespia, 1) + Inc(NpWehlen, -1) +
@@ -294,30 +293,27 @@ internal static partial class SupplyWar
         d.SayIf("PriceHarbor", $"not {pending} and not {now}", Alvarez,
             "\"Now, the price. I'll keep it simple. My admirals like harbors, and Caleqabiz has a very nice one.\"", "Harbor2");
         d.Say("Harbor2", Alvarez,
-            "\"A pier, a fuel depot, a few hundred sailors for as long as the war lasts. Rizia keeps the island, of course. We'd only " +
-            "be guests.\"", "Harbor3");
-        d.Say("Harbor3", Alvarez, "\"You understand the concept of guests, I'm sure. Zille had some.\"", "GrudgeHarbor");
+            "\"A pier, a fuel depot, a few hundred sailors. Fifty years, signed and stamped. Rizia keeps the island, of course. We'd only " +
+            "be tenants.\"", "Harbor3");
+        d.Say("Harbor3", Alvarez, "\"You understand the concept of tenants, I'm sure. Zille had some.\"", "GrudgeHarbor");
         d.Branch("GrudgeHarbor", "GrudgeHarborSay", "EsqHarbor");
         d.SayIf("GrudgeHarborSay", grudge, Alvarez,
             "\"And a word about the Meftiem. After the way Rizia treated Lespia there, whatever we settle on today costs a little more " +
             "than I'd charge a friend.\"", "EsqHarbor");
         d.Say("EsqHarbor", Esquibel,
-            "Laurento covered the mouthpiece. \"Guests with a lease, Your Majesty. That's how Zille began. He'd take money instead, " +
-            "if we have it.\"", "MenuHarbor");
+            "Laurento covered the mouthpiece. \"Fifty years, Your Majesty. Zille's lease was only twenty-five. He'd take money instead, " +
+            "every month the war lasts.\"", "MenuHarbor");
 
-        d.Branch("MenuHarbor", Gate("Free"), Gate("Harbor"), Gate("HarborG"), Gate("Money2"), Gate("Money3"), Gate("Money4"),
-            Gate("Money5"), "Refuse");
-        const string harborText = "\"Your ships may use Caleqabiz for as long as the war lasts.\"";
-        string harborDeal = dealScript + Inc(Authority, -1) + T(VarLespiaCaleqabiz);
-        d.Opt("Harbor", friendly, harborText, "-1 Authority, Lespian Naval Rights at Caleqabiz", harborDeal, "Deal2");
-        d.Opt("HarborG", $"{grudge} and {budget} >= 2", harborText, "-1 Authority, -2 Budget, Lespian Naval Rights at Caleqabiz",
-            harborDeal + Inc(Budget, -2), "Deal2");
+        d.Branch("MenuHarbor", Gate("Free"), Gate("Harbor"), Gate("HarborG"), Gate("Money3"), Gate("Money4"), "Refuse");
+        const string harborText = "\"Fifty years of Caleqabiz. Draw up the lease.\"";
+        string harborDeal = dealScript + Inc(Authority, -2) + T(VarLespiaCaleqabiz) + T(VarLespiaLease);
+        d.Opt("Harbor", friendly, harborText, "-2 Authority, +1 Budget Per Turn, Caleqabiz Leased to Lespia for 50 Years",
+            harborDeal + $"{V(WorldModifiers.CaleqabizRent)} = 1; ", "Deal2");
+        d.Opt("HarborG", grudge, harborText, "-2 Authority, Caleqabiz Leased to Lespia for 50 Years Without Rent", harborDeal, "Deal2");
         const string money = "\"Not Caleqabiz. I'll pay for your ships instead.\"";
         string paid = dealScript + T(VarLespiaPaid);
-        d.Opt("Money2", $"{help} and {friendly} and {budget} >= 2", money, "-2 Budget", paid + Inc(Budget, -2), "Money");
-        d.Opt("Money3", $"not {help} and {friendly} and {budget} >= 3", money, "-3 Budget", paid + Inc(Budget, -3), "Money");
-        d.Opt("Money4", $"{help} and {grudge} and {budget} >= 4", money, "-4 Budget", paid + Inc(Budget, -4), "Money");
-        d.Opt("Money5", $"not {help} and {grudge} and {budget} >= 5", money, "-5 Budget", paid + Inc(Budget, -5), "Money");
+        d.Opt("Money3", friendly, money, "-3 Budget Per Turn While the War Lasts", paid + $"{V(WorldModifiers.LespiaEscort)} = -3; ", "Money");
+        d.Opt("Money4", grudge, money, "-4 Budget Per Turn While the War Lasts", paid + $"{V(WorldModifiers.LespiaEscort)} = -4; ", "Money");
         d.Say("Money", Alvarez,
             "\"Money. How refreshingly direct. Warships are expensive, Your Majesty, and Lespian admirals more so.\"", "Money2b");
         d.Say("Money2b", Alvarez,

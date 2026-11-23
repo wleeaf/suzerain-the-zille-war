@@ -341,7 +341,7 @@ internal static class EarlyT6
             script: Set(VarAlvarezGasPrice, "\"paid\"") + Inc("RiziaDLC.Resources_Energy", -6) + Inc("RiziaDLC.Resources_Budget", 2) +
                     Inc("RiziaDLC.Diplomacy_Lespia_NegotiatingPower", 1));
         t.Line("PayA", Alvarez, "\"Safety in numbers, Your Majesty. I knew we would understand each other.\"", new[] { "Laurento" });
-        t.Choice("Caleqabiz", "\"Your navy was paid in rights at Caleqabiz. That was the price, and you agreed to it.\"", new[] { "CaleqabizA" },
+        t.Choice("Caleqabiz", "\"Lespia was paid with Caleqabiz, fifty years of it. That was the price, and you agreed to it.\"", new[] { "CaleqabizA" },
             condition: "Variable[\"ZilleWar.Lespia_Caleqabiz\"] == true",
             script: Set(VarAlvarezGasPrice, "\"caleqabiz\""));
         t.Line("CaleqabizA", Alvarez,

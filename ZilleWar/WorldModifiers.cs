@@ -294,6 +294,12 @@ internal static class WorldModifiers
         bool suzerain = declared && WorldSystems.RumburgFavors >= 3 && (active || since is >= 0 and <= 2);
 
         Set(WarExpenditures, active ? (strong ? -3 : -2) : 0);
+        // the Lespian escort fee is paid only while the war lasts
+        if (!active && Variables.GetInt(LespiaEscort) != 0)
+        {
+            Set(LespiaEscort, 0);
+        }
+
         Set(Occupation, occupation);
         Set(Reconstruction, reconstruction);
         Set(ZilleGold, liberated && since >= 1 ? (since <= 2 ? 1 : 2) : 0);
