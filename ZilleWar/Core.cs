@@ -140,10 +140,20 @@ internal sealed class Core : MelonMod
     {
         if (!GameState.IsCurrentStoryPack(SuzerainStoryPackInfo.Rizia))
         {
+            NewGameReset.Cancel();
             return;
         }
 
         LoggerInstance.Msg($"Rizia turn {GameState.CurrentTurnNum} step {GameState.CurrentStepNum}");
+        try
+        {
+            NewGameReset.OnStep();
+        }
+        catch (Exception ex)
+        {
+            LoggerInstance.Error($"New game reset failed: {ex}");
+        }
+
         if (!_converterChecked)
         {
             _converterChecked = true;
