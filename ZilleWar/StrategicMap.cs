@@ -313,7 +313,7 @@ internal static class StrategicMap
 
         var data = new TokenStatusEffectData
         {
-            Id = $"0x5A12{(uint)name.GetHashCode():X8}",
+            Id = $"0x5A12{StableHash.Of(name):X8}",
             NameInDatabase = name,
             Path = "Rizia/Tokens/Token Status Effects/Military",
             AppBundleProperties = template.AppBundleProperties,

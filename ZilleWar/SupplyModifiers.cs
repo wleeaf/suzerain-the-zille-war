@@ -40,7 +40,7 @@ internal static class SupplyModifiers
 
         var data = new HUDPeriodicStatModifierData
         {
-            Id = $"0x5A11{(uint)Name.GetHashCode():X8}",
+            Id = $"0x5A11{StableHash.Of(Name):X8}",
             NameInDatabase = Name,
             Path = "Rizia/HUD Panel/Modifiers/ZilleWar",
             IsWIP = false,

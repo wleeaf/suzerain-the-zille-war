@@ -26,6 +26,7 @@ internal static class WorldSystems
             Variables.Register(v);
         }
 
+        Run("news archive", NewsWire.Register);
         Run("modifiers", WorldModifiers.Register);
         Run("codex", WorldCodex.Register);
         Run("press", WorldPress.Register);

@@ -31,8 +31,8 @@ internal sealed class Core : MelonMod
         Step("strategic map", StrategicMap.Register);
         Step("war events", WarEvents.Hook);
         Step("AN declaration", AnDeclaration.Register);
-        Step("war flow", WarFlow.Register);
         Step("scene keeper", FragmentKeeper.Register);
+        Step("war flow", WarFlow.Register);
         Step("victory", VictoryParade.Register);
         Step("supply war", SupplyWar.Register);
         Step("war council", WarCouncil.Register);
@@ -138,21 +138,13 @@ internal sealed class Core : MelonMod
 
     private void OnEvaluateStep(object sender, EventArgs e)
     {
+        // The previous game's state is cleared earlier, on load and before the step is evaluated (NewGameReset).
         if (!GameState.IsCurrentStoryPack(SuzerainStoryPackInfo.Rizia))
         {
-            NewGameReset.Cancel();
             return;
         }
 
         LoggerInstance.Msg($"Rizia turn {GameState.CurrentTurnNum} step {GameState.CurrentStepNum}");
-        try
-        {
-            NewGameReset.OnStep();
-        }
-        catch (Exception ex)
-        {
-            LoggerInstance.Error($"New game reset failed: {ex}");
-        }
 
         if (!_converterChecked)
         {

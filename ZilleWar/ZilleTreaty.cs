@@ -203,12 +203,16 @@ internal static class ZilleTreaty
             }),
     };
 
-    /// <summary>The order in which the King strikes his own demands when Smolak refuses: dearest first.</summary>
-    private static readonly (string Key, int Refund)[] TrimLib =
-        { ("Rep2", 4), ("Army", 3), ("Demil", 2), ("Market", 2), ("Oil", 2), ("Rep1", 2), ("Apology", 1), ("PowRansom", 1), ("Gold", 1), ("Assets", 1), ("Renounce", 2) };
-    private static readonly (string Key, int Refund)[] TrimPart =
-        { ("Aure", 4), ("DamThem", 3), ("Passage", 2), ("Oil", 1), ("Families", 1), ("Hold", 1), ("Border", 1), ("MaveBack", 2) };
-    private static readonly (string Key, int Refund)[] TrimLost = { ("Mave", 3), ("Pow", 1), ("Leave", 1), ("PayNone", 1) };
+    /// <summary>The order in which the King strikes his own demands when Smolak refuses: dearest first. A struck clause on a
+    /// one-choice page (Zille, the line, prisoners) falls back to that page's milder clause, and the refund is the difference, so
+    /// the signed treaty always says something on every such page (a struck border is an accord, not a border).</summary>
+    private static readonly (string Key, int Refund, string Fallback)[] TrimLib =
+        { ("Rep2", 4, null), ("Army", 3, null), ("Demil", 2, null), ("Market", 2, null), ("Oil", 2, null), ("Rep1", 2, null), ("Apology", 1, null),
+          ("PowRansom", 1, "PowPaid"), ("Gold", 1, null), ("Assets", 1, null), ("Renounce", 1, "Strait") };
+    private static readonly (string Key, int Refund, string Fallback)[] TrimPart =
+        { ("Aure", 3, "Border"), ("DamThem", 3, null), ("Passage", 2, null), ("Oil", 1, null), ("Families", 1, null), ("Hold", 2, "Exchange"),
+          ("Border", 1, "Reserve"), ("MaveBack", 2, null) };
+    private static readonly (string Key, int Refund, string Fallback)[] TrimLost = { ("Mave", 3, null), ("Pow", 1, null), ("Leave", 1, null), ("PayNone", 1, null) };
 
     private static bool _added;
 
@@ -311,8 +315,9 @@ internal static class ZilleTreaty
                     Pages = pages,
                     Title = panel.Title,
                     Description = panel.Description,
-                    PanelBarMax = 10,
-                    PanelBarMin = -10,
+                    // Kreleck opens at 6 and the table can add up to 8 more before the draft: room for it, zero still in the middle
+                    PanelBarMax = 15,
+                    PanelBarMin = -15,
                     PanelBarText = "Negotiation Leverage",
                     PanelBarVariable = VarLeverage,
                     PanelCounterText = string.Empty,
@@ -330,7 +335,17 @@ internal static class ZilleTreaty
         Core.Log.Msg($"Treaty panels installed ({Panels.Length} panels, {n} terms).");
     }
 
-    private static string Id(string name) => $"0x5A12{(uint)name.GetHashCode():X8}";
+    /// <summary>A stable id (FNV-1a): string.GetHashCode is randomized per process, so the same option got a new id every launch.</summary>
+    private static string Id(string name)
+    {
+        uint h = 2166136261;
+        foreach (char ch in name)
+        {
+            h = (h ^ ch) * 16777619;
+        }
+
+        return $"0x5A12{h:X8}";
+    }
 
     // ------------------------------------------------------------------ registration
 
@@ -441,12 +456,13 @@ internal static class ZilleTreaty
 
     // ------------------------------------------------------------------ the conversation
 
-    private static string Trim((string Key, int Refund)[] order)
+    private static string Trim((string Key, int Refund, string Fallback)[] order)
     {
         string s = string.Empty;
-        foreach ((string key, int refund) in order)
+        foreach ((string key, int refund, string fallback) in order)
         {
-            s += $"if ({Lev} or 0) < 0 and {Is(Term(key))} then {V(Term(key))} = false; {AddLev(refund)}{V(VarTrimmed)} = true end; ";
+            string fb = fallback == null ? string.Empty : $"{V(Term(fallback))} = true; ";
+            s += $"if ({Lev} or 0) < 0 and {Is(Term(key))} then {V(Term(key))} = false; {fb}{AddLev(refund)}{V(VarTrimmed)} = true end; ";
         }
 
         return s;
@@ -546,7 +562,10 @@ internal static class ZilleTreaty
         t.Choice("Draft", "\"Let us go through the draft.\"", new[] { "Draft2" });
         t.Line("Draft2", Narr, "Laurento uncapped his pen and turned the draft toward me. We went through it clause by clause.", new[] { "Panel" });
         t.Logic("Panel", new[] { "Read" }, script: panelFor);
-        t.Line("Read", Narr, "Laurento noted each decision in the margin. When we had finished, he slid the draft across the table, and Smolak read it slowly, moving his lips.", new[] { "ReadRico", "Verdict" });
+        // An empty node between the panel and anything that reads its terms, as vanilla does (c326 864-866): a line's links are
+        // evaluated when the line is reached, which is while the panel is still open.
+        t.Line("Read", Narr, "Laurento noted each decision in the margin. When we had finished, he slid the draft across the table, and Smolak read it slowly, moving his lips.", new[] { "ReadNext" });
+        t.Logic("ReadNext", new[] { "ReadRico", "Verdict" });
         t.Line("ReadRico", Smolak, "\"Keep your files. I want the man who spoke for the bombers.\"", new[] { "Verdict" },
             condition: $"{Is(Term("Rico"))} and {Is(VarAskedFiles)}");
 
@@ -711,7 +730,9 @@ internal static class ZilleTreaty
                 NewsWire.Publish("Treaty", "G", "Rizia Signs Terms in Wraclawitz but Keeps Its Claim", NewsWire.P(
                     (On("PayNone")
                         ? "Rizia has signed Wehzek terms in Wraclawitz but refused to pay a guilder in reparations, and refused to recognize Wehzek sovereignty over Zille. "
-                        : "Rizia has accepted Wehzek terms on prisoners and reparations in Wraclawitz, but refused to recognize Wehzek sovereignty over Zille. ") +
+                        : On("PayNow") || On("PayLater")
+                        ? "Rizia has accepted Wehzek terms on prisoners and reparations in Wraclawitz, but refused to recognize Wehzek sovereignty over Zille. "
+                        : "Rizia has signed Wehzek terms in Wraclawitz, leaving reparations for another day, but refused to recognize Wehzek sovereignty over Zille. ") +
                     "President Smolak called the claim \"a king's hobby, like stamps.\"" + (On("Mave") ? " Wehzek troops leave Mave Nortus." : string.Empty)));
                 break;
             default:

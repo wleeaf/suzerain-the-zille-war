@@ -140,7 +140,7 @@ internal static class WorldCodex
 
             var data = new CodexEntryData
             {
-                Id = $"0x5A11{(uint)e.Name.GetHashCode():X8}",
+                Id = $"0x5A11{StableHash.Of(e.Name):X8}",
                 NameInDatabase = e.Name,
                 Path = "Rizia/Codex Entries/ZilleWar",
                 IsWIP = false,
@@ -255,7 +255,9 @@ internal static class WorldCodex
             "until the 1927 Zille Agreement placed its mines under Wehzek administration.",
             "Many of Auremina's miners are ethnic Rizians whose families stayed on through the years of the lease, working the same " +
             "pits under Wehzek overseers.",
-            Taken("Auremina")
+            Taken("Auremina") && Variables.GetBool(ZilleTreaty.VarSigned) && Variables.GetBool(ZilleTreaty.Term("Aure"))
+                ? "After the Zille War, Wehlen withdrew from Auremina and its gold hills under the Mave Nortus Treaty, and the town passed to Rizia."
+                : Taken("Auremina")
                 ? "During the Zille War, Auremina was taken by Rizian forces in Operation Northern Crown." +
                   (Flag("Auremina_MinersFreed") ? " The miners came out of the pits to greet the soldiers." : string.Empty) +
                   (Flag("Auremina_MinesSecured") ? " The mines were placed under military guard until the end of the fighting." : string.Empty)

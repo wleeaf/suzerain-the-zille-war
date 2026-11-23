@@ -222,7 +222,9 @@ internal static partial class WarDecrees
                 "The Kingdom will save its energy without spending a guilder, but its subjects will pay in darker streets, colder homes " +
                 "and shorter shifts at the mills of Valenqir and Iza. The industrialists warn of lost orders, and every month the " +
                 "ordinance stays in force will be counted against the Crown.",
-                $"{RTurn} >= 2 && (RiziaDLC.Resources_Energy <= 3 || RiziaDLC.Resources_EnergyModifiersTotal <= 0) && {Off(Rationing)}",
+                // exclusive with Fuel Rationing only while the rationing is in force (it ends with the war)
+                $"{RTurn} >= 2 && (RiziaDLC.Resources_Energy <= 3 || RiziaDLC.Resources_EnergyModifiersTotal <= 0) && " +
+                $"({Off(Rationing)} || {WarFlags.X(WarFlags.Active, false)})",
                 $"{Authority} -= 2;\nRiziaDLC.Country_PublicOpinion -= 2;\nRiziaDLC.LeaningValue_ProBusiness -= 1;\n" +
                 "RiziaDLC.RoyalDecrees_Energy_Passed += 1;\n" + Std(),
                 new[] { LowAuthority(1) },

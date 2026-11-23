@@ -524,7 +524,7 @@ internal static class LateT8
     private static void FrontReport(Talk t, string[] next)
     {
         string on = "\"The front has hardly moved since the last operation. The Wehzeks are dug in above the river, and every night their boats still try the strait. The General Staff wants the next push before the autumn rains.\"";
-        string lib = "\"Zille is ours from the river to the sea, Your Majesty. A few Wehzek holdouts still hide in the hills, our camps still hold their prisoners, and the engineers are still pulling wrecks out of the harbor.\"";
+        string lib = "\"Zille is ours from the river to the sea, Your Majesty. A few Wehzek holdouts still hide in the hills, and the engineers are still pulling wrecks out of the harbor.\"";
         string part = "\"The armistice line still holds, Your Majesty. We have Zille city and its harbor. The Wehzeks have Auremina, the gold hills and the northern ports, and both sides fire flares at night to remind the other they are awake.\"";
         string partAur = "\"The armistice line still holds, Your Majesty. We have Zille city, its harbor and Auremina with the gold hills. The Wehzeks have Isor and Nanta on the coast, and both sides fire flares at night to remind the other they are awake.\"";
         string lost = "\"Wehlen still holds Zille city and everything north of the armistice line, Your Majesty. Smolak's police have spent the months since going door to door for anyone who cheered our army.\"";
@@ -642,7 +642,7 @@ internal static class LateT8
         var t = new Talk(Council, "ZilleWar.Late.Council.");
         Swap(t, Council, "Smolak96", 96, new[] { 44, 82, 83, 84, 95 }, Laurento, new S(
             Ongoing: "\"President Smolak has agreed to talk, through the Sordish foreign ministry. It is not a negotiation, Your Majesty. Not yet. But it is a telephone line, and we have not had one since Konstantium.\"",
-            Lib: "\"Wehlen has asked for talks on the prisoners. And the Alliance will take up Zille in Konstantium. Smolak will want a resolution against us. We should want one that says nothing at all.\"",
+            Lib: "\"The Alliance will take up Zille in Konstantium. Smolak will want a resolution against us. We should want one that says nothing at all.\"",
             Part: "\"President Smolak will take the line to the Alliance, Your Majesty. He will ask for observers and a record of every violation, which tells me he wants Zille city back more than he wants to be seen asking for it.\"",
             Lost: "\"President Smolak will take Zille to the Alliance in Konstantium, Your Majesty, and he will not be gentle about it.\""),
             new[] { "R96a", "R96b", "R96c" });
@@ -673,7 +673,7 @@ internal static class LateT8
         Swap(t, Rusty, "Trip11H", 11, new[] { 9 }, Narr, tripHeld, new[] { "#5" }, when: MaveHeld);
         var papers = new S(
             Ongoing: "Seated on a leather divan in my private salon carriage, I looked once more at the casualty lists from Zille. Names and numbers swam before my eyes.",
-            Lib: "Seated on a leather divan in my private salon carriage, I looked once more at the list of Wehzek prisoners still in our camps. Names and numbers swam before my eyes.",
+            Lib: "Seated on a leather divan in my private salon carriage, I looked once more at the garrison rosters for Zille. Names and numbers swam before my eyes.",
             Part: "Seated on a leather divan in my private salon carriage, I looked once more at a map of the armistice line. Names and numbers swam before my eyes.",
             Lost: "Seated on a leather divan in my private salon carriage, I looked once more at the terms Laurento expected Smolak to put on the table. Letters and numbers swam before my eyes.");
         Swap(t, Rusty, "Papers12", 12, new[] { 7 }, Narr, papers, new[] { "#14" });

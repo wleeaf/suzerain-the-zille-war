@@ -405,7 +405,7 @@ internal static class WorldModifiers
         {
             var data = new HUDPeriodicStatModifierData
             {
-                Id = $"0x5A11{(uint)l.Name.GetHashCode():X8}",
+                Id = $"0x5A11{StableHash.Of(l.Name):X8}",
                 NameInDatabase = l.Name,
                 Path = "Rizia/HUD Panel/Modifiers/ZilleWar",
                 IsWIP = false,
@@ -495,7 +495,7 @@ internal static class WorldModifiers
         {
             var data = new SituationData
             {
-                Id = $"0x5A11{(uint)c.Name.GetHashCode():X8}",
+                Id = $"0x5A11{StableHash.Of(c.Name):X8}",
                 NameInDatabase = c.Name,
                 Path = $"Rizia/Situations/{c.Category}/Non Default Situations",
                 IsWIP = false,
@@ -537,7 +537,7 @@ internal static class WorldModifiers
         {
             var data = new PolicyData
             {
-                Id = $"0x5A11{(uint)c.Name.GetHashCode():X8}",
+                Id = $"0x5A11{StableHash.Of(c.Name):X8}",
                 NameInDatabase = c.Name,
                 Path = "Rizia/Policies/Diplomacy",
                 IsWIP = false,

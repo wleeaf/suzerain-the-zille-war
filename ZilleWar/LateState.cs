@@ -416,6 +416,11 @@ internal static class LateState
 
         int phases = Variables.GetInt(ZilleCampaign.VarPhase);
         int taken = new[] { "Zille", "Auremina", "Isor", "Nanta" }.Count(c => Variables.GetBool(ZilleOperation.CapturedVar(c)));
+        // Auremina handed over by the Mave Nortus Treaty (ZilleCampaign.CedeTown marks it captured) was not taken by Rizian forces
+        if (Variables.GetBool(ZilleTreaty.VarSigned) && Variables.GetBool(ZilleTreaty.Term("Aure")) && Variables.GetBool(ZilleOperation.CapturedVar("Auremina")))
+        {
+            taken--;
+        }
         string operation = phases <= 0 ? null
             : $"Operation Northern Crown was fought in {(phases == 1 ? "one phase" : phases == 2 ? "two phases" : "three phases")}, and Rizian forces took {Cities(taken)} of the four cities of the Zille province.";
 
@@ -488,7 +493,7 @@ internal static class LateState
         var lines = new List<(string cond, string text)>
         {
             (SummaryLib, "Zille was taken by force of arms after thirty years of Wehzek rule."),
-            (SummaryPart, "The Zille War ended along the armistice line, with Zille city in Rizian hands and the rest of the province Wehzek."),
+            (SummaryPart, "The Zille War ended along the armistice line, with Zille city in Rizian hands and part of the province still Wehzek."),
             (SummaryLost, "The war for Zille was lost, and Wehlen tightened its hold on the region."),
         };
         for (int i = 0; i < sums.Length; i++)

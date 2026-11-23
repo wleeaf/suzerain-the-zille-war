@@ -223,7 +223,9 @@ internal static class SweepLateTalk
         p.Line("ZilleLib", Narr, "A guard let slip that the new government had kept Zille. Your one victory had outlived your reign.",
             new[] { "#304" }, condition: Lib, hooks: Talk.From(340));
         p.Line("ZillePart", Narr, "A guard let slip that the armistice line in Zille still held, and that the new government had kept Zille city. Nobody told you what they had promised Wehlen for it.",
-            new[] { "#304" }, condition: Part, hooks: Talk.From(340));
+            new[] { "#304" }, condition: And(Part, $"Variable[\"{ZilleTreaty.VarKind}\"] ~= \"border\""), hooks: Talk.From(340));
+        p.Line("ZillePartBorder", Narr, "A guard let slip that the border you signed at Mave Nortus still held, and that the new government had kept Zille city. Nobody had asked your opinion of it.",
+            new[] { "#304" }, condition: And(Part, $"Variable[\"{ZilleTreaty.VarKind}\"] == \"border\""), hooks: Talk.From(340));
         string kind = $"Variable[\"{ZilleTreaty.VarKind}\"]";
         string signedT = $"Variable[\"{ZilleTreaty.VarSigned}\"] == true";
         p.Line("ZilleLost", Narr, "A guard let slip that the new government had recognized Wehzek sovereignty over Zille. Nobody in the prison had been surprised.",

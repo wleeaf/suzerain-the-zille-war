@@ -126,7 +126,7 @@ internal static class LateT9
     private static void RegisterTea()
     {
         var t = new Talk(Tea, "ZilleWar.Late.Tea.");
-        string[] start = { "On", "OnNoEmbargo", "LibHelped", "LibAlone", "LibRefused", "Part", "PartArmistice", "LostHelped", "LostAlone", "LostRefused" };
+        string[] start = { "On", "OnNoEmbargo", "LibHelped", "LibAlone", "LibRefused", "Part", "PartBorder", "PartArmistice", "LostHelped", "LostAlone", "LostRefused" };
         t.Logic("Zille1", start, condition: War, hooks: Talk.From(534));
         t.Logic("Zille2", start, condition: War, hooks: Talk.From(538));
 

@@ -643,7 +643,7 @@ internal static partial class WarDecrees
         }
     }
 
-    private static string Id(string name) => $"0x5A12{(uint)name.GetHashCode():X8}";
+    private static string Id(string name) => $"0x5A12{StableHash.Of(name):X8}";
 
     private static bool AddApprovals()
     {

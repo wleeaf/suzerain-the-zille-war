@@ -36,7 +36,7 @@ internal static class WarEvents
         Events[ev.Name] = ev;
         var data = new DecisionData
         {
-            Id = $"0x5A11{(uint)ev.Name.GetHashCode():X8}",
+            Id = $"0x5A11{StableHash.Of(ev.Name):X8}",
             NameInDatabase = ev.Name,
             AppBundleProperties = template?.AppBundleProperties,
             TagsProperties = template?.TagsProperties,

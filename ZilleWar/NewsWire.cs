@@ -17,20 +17,89 @@ internal static class NewsWire
     private static readonly Dictionary<string, NewsData> Templates = new();
     private static bool _logged;
 
-    /// <summary>Every item published this session, by name, so it can be put back after the game rebuilds its news lists.</summary>
-    private static readonly Dictionary<string, NewsData> Published = new();
+    /// <summary>
+    /// Every war item published in this playthrough (name, paper, title, text, and the turn and place EnableNews gave it), as JSON.
+    /// The game's own save keeps only its own variables and entities: without this, the war's news would vanish from the papers on
+    /// every load, and an item's enable variable (not registered) could outlive its game in the Lua state. Registered, so the
+    /// modding kit saves it with each save and a new game clears it (NewGameReset).
+    /// </summary>
+    internal const string VarArchive = "ZilleWar.News_Archive";
+
+    private sealed class Filed
+    {
+        public string Name { get; set; }
+        public string Paper { get; set; }
+        public string Title { get; set; }
+        public string Text { get; set; }
+        public int Turn { get; set; }
+        public int Index { get; set; }
+    }
+
     private static bool _reinstall;
 
-    /// <summary>The game rebuilt its entity lists (a save was loaded): put this session's published items back on the next step.</summary>
+    internal static void Register() => Variables.Register(VarArchive);
+
+    /// <summary>The game rebuilt its entity lists (a save was loaded): put the loaded game's published items back on the next step.</summary>
     internal static void ResetAdded()
     {
         _reinstall = true;
         Templates.Clear();
     }
 
+    private static List<Filed> ReadArchive()
+    {
+        string s = Variables.GetString(VarArchive);
+        if (string.IsNullOrEmpty(s) || s == "nil")
+        {
+            return new List<Filed>();
+        }
+
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<Filed>>(s) ?? new List<Filed>();
+        }
+        catch (Exception ex)
+        {
+            Core.Log.Warning($"News archive unreadable: {ex.Message}");
+            return new List<Filed>();
+        }
+    }
+
+    private static void Archive(Filed f)
+    {
+        List<Filed> all = ReadArchive();
+        all.RemoveAll(x => x.Name == f.Name);
+        all.Add(f);
+        Variables.Set(VarArchive, System.Text.Json.JsonSerializer.Serialize(all));
+    }
+
+    private static NewsData Build(string name, string paper, string title, string text, NewsData template) => new()
+    {
+        Id = $"0x5A11{StableHash.Of(name):X8}",
+        NameInDatabase = name,
+        Path = "Rizia/News/WarFragment",
+        AppBundleProperties = template.AppBundleProperties,
+        TagsProperties = template.TagsProperties,
+        NewsProperties = new NewsProperties
+        {
+            TurnNo = -1,
+            Index = -1,
+            IsNotificationActive = false,
+            IsRead = false,
+            IsEnabledVariable = EnableVar(name),
+            Title = title,
+            Description = text,
+            Newspaper = template.NewsProperties?.Newspaper,
+        },
+    };
+
+    /// <summary>"ZilleWar_News_Key_P" -> "ZilleWar.News_Key_P".</summary>
+    private static string EnableVar(string name) => "ZilleWar.News_" + name.Substring("ZilleWar_News_".Length);
+
     /// <summary>
-    /// Re-adds the items published this session whose enable variable is still set in the loaded game (an item published
-    /// after the loaded save point reads false there and stays out). They are not enabled again: they were filed already.
+    /// After the game rebuilt its news lists (a save loaded, a new game begun), the items filed in the loaded game's archive are put
+    /// back in their newspapers and turns, already read, without a new notification. Items published after the loaded save point
+    /// are not in its archive, and a new game's archive is empty. Runs on every step; works only after a rebuild.
     /// </summary>
     public static void Reinstall()
     {
@@ -39,40 +108,54 @@ internal static class NewsWire
             return;
         }
 
-        _reinstall = false;
-        int n = 0;
-        foreach ((string name, NewsData data) in Published)
+        List<Filed> all = ReadArchive();
+        var present = new HashSet<string>(StringComparer.Ordinal);
+        if (all.Count > 0)
+        {
+            foreach (NewsData x in EntityDataManager.NewsData)
+            {
+                string nm = x?.NameInDatabase;
+                if (nm != null && nm.StartsWith("ZilleWar_News_", StringComparison.Ordinal))
+                {
+                    present.Add(nm);
+                }
+            }
+        }
+
+        int n = 0, missing = 0;
+        foreach (Filed f in all)
         {
             try
             {
-                if (data == null || !Variables.GetBool(data.NewsProperties?.IsEnabledVariable ?? string.Empty))
+                Variables.Set(EnableVar(f.Name), true);
+                if (present.Contains(f.Name))
                 {
                     continue;
                 }
 
-                bool present = false;
-                foreach (NewsData x in EntityDataManager.NewsData)
+                NewsData template = Template(f.Paper);
+                if (template == null)
                 {
-                    if (x?.NameInDatabase == name)
-                    {
-                        present = true;
-                        break;
-                    }
+                    missing++;
+                    continue;
                 }
 
-                if (!present)
-                {
-                    ZilleOperation.AddByName(EntityDataManager.newsData, data, d => d.NameInDatabase);
-                    ZilleOperation.AddByName(EntityDataManager.NewsData, data, d => d.NameInDatabase);
-                    n++;
-                }
+                NewsData data = Build(f.Name, f.Paper, f.Title, f.Text, template);
+                data.NewsProperties.TurnNo = f.Turn;
+                data.NewsProperties.Index = f.Index;
+                data.NewsProperties.IsRead = f.Turn < (GameState.CurrentTurnNum ?? 0);
+                ZilleOperation.AddByName(EntityDataManager.newsData, data, d => d.NameInDatabase);
+                ZilleOperation.AddByName(EntityDataManager.NewsData, data, d => d.NameInDatabase);
+                n++;
             }
             catch (Exception ex)
             {
-                Core.Log.Warning($"Re-adding news '{name}' failed: {ex.Message}");
+                Core.Log.Warning($"Re-adding news '{f.Name}' failed: {ex.Message}");
             }
         }
 
+        // the newspapers' templates may not be loaded yet on the first step after the rebuild: try again on the next one
+        _reinstall = missing > 0;
         if (n > 0)
         {
             Core.Log.Msg($"Re-added {n} published war news items after the entity reload.");
@@ -137,31 +220,13 @@ internal static class NewsWire
             }
 
             string name = $"ZilleWar_News_{key}_{paper}";
-            string variable = $"ZilleWar.News_{key}_{paper}";
-            var data = new NewsData
-            {
-                Id = $"0x5A11{(uint)name.GetHashCode():X8}",
-                NameInDatabase = name,
-                Path = "Rizia/News/WarFragment",
-                AppBundleProperties = template.AppBundleProperties,
-                TagsProperties = template.TagsProperties,
-                NewsProperties = new NewsProperties
-                {
-                    TurnNo = -1,
-                    Index = -1,
-                    IsNotificationActive = false,
-                    IsRead = false,
-                    IsEnabledVariable = variable,
-                    Title = title,
-                    Description = text,
-                    Newspaper = template.NewsProperties?.Newspaper,
-                },
-            };
+            NewsData data = Build(name, paper, title, text, template);
             ZilleOperation.AddByName(EntityDataManager.newsData, data, n => n.NameInDatabase);
             ZilleOperation.AddByName(EntityDataManager.NewsData, data, n => n.NameInDatabase);
-            Published[name] = data;
-            Variables.Set(variable, true);
+            Variables.Set(EnableVar(name), true);
             Il2CppPixelCrushers.DialogueSystem.Lua.Run($"EnableNews(\"{name}\")");
+            int turn = data.NewsProperties.TurnNo > 0 ? data.NewsProperties.TurnNo : GameState.CurrentTurnNum ?? 0;
+            Archive(new Filed { Name = name, Paper = paper, Title = title, Text = text, Turn = turn, Index = data.NewsProperties.Index });
             Core.Log.Msg($"News [{data.NewsProperties.Newspaper}] turn {GameState.CurrentTurnNum}: {title}");
         }
         catch (Exception ex)

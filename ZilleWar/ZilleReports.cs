@@ -60,6 +60,24 @@ internal static class ZilleReports
             SetDescription(WonName, text);
             SetDescription(LostName, text);
         }
+
+        // A phase set up on its own (no snapshot) had its own after-action report, which the save may list too: put those back,
+        // each with the dispatch of the offensive fought as that phase.
+        for (int k = 1; k <= ZilleCampaign.OperationsDone; k++)
+        {
+            int p = SuzerainModdingKit.Variables.GetInt(ZilleCampaign.PhaseOfVar(k));
+            if (p < 1 || p >= ZilleCampaign.LastPhase)
+            {
+                continue;
+            }
+
+            string name = RegisterPhase(p, "Operation_1_Result_Won");
+            string phaseText = ZilleCampaign.Str(ZilleCampaign.ReportTextVar(k));
+            if (phaseText.Length > 0)
+            {
+                SetDescription(name, phaseText);
+            }
+        }
     }
 
     private static readonly Dictionary<string, ReportData> Created = new();
