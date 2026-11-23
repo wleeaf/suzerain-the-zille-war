@@ -182,17 +182,27 @@ internal static class WorldModifiers
         ("LivingStandards_Default", "ZilleWar.War_Active == true && RiziaDLC.Pales_War == false", "RiziaDLC.Country_LivingStandards -= 1;"),
         ("Diplomacy_GlobalPerceptionWar", "ZilleWar.War_Active == true && RiziaDLC.Pales_War == false", "RiziaDLC.Country_GlobalPerception -= 2"),
         ("Diplomacy_GlobalPerceptionWar", "ZilleWar.TwoWars == true", "RiziaDLC.Country_GlobalPerception -= 1"),
-        ("Diplomacy_GlobalPerceptionWar", "ZilleWar.War_Zille_Defeated == true", "RiziaDLC.Country_GlobalPerception -= 1"),
+        // War_Zille_Defeated is any end after the last phase without a liberation: a lost war only when Zille city is Wehzek
+        // (with Zille city held it is the divided outcome, like the HUD line and the "Defeat in Zille" card)
+        ("Diplomacy_GlobalPerceptionWar", "ZilleWar.War_Zille_Defeated == true && ZilleWar.ZilleCity_Held == false", "RiziaDLC.Country_GlobalPerception -= 1"),
         ("Diplomacy_GlobalPerceptionWar", "ZilleWar.War_Zille_Liberated == true && ZilleWar.Event_Zille_Restraint == true", "RiziaDLC.Country_GlobalPerception += 1"),
+        // the consulate files published during the war: the world learned who planned the Friendship Day bombing
+        // (vanilla recomputes perception every step, so the effect is a row, not a script change)
+        ("Diplomacy_GlobalPerceptionMisc", "ZilleWar.War_Declared == true && RiziaDLC.Zille_Publicized_LespianInvolvement == true", "RiziaDLC.Country_GlobalPerception += 1"),
         // a liberation weighs more than vanilla's Pales victory (+4): a Merkopan army beaten and a province taken back
         ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Liberated == true", "RiziaDLC.Country_Military_PowerProjection += 5;"),
         ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Liberated == true && ZilleWar.Treaty_Signed == true && ZilleWar.Treaty_T_Army == true", "RiziaDLC.Country_Military_PowerProjection += 2;"),
         ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Liberated == true && ZilleWar.Treaty_Signed == true && ZilleWar.Treaty_T_Demil == true", "RiziaDLC.Country_Military_PowerProjection += 1;"),
-        ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Defeated == true", "RiziaDLC.Country_Military_PowerProjection -= 4;"),
+        ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Defeated == true && ZilleWar.ZilleCity_Held == false", "RiziaDLC.Country_Military_PowerProjection -= 4;"),
         // turning down Smolak's ceasefire shows nerve, unless the war is then lost
         ("PowerProjection_War_Outcome", "ZilleWar.Smolak_RefusedCeasefire == true", "RiziaDLC.Country_Military_PowerProjection += 1;"),
-        ("PowerProjection_War_Outcome", "ZilleWar.Smolak_RefusedCeasefire == true && ZilleWar.War_Zille_Defeated == true", "RiziaDLC.Country_Military_PowerProjection -= 1;"),
-        ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Ceasefire == true && ZilleWar.ZilleCity_Held == true && ZilleWar.Treaty_Signed == false", "RiziaDLC.Country_Military_PowerProjection += 1;"),
+        ("PowerProjection_War_Outcome", "ZilleWar.Smolak_RefusedCeasefire == true && ZilleWar.War_Zille_Defeated == true && ZilleWar.ZilleCity_Held == false", "RiziaDLC.Country_Military_PowerProjection -= 1;"),
+        // the war stopped with Zille city Rizian, by a ceasefire or an armistice after the last phase, and nothing signed yet
+        ("PowerProjection_War_Outcome", "(ZilleWar.War_Zille_Ceasefire == true || ZilleWar.War_Zille_Defeated == true) && ZilleWar.ZilleCity_Held == true && ZilleWar.War_Zille_Liberated == false && ZilleWar.Treaty_Signed == false", "RiziaDLC.Country_Military_PowerProjection += 1;"),
+        // House Sazon (Brenas lost Zille in 1927) never forgives a signature that gives Zille, or part of it, away: Wehzek Zille
+        // recognized (the Terms of Wraclawitz, or Smolak's Turn 9 call), or the line made a border (Mave Nortus, or the call)
+        ("HouseOpinions_DialoguesTwelve", "ZilleWar.Late_RecognizedWehzekZille == true", "RiziaDLC.Country_HouseSazon -= 3;"),
+        ("HouseOpinions_DialoguesTwelve", "ZilleWar.Late_LinePermanent == true", "RiziaDLC.Country_HouseSazon -= 2;"),
     };
 
     private const string WehlenGate = "ZilleWar.War_Declared == false";
@@ -299,8 +309,9 @@ internal static class WorldModifiers
         bool suzerain = declared && WorldSystems.RumburgFavors >= 3 && (active || since is >= 0 and <= 2);
 
         Set(WarExpenditures, active ? (strong ? -3 : -2) : 0);
-        // the Lespian escort fee is paid only while the war lasts
-        if (!active && Variables.GetInt(LespiaEscort) != 0)
+        // the Lespian escort fee is paid only while the war lasts and the Lespian ships are in the strait (they leave when the
+        // consulate files are published or the King sends them away)
+        if ((!active || Variables.GetBool(SupplyWar.VarLespiaWithdrawn)) && Variables.GetInt(LespiaEscort) != 0)
         {
             Set(LespiaEscort, 0);
         }
@@ -332,13 +343,14 @@ internal static class WorldModifiers
         Variables.Set(SitOccupation, occupation < 0);
         Variables.Set(SitRefugees, refugees < 0);
         Variables.Set(SitReconstruction, reconstruction < 0);
-        // once Rizia has signed away the claim (recognized) or accepted the line (border, accord), the declaration no longer stands
-        bool settled = Variables.GetBool(ZilleTreaty.VarSigned) && Variables.GetString(ZilleTreaty.VarKind) is "recognized" or "border" or "accord";
-        bool treatySigned = Variables.GetBool(ZilleTreaty.VarSigned);
+        // once Rizia has signed away the claim (recognized) or accepted the line as a border, the declaration no longer stands and
+        // there is no armistice line left; an accord keeps the claim and the armistice line ("terms" after a lost war keeps the claim too)
+        bool settled = Variables.GetBool(ZilleTreaty.VarSigned) && Variables.GetString(ZilleTreaty.VarKind) is "recognized" or "border";
         Variables.Set(PolRepudiated, declared && !liberated && !settled);
-        Variables.Set(SitCeasefire, ceasefire && !treatySigned);
+        Variables.Set(SitCeasefire, ceasefire && !settled);
         Variables.Set(SitLost, declared && defeated && !cityHeld);
-        Variables.Set(SitDivided, declared && defeated && cityHeld && !treatySigned);
+        Variables.Set(SitDivided, declared && defeated && cityHeld && !settled);
+        UpdateCardTexts(declared && defeated, cityHeld, ceasefire && !settled);
 
         if (declared)
         {
@@ -360,6 +372,91 @@ internal static class WorldModifiers
         }
     }
 
+    // ------------------------------------------------------------------ card texts that follow the map
+
+    private const string DividedCard = "ZilleWar_Military_ZilleDividedArmistice";
+    private const string LostCard = "ZilleWar_Military_ZilleDefeat";
+    private const string CeasefireCard = "ZilleWar_Military_ZilleArmistice";
+    private static readonly Dictionary<string, string> CardTexts = new(StringComparer.Ordinal);
+
+    /// <summary>The Rizian border towns Wehlen still holds after the armistice, in words, or "" when none.</summary>
+    private static string OccupiedTowns() =>
+        Front.Join(WarFlags.RizianTowns.Where(t => Variables.GetBool(WarFlags.Occupied(t))));
+
+    /// <summary>The armistice and defeat cards name the cities each side holds once the war is over (the static text is the
+    /// default before then).</summary>
+    private static void UpdateCardTexts(bool ended, bool cityHeld, bool ceasefire)
+    {
+        string towns = OccupiedTowns();
+        string townsLine = towns.Length > 0 ? $" On the Rizian side of the old border, Wehzek troops still hold {towns}." : string.Empty;
+        if (ceasefire)
+        {
+            // the line of contact runs through the region only when Rizia holds part of it
+            SetCardText(CeasefireCard, Front.Held.Count > 0
+                ? "The guns in Zille are silent under a ceasefire supervised by the Alliance of Nations. The line of contact runs through " +
+                  $"the region: Rizian troops hold {Front.HeldWords}, and Wehzek forces hold {Front.WehzekWords}.{townsLine} \n\nNeither " +
+                  "government calls this peace, and both armies are still dug in within sight of each other."
+                : "The guns in Zille are silent under a ceasefire supervised by the Alliance of Nations. The line of contact runs close to " +
+                  $"the old border, and Wehlen holds every city in Zille.{townsLine} \n\nNeither government calls this peace, and both " +
+                  "armies are still dug in within sight of each other.");
+        }
+
+        if (!ended)
+        {
+            return;
+        }
+
+        if (cityHeld)
+        {
+            SetCardText(DividedCard,
+                "The armistice line, watched by Alliance observers, runs where the armies stopped. Rizian troops hold " +
+                $"{Front.HeldWords}, and Wehzek forces hold {Front.WehzekWords}.{townsLine} \n\nNeither government calls this peace, and " +
+                "both armies are still dug in within sight of each other.");
+        }
+        else
+        {
+            List<string> held = Front.Held;
+            SetCardText(LostCard, held.Count > 0
+                ? "The campaign in Zille has failed. Wehzek forces hold Zille city, and Rizian troops hold only " +
+                  $"{Front.HeldWords} behind an armistice line watched by Alliance observers.{townsLine} \n\nAbroad, the failure is read " +
+                  "as the limit of the Rizian crown's reach. At home, it is read as the King's."
+                : "The campaign in Zille has failed. Wehzek forces hold the region more firmly than before, and the army has come home " +
+                  $"with its losses and its questions.{townsLine} \n\nAbroad, the failure is read as the limit of the Rizian crown's reach. " +
+                  "At home, it is read as the King's.");
+        }
+    }
+
+    private static void SetCardText(string name, string text)
+    {
+        if (CardTexts.TryGetValue(name, out string last) && last == text)
+        {
+            return;
+        }
+
+        bool found = false;
+        foreach (var list in new[] { EntityDataManager.situationsData, EntityDataManager.SituationsData })
+        {
+            if (list == null)
+            {
+                continue;
+            }
+
+            foreach (SituationData d in list)
+            {
+                if (d?.NameInDatabase == name && d.SituationProperties != null)
+                {
+                    d.SituationProperties.Description = text;
+                    found = true;
+                }
+            }
+        }
+
+        if (found)
+        {
+            CardTexts[name] = text;
+        }
+    }
+
     private static void Set(string v, int value)
     {
         value = WarDecrees.Adjust(v, value);
@@ -374,7 +471,11 @@ internal static class WorldModifiers
     private static bool _added;
 
     /// <summary>The game rebuilt its entity lists (a save was loaded): add ours again on the next step.</summary>
-    internal static void ResetAdded() => _added = false;
+    internal static void ResetAdded()
+    {
+        _added = false;
+        CardTexts.Clear();
+    }
 
     private static void EnsureEntities()
     {

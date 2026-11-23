@@ -2090,9 +2090,10 @@ internal static class NewsWire
                     ? P("\"Romus,",
                         "An end date. You did listen, after all. My ministers have stopped adding things up, which is the nearest they " +
                         "come to applause.",
-                        WorldSystems.ZilleCityHeld || Variables.GetBool(ZilleOperation.CapturedVar("Auremina"))
-                            ? "Half a province is not what you promised the crowds in Porte Drazon. It is, however, half a province more than " +
-                              "your father managed. I would stop there, if I were you, and I am very glad I am not."
+                        AfterAction.HeldNow().Count > 0
+                            ? $"{ZilleWar.Front.HeldWords} {(AfterAction.HeldNow().Count > 1 ? "are" : "is")} not what you promised the crowds in Porte Drazon. " +
+                              $"{(AfterAction.HeldNow().Count > 1 ? "They are" : "It is")}, however, more than your father managed. I would stop there, " +
+                              "if I were you, and I am very glad I am not."
                             : "Nothing is a long way from what you promised the crowds in Porte Drazon. I would stop there, if I were you, and I am very " +
                               "glad I am not.",
                         "Beatrice\"")
@@ -2139,10 +2140,15 @@ internal static class NewsWire
         switch (kind)
         {
             case "victory":
+                // Zille is liberated, but a counterattack may have left Wehzek troops in a town on our side of the old border
+                List<string> stillHeld = RizianOccupied();
+                string stillLine = stillHeld.Count > 0
+                    ? $" Wehzek troops still hold {Join(stillHeld)}, on our side of the old border, and the army has orders to see them out."
+                    : string.Empty;
                 Publish("End", "RH", "Zille Is Free!", P(
                     "After twenty-five years under a foreign flag, the region of Zille has been returned to the Kingdom of Rizia by the " +
-                    "Royal Army. The last Wehzek garrisons laid down their arms this morning, and Wehzek ships are already carrying " +
-                    "them home across the strait.",
+                    "Royal Army. The last Wehzek garrisons in Zille laid down their arms this morning, and Wehzek ships are already carrying " +
+                    "them home across the strait." + stillLine,
                     "Sanctuary bells are ringing in every town in Brenas. The King is expected in Zille within days."));
                 Publish("End", "G", "Wehlen Concedes Zille as Garrison Surrenders", P(
                     "Wehlen's forces in Zille have surrendered to the Rizian army. President Smolak called the defeat \"a temporary " +
@@ -2153,8 +2159,11 @@ internal static class NewsWire
                     "cost thousands of lives and a fortune the kingdom did not have, and the Wehzeks of Zille are now our citizens too. " +
                     "How we treat them will decide whether this was a liberation or a conquest."));
                 Report("End_Victory", SuzerainTokenName.RiziaCityPorteDrazon, "The War Is Won", P(
-                    "The General Staff reports that no Wehzek soldier remains under arms on the Rizian mainland. Military government " +
-                    "has been established across Zille until the Crown decides how the region is to be governed.",
+                    (stillHeld.Count > 0
+                        ? $"The General Staff reports that no Wehzek soldier remains under arms in Zille. Wehzek troops still hold {Join(stillHeld)} " +
+                          "on the Rizian side of the old border. "
+                        : "The General Staff reports that no Wehzek soldier remains under arms on the Rizian mainland. ") +
+                    "Military government has been established across Zille until the Crown decides how the region is to be governed.",
                     "In Porte Drazon, the crowds have not left the palace square since the news broke."));
                 break;
             case "divided":
@@ -2163,23 +2172,23 @@ internal static class NewsWire
                 Publish("End", "RH", "The Golden Banner Stays Over Zille", P(
                     $"Operation Northern Crown is over. After three months of fighting, the Royal Army holds {HeldByRizia()}, " +
                     "and the guns have fallen silent on the line where our soldiers stand. Alliance observers have arrived, and peace talks with Wraclawitz are expected.",
-                    "\"What was taken back will not be given back,\" the palace said in a statement. The Royal Herald adds that the rest of " +
-                    "Zille is not forgotten, and neither are the men who fell for it."));
+                    "\"What was taken back will not be given back,\" the palace said in a statement. The Royal Herald adds that it has not " +
+                    $"forgotten {HeldByWehlen()}, nor the men who fell in Zille."));
                 Publish("End", "G", "Armistice Divides Zille", P(
                     "The fighting in Zille has stopped along the line of contact, after three months of war. Rizian " +
                     $"troops keep {HeldByRizia()}; Wehlen keeps {HeldByWehlen()}.{OccupiedLine()} " +
                     "Alliance observers will patrol the line until the two governments meet to negotiate a treaty.",
                     "Both capitals claim the outcome. President Smolak calls the city \"occupied, not lost,\" and the Security Committee is " +
                     "expected to discuss Rizia's conduct before it discusses the new line on the map."));
-                Publish("End", "V", "Half a Province, Full Price", P(
+                Publish("End", "V", "Part of a Province, Full Price", P(
                     "The King has Zille city. He does not have Zille. The war he declared alone in Konstantium has ended in an armistice, a line " +
-                    "of barbed wire through the middle of the region, and casualty lists the Ministry of War is still adding to.",
+                    "of barbed wire through the region, and casualty lists the Ministry of War is still adding to.",
                     "The palace will call this a victory, and in the harbor it may look like one. In the villages on the wrong side of " +
                     "the line, it looks like a border that moved a few miles and stayed."));
                 Report("End_Divided", SuzerainTokenName.RiziaCityPorteDrazon, "Armistice in Zille", P(
                     "With the last phase of Operation Northern Crown fought, the General Staff has advised that the army has reached the " +
                     "limit of what it can take. The army holds the line of contact under Alliance supervision until a treaty is negotiated.",
-                    "Our troops hold the city of Zille and dig in around it. Military administration continues in the city, and the " +
+                    $"Our troops hold {HeldByRizia()} and are digging in. Military administration continues in Zille city, and the " +
                     "engineers are already fortifying the new line."));
                 Report("End_Wehlen", SuzerainTokenName.RiziaCountryWehlen, "Smolak Swears to Return", P(
                     "President Smolak has toured the new front outside Zille city and promised the garrison that the city \"will be Wehzek " +
@@ -2227,11 +2236,16 @@ internal static class NewsWire
                         ? "The Golden Banner flies over the city of Zille. The Royal Herald is confident that the rest of the region will " +
                           "follow it home, by the pen if not by the sword."
                         : "The Royal Herald is confident that the King's patience will achieve what our soldiers began."));
+                // no Zille city in Rizian hands: the line runs along the old border, not through the region
+                bool noneHeld = AfterAction.HeldNow().Count == 0;
                 if (byPhone)
                 {
-                    Report("End_Ceasefire", SuzerainTokenName.RiziaCityPorteDrazon, "A Divided Zille", P(
-                        "The guns in Zille fell silent at midnight, as the King and President Smolak agreed. The ceasefire line runs " +
-                        "through the region, and Alliance observers are on their way to watch it. Families on either side of it cannot cross.",
+                    Report("End_Ceasefire", SuzerainTokenName.RiziaCityPorteDrazon, noneHeld ? "Ceasefire on the Border" : "A Divided Zille", P(
+                        noneHeld
+                            ? "The guns in Zille fell silent at midnight, as the King and President Smolak agreed. The ceasefire line runs close to the " +
+                              "old border, and Wehlen holds every city in Zille." + OccupiedLine() + " Alliance observers are on their way to watch it."
+                            : "The guns in Zille fell silent at midnight, as the King and President Smolak agreed. The ceasefire line runs " +
+                              "through the region, and Alliance observers are on their way to watch it. Families on either side of it cannot cross.",
                         "Neither government calls this peace."));
                     break;
                 }
@@ -2246,9 +2260,12 @@ internal static class NewsWire
                     (AfterAction.HeldNow().Count > 0
                         ? $"frozen where they stand, leaving Zille divided between the two armies: Rizia holds {HeldByRizia()}, and Wehlen keeps {HeldByWehlen()}."
                         : "frozen where they stand, and every city in the region is still in Wehzek hands.") + OccupiedLine()));
-                Report("End_Ceasefire", SuzerainTokenName.RiziaCityPorteDrazon, "A Divided Zille", P(
-                    "The guns in Zille have fallen silent. The ceasefire line runs through the region, and families on either side of it " +
-                    "cannot cross. Neither government calls this peace."));
+                Report("End_Ceasefire", SuzerainTokenName.RiziaCityPorteDrazon, noneHeld ? "Ceasefire on the Border" : "A Divided Zille", P(
+                    noneHeld
+                        ? "The guns in Zille have fallen silent. The ceasefire line runs close to the old border, and Wehlen holds every city in Zille." +
+                          OccupiedLine() + " Neither government calls this peace."
+                        : "The guns in Zille have fallen silent. The ceasefire line runs through the region, and families on either side of it " +
+                          "cannot cross. Neither government calls this peace."));
                 break;
         }
     }

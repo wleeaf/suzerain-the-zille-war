@@ -18,6 +18,8 @@ internal static class SweepMiddleT7
 
     private static string ZilleOnly => EarlyT7.ZilleOnly;
     private static string NoPales => EarlyT7.NoPales;
+    /// <summary>Divided, and every Zille city Rizian: the Mave Nortus Treaty handed over the last one (Auremina).</summary>
+    private static string AllHeld => And(Part, Front.LWehzekExactly(Array.Empty<string>()));
 
     public static void Register()
     {
@@ -38,14 +40,19 @@ internal static class SweepMiddleT7
         // "I won't sleep until we have Zille back." Not once it is back.
         // Sleeping like a baby goes to Pabel's "I'm glad to hear it", not to his remedy for a sleepless king.
         Swap(t, conv, "Sleep365", 365, new[] { 363 }, R, new S(Lib: "\"Like a baby. Zille is ours again.\""), new[] { "#368" });
-        Swap(t, conv, "Sleep365b", 365, new[] { 363 }, R, new S(Part: "\"I won't sleep until the rest of Zille is ours.\""), new[] { "#584" });
+        // divided: the cities still Wehzek, by name
+        SweepEarlyKit.ForDivided((id, cond, _, theirs, be) =>
+            Swap(t, conv, "Sleep365b" + id, 365, new[] { 363 }, R, new S(Part: $"\"I won't sleep until {theirs} {be} ours.\""), new[] { "#584" }, when: cond));
+        // the Mave Nortus Treaty handed over the last Wehzek city: Zille is whole
+        Swap(t, conv, "Sleep365All", 365, new[] { 363 }, R, new S(PartBorder: "\"Like a baby. Zille is ours again.\""), new[] { "#368" }, when: AllHeld);
 
         // The morning paper: what the household reads first.
         foreach ((string sfx, string state, string text) in new[]
                  {
                      ("On", Ongoing, "\"The front page is Zille again, I'm afraid. Cook reads the casualty lists before anything else now. Her nephew is with the infantry up there.\""),
                      ("Lib", Lib, "\"The front page is still Zille, Your Majesty. Cook cried into the porridge this morning. Her nephew came through the whole campaign without a scratch.\""),
-                     ("Part", Part, "\"The front page is the armistice line again. Cook's nephew writes that the two sides wave at each other across it now. She doesn't know whether to laugh.\""),
+                     ("Part", And(Part, $"not ({BorderTreaty})"), "\"The front page is the armistice line again. Cook's nephew writes that the two sides wave at each other across it now. She doesn't know whether to laugh.\""),
+                     ("PartB", And(Part, BorderTreaty), "\"The front page is the new border again. Cook's nephew writes that the two sides wave at each other across it now. She doesn't know whether to laugh.\""),
                      ("Lost", Lost, "\"I would read it after breakfast, if I were you, Your Majesty. It's Zille again.\""),
                  })
         {
@@ -69,17 +76,27 @@ internal static class SweepMiddleT7
         var t = new Talk(conv, "ZilleWar.SM.T7.Dinner.");
 
         // Pabel serves a Cantuavo bottled "days prior to the uprising". The Uprising is why Wehlen got Zille, and Estela is from Zille.
-        t.Choice("Wine1926", "\"1926. The year Wehlen saved us from ourselves, and Zille paid the bill.\"", new[] { "WineOn", "WineLib", "WinePart", "WineLost" },
-            condition: War, hooks: Talk.From(64));
+        var parts = new List<string>();
+        // divided: the cities on each side, by name
+        SweepEarlyKit.ForDivided((id, cond, _, theirs, be) =>
+        {
+            parts.Add("WinePart" + id);
+            t.Line("WinePart" + id, Estela,
+                $"\"Partly paid, then. Zille's harbor is ours, and {theirs} {be} still his. Twenty-five years, and my homeland still can't be in one piece.\"",
+                new[] { "#94" }, condition: cond);
+        });
+        // the treaty handed over the last Wehzek city
+        t.Line("WinePartAll", Estela,
+            "\"Paid in full, darling, though it took a treaty as well as a war. Pabel, put a bottle aside for me. I mean to drink it in Zille.\"",
+            new[] { "#94" }, condition: AllHeld);
+        t.Choice("Wine1926", "\"1926. The year Wehlen saved us from ourselves, and Zille paid the bill.\"",
+            Cat("WineOn", "WineLib", parts.ToArray(), "WinePartAll", "WineLost"), condition: War, hooks: Talk.From(64));
         t.Line("WineOn", Estela,
             "\"And the bill keeps coming, doesn't it? Drink it slowly, dears. When this war is over, I want there to be something left to toast with.\"",
             new[] { "#94" }, condition: Ongoing);
         t.Line("WineLib", Estela,
             "\"Paid in full now, darling. Years late, but in full. Pabel, put a bottle aside for me. I mean to drink it in Zille.\"",
             new[] { "#94" }, condition: Lib);
-        t.Line("WinePart", Estela,
-            "\"Half paid, then. Zille's harbor is ours, and Isor and Nanta are still his. Twenty-five years, and my homeland still can't be in one piece.\"",
-            new[] { "#94" }, condition: Part);
         t.Line("WineLost", Estela,
             "\"And now we've paid it twice. Pour me a large one, Pabel. I would rather not think about my homeland tonight.\"",
             new[] { "#94" }, condition: Lost);

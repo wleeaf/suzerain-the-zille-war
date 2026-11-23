@@ -98,13 +98,17 @@ internal static class EarlyBookkeeping
         },
     };
 
-    /// <summary>After a lost war or a ceasefire line: the resistance goes underground in a Zille that stayed Wehzek.</summary>
-    private static readonly Dictionary<string, Rewrite> LostText = new()
+    /// <summary>After a lost war or a ceasefire line: the resistance goes underground in a Zille that stayed Wehzek (built at each
+    /// step: our troops may still hold Auremina or a port).</summary>
+    private static Dictionary<string, Rewrite> LostText() => new()
     {
         [Funding5] = new Rewrite
         {
             Description =
-                "The guns have fallen silent in Zille, but the region is still in Wehzek hands. Wehlen's security police are hunting " +
+                (Front.Held.Count > 0
+                    ? $"The guns have fallen silent in Zille. Our troops hold {Front.HeldWords}, but {Front.WehzekWords} {Front.Is(Front.Wehzek)} " +
+                      "still in Wehzek hands. Wehlen's security police are hunting "
+                    : "The guns have fallen silent in Zille, but the region is still in Wehzek hands. Wehlen's security police are hunting ") +
                 "everyone who helped our soldiers, and the Ariana Toras Association and the Zille branch of Su Omina have gone " +
                 "underground. Without our money they will be broken within months. With it, they keep the claim alive, and give " +
                 "Wiktor Smolak every reason to tighten his grip on the region.",
@@ -136,15 +140,16 @@ internal static class EarlyBookkeeping
         },
     };
 
-    /// <summary>After an armistice that left Zille city Rizian: the resistance lives on behind the line, in Isor and Nanta.</summary>
-    private static readonly Dictionary<string, Rewrite> DividedText = new()
+    /// <summary>After an armistice that left Zille city Rizian: the resistance lives on behind the line, in the cities Wehlen still
+    /// holds (built at each step from the cities held).</summary>
+    private static Dictionary<string, Rewrite> DividedText() => new()
     {
         [Funding5] = new Rewrite
         {
             Description =
                 "The guns have fallen silent along the new line in Zille. The city and its harbor are ours, but beyond the wire Wehlen's " +
                 "security police are hunting everyone who helped our soldiers. The Ariana Toras Association and the Zille branch of " +
-                "Su Omina have gone underground in Isor and Nanta. Without our money they will be broken within months. With it, they " +
+                $"Su Omina have gone underground in {Front.WehzekWords}. Without our money they will be broken within months. With it, they " +
                 "keep the rest of the claim alive, and give Wiktor Smolak every reason to fortify the line.",
             Options = new[]
             {
@@ -159,8 +164,8 @@ internal static class EarlyBookkeeping
         [Funding7] = new Rewrite
         {
             Description =
-                "Since the armistice, Wehlen has filled the prisons of Isor and Nanta with anyone suspected of helping our army, and " +
-                "families who crossed into our half of Zille cannot go back. What is left of the resistance on the far side of the line " +
+                $"Since the armistice, Wehlen has filled the prisons of {Front.WehzekWords} with anyone suspected of helping our army, and " +
+                "families who crossed the line to our side cannot go back. What is left of the resistance on the far side of the line " +
                 "asks for money to keep its people hidden and its networks alive. Supporting them keeps the rest of Zille's question " +
                 "open; it also hands Wehlen proof that Rizia means to move the line again.",
             Options = new[]
@@ -202,6 +207,11 @@ internal static class EarlyBookkeeping
         Vanilla.GateInstruction("NarrativeSupport_Zille_Part2", "Reports_Turn07_Zille_DerdianMercenaries", WarFlags.X(WarFlags.Liberated, false));
         Vanilla.GateInstruction("NarrativeSupport_Zille_Part2", "Reports_Turn07_MaveNortus_IntelligenceInsertion", notOurs);
 
+        // The Turn 7 "Increase funding" reports: written for a peacetime occupation (supplies "to the Foundation in Zille", heavy
+        // weapons "to the Su Omina branch in Zille"); after the war the mod's own report (E_Underground) tells the choice.
+        Vanilla.HideReport("Turn07_Zille_Decision_SecondZilleResistanceFunding_ATAIncrease", () => Variables.GetBool(WarFlags.Declared));
+        Vanilla.HideReport("Turn07_Zille_Decision_SecondZilleResistanceFunding_SOIncrease", () => Variables.GetBool(WarFlags.Declared));
+
         // Funding the resistance makes no sense once Zille is ours.
         Vanilla.Gate(Funding5, WarFlags.X(WarFlags.Liberated, false));
         Vanilla.Gate(Funding7, WarFlags.X(WarFlags.Liberated, false));
@@ -225,7 +235,7 @@ internal static class EarlyBookkeeping
         }
 
         RewriteFundingDecisions(!declared || Variables.GetBool(WarFlags.Liberated) ? null
-            : Variables.GetBool(WarFlags.Active) ? WarText : Variables.GetBool(WarFlags.ZilleCityHeld) ? DividedText : LostText);
+            : Variables.GetBool(WarFlags.Active) ? WarText : Variables.GetBool(WarFlags.ZilleCityHeld) ? DividedText() : LostText());
     }
 
     private static void RewriteFundingDecisions(Dictionary<string, Rewrite> texts)
@@ -279,7 +289,7 @@ internal static class EarlyBookkeeping
         if (afterWar)
         {
             // The war is over and Zille (or its hinterland) is still Wehzek: the money keeps the networks alive underground.
-            var after = Variables.GetBool(WarFlags.ZilleCityHeld) ? DividedText : LostText;
+            var after = Variables.GetBool(WarFlags.ZilleCityHeld) ? DividedText() : LostText();
             int j = Array.IndexOf(after[o.DecisionName].Options, o.Text);
             if (j is >= 0 and <= 4)
             {

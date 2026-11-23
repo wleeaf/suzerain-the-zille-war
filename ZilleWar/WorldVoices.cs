@@ -536,7 +536,11 @@ internal static class WorldVoices
             Il2CppPixelCrushers.DialogueSystem.Lua.Run(
                 "Variable[\"RiziaDLC.Resources_Budget\"] = (Variable[\"RiziaDLC.Resources_Budget\"] or 0) - 1");
             Report("W_WarBondsDue", SuzerainTokenName.RiziaCityPorteDrazon, "The War Bonds Fall Due", P(
-                WorldSystems.Defeated
+                // a divided end (Zille city held) is not the rout a lost war is
+                WorldSystems.Defeated && WorldSystems.ZilleCityHeld
+                    ? "The war bonds issued after Konstantium were sold on the promise of a Rizian Zille. With an armistice line through the " +
+                      "province, they now change hands at half their face value, and small holders have begun queueing at the Royal Treasury."
+                    : WorldSystems.Defeated
                     ? "The war bonds issued after Konstantium now change hands on the Porte Drazon exchange at a third of their face value. " +
                       "Since the news from Zille, small holders have queued outside the Royal Treasury every morning to sell them back."
                     : "The war bonds issued after Konstantium were sold on the promise of a Rizian Zille. With a ceasefire line through the " +

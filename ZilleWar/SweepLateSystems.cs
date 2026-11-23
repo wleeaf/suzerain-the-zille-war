@@ -26,6 +26,17 @@ internal static class SweepLateSystems
     private static bool Lost => LateState.Lost;
     private static bool Fought => LateState.Declared && ZilleCampaign.OperationsDone >= 1;
 
+    /// <summary>A divided Zille with exactly these cities (of Auremina, Isor and Nanta) still Wehzek.</summary>
+    private static bool PartWith(List<string> wehzek) =>
+        Part && Front.Wehzek.Where(c => c != "Zille").OrderBy(c => c).SequenceEqual(wehzek.OrderBy(c => c));
+
+    /// <summary>A lost war (Zille city Wehzek) in which Rizia still holds exactly these cities (of Auremina, Isor and Nanta).</summary>
+    private static bool LostHolding(List<string> held) =>
+        Lost && Front.Held.Where(c => c != "Zille").OrderBy(c => c).SequenceEqual(held.OrderBy(c => c));
+
+    private static bool BorderSigned =>
+        Variables.GetBool(ZilleTreaty.VarPeace) && Variables.GetString(ZilleTreaty.VarKind) == "border";
+
     /// <summary>Rumburg actually helped in the Zille war (Queen Beatrice's levers or war credits).</summary>
     private static bool RumburgHelped => LateT9.RumburgHelpedNow;
 
@@ -127,29 +138,56 @@ internal static class SweepLateSystems
             "holdouts in Isor and Nanta.\n\nSome in Porte Drazon worry about armed men who answer to their own captains before they " +
             "answer to the King.");
 
-        // war over, Zille city ours, the rest behind an armistice line
-        Card(small, () => Part, "Divided Zille, Divided Loyalties",
+        // war over, Zille city ours, the rest behind an armistice line (or the border a treaty made of it)
+        Card(small, () => Part && !BorderSigned, "Divided Zille, Divided Loyalties",
             "Zille city flies the Rizian flag again, but beyond the armistice line few Zilleans dare to show where they stand. The " +
             "Wehzek authorities in the occupied towns watch for anyone who looks south.\n\nEven in Zille city, many wait to see " +
             "whether the line will hold before they choose a side.");
-        Card(growing, () => Part, "Zilleans Look Across the Line",
+        Card(small, () => Part && BorderSigned, "Divided Zille, Divided Loyalties",
+            "Zille city flies the Rizian flag again, but beyond the new border few Zilleans dare to show where they stand. The " +
+            "Wehzek authorities in the towns the treaty left them watch for anyone who looks south.\n\nEven in Zille city, many " +
+            "wait to see whether the border will hold before they choose a side.");
+        Card(growing, () => Part && !BorderSigned, "Zilleans Look Across the Line",
             "On the Wehzek side of the armistice line, support for reunification is growing. Families slip across at night to visit " +
             "relatives in Zille city, and come back with Rizian newspapers.\n\nThe Wehzek garrison has doubled its checkpoints, and " +
             "the Alliance's observers have started to take notes.");
-        Card(massive, () => Part, "Zille Demands Reunification",
+        Card(growing, () => Part && BorderSigned, "Zilleans Look Across the Border",
+            "On the Wehzek side of the new border, support for reunification is growing. Families slip across at night to visit " +
+            "relatives in Zille city, and come back with Rizian newspapers.\n\nThe Wehzek garrison has doubled its checkpoints, and " +
+            "the Alliance's observers have started to take notes.");
+        Card(massive, () => Part && !BorderSigned, "Zille Demands Reunification",
             "On both sides of the armistice line, Zilleans demand to live under one flag again. Strikes and protests in the " +
             "Wehzek-held towns have become a daily occurrence.\n\nWehlen accuses Porte Drazon of breaking the spirit of the armistice. " +
             "Porte Drazon has not tried very hard to deny it.");
-        Card(weak, () => Part, "Quiet Beyond the Armistice Line",
+        Card(massive, () => Part && BorderSigned, "Zille Demands Reunification",
+            "On both sides of the new border, Zilleans demand to live under one flag again. Strikes and protests in the " +
+            "Wehzek-held towns have become a daily occurrence.\n\nWehlen accuses Porte Drazon of breaking the spirit of the treaty. " +
+            "Porte Drazon has not tried very hard to deny it.");
+        Card(weak, () => Part && !BorderSigned, "Quiet Beyond the Armistice Line",
             "Few partisans remain active in the Wehzek-held part of Zille. Those who fought with our army have come south of the line " +
             "or laid down their arms.\n\nThe armistice holds, if only because no one on the other side has the means to break it.");
-        Card(growingArmed, () => Part, "Partisans Beyond the Armistice Line",
-            "Armed pro-Rizian bands still strike Wehzek patrols in the occupied hills of Zille. Every raid risks the armistice, and " +
+        Card(weak, () => Part && BorderSigned, "Quiet Beyond the Border",
+            "Few partisans remain active in the Wehzek-held part of Zille. Those who fought with our army have come south of the " +
+            "border or laid down their arms.\n\nThe treaty holds, if only because no one on the other side has the means to break it.");
+        Card(growingArmed, () => Part && !BorderSigned, "Partisans Beyond the Armistice Line",
+            "Armed pro-Rizian bands still strike Wehzek patrols in the occupied part of Zille. Every raid risks the armistice, and " +
             "Wehlen blames Porte Drazon for each one.\n\nThe Alliance's observers have asked the Crown, politely, to rein them in.");
-        Card(strong, () => Part, "Partisan War Beyond the Line",
-            "The partisans of Zille have not accepted the armistice. Well armed and well hidden, they keep the Wehzek garrison in " +
-            "Isor and Nanta under siege in all but name.\n\nWehlen threatens to resume the war if the raids continue, and the " +
-            "partisans seem to hope it will.");
+        Card(growingArmed, () => Part && BorderSigned, "Partisans Beyond the Border",
+            "Armed pro-Rizian bands still strike Wehzek patrols in the part of Zille the treaty left to Wehlen. Every raid risks the " +
+            "treaty, and Wehlen blames Porte Drazon for each one.\n\nThe Alliance's observers have asked the Crown, politely, to rein them in.");
+        // the garrisons named are the ones Wehlen still has (any of Auremina, Isor and Nanta)
+        foreach (List<string> wehzek in Front.Subsets("Auremina", "Isor", "Nanta"))
+        {
+            List<string> w = wehzek;
+            Card(strong, () => PartWith(w) && !BorderSigned, "Partisan War Beyond the Line",
+                "The partisans of Zille have not accepted the armistice. Well armed and well hidden, they keep the Wehzek " +
+                $"{(w.Count > 1 ? "garrisons" : "garrison")} in {Front.Join(w)} under siege in all but name.\n\nWehlen threatens to resume the war " +
+                "if the raids continue, and the partisans seem to hope it will.");
+            Card(strong, () => PartWith(w) && BorderSigned, "Partisan War Beyond the Border",
+                "The partisans of Zille have not accepted the new border. Well armed and well hidden, they keep the Wehzek " +
+                $"{(w.Count > 1 ? "garrisons" : "garrison")} in {Front.Join(w)} under siege in all but name.\n\nWehlen threatens to tear up the treaty " +
+                "if the raids continue, and the partisans seem to hope it will.");
+        }
 
         // Zille city lost
         Card(small, () => Lost, "Zille Falls Silent",
@@ -170,7 +208,15 @@ internal static class SweepLateSystems
             "Some of the partisans who fought beside our army refused to lay down their arms after the defeat. They still strike at " +
             "Wehzek patrols in the hills, and the Wehzek garrison answers with curfews and arrests.\n\nWehlen holds Porte Drazon " +
             "responsible for every shot.");
-        Card(strong, () => Lost, "Zille's Partisan War",
+        foreach (List<string> held in Front.Subsets("Auremina", "Isor", "Nanta"))
+        {
+            List<string> h = held;
+            Card(strong, () => LostHolding(h), "Zille's Partisan War",
+                $"Rizia's army holds only {Front.Join(h)} now, but the partisans of Zille have not given up the rest. Well armed and well " +
+                "hidden, they keep the Wehzek garrison of Zille city on edge, and they have not stopped asking when the Royal Army is " +
+                "coming back.\n\nWehlen holds Porte Drazon responsible for every ambush.");
+        }
+        Card(strong, () => Lost && Front.Held.Count == 0, "Zille's Partisan War",
             "Rizia's army has gone home, but the partisans of Zille have not. Well armed and well hidden in the hills, they keep the " +
             "Wehzek garrison on edge, and they have not stopped asking when the Royal Army is coming back.\n\nWehlen holds Porte " +
             "Drazon responsible for every ambush.");
@@ -185,11 +231,34 @@ internal static class SweepLateSystems
             "The country faces a significant setback with the loss of its ancestral lands of Pales and the vital territory of Zille. " +
             "The Royal Army is now fighting to take Zille back, and the nation's pride rides on the outcome.\n\nUntil the war is " +
             "decided, the loss continues to weigh on strategic positioning and the allocation of resources.");
-        SLK.Situation(lost, () => Part, null,
-            "The country faces a significant setback with the loss of its ancestral lands of Pales and much of the territory of " +
-            "Zille. Zille city flies the Rizian flag again, but the rest of the region lies beyond an armistice line, in Wehzek hands." +
-            "\n\nA border drawn by the guns satisfies no one, and the unfinished war weighs on national pride and on the treasury.");
-        SLK.Situation(lost, () => Lost, null,
+        // a divided Zille: name what Rizia holds and what lies beyond the line (or the border, once a treaty has drawn one)
+        foreach (List<string> wehzek in Front.Subsets("Auremina", "Isor", "Nanta"))
+        {
+            List<string> w = wehzek;
+            var held = new[] { "Zille city" }.Concat(new[] { "Auremina", "Isor", "Nanta" }.Where(c => !w.Contains(c))).ToList();
+            string share = held.Count == 1 ? "much of the territory" : held.Count == 2 ? "half the territory" : "part of the territory";
+            string verb = w.Count > 1 ? "lie" : "lies";
+            foreach (bool signed in new[] { true, false })
+            {
+                bool b = signed;
+                SLK.Situation(lost, () => PartWith(w) && BorderSigned == b, null,
+                    $"The country faces a significant setback with the loss of its ancestral lands of Pales and {share} of " +
+                    $"Zille. {Front.Join(held)} {(held.Count > 1 ? "fly" : "flies")} the Rizian flag again, but {Front.Join(w)} {verb} " +
+                    (b ? "beyond the new border, in Wehzek hands by treaty." : "beyond an armistice line, in Wehzek hands.") +
+                    (b ? "\n\nA border signed after a war that did not finish satisfies no one, and what was given up weighs on national pride."
+                       : "\n\nA border drawn by the guns satisfies no one, and the unfinished war weighs on national pride and on the treasury."));
+            }
+        }
+        foreach (List<string> held in Front.Subsets("Auremina", "Isor", "Nanta"))
+        {
+            List<string> h = held;
+            SLK.Situation(lost, () => LostHolding(h), null,
+                "The country faces a significant setback with the loss of its ancestral lands of Pales and the vital territory of Zille. " +
+                $"The attempt to retake Zille by force has failed: Wehlen kept Zille city, and Rizian troops hold only {Front.Join(h)} " +
+                "behind an armistice line.\n\nThe defeat has deepened the wound to national pride and left the kingdom's strategic " +
+                "position weaker than it was before the war.");
+        }
+        SLK.Situation(lost, () => Lost && Front.Held.Count == 0, null,
             "The country faces a significant setback with the loss of its ancestral lands of Pales and the vital territory of Zille. " +
             "The attempt to retake Zille by force has failed, and Wehlen now holds the region more firmly than before.\n\nThe defeat " +
             "has deepened the wound to national pride and left the kingdom's strategic position weaker than it was before the war.");
@@ -262,7 +331,11 @@ internal static class SweepLateSystems
             "Zille is Rizian again, but Wehlen has not given up on it. We hereby sanction the establishment of the Mave Nortus " +
             "Foreign Intelligence Hub, to watch the new border and root out the Wehzek agents left behind in the liberated province." +
             "\n\nIt will also help win over the Zilleans who still doubt the Crown, before someone in Wraclawitz wins them back.");
-        SLK.Decree(decree, () => Part, null,
+        SLK.Decree(decree, () => Part && BorderSigned, null,
+            "The new border still cuts Zille in two. We hereby sanction the establishment of the Mave Nortus Foreign " +
+            "Intelligence Hub, to watch the border, run agents into the Wehzek-held towns and warn the army of any buildup on the " +
+            "other side.\n\nIt will also keep the hope of reunification alive among the Zilleans who were left beyond the border.");
+        SLK.Decree(decree, () => Part && !BorderSigned, null,
             "The armistice line still cuts Zille in two. We hereby sanction the establishment of the Mave Nortus Foreign " +
             "Intelligence Hub, to watch the line, run agents into the Wehzek-held towns and warn the army of any buildup on the " +
             "other side.\n\nIt will also keep the hope of reunification alive among the Zilleans who were left beyond the line.");
@@ -278,7 +351,10 @@ internal static class SweepLateSystems
         SLK.Policy(policy, () => Lib, null,
             "The Mave Nortus Intelligence Hub watches the new border with Wehlen and hunts the Wehzek agents left behind in liberated " +
             "Zille, while shaping public sentiment in a province that is still getting used to Rizian rule.");
-        SLK.Policy(policy, () => Part, null,
+        SLK.Policy(policy, () => Part && BorderSigned, null,
+            "The Mave Nortus Intelligence Hub watches the new border in Zille, runs agents into the Wehzek-held towns and keeps " +
+            "in touch with the Zilleans who were left on the other side.");
+        SLK.Policy(policy, () => Part && !BorderSigned, null,
             "The Mave Nortus Intelligence Hub watches the armistice line in Zille, runs agents into the Wehzek-held towns and keeps " +
             "in touch with the Zilleans who were left on the other side.");
         SLK.Policy(policy, () => Lost, null,
@@ -292,7 +368,9 @@ internal static class SweepLateSystems
         SLK.Status(badge, () => Lib, null,
             "The hub watches the new border with Wehlen and roots out Wehzek agents in liberated Zille, while shaping public " +
             "sentiment in the province.");
-        SLK.Status(badge, () => Part, null,
+        SLK.Status(badge, () => Part && BorderSigned, null,
+            "The hub watches the new border in Zille and runs agents into the Wehzek-held towns on the other side.");
+        SLK.Status(badge, () => Part && !BorderSigned, null,
             "The hub watches the armistice line in Zille and runs agents into the Wehzek-held towns on the other side.");
         SLK.Status(badge, () => Lost, null,
             "The hub watches the Wehzek garrison in occupied Zille and shelters the partisans who escaped south after the war.");
@@ -332,7 +410,9 @@ internal static class SweepLateSystems
             "visitors chose other destinations.");
         SLK.Append("decision", "Turn09_Decision_StockExchangeResults", () => Lib,
             "Brokers expect the gold of liberated Zille to lift mining shares, and RRG's prospectors are already talking about Auremina.");
-        SLK.Append("decision", "Turn09_Decision_StockExchangeResults", () => Part,
+        SLK.Append("decision", "Turn09_Decision_StockExchangeResults", () => Part && BorderSigned,
+            "Investors are wary of a kingdom whose new border in Zille was drawn by a war, and the brokers know it.");
+        SLK.Append("decision", "Turn09_Decision_StockExchangeResults", () => Part && !BorderSigned,
             "Investors are wary of a kingdom whose border in Zille is an armistice line, and the brokers know it.");
         SLK.Append("decision", "Turn09_Decision_StockExchangeResults", () => Lost,
             "The defeat in Zille has made foreign investors nervous, and the brokers fear they will keep their money at home.");

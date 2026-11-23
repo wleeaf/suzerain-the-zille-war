@@ -55,6 +55,7 @@ internal static class FinishT10
             new[] { "#700" });
         Swap(g, Gather, "Farm", 699, new[] { 698 }, "Russello Montoro", new S(
             Part: "\"Yeah. Some of RRG's old land ended up on our side of the armistice line. All mined out -- but perfect for farming.\"",
+            PartBorder: "\"Yeah. Some of RRG's old land ended up on our side of the new border. All mined out -- but perfect for farming.\"",
             Lost: "\"Yeah. Turns out the Wehzek colonel running Zille now likes Rizian money as much as the last one did. Got back a patch of old RRG land that's all mined out -- but perfect for farming.\""),
             new[] { "#700" });
         g.Register();

@@ -24,6 +24,37 @@ internal static class Vanilla
 {
     private const string Never = "ZilleWar.Never";
 
+    /// <summary>
+    /// A hidden news item or report points its IsEnabledVariable at a variable of its own that is never true. Vanilla decrees
+    /// switch items on with EnableNews/EnableReport, which may write true to whatever the item's enable variable is: with one
+    /// shared variable, a single such call (the Mave Nortus hub, the war tax) would have re-enabled every hidden item at once.
+    /// Each item gets its own, and every one that was written true is reset at each step.
+    /// </summary>
+    private static string NeverFor(string key) => Never + "_" + key.Replace(':', '_');
+
+    private static bool IsNever(string v) => v != null && (v == Never || v.StartsWith(Never + "_", StringComparison.Ordinal));
+
+    private static readonly HashSet<string> NeverVars = new(StringComparer.Ordinal);
+
+    private static void ResetNevers()
+    {
+        foreach (string v in NeverVars)
+        {
+            try
+            {
+                if (SuzerainModdingKit.Variables.GetBool(v))
+                {
+                    SuzerainModdingKit.Variables.Set(v, false);
+                    Core.Log.Msg($"Vanilla: {v} had been switched on (EnableNews/EnableReport on a hidden item); reset.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Core.Log.Warning($"Vanilla: could not reset {v}: {ex.Message}");
+            }
+        }
+    }
+
     // ------------------------------------------------------------------ variables in expresso
 
     private static readonly Dictionary<string, bool> Exposed = new(StringComparer.Ordinal);
@@ -126,20 +157,26 @@ internal static class Vanilla
     /// <summary>The vanilla enable variable of a news item or report ("news:Name" / "report:Name"), seen through a hide:
     /// null while it is hidden and its own variable is not known.</summary>
     internal static string UnhiddenEnableVariable(string key, string current) =>
-        current != Never ? current : OriginalEnable.TryGetValue(key, out string original) ? original : null;
+        !IsNever(current) ? current : OriginalEnable.TryGetValue(key, out string original) ? original : null;
 
     private static void Toggle(string key, Func<string> get, Action<string> set, bool hide)
     {
         string current = get();
         if (hide)
         {
-            if (current != Never)
+            string never = NeverFor(key);
+            NeverVars.Add(never);
+            if (current != never)
             {
-                OriginalEnable[key] = current;
-                set(Never);
+                if (!IsNever(current))
+                {
+                    OriginalEnable[key] = current;
+                }
+
+                set(never);
             }
         }
-        else if (current == Never && OriginalEnable.TryGetValue(key, out string original))
+        else if (IsNever(current) && OriginalEnable.TryGetValue(key, out string original))
         {
             set(original);
         }
@@ -415,6 +452,7 @@ internal static class Vanilla
             }
         }
 
+        ResetNevers();
         if (NewsHides.Count > 0)
         {
             var hides = NewsHides.GroupBy(h => h.name).ToDictionary(g => g.Key, g => g.Any(h => Safe(h.when)), StringComparer.Ordinal);

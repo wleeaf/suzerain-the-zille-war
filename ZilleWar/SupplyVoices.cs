@@ -258,11 +258,13 @@ internal static partial class SupplyWar
             "Laurento leaned in and spoke quietly. \"A ceasefire on the present line means we keep what we hold, Your Majesty. Whether " +
             "that is enough is for you to decide.\"", "Answer");
 
+        // The full price includes Ricardus only when Smolak asked for him (TRico); otherwise it is the reduced one.
+        string withRico = $"({full} and {rico})";
         d.Branch("Answer", Gate("AcceptFull"), Gate("AcceptReduced"), Gate("Counter"), "Refuse");
-        d.Opt("AcceptFull", full, "\"Rizia accepts. The guns go quiet at midnight.\"", "-2 Authority",
+        d.Opt("AcceptFull", withRico, "\"Rizia accepts. The guns go quiet at midnight.\"", "-2 Authority",
             ceasefire + Inc(Authority, -2) + T(RicoExtradition) + T(BludishBan) + T(WehzekRights) + S(VarSmolakAnswer, "accepted") +
             S(VarCeasefireTerms, "full"), "Accepted");
-        d.Opt("AcceptReduced", reduced, "\"Rizia accepts. The guns go quiet at midnight.\"", "-1 Authority",
+        d.Opt("AcceptReduced", $"not {withRico}", "\"Rizia accepts. The guns go quiet at midnight.\"", "-1 Authority",
             ceasefire + Inc(Authority, -1) + T(BludishBan) + T(WehzekRights) + S(VarSmolakAnswer, "accepted") +
             S(VarCeasefireTerms, "reduced"), "Accepted");
         d.Say("Accepted", Smolak,
@@ -299,7 +301,9 @@ internal static partial class SupplyWar
     {
         var d = new Dlg(SaltanaConv, "ZilleWar.Saltana.");
         string budget = N(Budget);
-        string cheap = $"({Is(VoteNationalization)} or {Is(ValgslandMitz)})";
+        // At Cavette (Turn 5) Rizia and Morella carved Lespia out of the Meftiem together: Saltana prices that as a friend's deal.
+        string cavette = Is(MitzScrewed);
+        string cheap = $"({Is(VoteNationalization)} or {Is(ValgslandMitz)} or {cavette})";
         string dear = $"(not {cheap} and ({Is(VarLespiaMitz)} or {Is(MitzPromise)} or {Is(MitzPromiseLate)} or {Is(VoteStatusQuo)}))";
         string fair = $"(not {cheap} and not {dear})";
         string buy = T(VarMorellaAircraft) + Inc(Fighters, 1) + Talk.Weaken(1) + Inc(NpMorella, 1);
@@ -322,7 +326,9 @@ internal static partial class SupplyWar
         d.Say("S3First", Saltana,
             "\"I have aircraft, built in Morella. I could sell you a squadron without markings, Morellan pilots or paperwork that " +
             "anyone in Konstantium could trace.\"", "Price");
-        d.Branch("Price", "PriceCheap", "PriceDear", "PriceFair");
+        d.Branch("Price", "PriceCavette", "PriceCheap", "PriceDear", "PriceFair");
+        d.SayIf("PriceCavette", $"{cavette} and not {Is(VoteNationalization)} and not {Is(ValgslandMitz)}", Saltana,
+            "\"We divided the Meftiem between us at Cavette, so you'll have the price I would give a partner. Three billion guilders for the squadron.\"", "Menu");
         d.SayIf("PriceCheap", cheap, Saltana,
             "\"Rizia stood with the workers on the Meftiem, so you'll have the price I would give a friend. Three billion guilders for the squadron.\"", "Menu");
         d.SayIf("PriceDear", dear, Saltana,
@@ -399,8 +405,10 @@ internal static partial class SupplyWar
         d.Staff("Who2",
             "\"Whoever in Wraclawitz read them and decided they were inconvenient. And now the three of us.\"",
             "\"Whoever in Wraclawitz found them inconvenient, Your Majesty. And now the three of us.\"", "Choose");
+        // The +1 global perception is a row keyed on Zille_Publicized_LespianInvolvement (WorldModifiers): vanilla recomputes
+        // perception every step. The Lespian ships leave the strait, and with them any escort fee.
         string publish = found + T(Discovered) + T(Publicized) + S(VarRamiro, "publish") + Inc(NpLespia, -3) +
-                         Inc("RiziaDLC.Country_GlobalPerception", 1);
+                         $"{V(WorldModifiers.LespiaEscort)} = 0; ";
         const string publishText = "\"Publish it. The world should know who started this war.\"";
         d.Opt("PublishStrait", strait, publishText, "Ends the Lespian Blockade",
             publish + F(VarLespiaStrait) + T(VarLespiaWithdrawn) + Strengthen(1), "Published");

@@ -184,9 +184,24 @@ internal static class WorldCodex
     /// <summary>The Turn 8 treaty kind (renounced, border, accord, recognized, terms), or empty before or without a signed treaty.</summary>
     private static string TreatyKind => Variables.GetBool(ZilleTreaty.VarSigned) ? Variables.GetString(ZilleTreaty.VarKind) ?? string.Empty : string.Empty;
 
-    private static string Pending => TreatyKind == "border"
-        ? "the line having been made the border by the Mave Nortus Treaty."
-        : "pending a final settlement.";
+    private static string Pending => TreatyKind switch
+    {
+        "border" => "the line having been made the border by the Mave Nortus Treaty.",
+        "recognized" => "which Rizia has since recognized as Wehzek in the treaty signed at Wraclawitz.",
+        "terms" => "pending a final settlement. Rizia signed terms at Wraclawitz but did not give up its claim.",
+        "accord" => "pending a final settlement. The accord signed at Mave Nortus settled prisoners and damages, but not the line.",
+        _ => "pending a final settlement.",
+    };
+
+    /// <summary>What the treaty after a ceasefire or an armistice made of the end of the war (empty without one).</summary>
+    private static string TreatyAfter => TreatyKind switch
+    {
+        "border" => " The Mave Nortus Treaty has since made the line of contact the border.",
+        "accord" => " The accord signed at Mave Nortus has since settled prisoners and damages, but left the line an armistice line.",
+        "recognized" => " Rizia has since recognized Wehzek sovereignty over Zille in the treaty signed at Wraclawitz.",
+        "terms" => " Rizia has since signed terms at Wraclawitz, but has not recognized Wehzek sovereignty over Zille.",
+        _ => string.Empty,
+    };
 
     private static string Cap(string s) => s.Length == 0 ? s : char.ToUpperInvariant(s[0]) + s.Substring(1);
 
@@ -324,9 +339,11 @@ internal static class WorldCodex
                   $"remained in Rizian hands behind the armistice line. Wehlen has since declared the Zille Agreement void. "
                 : "The war ended in a Rizian defeat. Wehlen continues to administer the region and has since declared the Zille Agreement void. ") +
             (TreatyKind == "recognized" ? "Rizia has since accepted that claim in the treaty signed at Wraclawitz." : "Rizia does not recognize that claim."),
-            "The war ended in a ceasefire supervised by the Alliance of Nations, with the region divided along the line of contact" +
-            (held.Count > 0 ? $" and {heldWords} in Rizian hands." : ". Wehlen continues to administer the region."),
-            $"The war ended in an armistice under Alliance supervision, with {heldWords} in Rizian hands and {Front.WehzekWords} in Wehzek hands.");
+            (held.Count > 0
+                ? $"The war ended in a ceasefire supervised by the Alliance of Nations, with the region divided along the line of contact and {heldWords} in Rizian hands."
+                : "The war ended in a ceasefire supervised by the Alliance of Nations, along a line close to the old border. Wehlen continues to administer the region.") +
+            TreatyAfter,
+            $"The war ended in an armistice under Alliance supervision, with {heldWords} in Rizian hands and {Front.WehzekWords} in Wehzek hands." + TreatyAfter);
 
         string twoWars = Variables.GetInt(WorldSystems.VarTwoWarsTurn) > 0
             ? "For part of the war, Rizia was also at war with the Grand Duchy of Pales, and the Royal Army fought on two fronts at once."
@@ -389,9 +406,9 @@ internal static class WorldCodex
                     (TreatyKind == "recognized"
                         ? "Rizia has since recognized Wehzek sovereignty over Zille in a treaty signed at Wraclawitz."
                         : "Rizia does not recognize the claim."),
-                    "Fighting ended with a ceasefire supervised by the Alliance of Nations. The line of contact now runs through the " +
-                    "region" + (held.Count > 0 ? $", with {heldWords} under Rizian control," : string.Empty) +
-                    " and the rest of the territory remains under Wehzek administration, " + Pending,
+                    "Fighting ended with a ceasefire supervised by the Alliance of Nations. " + (held.Count > 0
+                        ? $"The line of contact now runs through the region, with {heldWords} under Rizian control, and the rest of the territory remains under Wehzek administration, "
+                        : "The line of contact runs close to the old border, and the territory remains under Wehzek administration, ") + Pending,
                     "Fighting ended in an armistice under Alliance supervision. The line of contact now runs through the " +
                     $"region, with {heldWords} under Rizian control, and {Front.WehzekWords} {Front.Is(Front.Wehzek)} still under Wehzek " +
                     "administration, " + Pending));
@@ -458,19 +475,29 @@ internal static class WorldCodex
                         TreatyKind == "recognized"
                             ? "Wehlen cited Rizia's declaration of war as grounds for voiding the agreement altogether, and Rizia has since recognized that in a treaty signed at Wraclawitz."
                             : "Wehlen now cites Rizia's declaration of war as grounds for voiding the agreement altogether.",
-                        TreatyKind == "border"
-                            ? "The Mave Nortus Treaty settled the question by making the line of contact the border."
-                            : "Under the ceasefire, the question of the agreement has been returned to the Alliance of Nations, where it remains unresolved.",
-                        TreatyKind == "border"
-                            ? "The Mave Nortus Treaty settled the question by making the armistice line the border."
-                            : "Under the armistice, the question of the agreement has been returned to the Alliance of Nations, where it remains unresolved."));
+                        TreatyKind switch
+                        {
+                            "border" => "The Mave Nortus Treaty settled the question by making the line of contact the border.",
+                            "recognized" => "Wehlen cited Rizia's declaration of war as grounds for voiding the agreement altogether, and Rizia has since recognized that in a treaty signed at Wraclawitz.",
+                            "terms" => "Rizia has since signed terms at Wraclawitz, but kept its claim, and the question of the agreement remains unresolved.",
+                            "accord" => "The accord signed at Mave Nortus left the question of the agreement unresolved, and Rizia keeps its claim to all of Zille.",
+                            _ => "Under the ceasefire, the question of the agreement has been returned to the Alliance of Nations, where it remains unresolved.",
+                        },
+                        TreatyKind switch
+                        {
+                            "border" => "The Mave Nortus Treaty settled the question by making the armistice line the border.",
+                            "accord" => "The accord signed at Mave Nortus left the question of the agreement unresolved, and Rizia keeps its claim to all of Zille.",
+                            _ => "Under the armistice, the question of the agreement has been returned to the Alliance of Nations, where it remains unresolved.",
+                        }));
             case "Locations_Countries_Wehlen":
                 return P(original,
                     "After refusing to return the Zille region at the end of its lease, Wehlen found itself at war with the Kingdom of " +
                     "Rizia. The conflict strained an economy still recovering from the civil war and coincided with renewed operations " +
                     "against the Bludish Freedom Front in the northeast." +
                     Outcome(string.Empty, " It ended with the loss of Zille.", held.Count > 0 ? $" Wehlen emerged from it holding the city of Zille, though {heldWords} stayed behind Rizian lines." : " Wehlen emerged from it holding Zille more firmly than before.",
-                        " It ended in a ceasefire that left the region divided.", " It ended in an armistice that left Zille divided."));
+                        held.Count > 0 ? " It ended in a ceasefire that left the region divided." : " It ended in a ceasefire that left Wehlen holding every city in Zille." +
+                            (TreatyKind == "recognized" ? " Rizia has since recognized Wehzek sovereignty over the region." : string.Empty),
+                        " It ended in an armistice that left Zille divided."));
             case "Characters_ForeignLeaders_WiktorSmolak":
                 return P(original,
                     "Smolak refused to return the Zille region to Rizia at the end of its lease, invoking the AN Threat Mitigation " +
@@ -478,7 +505,13 @@ internal static class WorldCodex
                     "presented the conflict as a defense of the Wehzeks of Zille against \"Rumburg and its royal clients.\"" +
                     Outcome(string.Empty, " The loss of Zille was the first territorial defeat of his presidency.",
                         " Victory in Zille has strengthened his position at home, where the war is commemorated as the Defense of the Strait.",
-                        TreatyKind == "border" ? " He signed the Mave Nortus Treaty, which made the line of contact the border." : " He has called the ceasefire line \"a wound, not a border.\"",
+                        TreatyKind switch
+                        {
+                            "border" => " He signed the Mave Nortus Treaty, which made the line of contact the border.",
+                            "recognized" => " He later had Rizia recognize Wehzek sovereignty over Zille in the treaty signed at Wraclawitz.",
+                            "terms" => " He later dictated terms to Rizia at Wraclawitz, though Rizia kept its claim to Zille.",
+                            _ => held.Count > 0 ? " He has called the ceasefire line \"a wound, not a border.\"" : " He has called the ceasefire \"the day the King of Rizia learned arithmetic.\"",
+                        },
                         TreatyKind == "border" ? " He signed the Mave Nortus Treaty, which made the armistice line the border." : " He has called the armistice line \"a wound, not a border.\""));
             case "Characters_ForeignLeaders_PatricioAlvarez_1950":
             case "Characters_ForeignLeaders_PatricioAlvarez_1953":

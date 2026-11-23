@@ -91,6 +91,8 @@ internal static partial class SupplyWar
     public const string VarRumburgSaidNo = "ZilleWar.Rumburg_SaidNo";
     /// <summary>Beatrice asked the King to end the war ("an end date").</summary>
     public const string VarRumburgWantsCeasefire = "ZilleWar.Rumburg_WantsCeasefire";
+    /// <summary>The King brought Beatrice's sister into her last call (No2); she abstains at the Alliance on Turn 8.</summary>
+    public const string VarRumburgInsulted = "ZilleWar.Rumburg_Insulted";
     /// <summary>Wehlen published the "Thornbourgh dossier" on Rumburg's arms for the Bludish Freedom Front.</summary>
     public const string VarDossier = "ZilleWar.Rumburg_DossierPublished";
 
@@ -131,6 +133,17 @@ internal static partial class SupplyWar
     public const string VarSmolakRefused = "ZilleWar.Smolak_RefusedCeasefire";
     /// <summary>Terms of an accepted ceasefire: "full" (Rico, Bludish ban, Wehzek rights) | "reduced" (ban, rights) | "rights".</summary>
     public const string VarCeasefireTerms = "ZilleWar.Ceasefire_Terms";
+    /// <summary>What was already conceded before Smolak's ceasefire call was accepted (snapshots taken every step until then):
+    /// his demands are voiced only while still open, so the papers name only the ones he actually made.</summary>
+    public const string VarPreBan = "ZilleWar.Ceasefire_PreBan";
+    public const string VarPreRights = "ZilleWar.Ceasefire_PreRights";
+    /// <summary>Ricardus was held and not yet promised when the call came: Smolak named him in his full terms.</summary>
+    public const string VarPreRico = "ZilleWar.Ceasefire_PreRico";
+    public const string VarPreSnapped = "ZilleWar.Ceasefire_PreSnapped";
+    private const string VarPrePromised = "ZilleWar.Ceasefire_PrePromised";
+    private const string VarPromiseChecked = "ZilleWar.Ceasefire_PromiseChecked";
+    /// <summary>Queen Beatrice asked for an end date, and the King gave her one: Thornbourgh's goodwill, once.</summary>
+    public const string VarRumburgCeaseThanked = "ZilleWar.Rumburg_CeasefireThanked";
     /// <summary>Morellan aircraft bought without markings.</summary>
     public const string VarMorellaAircraft = "ZilleWar.Morella_Aircraft";
 
@@ -265,6 +278,7 @@ internal static partial class SupplyWar
         VarCallLastWon, VarCallHeld, VarCallExtra, VarCallOwnLost, VarBeaToldDossier, VarBeaToldBluds, VarBeaNoEmbargo, VarBeaNoCredit,
         VarBeaNoRaids, VarBeaNoFighters, VarBeaAskedEmbWhy, VarBeaAskedInterest, VarBeaAskedRaidWhy, VarBeaAskedFigWhy, VarAlvRefusedStrait,
         VarAlvRefusedMitz, VarAlvAskedWhy, VarAlvAskedMitzWhy, VarAlvJabbed, VarSmolakRefused,
+        VarPreBan, VarPreRights, VarPreRico, VarPreSnapped, VarPrePromised, VarPromiseChecked, VarRumburgCeaseThanked, VarRumburgInsulted,
     };
 
     private static readonly string[] StringVars =
@@ -377,7 +391,7 @@ internal static partial class SupplyWar
 
         foreach ((string what, Action step) in new (string, Action)[]
                  {
-                     ("numbers", EnsureNumbers), ("grudges", Grudges), ("upkeep", Upkeep), ("gas contract", GasContract), ("modifiers", SupplyModifiers.Install), ("calls", Offer),
+                     ("numbers", EnsureNumbers), ("grudges", Grudges), ("ceasefire terms", CeasefireTerms), ("upkeep", Upkeep), ("gas contract", GasContract), ("modifiers", SupplyModifiers.Install), ("calls", Offer),
                      ("levers", ReportNewLevers), ("news", SupplyNews.OnStep),
                  })
         {
@@ -412,7 +426,61 @@ internal static partial class SupplyWar
             Variables.Set(VarStraitThin, true);
         }
 
+        // Valgslandian ports reopen the step the war ends, with the war's other per-turn lines, not a turn later after one
+        // more end-of-turn charge.
+        if (!WarFlow.AtWar && Variables.GetBool(VarValgslandPorts))
+        {
+            Variables.Set(VarValgslandPorts, false);
+            Variables.Set(ModValgsland, 0);
+        }
+
+        // Queen Beatrice asked for a swift peace and promised Thornbourgh would be "very generous": the King's ceasefire gives
+        // her the end date she asked for.
+        if (Variables.GetBool(VarRumburgWantsCeasefire) && Variables.GetBool(WarFlow.VarCeasefire) && !Variables.GetBool(VarRumburgCeaseThanked))
+        {
+            Variables.Set(VarRumburgCeaseThanked, true);
+            Il2CppPixelCrushers.DialogueSystem.Lua.Run($"Variable[\"{NpRumburg}\"] = (Variable[\"{NpRumburg}\"] or 0) + 1");
+        }
+
         ForeignGrudges();
+    }
+
+    /// <summary>
+    /// Smolak's ceasefire call voices each demand only while it is still open (SupplyVoices): Ricardus while he is held and
+    /// not promised, the Bludish ban and the Wehzek rights until they are granted. What stood before the call is kept here
+    /// for the papers. Accepting the full terms promises Ricardus even when Smolak never named him (he is arrested only on
+    /// Turn 7): that promise is struck once, right after the call, unless he was named or promised before.
+    /// </summary>
+    private static void CeasefireTerms()
+    {
+        bool accepted = Str(VarSmolakAnswer) is "accepted" or "countered";
+        if (!accepted)
+        {
+            if (WarFlow.AtWar)
+            {
+                bool promised = Variables.GetBool(RicoExtradition);
+                Variables.Set(VarPreBan, Variables.GetBool(BludishBan));
+                Variables.Set(VarPreRights, Variables.GetBool(WehzekRights));
+                Variables.Set(VarPreRico, Variables.GetBool("RiziaDLC.Rico_Arrested") && !Variables.GetBool("RiziaDLC.Rico_Extradited") && !promised);
+                Variables.Set(VarPrePromised, promised);
+                Variables.Set(VarPreSnapped, true);
+            }
+
+            return;
+        }
+
+        if (Variables.GetBool(VarPromiseChecked))
+        {
+            return;
+        }
+
+        Variables.Set(VarPromiseChecked, true);
+        if (Str(VarCeasefireTerms) == "full" && Variables.GetBool(VarPreSnapped) && !Variables.GetBool(VarPreRico) &&
+            !Variables.GetBool(VarPrePromised) && Variables.GetBool(RicoExtradition))
+        {
+            Variables.Set(RicoExtradition, false);
+            Core.Log.Msg("Smolak's ceasefire never named Ricardus: no promise to hand him over.");
+        }
     }
 
     /// <summary>
@@ -421,7 +489,8 @@ internal static partial class SupplyWar
     /// </summary>
     private static void GasContract()
     {
-        bool owed = Variables.GetBool(VarLespiaGasDeal) && Variables.GetBool(Extractions);
+        // the gas was the price of the Lespian navy in the strait: it ends when that navy leaves (files published, sent away)
+        bool owed = Variables.GetBool(VarLespiaGasDeal) && Variables.GetBool(Extractions) && !Variables.GetBool(VarLespiaWithdrawn);
         Variables.Set(WorldModifiers.LespiaGas, owed ? -6 : 0);
         Variables.Set(WorldModifiers.LespiaGasBudget, owed ? 2 : 0);
     }
@@ -469,13 +538,6 @@ internal static partial class SupplyWar
         {
             Variables.Set(VarDossier, true);
             Variables.Set(VarRumburgPatience, Variables.GetInt(VarRumburgPatience) - 1);
-        }
-
-        // Valgslandian ports reopen when the war is over.
-        if (!atWar && Variables.GetBool(VarValgslandPorts))
-        {
-            Variables.Set(VarValgslandPorts, false);
-            Variables.Set(ModValgsland, 0);
         }
     }
 

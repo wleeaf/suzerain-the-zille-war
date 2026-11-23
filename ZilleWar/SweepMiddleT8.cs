@@ -89,7 +89,7 @@ internal static class SweepMiddleT8
         foreach ((string sfx, string state, string text) in new[]
                  {
                      ("Lib", Lib, "\"Zille has come home, Your Majesty, and the bill came with it. We are still paying for the shells and the fuel, and the pensions for the widows will be with us for a generation. The Auremina mines may pay some of it back, in a few years.\""),
-                     ("Part", Part, "\"The armistice stopped the shelling, Your Majesty, but not the spending. We are paying to garrison half of Zille, and the war pensions are now a permanent line in my budget.\""),
+                     ("Part", Part, "\"The armistice stopped the shelling, Your Majesty, but not the spending. We are paying to garrison our side of the line in Zille, and the war pensions are now a permanent line in my budget.\""),
                      ("Lost", Lost, "\"I won't dress it up, Your Majesty. The Zille campaign emptied the war chest, and all we have to show for it are the pensions for the widows.\""),
                  })
         {
@@ -145,7 +145,7 @@ internal static class SweepMiddleT8
         Swap(t, conv, "Word115", 115, new[] { 114 }, R, new S(
             Ongoing: "\"Not while this war is being fought, Uncle. Rico stays where he is until it is over.\"",
             Lib: "\"Our soldiers brought Zille home without him, Uncle. Rico stays where he is until I am sure of him.\"",
-            Part: "\"I did what I thought was right. With half of Zille still in Smolak's hands, I cannot afford to be wrong about Rico.\"",
+            Part: "\"I did what I thought was right. With Wehzek soldiers still in Zille, I cannot afford to be wrong about Rico.\"",
             Lost: "\"I did what I thought was right. After Zille, I cannot afford to be wrong about anyone.\""), new[] { "#116" },
             when: "Variable[\"RiziaDLC.Rico_Extradited\"] ~= true");
         // Rico was handed to Wehlen at the Turn 8 meeting, under the ceasefire terms the King accepted during the war (LateT8)
@@ -198,7 +198,7 @@ internal static class SweepMiddleT8
         Swap(t, conv, "Bea329", 329, new[] { 328 }, Beatrice, new S(
             Ongoing: "\"Why, I wouldn't miss it for anything in the world. Not even for your war, Romus, which my ministers now discuss more often than my own budget.\"",
             Lib: "\"Why, I wouldn't miss it for anything in the world. And congratulations on Zille. Do try to remember who helped you pay for it.\"",
-            Part: "\"Why, I wouldn't miss it for anything in the world. Half of Zille and a whole wedding. It's more than most kings manage in a reign.\"",
+            Part: "\"Why, I wouldn't miss it for anything in the world. Zille's harbor and a whole wedding. It's more than most kings manage in a reign.\"",
             Lost: "\"Why, I wouldn't miss it for anything in the world. Your family has had its fill of bad news from Zille, Romus. Let's make today a victory.\""),
             new[] { "#330" }, when: BeatriceHelped);
 

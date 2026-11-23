@@ -5,8 +5,9 @@ namespace ZilleWar;
 /// <summary>
 /// What Valgsland and Lespia hold against a King at war.
 /// - Valgsland: a war on a friend of Contana makes Chancellor Hegel's republic an enemy in all but name. At the declaration
-///   its standing drops by four (Hostile from vanilla's starting point), and for the rest of the reign it never rises above
-///   Unfriendly (vanilla: NegotiatingPower -1 or lower), whatever the King does at the Meftiem. A Malenyevist King is spared.
+///   its standing drops by four (Hostile from vanilla's starting point), and it never rises above Unfriendly (vanilla:
+///   NegotiatingPower -1 or lower), whatever the King does at the Meftiem, until Valgsland gets its CSP base on Caleqabiz or a
+///   peace treaty settles Zille. A Malenyevist King is spared.
 /// - Lespia: Alvarez keeps books. A broken Meftiem promise, or Lespia left with nothing at Cavette (vanilla
 ///   MITZ_ScrewedOverLespia), is a grievance until the King gives him the final vote (Diplomacy_Lespia_PromiseITZSupport_Late).
 ///   So is a King who turned every offer down after Alvarez warned him. A grievance costs Lespian standing once, cancels
@@ -76,7 +77,15 @@ internal static partial class SupplyWar
                 Core.Log.Msg($"Valgsland turns against Rizia over the war: standing {np} -> {Math.Min(want, -1)}.");
             }
 
-            want = Math.Min(want, -1);
+            // The cap ends once Hegel has what he wanted most (Caleqabiz as a CSP base, which also ends the embargo) or a peace
+            // treaty has settled Zille: from then on Valgsland's standing moves as vanilla moves it.
+            bool capLifted = Variables.GetBool("RiziaDLC.Policy_Diplomacy_Caleqabiz_ValgslandCSP") ||
+                             (Variables.GetBool(ZilleTreaty.VarPeace) && !WarFlow.AtWar);
+            if (!capLifted)
+            {
+                want = Math.Min(want, -1);
+            }
+
             if (want != np)
             {
                 Variables.Set(NpValgsland, want);

@@ -143,9 +143,9 @@ internal static class SweepMiddle
             "With the defeat in Zille still fresh, a celebration on the water would not go unnoticed, least of all by the families of " +
             "the fallen.", true));
         // divided: Zille city is ours, the rest of the province behind an armistice line
-        Text("Turn07_Decision_RoyalYachtRestorationFinal", () => Over && !Liberated && !Lost && !YachtHospital, Append(
-            "With half of Zille still behind the armistice line and the casualty lists still fresh in every parish, a celebration on the water " +
-            "would not go unnoticed, least of all by the families of the fallen.", true));
+        Text("Turn07_Decision_RoyalYachtRestorationFinal", () => Over && !Liberated && !Lost && !YachtHospital, original => Append(
+            $"With {Front.WehzekWords} still behind the armistice line and the casualty lists still fresh in every parish, a celebration " +
+            "on the water would not go unnoticed, least of all by the families of the fallen.", true)(original));
 
         // the Rizania went to the Monqiz yards as a hospital ship at Turn 5: nobody is celebrating on her deck
         Text("Turn07_Decision_RoyalYachtRestorationFinal", () => Declared && YachtHospital, Append(

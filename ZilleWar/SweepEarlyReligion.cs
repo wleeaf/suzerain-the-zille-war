@@ -101,15 +101,15 @@ internal static class SweepEarlyReligion
             "\"I took Zille back by force of arms. Now that it is done, I would hear what our faith says of it.\"", new[] { "#461" });
         t.Variant("Ask1227Lost", 1227, new[] { 740 }, AuditT6.Lost, Romus,
             "\"I sent men to die for Zille, and Zille is still Wehzek. I would hear what our faith says of that.\"", new[] { "#461" });
-        t.Variant("Ask1227Part", 1227, new[] { 740 }, AuditT6.Part, Romus,
-            "\"I sent men to die for Zille, and only half of it came home. I would hear what our faith says of that.\"", new[] { "#461" });
+        ForDivided((id, cond, _, theirs, be) => t.Variant("Ask1227Part" + id, 1227, new[] { 740 }, cond, Romus,
+            $"\"I sent men to die for Zille, and {theirs} {be} still Wehzek. I would hear what our faith says of that.\"", new[] { "#461" }));
 
         // [741] "We may need to reclaim Zille through less peaceful means..." (EarlyT6 covers the war being fought).
         t.Variant("Ask741Won", 741, new[] { 740 }, Liberated, Romus,
             "\"Zille was taken back by force of arms. Tell me the religious context and implications of what I have done.\"", new[] { "#461" });
-        t.Variant("Ask741Part", 741, new[] { 740 }, AuditT6.Part, Romus,
-            "\"I went to war for Zille and won back only half of it. Tell me the religious context and implications of what I have done.\"",
-            new[] { "#461" });
+        ForDivided((id, cond, ours, theirs, _) => t.Variant("Ask741Part" + id, 741, new[] { 740 }, cond, Romus,
+            $"\"I went to war for Zille and won back {ours}, but not {theirs}. Tell me the religious context and implications of what I have done.\"",
+            new[] { "#461" }));
         t.Variant("Ask741Lost", 741, new[] { 740 }, AuditT6.Lost, Romus,
             "\"I went to war for Zille and could not win it. Tell me the religious context and implications of what I have done.\"",
             new[] { "#461" });
@@ -141,9 +141,9 @@ internal static class SweepEarlyReligion
         t.Variant("Worse700Won", 700, new[] { 699 }, Liberated, Sal,
             "\"You took Zille from him, Your Majesty. Supreme Wiseman Azmal respects strength. Let us hope he does not learn to fear it.\"",
             new[] { "#986" });
-        t.Variant("Worse700Part", 700, new[] { 699 }, AuditT6.Part, Sal,
-            "\"And half of Zille is still in his hands, Your Majesty. Standing up to President Smolak has cost us dearly enough already.\"",
-            new[] { "#986" });
+        ForDivided((id, cond, _, theirs, be) => t.Variant("Worse700Part" + id, 700, new[] { 699 }, cond, Sal,
+            $"\"And {theirs} {be} still in his hands, Your Majesty. Standing up to President Smolak has cost us dearly enough already.\"",
+            new[] { "#986" }));
         t.Variant("Worse700Lost", 700, new[] { 699 }, AuditT6.Lost, Sal,
             "\"And Zille is still in his hands, Your Majesty. Standing up to President Smolak has cost us dearly enough already.\"",
             new[] { "#986" });

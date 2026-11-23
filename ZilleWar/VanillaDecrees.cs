@@ -51,6 +51,70 @@ internal static class VanillaDecrees
 
     // ------------------------------------------------------------------ the edits
 
+    /// <summary>
+    /// The papers on more levies and on arms purchases are written for a peacetime build-up ("sooner or later it will lead to
+    /// conflict", the AN "advocating de-escalation"). In a war game they are rewritten for the war being fought or just ended,
+    /// latched at the state of the moment they ran (SweepEarlyKit.News). Peace games keep vanilla's text.
+    /// </summary>
+    private static void DecreePress()
+    {
+        static string When(string s, string active, string after) => s == SweepEarlyKit.StActive ? active : after;
+
+        SweepEarlyKit.News("RD_V_IncreaseProvincialLevies", (s, _) => SweepEarlyKit.P(
+            When(s,
+                "The King has demanded more levies from every province, and nobody in Brenas pretends they will spend the year drilling on the " +
+                "parade ground. The new recruits are going north, to Zille, to a war the King declared alone in a foreign capital.",
+                "The war in Zille is over, and the King has demanded more levies from every province all the same. Somebody in the palace " +
+                "has decided that the army that went to Zille must be made bigger, not sent home."),
+            "The Palace has left it to the provinces to fill the new quotas, with volunteers preferred. We do not encourage anyone to sign " +
+            "up. If the Crown wants more sons, let it ask the families who have already buried one.",
+            "Some hope remains that certain nobles will stand up to this demand. Our readers are counting on you, House Sazon."));
+
+        SweepEarlyKit.News("RD_G_Buy_TanksOne", (s, _) => SweepEarlyKit.P(
+            "Rizia has confirmed the acquisition of a new fleet of battle tanks. " +
+            When(s, "The purchase comes while the Royal Army is fighting Wehlen for Zille, and the first battalions are expected at the front within weeks.",
+                "The purchase comes after the war over Zille, and officials describe it as replacing the armor lost there."),
+            "Diplomats in Konstantium note that Rizia already stands accused at the Alliance of changing a border by force, and that its " +
+            "neighbors will read the order in that light."));
+        SweepEarlyKit.News("RD_V_Buy_TanksOne", (s, _) => SweepEarlyKit.P(
+            When(s, "News of King Romus ordering several battalions of battle tanks has ignited outrage. The army already has a war in Zille, " +
+                    "and the King's answer to its casualty lists is to buy more machines to send after them.",
+                "News of King Romus ordering several battalions of battle tanks has ignited outrage. The war in Zille is barely over, and " +
+                "the King is already buying the armor for the next one."),
+            "While the monarch sits in his palace, it is the people who bear the cost of his militarism. How long will Rizians remain silent " +
+            "while their future is gambled away?"));
+        SweepEarlyKit.News("RD_G_Buy_FighterPlanesOne", (s, _) => SweepEarlyKit.P(
+            "The Kingdom of Rizia has acquired a squadron of modern fighter aircraft. " +
+            When(s, "Officials say the planes are needed over Zille, where Wehzek aircraft have contested the skies since the war began.",
+                "Officials say the planes replace aircraft lost in the war over Zille and will guard the kingdom's northern skies."),
+            "Skeptics argue that the purchase diverts money from domestic reforms, and that Rizia's neighbors have reason to watch its air force closely."));
+        SweepEarlyKit.News("RD_V_Buy_FighterPlanesOne", (s, _) => SweepEarlyKit.P(
+            When(s, "As the government pours money into new fighter planes for the war in Zille, one must ask how many more machines the King " +
+                    "will buy before he asks what diplomacy could have done.",
+                "The war in Zille is over, and the government is still pouring money into fighter planes. One must ask why the King keeps " +
+                "buying weapons when the war he chose has ended."),
+            "The message is clear: while the kingdom pours money into its military, meaningful dialogue and peace-building are shamefully neglected!"));
+        SweepEarlyKit.News("RD_G_Buy_BomberPlanesOne", (s, _) => SweepEarlyKit.P(
+            "The Kingdom of Rizia has acquired a fleet of modern bomber aircraft. " +
+            When(s, "The purchase comes in the middle of Rizia's war with Wehlen, and analysts expect the bombers over Zille before the next operation.",
+                "The purchase comes after Rizia's war with Wehlen over Zille, and regional analysts caution that it projects force toward " +
+                "neighbors who already have reason to fear it."),
+            "Officials herald the purchase as crucial for national defense. Critics note that domestic prosperity and global trade make " +
+            "for a strange companion to a growing bomber fleet."));
+        SweepEarlyKit.News("RD_G_Buy_SupportVehiclesOne", (s, _) => SweepEarlyKit.P(
+            "The Kingdom's Royal Defense Department has announced the procurement of a fleet of military support vehicles from " +
+            "international manufacturers, to strengthen the army's logistics and supply lines.",
+            When(s, "The trucks are expected on the roads to Zille within weeks, where the Royal Army has struggled to keep its front supplied.",
+                "The order follows Rizia's war with Wehlen over Zille, which showed how far the army's supply lines could be stretched.")));
+        SweepEarlyKit.News("RD_V_Buy_SupportVehiclesOne", (s, _) => SweepEarlyKit.P(
+            When(s, "The King's latest purchase of military support vehicles is for the war in Zille, and every truck bought is a truck that " +
+                    "will carry our sons to the front.",
+                "The war in Zille is over, and the King is buying military support vehicles as if it were not. Despite repeated calls for " +
+                "negotiation, Romus' answer to every problem is still a bigger army."),
+            "Critics warn that this unchecked militarization risks dragging the nation into yet another costly conflict, endangering both " +
+            "lives and the economy."));
+    }
+
     public static void Register()
     {
         VanillaDecreesAll.Register();
@@ -75,6 +139,8 @@ internal static class VanillaDecrees
         const string levies = "Order_ConscriptionLevy_IncreaseProvincialLevies";
         Append(levies, "With the Kingdom at war, the dukes know their levies will not drill in the provinces but fight in Zille, and " +
                        "House Sazon and House Azaro will count every son they send.");
+
+        DecreePress();
 
         // V5, V6: nothing is built in a town the enemy holds
         foreach (string d in new[] { "Economy_Resources_BuildMaveNortusOilfield", "Order_SecurityIntel_BuildMaveNortusIntelligenceHub" })

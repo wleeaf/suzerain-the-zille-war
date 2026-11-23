@@ -383,7 +383,7 @@ internal static partial class SupplyWar
             "No1", "No2", "No3");
         d.Opt("No1", null, "\"Then I'll finish it without Rumburg.\"", null, T(VarRumburgSaidNo), "No1a");
         d.Say("No1a", Beatrice, "\"I expect you'll try. You always were a stubborn boy.\"", "Hangup");
-        d.Opt("No2", null, "\"Lena would never leave me to fight alone.\"", null, T(VarRumburgSaidNo) + Inc(NpRumburg, -1), "No2a");
+        d.Opt("No2", null, "\"Lena would never leave me to fight alone.\"", null, T(VarRumburgSaidNo) + T(VarRumburgInsulted) + Inc(NpRumburg, -1), "No2a");
         d.Say("No2a", Beatrice, "\"Don't you dare bring my sister into this over a telephone line.\"", "No2b");
         d.Say("No2b", Narrator, "There was a long pause.", "No2c");
         d.Say("No2c", Beatrice, "\"Goodbye, Romus.\"", "No2d");

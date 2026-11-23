@@ -8,8 +8,9 @@ internal static class MenuFixes
 {
     public static void Register()
     {
-        // The Zille front exists (war fought, or an armistice line through Zille): same test as the Manus choices in FinishManus.
-        string front = $"({LK.Ongoing}) or ({LK.Part})";
+        // The Pales options duplicate the Zille ones only while the Zille war is being fought (never true from Turn 7, when this talk
+        // plays). After the war the Zille choice means a quiet armistice line and Pales a real war, so both are offered.
+        string front = LK.Ongoing;
         string sendOpen = "Variable[\"RiziaDLC.SuOmina_OrderedToKillManus\"] ~= true and Variable[\"RiziaDLC.Manus_Arrested\"] ~= true";
 
         // "Such as ordering him to fight in Pales?" duplicates the Zille choice "Such as ordering him to fight in Zille?".

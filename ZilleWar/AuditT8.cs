@@ -36,6 +36,25 @@ internal static class AuditT8
     /// <summary>Divided or lost: the war is over and Zille is not (all) ours.</summary>
     private static readonly string NotLibOver = $"({Part}) or ({Lost})";
 
+    /// <summary>The Terms of Wraclawitz recognized Wehzek Zille (ZilleTreaty): the King signed the claim away the turn before.</summary>
+    private static readonly string Recognized = $"{V(ZilleTreaty.VarKind)} == \"recognized\"";
+    private static readonly string NotRecognized = $"{V(ZilleTreaty.VarKind)} ~= \"recognized\"";
+
+    /// <summary>
+    /// A divided Zille, one set of Wehzek cities at a time (Zille city is always held): calls <paramref name="add"/> with a name
+    /// suffix, the Lua condition for exactly that set, the cities held and their verb ("Zille city and Nanta", "are"), and the cities
+    /// Wehlen kept and theirs ("Isor", "is").
+    /// </summary>
+    private static void Divided(Action<string, string, string, string, string, string> add)
+    {
+        foreach (List<string> wehzek in Front.Subsets("Auremina", "Isor", "Nanta"))
+        {
+            var held = new[] { "Zille city" }.Concat(new[] { "Auremina", "Isor", "Nanta" }.Where(c => !wehzek.Contains(c))).ToList();
+            add(string.Concat(wehzek), Front.LWehzekExactly(wehzek), Front.Join(held), held.Count > 1 ? "are" : "is",
+                Front.Join(wehzek), wehzek.Count > 1 ? "are" : "is");
+        }
+    }
+
     /// <summary>The King settled who governs Zille in the Turn 7 House session (EarlyT7).</summary>
     private static readonly string AdminDecided =
         $"{V(EarlyT7.VarZilleAdmin)} == \"brenas\" or {V(EarlyT7.VarZilleAdmin)} == \"imperii\"";
@@ -63,6 +82,7 @@ internal static class AuditT8
         S Agenda(string lead) => new(
             Lib: $"\"{lead}the latest from Zille, now that the army governs it.\"",
             Part: $"\"{lead}the latest from Zille and the armistice line.\"",
+            PartBorder: $"\"{lead}the latest from Zille and the new border.\"",
             Lost: $"\"{lead}the latest on Zille, and on what Wehlen is doing with it.\"");
         foreach ((int entry, int[] parents, string speaker, string lead, string next) in new[]
                  {
@@ -84,6 +104,7 @@ internal static class AuditT8
         S Onward(string lead) => new(
             Lib: $"\"{lead}I suggest we move on to the matter of governing Zille.\"",
             Part: $"\"{lead}I suggest we move on to Zille and the armistice line.\"",
+            PartBorder: $"\"{lead}I suggest we move on to Zille and the new border.\"",
             Lost: $"\"{lead}I suggest we move on to Zille, such as it is.\"");
         foreach ((int entry, int[] parents, string lead, string next) in new[]
                  {
@@ -135,8 +156,8 @@ internal static class AuditT8
         // keep the evidence as leverage, or not
         Swap(t, Brief, "Lever1141", 1141, new[] { 1111, 1114 }, R, new S(
             Lib: "\"I like that idea. Zille is ours already. Let the evidence work for us somewhere else.\"",
-            Part: "\"I like that idea. It may be worth more to us at the armistice table than in the newspapers.\"",
-            Lost: "\"I like that idea. It may be worth more to us at the armistice table than in the newspapers.\""), new[] { "#1368" });
+            Part: "\"I like that idea. It may be worth more to us at the Alliance in Konstantium than in the newspapers.\"",
+            Lost: "\"I like that idea. It may be worth more to us at the Alliance in Konstantium than in the newspapers.\""), new[] { "#1368" });
         Swap(t, Brief, "Lever1142", 1142, new[] { 1111, 1114 }, R, S.All(
             "\"The leverage isn't worth it. Too many of our soldiers died over that bomb.\""), new[] { "#1368" });
         Swap(t, Brief, "Lever1143", 1143, new[] { 1111, 1114 }, R, new S(
@@ -156,9 +177,9 @@ internal static class AuditT8
     {
         var t = new Talk(Rusty, "ZilleWar.A8.Rusty.");
         Swap(t, Rusty, "Smile540", 540, new[] { 881, 884, 886 }, Montoro, new S(
-            Lib: "\"Do me a favor, at least. Take a picture of old Smolak's face when he has to sit across from you in his own strait.\"",
-            Part: "\"Do me a favor, at least. Take a picture of old Smolak's face when he looks at that armistice line.\"",
-            Lost: "\"Do me a favor, at least. Don't let old Smolak keep the pen when he's done with you.\""), new[] { "#486" });
+            Lib: "\"Shame nobody took a picture of old Smolak's face when he had to sit across from you in his own strait.\"",
+            Part: "\"Do me a favor, at least. Take a picture of old Smolak's face when he has to sit in the same hall as you in Konstantium.\"",
+            Lost: "\"Do me a favor, at least. Next time you see old Smolak, count your fingers after the handshake.\""), new[] { "#486" });
 
         // Smolak and Zille are no longer the King's daily fight once the war is over
         Swap(t, Rusty, "Focus434", 434, new[] { 433 }, R, S.All(
@@ -186,7 +207,7 @@ internal static class AuditT8
             new[] { "#1025", "Pass1019", "#1021" });
         t.Choice("Pass1019", "\"I don't need that evidence to justify my war.\"", new[] { "#1029" });
 
-        // the trip goes to the armistice commission or to Wraclawitz, not into Zille
+        // the treaty is behind him: the trip goes to the Alliance in Konstantium, not into Zille
         foreach ((string name, int entry, int[] parents, string[] next) in new[]
                  {
                      ("Luck653", 653, new[] { 651, 1179 }, new[] { "#681", "#685", "#686", "#687" }),
@@ -194,7 +215,7 @@ internal static class AuditT8
                      ("Luck832", 832, new[] { 830, 831, 833, 834, 837, 838 }, new[] { "#283" }),
                  })
         {
-            Swap(t, Rusty, name, entry, parents, Montoro, new S(Part: "\"Good luck with Smolak.\"", Lost: "\"Good luck in Wraclawitz.\""), next);
+            Swap(t, Rusty, name, entry, parents, Montoro, new S(Part: "\"Good luck with the Alliance in Konstantium.\"", Lost: "\"Good luck in Konstantium. You'll need it.\""), next);
         }
 
         // Mave Nortus held by Wehlen after the armistice: the train stops short of it
@@ -202,6 +223,7 @@ internal static class AuditT8
         Swap(t, Rusty, "Train3", 3, new[] { 719, 720 }, Talk.Narrator, new S(
             Lib: "The greenery of Brenas whizzed past the windows of the royal train as we chugged toward the border. Mave Nortus, where the royal train used to stop, was still in Wehzek hands, and nobody in Wraclawitz had said when they would leave.",
             Part: "The greenery of Brenas whizzed past the windows of the royal train as we chugged toward the border. Mave Nortus, where the royal train used to stop, was on the Wehzek side of the armistice line now.",
+            PartBorder: "The greenery of Brenas whizzed past the windows of the royal train as we chugged toward the border. Mave Nortus, where the royal train used to stop, was on the Wehzek side of the new border now.",
             Lost: "The greenery of Brenas whizzed past the windows of the royal train as we chugged toward the border. Mave Nortus, where the royal train used to stop, was on the Wehzek side of the armistice line now."),
             new[] { "#8" }, when: maveHeld);
         Swap(t, Rusty, "Pabel23", 23, new[] { 19 }, "Pabel Adria", S.All(
@@ -209,6 +231,7 @@ internal static class AuditT8
 
         Swap(t, Rusty, "Onwards716", 716, new[] { 283, 709, 1070 }, Talk.Narrator, new S(
             Part: "The train chugged onwards, toward the armistice line.",
+            PartBorder: "The train chugged onwards, toward the new border.",
             Lost: "The train chugged onwards, toward the border and the Wehzek flags beyond it."), new[] { "#1086" });
         t.Register();
     }
@@ -227,19 +250,28 @@ internal static class AuditT8
         }
 
         Swap(t, Hod, "Sugar46", 46, new[] { 40 }, R, new S(
-            Part: "\"Don't try to sugarcoat it, Uncle. We lost half of Zille, and now we're losing Pales.\"",
             Lost: "\"Don't try to sugarcoat it, Uncle. We lost Zille, and now we're losing Pales.\""), new[] { "#69" }, when: PalesWar);
         Swap(t, Hod, "Sugar46N", 46, new[] { 40 }, R, new S(
-            Part: "\"Don't try to sugarcoat it, Uncle. We lost half of Zille, and the Pales business is not going any better.\"",
             Lost: "\"Don't try to sugarcoat it, Uncle. We lost Zille, and the Pales business is not going any better.\""), new[] { "#69" }, when: $"not ({PalesWar})");
+        Divided((id, w, _, _, theirs, tb) =>
+        {
+            Swap(t, Hod, "Sugar46P" + id, 46, new[] { 40 }, R, new S(
+                Part: $"\"Don't try to sugarcoat it, Uncle. {theirs} {tb} still Wehzek, and now we're losing Pales.\""), new[] { "#69" }, when: And(PalesWar, w));
+            Swap(t, Hod, "Sugar46NP" + id, 46, new[] { 40 }, R, new S(
+                Part: $"\"Don't try to sugarcoat it, Uncle. {theirs} {tb} still Wehzek, and the Pales business is not going any better.\""), new[] { "#69" },
+                when: And($"not ({PalesWar})", w));
+        });
         Swap(t, Hod, "Strong85", 85, new[] { 82 }, R, new S(
             Part: "\"As long as our government stays strong, Zille will be ours in the end.\"",
-            Lost: "\"As long as our government stays strong, Zille will be ours in the end.\""), new[] { "#86" });
+            Lost: "\"As long as our government stays strong, Zille will be ours in the end.\""), new[] { "#86" }, when: NotRecognized);
+        Swap(t, Hod, "Strong85R", 85, new[] { 82 }, R, new S(
+            Lost: "\"As long as our government stays strong, Rizia will recover from what Zille cost us.\""), new[] { "#86" }, when: Recognized);
 
         // The openings after a divided or lost war (LateT8 swaps the first sentence): the speeches that follow talked about
         // Smolak's referendum and the Alliance restoring Zille. Each speaker gets a war version that joins vanilla again.
-        t.Line("AdPart", Adarfo, "\"Half a province, for the lives of our sons. The RPP opposed this war from the first day, and we will leave it to others to call that a victory.\"",
-            new[] { "AdSplit" }, condition: And(War, Part), hooks: Talk.From(175));
+        Divided((id, w, ours, _, _, _) => t.Line("AdPart" + id, Adarfo,
+            $"\"{ours}, for the lives of our sons. The RPP opposed this war from the first day, and we will leave it to others to call that a victory.\"",
+            new[] { "AdSplit" }, condition: And(War, Part, w), hooks: Talk.From(175)));
         t.Line("AdLost", Adarfo, "\"The RPP warned this House that a war for Zille would be paid for by miners and farmhands, not by Sazons or de Ravas. We were right, and I take no pleasure in it.\"",
             new[] { "AdSplit" }, condition: And(War, Lost), hooks: Talk.From(175));
         // reform path: Hugo's aside and Daria's hand (vanilla 353); otherwise Adarfo's tirade against the Crown (vanilla 151)
@@ -248,24 +280,39 @@ internal static class AuditT8
         t.Line("AdTirade", Adarfo, "\"But we are sadly not surprised. This is a country ruled by a family that gave away an entire region to stay in power, and then sent our sons to take it back.\"",
             new[] { "#151" }, condition: "Variable[\"RiziaDLC.Reform_Path\"] ~= true");
 
-        t.Line("ManPart", Manus, "\"Brenas gave its sons to this war, and Zille city is ours again for it. The rest of Zille is still behind Wehzek wire. It is my hope that the Zilleans on both sides of that wire will one day come home to a Rizia that has changed for the better.\"",
-            new[] { "#569" }, condition: And(War, Part), hooks: Talk.From(490));
+        Divided((id, w, ours, ob, theirs, tb) => t.Line("ManPart" + id, Manus,
+            $"\"Brenas gave its sons to this war, and {ours} {ob} ours again for it. {theirs} {tb} still behind Wehzek wire. It is my hope that the Zilleans on both sides of that wire will one day come home to a Rizia that has changed for the better.\"",
+            new[] { "#569" }, condition: And(War, Part, w), hooks: Talk.From(490)));
         t.Line("ManLost", Manus, "\"We sent the sons of Brenas to bring Zille home, and they came back without it. This House owes their families more than speeches. It is my hope that when Zille does come home, it comes home to a Rizia that has changed for the better.\"",
-            new[] { "#569" }, condition: And(War, Lost), hooks: Talk.From(490));
+            new[] { "#569" }, condition: And(War, Lost, NotRecognized), hooks: Talk.From(490));
+        t.Line("ManLostR", Manus, "\"We sent the sons of Brenas to bring Zille home. They came back without it, and then the Crown signed it away in Wraclawitz. This House owes their families more than speeches, and Brenas will not stop asking for Zille back.\"",
+            new[] { "#569" }, condition: And(War, Lost, Recognized), hooks: Talk.From(490));
 
-        t.Line("DarPart", Daria, "\"Nonetheless, Zille city is free, and the RNC is confident the rest of the region will follow.\"",
-            new[] { "#685" }, condition: And(War, Part), hooks: Talk.From(625));
+        Divided((id, w, ours, ob, theirs, _) => t.Line("DarPart" + id, Daria,
+            $"\"Nonetheless, {ours} {ob} free, and the RNC is confident {theirs} will follow.\"",
+            new[] { "#685" }, condition: And(War, Part, w), hooks: Talk.From(625)));
         t.Line("DarLost", Daria, "\"Nonetheless, the RNC will never abandon the claim to Zille. Neither will the Crown.\"",
-            new[] { "#685" }, condition: And(War, Lost), hooks: Talk.From(625));
+            new[] { "#685" }, condition: And(War, Lost, NotRecognized), hooks: Talk.From(625));
+        // the King signed Wehzek Zille away at Wraclawitz: the RNC does not follow him there
+        t.Line("DarLostR", Daria, "\"Nonetheless, the RNC will never abandon the claim to Zille, whatever His Majesty signed in Wraclawitz.\"",
+            new[] { "#685" }, condition: And(War, Lost, Recognized), hooks: Talk.From(625));
 
         Swap(t, Hod, "Future271", 271, new[] { 270 }, Daria, new S(
-            Part: "\"Zille city is ours again, and the rest of the region will follow in time. We must look to the future and decide how it will be reintegrated.\"",
             Lost: "\"Zille will be Rizian again, whatever Wehlen thinks. We must look to the future and decide how it will one day be reintegrated.\""),
-            new[] { "#756" });
+            new[] { "#756" }, when: NotRecognized);
+        Swap(t, Hod, "Future271R", 271, new[] { 270 }, Daria, new S(
+            Lost: "\"The Crown has signed Zille away. The RNC has not. We must look to the future and decide how it will one day be reintegrated.\""),
+            new[] { "#756" }, when: Recognized);
+        Divided((id, w, ours, ob, theirs, _) => Swap(t, Hod, "Future271P" + id, 271, new[] { 270 }, Daria, new S(
+            Part: $"\"{ours} {ob} ours again, and {theirs} will follow in time. We must look to the future and decide how it will be reintegrated.\""),
+            new[] { "#756" }, when: w));
         Swap(t, Hod, "Future755", 755, new[] { 754 }, Daria, new S(
             Part: "\"We must look to the future. Zille city is ours, and there is still the question of how it will be governed.\"",
             Lost: "\"We must look to the future. When Zille is ours again, there is still the question of how the region will be reintegrated.\""),
-            new[] { "#778" });
+            new[] { "#778" }, when: NotRecognized);
+        Swap(t, Hod, "Future755R", 755, new[] { 754 }, Daria, new S(
+            Lost: "\"We must look to the future. Treaty or no treaty, there is still the question of how Zille will one day be reintegrated.\""),
+            new[] { "#778" }, when: Recognized);
 
         // the governance debate: what Rizia holds, and whether the King already decided it in the Turn 7 session
         const string decided = "His Majesty has already decided who will govern Zille. Not everyone in this chamber has made peace with it.";
@@ -290,7 +337,10 @@ internal static class AuditT8
             Swap(t, Hod, name, entry, new[] { parent }, Daria, new S(
                 Part: $"\"{lead}Zille city is ours again, but the future governance of Zille remains undecided.{tail}\"",
                 Lost: $"\"{lead}Zille is lost for now, not forever, and its future governance remains undecided.{tail}\""),
-                new[] { next }, when: $"not ({AdminDecided})");
+                new[] { next }, when: And($"not ({AdminDecided})", NotRecognized));
+            Swap(t, Hod, name + "R", entry, new[] { parent }, Daria, new S(
+                Lost: $"\"{lead}His Majesty signed Zille away in Wraclawitz. The RNC did not, and its future governance remains undecided.{tail}\""),
+                new[] { next }, when: And($"not ({AdminDecided})", Recognized));
         }
 
         Swap(t, Hod, "Gov954", 954, new[] { 957 }, Daria, new S(Lib: "\"His Majesty has decided who will govern Zille. Not everyone here has made peace with that.\""),
@@ -300,7 +350,10 @@ internal static class AuditT8
         Swap(t, Hod, "Gov955", 955, new[] { 958 }, Daria, new S(
             Part: "\"With Zille city back in our hands, its governance must be decided upon.\"",
             Lost: "\"Zille will be ours again one day, and its governance must be decided upon.\""),
-            new[] { "#959" }, when: $"not ({AdminDecided})");
+            new[] { "#959" }, when: And($"not ({AdminDecided})", NotRecognized));
+        Swap(t, Hod, "Gov955R", 955, new[] { 958 }, Daria, new S(
+            Lost: "\"Treaty or no treaty, Zille will be ours again one day, and its governance must be decided upon.\""),
+            new[] { "#959" }, when: And($"not ({AdminDecided})", Recognized));
         Swap(t, Hod, "Mind964", 964, new[] { 961 }, R, new S(
             Lib: "\"Thank you, Baroness de Rava, but I have already made up my mind on Zille. This House will not make it up again for me.\"",
             Part: "\"Thank you, Baroness de Rava, but I have already made up my mind on Zille. This House will not make it up again for me.\"",
@@ -312,24 +365,36 @@ internal static class AuditT8
             Part: "\"I will add that Zille still bears the scars of the war we fought for it. Its reconstruction must be overseen with the full strength of the Crown.\"",
             Lost: "\"I will add that whenever Zille returns, it will bear the scars of the war we fought for it. Its reconstruction must be overseen with the full strength of the Crown.\""),
             new[] { "#294" });
-        Swap(t, Hod, "Ours532", 532, new[] { 535 }, Adarfo, new S(
-            Part: "\"Your intentions are transparent, Ms. de Rava. Half of Zille isn't even ours, and you're already scheming about how to use its reconstruction to enrich your own family.\""),
-            new[] { "#1195" });
+        Divided((id, w, _, _, theirs, tb) => Swap(t, Hod, "Ours532" + id, 532, new[] { 535 }, Adarfo, new S(
+            Part: $"\"Your intentions are transparent, Ms. de Rava. {theirs} {tb}n't even ours, and you're already scheming about how to use Zille's reconstruction to enrich your own family.\""),
+            new[] { "#1195" }, when: w));
 
         // Adarfo's "might as well remain Wehzek" and the King's "when Wehlen hands Zille back"
-        string[] after547 = { "#1020", "#1024", "Res1055_Lib", "Res1055_Part", "Res1055_Lost", "#1028" };
+        var dividedIds = new List<string>();
+        Divided((id, _, _, _, _, _) => dividedIds.Add(id));
+        string[] after547 = new[] { "#1020", "#1024", "Res1055_Lib", "Res1055_Lost", "Res1055R_Lost" }
+            .Concat(dividedIds.Select(id => "Res1055P" + id + "_Part")).Concat(new[] { "#1028" }).ToArray();
         Swap(t, Hod, "Wehzek547", 547, new[] { 546 }, Adarfo, new S(
-            Lib: "\"If we can't do that, Zille might as well have stayed Wehzek.\"",
-            Part: "\"If we can't do that, the rest of Zille might as well stay Wehzek.\""), after547);
+            Lib: "\"If we can't do that, Zille might as well have stayed Wehzek.\""), after547);
+        Divided((id, w, _, _, theirs, _) => Swap(t, Hod, "Wehzek547P" + id, 547, new[] { 546 }, Adarfo, new S(
+            Part: $"\"If we can't do that, {theirs} might as well stay Wehzek.\""), after547, when: w));
         Swap(t, Hod, "Res1055", 1055, new[] { 547 }, R, new S(
             Lib: "\"We will resume this conversation once Zille is formally back in the realm. For now, are there any other topics on the agenda?\"",
-            Part: "\"We will resume this conversation when the rest of Zille is ours. For now, are there any other topics on the agenda?\"",
-            Lost: "\"We will resume this conversation when Zille is ours again. For now, are there any other topics on the agenda?\""), new[] { "#1056" });
-        Swap(t, Hod, "Wrest299", 299, new[] { 302 }, R, new S(
-            Part: "\"We will consider Zille's reintegration once the rest of it is ours. For now, what else is on the agenda, Mr. Speaker?\""), new[] { "#310" });
-        Swap(t, Hod, "Squabble965", 965, new[] { 968 }, R, new S(
-            Part: "\"Half of Zille isn't even back in our hands, and you two are already squabbling over it? There are more important things to discuss.\""),
-            new[] { "#1084" });
+            Lost: "\"We will resume this conversation when Zille is ours again. For now, are there any other topics on the agenda?\""), new[] { "#1056" },
+            when: NotRecognized);
+        Swap(t, Hod, "Res1055R", 1055, new[] { 547 }, R, new S(
+            Lost: "\"There is nothing to resume. I signed Zille away in Wraclawitz, and this House may curse me for it. Are there any other topics on the agenda?\""),
+            new[] { "#1056" }, when: Recognized);
+        Divided((id, w, _, _, theirs, tb) =>
+        {
+            Swap(t, Hod, "Res1055P" + id, 1055, new[] { 547 }, R, new S(
+                Part: $"\"We will resume this conversation when {theirs} {tb} ours. For now, are there any other topics on the agenda?\""), new[] { "#1056" }, when: w);
+            Swap(t, Hod, "Wrest299P" + id, 299, new[] { 302 }, R, new S(
+                Part: $"\"We will consider Zille's reintegration once {theirs} {tb} ours. For now, what else is on the agenda, Mr. Speaker?\""), new[] { "#310" }, when: w);
+            Swap(t, Hod, "Squabble965P" + id, 965, new[] { 968 }, R, new S(
+                Part: $"\"{theirs} {tb}n't even back in our hands, and you two are already squabbling over Zille? There are more important things to discuss.\""),
+                new[] { "#1084" }, when: w);
+        });
         // Hugo after the session, on Manus's claim to Zille
         string brenas = $"{V(EarlyT7.VarZilleAdmin)} == \"brenas\"";
         string imperii = $"{V(EarlyT7.VarZilleAdmin)} == \"imperii\"";
@@ -361,16 +426,24 @@ internal static class AuditT8
             string tail = speaker == Manus ? "They will need schools and work, not speeches." : "It is up to us to make sure none of them get left behind.";
             string pal = pales ? " Pales will bring more when it is ours." : string.Empty;
             Swap(t, Hod, name, entry, new[] { parent }, speaker, new S(
-                Part: $"\"With Zille city back in the realm we have gained hundreds of thousands of new citizens, many of Wehzek origin.{pal} {tail}\"",
                 Lost: $"\"Whenever Zille does return{(pales ? ", to say nothing of Pales," : ",")} it will bring millions of new citizens, many of Wehzek origin. {tail}\""),
-                new[] { next });
+                new[] { next }, when: NotRecognized);
+            Swap(t, Hod, name + "R", entry, new[] { parent }, speaker, new S(
+                Lost: $"\"His Majesty signed Zille away, but if it ever returns{(pales ? ", to say nothing of Pales," : ",")} it will bring millions of new citizens, many of Wehzek origin. {tail}\""),
+                new[] { next }, when: Recognized);
+            string n = name, sp = speaker, nx = next;
+            Divided((id, w, ours, _, _, _) => Swap(t, Hod, n + "P" + id, entry, new[] { parent }, sp, new S(
+                Part: $"\"With {ours} back in the realm we have gained hundreds of thousands of new citizens, many of Wehzek origin.{pal} {tail}\""),
+                new[] { nx }, when: w));
         }
 
         foreach ((string name, int entry, int parent, bool pales) in new[] { ("Rejoins1103", 1103, 1576, true), ("Rejoins1107", 1107, 1577, false) })
         {
-            Swap(t, Hod, name, entry, new[] { parent }, Manus, new S(
-                Part: $"\"When the rest of Zille rejoins us{(pales ? " -- to say nothing of Pales --" : string.Empty)} we will gain millions of new citizens. How do we make sure nobody is left behind?\""),
-                new[] { "#1109", "#1112", "#1225", "#1226" });
+            string n = name;
+            bool pl = pales;
+            Divided((id, w, _, _, theirs, tb) => Swap(t, Hod, n + "P" + id, entry, new[] { parent }, Manus, new S(
+                Part: $"\"When {theirs} {(tb == "are" ? "rejoin" : "rejoins")} us{(pl ? " -- to say nothing of Pales --" : string.Empty)} we will gain many thousands of new citizens. How do we make sure nobody is left behind?\""),
+                new[] { "#1109", "#1112", "#1225", "#1226" }, when: w));
         }
 
         Swap(t, Hod, "Unity1144", 1144, new[] { 1143 }, Daria, new S(

@@ -13,8 +13,12 @@ internal static class EarlyT7Diplomacy
     private const string Azmal = "Jorga Azmal";
     private const string Sal = "Sal Ignacius";
 
+    /// <summary>Some phase of the war took Zille city, even if Wehlen took it back (set every step from the phase history).</summary>
+    private const string VarCityEverTaken = "ZilleWar.E7_ZilleCityEverTaken";
+
     public static void Register()
     {
+        Variables.Register(VarCityEverTaken);
         RegisterRumburg();
         RegisterDuke();
         RegisterDerdia();
@@ -23,6 +27,14 @@ internal static class EarlyT7Diplomacy
 
     public static void OnStep()
     {
+        if (Variables.GetBool(WarFlags.Declared))
+        {
+            bool taken = Front.EverTaken("Zille");
+            if (Variables.GetBool(VarCityEverTaken) != taken)
+            {
+                Variables.Set(VarCityEverTaken, taken);
+            }
+        }
     }
 
     // ------------------------------------------------------------------ c389 Rumburg
@@ -40,9 +52,8 @@ internal static class EarlyT7Diplomacy
         Vanilla.Require(conv, 1099, Peace);   // "If Smolak found out, he'd hold on to Zille forever."
 
         // Rumburg is only starving Smolak of oil money if it stopped buying Wehzek oil (Turn 3 deal, or the embargo on the telephone).
-        const string rumburgEmbargo =
-            "(Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_HighEnergyExport\"] == true or Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_AverageEnergyExport\"] == true " +
-            "or (Variable[\"ZilleWar.Lever_Embargo\"] or 0) > 0)";
+        // (unless vanilla has cancelled the Turn 3 deal since, for missed gas deliveries)
+        const string rumburgEmbargo = "(" + SupplyWar.LuaOilCut + " or " + SupplyWar.LuaOilHalved + ")";
         t.Variant("Pry868", 868, new[] { 867 }, $"({Act}) and {rumburgEmbargo}", Beatrice,
             "\"And what of Rumburg's help against Smolak? Whose oil embargo do you imagine is starving his garrison in Zille?\"",
             new[] { "#897", "#882", "#885", "#886", "#888" });
@@ -116,6 +127,9 @@ internal static class EarlyT7Diplomacy
         // making amends (1326 answers "Now let's talk about Zille", which leads into the vanilla BFF offer in peacetime).
         string partCf = $"{Part} and {KingCf}", partArm = $"{Part} and {NoKingCf}";
         string lostCf = $"{Lost} and {KingCf}", lostArm = $"{Lost} and {NoKingCf}";
+        // she asked for an end date in her last call and the ceasefire gave it to her (SupplyWar: +1 Rumburg standing, once)
+        string thanked = $"Variable[\"{SupplyWar.VarRumburgCeaseThanked}\"] == true";
+        string notThanked = $"Variable[\"{SupplyWar.VarRumburgCeaseThanked}\"] ~= true";
         foreach ((string sfx, int entry, int[] parents, string lead) in new[]
                  {
                      ("", 1300, zilleParents, "And Zille. "),
@@ -127,13 +141,19 @@ internal static class EarlyT7Diplomacy
             t.Variant("ZillePartArm" + sfx, entry, parents, partArm, Beatrice,
                 $"\"{lead}Half a loaf, I'm told. You have the city and its harbor, and Smolak sits behind an armistice line with the rest.\"",
                 new[] { "RPart1", "RPart2", "RDef3" });
-            t.Variant("ZillePartCf" + sfx, entry, parents, partCf, Beatrice,
+            t.Variant("ZillePartCfT" + sfx, entry, parents, $"{partCf} and {thanked}", Beatrice,
+                $"\"{lead}A ceasefire, with the harbor in your pocket. You gave me my end date, Romus. Rumburg remembers that too.\"",
+                new[] { "RCf1", "RCf2", "RPart2" });
+            t.Variant("ZilleLostCfT" + sfx, entry, parents, $"{lostCf} and {thanked}", Beatrice,
+                $"\"{lead}A ceasefire, before your army even reached the city. Still, you gave me my end date, Romus. Rumburg remembers that.\"",
+                new[] { "RCf1", "RCf2", "RDef3" });
+            t.Variant("ZillePartCf" + sfx, entry, parents, $"{partCf} and {notThanked}", Beatrice,
                 $"\"{lead}A ceasefire, with the harbor in your pocket and the rest still in Smolak's. Very diplomatic of you.\"",
                 new[] { "RCf1", "RCf2", "RPart2" });
             t.Variant("ZilleLostArm" + sfx, entry, parents, lostArm, Beatrice,
                 $"\"{lead}I told my ministers Smolak would not give it up easily. I did not expect him to keep all of it.\"",
                 new[] { "RDef1", "RDef2", "RDef3" });
-            t.Variant("ZilleLostCf" + sfx, entry, parents, lostCf, Beatrice,
+            t.Variant("ZilleLostCf" + sfx, entry, parents, $"{lostCf} and {notThanked}", Beatrice,
                 $"\"{lead}A ceasefire, before your army even reached the city. Smolak keeps what he holds and calls it peace, and you call it prudence.\"",
                 new[] { "RCf1", "RCf2", "RDef3" });
         }
@@ -191,9 +211,13 @@ internal static class EarlyT7Diplomacy
         // liberated: the gold
         t.Line("RLib", Beatrice,
             "\"Now. You have Zille back, but its gold is as good as useless if you have nobody to sell it to. Rumburg would like first " +
-            "refusal on whatever comes out of those mines.\"", new[] { "Gold1", "Gold2", "Gold3" }, condition: Lib);
-        t.Choice("Gold1", "\"Rumburg will have first claim on Zille's gold.\"", new[] { "Gold1r" },
+            "refusal on whatever comes out of those mines.\"", new[] { "Gold1", "Gold1P", "Gold2", "Gold3" }, condition: Lib);
+        // Rusty paid six billion for first claim on the Auremina concession during the war: Rumburg can only buy what RRG digs up
+        string pledged = $"Variable[\"{SweepEarlyT6Home.VarRustyZilleGold}\"] == \"pledged\"";
+        t.Choice("Gold1", "\"Rumburg will have first claim on Zille's gold.\"", new[] { "Gold1r" }, condition: $"not ({pledged})",
             script: Str(VarZilleGold, "rumburg") + Inc("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", 2));
+        t.Choice("Gold1P", "\"Montoro has the concession. Rumburg will have first refusal on what his mines dig up.\"", new[] { "Gold1r" },
+            condition: pledged, script: Str(VarZilleGold, "rumburg") + Inc("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", 2));
         t.Line("Gold1r", Beatrice, "\"Now that is the brother-in-law I remember.\"", new[] { "#1370" });
         t.Choice("Gold2", "\"Zille's gold will go to whoever pays best.\"", new[] { "Gold2r" },
             script: Str(VarZilleGold, "market") + Inc("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", -1));
@@ -269,17 +293,24 @@ internal static class EarlyT7Diplomacy
         t.Variant("Strong362Part", 362, strong, Part, Axel,
             "\"I must say, your army took Zille's harbor from Smolak and held it. Any other world leader would think twice before messing with you.\"",
             new[] { "#398" });
-        t.Variant("Strong362Lost", 362, strong, Lost, Axel,
+        string everTaken = $"{V(VarCityEverTaken)} == true";
+        t.Variant("Strong362Lost", 362, strong, $"{Lost} and not ({everTaken})", Axel,
             "\"Your army couldn't take Zille, I know. But it is still the strongest in the region, and any other world leader would think " +
             "twice before messing with you.\"", new[] { "#398" });
+        t.Variant("Strong362Retaken", 362, strong, $"{Lost} and {everTaken}", Axel,
+            "\"Your army took Zille and couldn't hold it, I know. But it is still the strongest in the region, and any other world leader " +
+            "would think twice before messing with you.\"", new[] { "#398" });
         t.Variant("Weak366Lib", 366, new[] { 850 }, Lib, Axel,
             "\"You took Zille, I'll grant you that. But your army is spent, Your Majesty. How can it protect Pales when it can barely hold Rizia?\"",
             new[] { "#367" });
         t.Variant("Weak366Part", 366, new[] { 850 }, Part, Axel,
             "\"Your army couldn't finish the job in Zille, Your Majesty. How can it protect Pales when it can barely protect Rizia?\"",
             new[] { "#367" });
-        t.Variant("Weak366Lost", 366, new[] { 850 }, Lost, Axel,
+        t.Variant("Weak366Lost", 366, new[] { 850 }, $"{Lost} and not ({everTaken})", Axel,
             "\"Your army couldn't take Zille from Smolak, Your Majesty. How can it protect Pales when it can barely protect Rizia?\"",
+            new[] { "#367" });
+        t.Variant("Weak366Retaken", 366, new[] { 850 }, $"{Lost} and {everTaken}", Axel,
+            "\"Your army took Zille and couldn't hold it, Your Majesty. How can it protect Pales when it can barely protect Rizia?\"",
             new[] { "#367" });
 
         // Intermerkopum: "Morella, Derdia and Wehlen."

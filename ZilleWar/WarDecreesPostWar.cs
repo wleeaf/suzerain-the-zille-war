@@ -39,8 +39,9 @@ internal static partial class WarDecrees
     /// <summary>The rebuilt harbor of Zille is open: two turns after the decree.</summary>
     private static bool PwHarborDone => Enacted(RebuildHarborKey) && WorldSystems.Turn >= EnactTurn(RebuildHarborKey) + 2;
 
-    /// <summary>Rizia still holds its Wehzek prisoners of war (liberated or divided war).</summary>
-    private static bool PwPrisonersHeld => Variables.GetString(LateT8.VarPrisoners) is "held" or "ransomed";
+    /// <summary>Rizia still holds its Wehzek prisoners of war (liberated or divided war). "ransomed" is not held: Wehlen paid
+    /// for its officers at the signing (+2 Budget), and the rest went home.</summary>
+    private static bool PwPrisonersHeld => Variables.GetString(LateT8.VarPrisoners) == "held";
 
     /// <summary>A failed phase in Zille: a lost war, or a divided one that ended after a defeat.</summary>
     private static bool PwFailedCampaign => Lost || (Part && Variables.GetBool(WarFlags.Defeated));
@@ -128,11 +129,15 @@ internal static partial class WarDecrees
             "+{0} per turn from Southern Trade Routes", () => Enacted(SouthernTradeKey) && PwEmbargo ? 1 : 0));
     }
 
+    /// <summary>The Mave Nortus Treaty made the armistice line a border.</summary>
+    private static bool BorderSigned =>
+        Variables.GetBool(ZilleTreaty.VarPeace) && Variables.GetString(ZilleTreaty.VarKind) == "border";
+
     private static void AddPostWarCards()
     {
         Cards.Add(new("ZilleWar_Order_ZilleCivilAdministration", "Order", "ZilleWar.DecPol_CivilAdmin", "Civil Administration in Zille City",
             "Zille city is governed by Rizian civil servants under a royal commissioner. The curfew is lifted and the city council " +
-            "meets again, while the armistice line still divides the province.", () => Enacted(CivilAdminKey) && Part));
+            "meets again, while the rest of the province stays in Wehzek hands.", () => Enacted(CivilAdminKey) && Part));
         Cards.Add(new("ZilleWar_Economy_ZilleHarborWorks", "Economy", "ZilleWar.DecPol_HarborWorks", "Harbor Works in Zille",
             "The quays, cranes and warehouses of Zille wrecked in the fighting are being rebuilt at the Crown's expense, and the " +
             "harbor mouth is being cleared of wrecks.", () => Enacted(RebuildHarborKey) && !PwHarborDone));
@@ -389,7 +394,7 @@ internal static partial class WarDecrees
                 News(CivilAdminKey, "V", "The Curfew Lifts", NewsWire.P(
                     "For the first time since the guns fell silent, the cafés of the harbor district stayed open after nine last night, and " +
                     "nobody was asked for his papers on the way home.",
-                    "Zille remains cut in two by the armistice line, and the families on the far side of it are as far away as ever. " +
+                    $"Zille remains cut in two by {(BorderSigned ? "the new border" : "the armistice line")}, and the families on the far side of it are as far away as ever. " +
                     "But a city run by clerks instead of colonels is a better place to wait for them."));
             }
         });
@@ -419,7 +424,7 @@ internal static partial class WarDecrees
                 lib
                     ? "NANTA, RIZIA - Long queues formed at the Nanta ferry this week, as Wehzek officials and their families left " +
                       "Zille rather than swear the loyalty oath demanded by the Rizian Crown."
-                    : "ZILLE - Long queues formed at the crossings of the armistice line this week, as Wehzek officials and their " +
+                    : $"ZILLE - Long queues formed at the crossings of {(BorderSigned ? "the new border" : "the armistice line")} this week, as Wehzek officials and their " +
                       "families left Zille city rather than swear the loyalty oath demanded by the Rizian Crown.",
                 "Among them were schoolteachers, two judges of the city court and most of the harbor police. Wraclawitz radio called " +
                 "the oath \"an expulsion by other means.\""));

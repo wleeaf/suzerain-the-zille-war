@@ -451,17 +451,29 @@ internal static class ZilleCampaign
         bool allObjectives = Sequence.All(o => AllTaken(Info(o), owners));
         bool final = phase >= LastPhase || EndsEarly(owners);
         bool liberated = cleared || allObjectives;
-        if (liberated && !cleared)
+        if (liberated)
         {
-            foreach (string t in owners.Keys.Where(t => ZilleData.ByName[t].Region == "zille").ToList())
+            // the Wehzek garrisons surrender with the rest: those still in Zille, and those still on Rizian soil (Mave Nortus,
+            // Dapalle, Jales), so no Rizian town stays occupied after a liberation
+            List<string> surrender = owners.Keys
+                .Where(t => !owners[t] && (ZilleData.ByName[t].Region == "rizia" || (!cleared && ZilleData.ByName[t].Region == "zille"))).ToList();
+            foreach (string t in surrender)
             {
                 owners[t] = true;
             }
 
-            SaveOwners(owners);
-            foreach (TownSpec town in ZilleData.Towns.Where(t => t.Role == "city" && t.Side == "zille"))
+            if (surrender.Count > 0)
             {
-                Variables.Set(ZilleOperation.CapturedVar(town.Name), true);
+                SaveOwners(owners);
+                Core.Log.Msg($"Liberation: the Wehzek garrisons surrender ({string.Join(", ", surrender)}).");
+            }
+
+            if (!cleared)
+            {
+                foreach (TownSpec town in ZilleData.Towns.Where(t => t.Role == "city" && t.Side == "zille"))
+                {
+                    Variables.Set(ZilleOperation.CapturedVar(town.Name), true);
+                }
             }
         }
 

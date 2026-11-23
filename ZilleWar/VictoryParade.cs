@@ -26,6 +26,8 @@ internal static class VictoryParade
     public const string VarOpinionApplied = "ZilleWar.Victory_OpinionApplied";
     /// <summary>"fedo" | "liberation" | "romus" | "fallen" | "" (the square once called Smolak Square)</summary>
     public const string VarSquare = "ZilleWar.Victory_SquareName";
+    /// <summary>The King gave the square back Duke Fedo Sazon's name himself: House Sazon remembers (a House recompute row).</summary>
+    private const string VarFedoByKing = "ZilleWar.Victory_FedoByKing";
     public const string VarSpeech = "ZilleWar.Victory_Speech";
 
     private const string Opinion = "RiziaDLC.Country_PublicOpinion";
@@ -34,10 +36,14 @@ internal static class VictoryParade
 
     public static void Register()
     {
-        foreach (string v in new[] { VarOffered, VarEndTurn, VarOpinionApplied, VarSquare, VarSpeech })
+        foreach (string v in new[] { VarOffered, VarEndTurn, VarOpinionApplied, VarSquare, VarSpeech, VarFedoByKing })
         {
             Variables.Register(v);
         }
+
+        // vanilla recomputes House standing after every fragment: a one-off +1 in the choice's script would be gone at once
+        Vanilla.Expose(VarFedoByKing);
+        WarDecrees.AddRow("HouseOpinions_DialoguesTwelve", $"{VarFedoByKing} == true", "RiziaDLC.Country_HouseSazon += 1;");
 
         Vanilla.Expose(VarSquare, isBool: false);
         ConversationRegistry.RegisterConversation(Conv);
@@ -147,9 +153,9 @@ internal static class VictoryParade
         t.Line("NameFedo", Narr, "Someone had already screwed the old enamel sign back onto the wall, a little crooked: Fedo Square. The crowd cheered it as we passed, as if the sign itself had marched with us.",
             new[] { "Speech" }, condition: fedoUp, script: Set(VarSquare, "\"fedo\""));
         t.Logic("NameMenu", new[] { "Name1", "Name2", "Name3", "Name4" }, condition: $"not ({fedoUp})");
-        t.Choice("Name1", "\"Give it back its old name. Fedo Square, as it was before the lease.\"", new[] { "Named" }, script: Set(VarSquare, "\"fedo\"") + Add("RiziaDLC.Country_HouseSazon", 1));
+        t.Choice("Name1", "\"Give it back its old name. Fedo Square, as it was before the lease.\"", new[] { "Named" }, script: Set(VarSquare, "\"fedo\"") + Set(VarFedoByKing, "true"));
         t.Choice("Name2", "\"Liberation Square. Let every Wehzek who walks through it remember why.\"", new[] { "Named" }, condition: lib, script: Set(VarSquare, "\"liberation\"") + Add(Opinion, 1));
-        t.Choice("Name3", "\"Romus Square. A king should not be shy about the things he gets right.\"", new[] { "NamedRomus" },
+        t.Choice("Name3", "\"Romus Square. A king should not be shy about the things he gets right.\"", new[] { "NamedRomus" }, cost: "+1 Authority",
             script: Set(VarSquare, "\"romus\"") + Add("RiziaDLC.Resources_Authority", 1) + Add("RiziaDLC.LeaningValue_Democratic", -1));
         t.Choice("Name4", "\"The Square of the Fallen. It belongs to the men who didn't march in today.\"", new[] { "Named" }, script: Set(VarSquare, "\"fallen\""));
         t.Line("Named", Narr, "An aide wrote it down. By the evening the city's sign painters had it on the wall, and by the next morning half the city was already using it.", new[] { "Speech", "PartEnd" });
@@ -163,7 +169,7 @@ internal static class VictoryParade
         t.Choice("S2", "\"People of Zille, you are home. You were always home. It only took the rest of us twenty-five years to come and get you.\"", new[] { "S2a" },
             script: Set(VarSpeech, "\"home\"") + Add(Opinion, 2));
         t.Line("S2a", Narr, "The roar came up off the square like heat off a road. The bells of the harbor sanctuary started ringing on their own, and nobody ever found out who had climbed the tower.", new[] { "Close" });
-        t.Choice("S3", "\"Let the world remember what this Crown promised, and what this Crown delivered.\"", new[] { "S3a" },
+        t.Choice("S3", "\"Let the world remember what this Crown promised, and what this Crown delivered.\"", new[] { "S3a" }, cost: "+1 Authority",
             script: Set(VarSpeech, "\"crown\"") + Add("RiziaDLC.Resources_Authority", 1));
         t.Line("S3a", Narr, "The cheering came a beat late, and then it came all at once. From the stand I could see the strait beyond the harbor, and beyond it, very faint, the Wehzek shore.", new[] { "Close" });
         t.Line("Close", Narr, "The parade lasted until dusk and the celebrations until morning. When I left the city, the street sweepers were still filling carts with paper flags.",
@@ -171,16 +177,34 @@ internal static class VictoryParade
         t.Line("CloseE", Estela, "\"You kept your word, darling. Now go back to Porte Drazon and keep the rest of them.\"", new[] { "End" }, condition: $"{Not(LateT8.VarEstelaHome)}");
 
         // ---------------------------------------------------------------- the homecoming (divided)
-        t.Line("Part1", Narr, "There was no parade. There were not enough streets left in Zille city for one, and the armistice line ran along the hills above the harbor.",
-            new[] { "Part2" }, condition: part, script: "PlayLoopedMusic(\"R_Sunrise\",\"R_Sunrise_Loop\"); ");
+        // Where the line runs: on the hills above the harbor, or far to the north when Auremina and its gold hills are Rizian.
+        // After a Mave Nortus border treaty it is a border, not an armistice line.
+        string aure = LK.Auremina, noAure = $"not ({LK.Auremina})", border = LK.BorderTreaty, noBorder = $"not ({LK.BorderTreaty})";
+        const string sunrise = "PlayLoopedMusic(\"R_Sunrise\",\"R_Sunrise_Loop\"); ";
+        t.Logic("Part1", new[] { "Part1H", "Part1HB", "Part1N", "Part1NB" }, condition: part);
+        t.Line("Part1H", Narr, "There was no parade. There were not enough streets left in Zille city for one, and the armistice line ran along the hills above the harbor.",
+            new[] { "Part2" }, condition: LK.And(noAure, noBorder), script: sunrise);
+        t.Line("Part1HB", Narr, "There was no parade. There were not enough streets left in Zille city for one, and the new border ran along the hills above the harbor.",
+            new[] { "Part2" }, condition: LK.And(noAure, border), script: sunrise);
+        t.Line("Part1N", Narr, "There was no parade. There were not enough streets left in Zille city for one, and the armistice line was far to the north now, beyond the gold hills of Auremina.",
+            new[] { "Part2" }, condition: LK.And(aure, noBorder), script: sunrise);
+        t.Line("Part1NB", Narr, "There was no parade. There were not enough streets left in Zille city for one, and the new border was far to the north now, beyond the gold hills of Auremina.",
+            new[] { "Part2" }, condition: LK.And(aure, border), script: sunrise);
         t.Line("Part2", Narr, "So I walked, from the station to the harbor, with the Golden Guard and a few officers. The crowds did not cheer so much as press closer, to touch a sleeve or hold up a child.",
-            new[] { "Part2C" });
-        t.Line("Part2C", Carlos, "\"Your Majesty, their field glasses can see this street. I would not stay long.\"", new[] { "Part3" });
+            new[] { "Part2C", "Part2CN" });
+        t.Line("Part2C", Carlos, "\"Your Majesty, their field glasses can see this street. I would not stay long.\"", new[] { "Part3" }, condition: noAure);
+        t.Line("Part2CN", Carlos, "\"Your Majesty, the Wehzeks are beyond the hills now, but a crowd this size worries me more than they do. I would not stay long.\"",
+            new[] { "Part3" }, condition: aure);
         t.Line("Part3", Narr, "In the great square, the Wehzek plaque had been pried off the wall. The square was waiting for a name.", new[] { "NameFedoP", "NameMenu" });
         t.Line("NameFedoP", Narr, "Someone had already screwed the old enamel sign back onto the wall: Fedo Square. An old man stood under it with his hat in his hands, as if at a grave.",
             new[] { "PartEnd" }, condition: fedoUp, script: Set(VarSquare, "\"fedo\""));
-        t.Line("PartEnd", Narr, "I stayed until dark. On the ridge across the line, someone was watching us through field glasses, and did not look away.",
-            new[] { "End" }, condition: part);
+        t.Logic("PartEnd", new[] { "PartEndH", "PartEndHB", "PartEndN" }, condition: part);
+        t.Line("PartEndH", Narr, "I stayed until dark. On the ridge across the line, someone was watching us through field glasses, and did not look away.",
+            new[] { "End" }, condition: LK.And(noAure, noBorder));
+        t.Line("PartEndHB", Narr, "I stayed until dark. On the ridge across the border, someone was watching us through field glasses, and did not look away.",
+            new[] { "End" }, condition: LK.And(noAure, border));
+        t.Line("PartEndN", Narr, "I stayed until dark. From the harbor wall I could see the gold hills of Auremina, and the lights of our own garrison coming on along the ridge.",
+            new[] { "End" }, condition: aure);
         t.End();
         t.Register();
     }

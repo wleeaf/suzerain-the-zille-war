@@ -69,6 +69,20 @@ internal static class SweepLateTalk
                 Part: "\"And with two wars of conquest, one in Pales and one in Zille, Rizia is wearing the biggest boot of all.\"",
                 Lost: "\"And with two wars, one in Pales and one in Zille that you lost, Rizia is still wearing the biggest boot of all.\""),
             new[] { "#86", "#78", "#81", "#82", "#94" });
+
+        // The strait was bought with a fifty-year lease of Caleqabiz (SupplyAlvarez): there is no island left to offer the CSP.
+        // Vanilla only knows its own ATO lease; every road to "Your island, Caleqabiz" (108, 141, 145) ends as its refusals do.
+        string leased = $"{War} and Variable[\"{SupplyWar.VarLespiaLease}\"] == true";
+        foreach (int gate in new[] { 108, 141, 145 })
+        {
+            Vanilla.Require(Hegel, gate, $"not ({leased})");
+        }
+
+        h.Line("Leased106", "Emmerich Hegel (R)", "\"You expect me to believe that, after you leased your island to Lespia for fifty years?\"",
+            new[] { "#110" }, condition: And(leased, "Variable[\"RiziaDLC.Policy_Diplomacy_Caleqabiz_LespiaATO\"] ~= true"), hooks: Talk.From(106));
+        h.Logic("Leased140", new[] { "#76" }, condition: And(leased, "Variable[\"RiziaDLC.Policy_Diplomacy_Caleqabiz_LespiaATO\"] ~= true"), hooks: Talk.From(140));
+        h.Line("Leased144", "Emmerich Hegel (R)", "\"You leased your own island to Lespia for fifty years. No offer under the sun would convince me.\"",
+            new[] { "#129" }, condition: And(leased, "Variable[\"RiziaDLC.Policy_Diplomacy_Caleqabiz_LespiaATO\"] ~= true"), hooks: Talk.From(144));
         h.Register();
 
         // At the MITZ board, without a Pales war, vanilla has the King say "There's a war going on." That holds while Zille is

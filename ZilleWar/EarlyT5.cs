@@ -51,6 +51,8 @@ internal static class EarlyT5
     private const string VarQueenGiven = "ZilleWar.E5_QueenGiven";
     private const string VarWatchtower = "ZilleWar.E5_WatchtowerPublished";
     private const string VarSaltanaReport = "ZilleWar.E5_SaltanaReportFiled";
+    /// <summary>The King closed the Palesian line of the bombing inquiry after the consulate files had been published.</summary>
+    private const string VarClosedPublic = "ZilleWar.E5_FilesClosedPublic";
     private const string CouncilFragment = "ZilleWar.Pre_EarlyCouncil_T5";
 
     private static readonly string War = WarFlags.LDeclared;
@@ -61,7 +63,7 @@ internal static class EarlyT5
         foreach (string v in new[]
                  {
                      VarLespiaBetrayed, VarRefugeePolicy, VarWarBonds, VarVinaAnswer, VarBookkept, VarCouncilOffered, VarQueenGiven, VarWatchtower,
-                     VarSaltanaReport,
+                     VarSaltanaReport, VarClosedPublic,
                  })
         {
             Variables.Register(v);
@@ -91,8 +93,10 @@ internal static class EarlyT5
     private static void RegisterCouncil()
     {
         var t = new Talk(CouncilConv, "ZilleWar.E5.Council.");
-        string rumburgGas = "Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_HighEnergyExport\"] == true or " +
-                            "Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_AverageEnergyExport\"] == true";
+        // the Turn 3 gas-for-oil contract, unless vanilla has already cancelled it for missed deliveries
+        string rumburgGas = "Variable[\"RiziaDLC.Situation_Diplomacy_EnergyCommitment_Rumburg_Failed\"] ~= true and " +
+                            "(Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_HighEnergyExport\"] == true or " +
+                            "Variable[\"RiziaDLC.Situation_Diplomacy_Rumburg_AverageEnergyExport\"] == true)";
         string alvarezBacks = $"{V(AnDeclaration.VarAlvarezStance)} == \"backs\"";
 
         t.Logic("Start", new[] { "Room" }, hooks: AtStart(CouncilConv),
@@ -189,7 +193,7 @@ internal static class EarlyT5
             "\"I can carry the cost for a season, Your Majesty. Not for a year.\"", new[] { "M_R1", "M_R2", "M_R3" });
         t.Choice("M_R1", "\"Issue war bonds. Let the people who cheered in the streets buy a share of the victory.\"", new[] { "M_R1a" },
             script: Set(VarWarBonds, "true") + "Variable[\"RiziaDLC.Resources_Budget\"] = (Variable[\"RiziaDLC.Resources_Budget\"] or 0) + 2;",
-            cost: "+2 Budget");
+            cost: "+2 Budget, +1 Budget Per Turn While the War Lasts");
         t.Line("M_R1a", Elena,
             "\"Six billion guilders, if they sell as well as the newspapers. Patriotism is the cheapest money there is, until the war goes badly. Then it becomes the most expensive.\"",
             new[] { "House1" });
@@ -504,7 +508,9 @@ internal static class EarlyT5
         t.Line("FilesHugo", Hugo,
             "\"So Wehlen was wrong about Su Omina. I suppose that makes it a good evening for nobody.\"",
             new[] { "FilesC1", "FilesC2" });
-        string closed = Set("RiziaDLC.Turn05_Security_InvestigateEndInvestigation", "true");
+        string published = $"{V(SupplyWar.VarRamiro)} == \"publish\"";
+        string closed = Set("RiziaDLC.Turn05_Security_InvestigateEndInvestigation", "true") +
+                        $"if {published} then {V(VarClosedPublic)} = true end; ";
         t.Choice("FilesC1", "\"Close the Palesian line. We know who did it.\"", new[] { "FilesC1L", "FilesC1T" }, script: closed);
         t.Line("FilesC1L", Lucita, "\"Closed. The Ramiro file stays open in my drawer, Your Majesty. Lespia has a long reach, and I'd like to know where it ends.\"",
             new[] { "#96" }, condition: lucitaLeads);
@@ -512,6 +518,22 @@ internal static class EarlyT5
         t.Choice("FilesC2", "\"Keep one man on the Palesian supplier. Someone in Remaz sold a bomb to a stranger.\"", new[] { "FilesC2L", "FilesC2T" });
         t.Line("FilesC2L", Lucita, "\"One man, then. Quietly. Pales has enough reasons to dislike us this year.\"", new[] { "#96" }, condition: lucitaLeads);
         t.Line("FilesC2T", "Titus Gordion", "\"One man, sir. Quietly.\"", new[] { "#96" }, condition: $"not ({lucitaLeads})");
+
+        // Closing the inquiry after the files were published: the Herald cannot say the Crown keeps silent about the perpetrators.
+        const string closedText =
+            "The Crown has closed the part of the kingdom's investigation into the Zille Friendship Day bombing that looked at Pales. " +
+            "A Palace spokesman said that the consulate files recovered in Zille, which name Héctor Ramiro of the Lespian consulate as the " +
+            "man who planned the attack, \"leave no question worth a policeman's evening\" about who was responsible.\n\n" +
+            "The bombing claimed the lives of three Wehzek civilians, and Wehlen cited it when it refused to return Zille. The Herald " +
+            "notes that Wraclawitz, which held the same files for months, has yet to explain why it never published them.";
+        foreach (string news in new[] { "Turn05_RH_Security_BlameBombingEndInvestigation", "Turn05_RH_Security_BlameBombingEndInvestigationIncludeScapegoats" })
+        {
+            SweepEarlyKit.News(news, (_, _) => closedText, _ => "Crown Closes Palesian Line of Zille Bombing Inquiry",
+                _ => Variables.GetBool(VarClosedPublic));
+        }
+
+        // Framing Ricardus for the bombing (c324 [796]) after Rizia has published who planned it: the King no longer considers it.
+        Vanilla.Require(Security, 796, $"not ({War} and {published})");
 
         // The royal yacht (c320): the King asks Vina, bound for Pales, about the bombing. With the files read, he knows who planned it.
         var y = new Talk(Yacht, "ZilleWar.E5.YachtFiles.");
@@ -668,19 +690,51 @@ internal static class EarlyT5
         {
             Variables.Set(VarWatchtower, true);
             bool city = Variables.GetBool(ZilleOperation.CapturedVar("Zille"));
-            NewsWire.Publish("E5_Watchtower", "G", "WHR Reports Abuses on Both Sides of the Zille Front", P(
-                "The Watchtower of Human Rights has published its first report on the war in Zille. On the Wehzek side, it lists the " +
-                "internment of Rizian-speaking men of fighting age " +
-                (city ? "in the towns Wehlen still holds" : "in the region") + ", held, in the words of one witness, " +
-                "\"without charge or a lawyer.\"",
-                city
-                    ? "The report is no kinder to Rizia. It documents the shelling of the harbor district during the battle for Zille " +
-                      "city, the detention of Wehzek municipal officials since the city came under Rizian military administration, and " +
-                      "attacks on Wehzek police posts by irregulars it describes as \"armed and directed from across the border.\""
-                    : "The report is no kinder to Rizia. It documents shelling near residential streets on the outskirts of Zille city " +
-                      "and attacks on Wehzek police posts by irregulars it describes as \"armed and directed from across the border.\"",
-                "WHR has called on both governments to allow observers into the region and to open safe corridors for civilians. " +
-                "Neither government has responded."));
+            const string title = "WHR Reports Abuses on Both Sides of the Zille Front";
+            if (ZilleCampaign.Liberated)
+            {
+                // Phase I took all four cities: the war ended on Turn 4, and the report looks back at it
+                NewsWire.Publish("E5_Watchtower", "G", "WHR Reports on the Conduct of the Zille Campaign", P(
+                    "The Watchtower of Human Rights has published its first report on the war in Zille, which ended with the region in " +
+                    "Rizian hands. On the Wehzek side, it lists the internment of Rizian-speaking men of fighting age in the weeks before " +
+                    "the Wehzek garrisons withdrew, held, in the words of one witness, \"without charge or a lawyer.\"",
+                    "The report is no kinder to Rizia. It documents the shelling of the harbor district during the battle for Zille city, " +
+                    "the detention of Wehzek municipal officials under the Rizian military administration, and reprisals against Wehzek " +
+                    "families by irregulars it describes as \"armed and directed from across the old border.\"",
+                    "WHR has called on Porte Drazon to open the military administration's detention centers to independent observers. " +
+                    "The Rizian government has not responded."));
+            }
+            else if (!WarFlow.AtWar)
+            {
+                // a ceasefire on Turn 4: the guns are silent, the line is not
+                NewsWire.Publish("E5_Watchtower", "G", title, P(
+                    "The Watchtower of Human Rights has published its first report on the war in Zille, now halted by a ceasefire. On the " +
+                    "Wehzek side, it lists the internment of Rizian-speaking men of fighting age in the towns Wehlen still holds, held, in " +
+                    "the words of one witness, \"without charge or a lawyer.\"",
+                    city
+                        ? "The report is no kinder to Rizia. It documents the shelling of the harbor district during the battle for Zille " +
+                          "city and the detention of Wehzek municipal officials since the city came under Rizian military administration."
+                        : "The report is no kinder to Rizia. It documents shelling near residential streets on the outskirts of Zille city " +
+                          "and attacks on Wehzek police posts by irregulars it describes as \"armed and directed from across the border.\"",
+                    "WHR has called on both governments to admit observers on both sides of the line of contact and to let separated " +
+                    "families cross it. Neither government has responded."));
+            }
+            else
+            {
+                NewsWire.Publish("E5_Watchtower", "G", title, P(
+                    "The Watchtower of Human Rights has published its first report on the war in Zille. On the Wehzek side, it lists the " +
+                    "internment of Rizian-speaking men of fighting age " +
+                    (city ? "in the towns Wehlen still holds" : "in the region") + ", held, in the words of one witness, " +
+                    "\"without charge or a lawyer.\"",
+                    city
+                        ? "The report is no kinder to Rizia. It documents the shelling of the harbor district during the battle for Zille " +
+                          "city, the detention of Wehzek municipal officials since the city came under Rizian military administration, and " +
+                          "attacks on Wehzek police posts by irregulars it describes as \"armed and directed from across the border.\""
+                        : "The report is no kinder to Rizia. It documents shelling near residential streets on the outskirts of Zille city " +
+                          "and attacks on Wehzek police posts by irregulars it describes as \"armed and directed from across the border.\"",
+                    "WHR has called on both governments to allow observers into the region and to open safe corridors for civilians. " +
+                    "Neither government has responded."));
+            }
         }
 
         if (!Variables.GetBool(VarSaltanaReport) && Variables.GetBool("RiziaDLCSupport.Reports_Turn05_Morella_DemandsZilleReturn"))

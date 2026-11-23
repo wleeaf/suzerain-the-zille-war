@@ -309,16 +309,24 @@ internal static partial class SupplyWar
         d.Say("Lease1", Alvarez,
             "\"Then let's talk about land instead, since gas upsets you. Fifty years of Caleqabiz. A proper lease, signed and stamped: " +
             "our pier, our depot, our flag over the harbor.\"", "Lease2");
-        d.Say("Lease2", Alvarez,
+        // the grudge or the blockade raised the gas price; refusing the gas does not escape it: no rent, as on the harbor path
+        d.Branch("Lease2", "Lease2Grudge", "Lease2Blockade", "Lease2Fair");
+        d.SayIf("Lease2Grudge", grudge, Alvarez,
+            "\"And after the way Rizia treated Lespia at the Meftiem, don't expect rent. The island is the price of my disappointment.\"", "EsqLease");
+        d.SayIf("Lease2Blockade", $"{blockade} and not {grudge}", Alvarez,
+            "\"And while your warships sit on my partner's drillship at Aureus, don't expect rent. Call them home and we'll talk.\"", "EsqLease");
+        d.Say("Lease2Fair", Alvarez,
             "\"And because I'm a generous man, Lespia pays rent. Three billion guilders a turn, on time. You'll hardly notice " +
             "the island is gone.\"", "EsqLease");
         d.Say("EsqLease", Esquibel,
             "Laurento covered the mouthpiece. \"Fifty years, Your Majesty. Your father signed twenty-five on Zille, and we are at war " +
             "to get it back.\"", "MenuLease");
-        d.Branch("MenuLease", "Lease", "RefuseLease");
-        d.Opt("Lease", null, "\"Fifty years. Draw up the lease.\"", "-2 Authority, -1 Authority Per Turn, +1 Budget Per Turn, Caleqabiz Leased to Lespia for 50 Years",
-            dealScript + Talk.Weaken(1) + T(VarLespiaCaleqabiz) + T(VarLespiaLease) + Inc(Authority, -2) +
-            $"{V(WorldModifiers.CaleqabizRent)} = 1; ", "DealLease");
+        d.Branch("MenuLease", Gate("Lease"), Gate("LeaseG"), "RefuseLease");
+        string leaseDeal = dealScript + Talk.Weaken(1) + T(VarLespiaCaleqabiz) + T(VarLespiaLease) + Inc(Authority, -2);
+        d.Opt("Lease", fair, "\"Fifty years. Draw up the lease.\"", "-2 Authority, -1 Authority Per Turn, +1 Budget Per Turn, Caleqabiz Leased to Lespia for 50 Years",
+            leaseDeal + $"{V(WorldModifiers.CaleqabizRent)} = 1; ", "DealLease");
+        d.Opt("LeaseG", dear, "\"Fifty years. Draw up the lease.\"", "-2 Authority, -1 Authority Per Turn, Caleqabiz Leased to Lespia for 50 Years Without Rent",
+            leaseDeal, "DealLease");
         d.Say("DealLease", Alvarez,
             "\"Splendid. My lawyers have had the papers ready since Konstantium. My admirals will be in the strait by Sunday.\"", "Hub");
         d.Opt("RefuseLease", null, "\"No. Not the island, and not the gas.\"", null, T(VarAlvRefusedStrait) + T(Q(10)) + Inc(VarAlvRefusals, 1), "NoDeal");
@@ -531,7 +539,8 @@ internal static partial class SupplyWar
         d.Say("CPay2", Alvarez,
             "\"Lespia is always generous to the victims of terrorism, Your Majesty. Whoever the terrorists turn out to be.\"", "CEnd");
         d.Opt("CSendAway", null, "\"Take your ships out of the strait. I'll fight this war without Lespia.\"", "Ends the Lespian Blockade",
-            done + F(VarLespiaStrait) + T(VarLespiaWithdrawn) + Inc(NpLespia, -3) + Strengthen(1) + S(VarRamiroOutcome, "sentaway"), "CSendAway2");
+            done + F(VarLespiaStrait) + T(VarLespiaWithdrawn) + $"{V(WorldModifiers.LespiaEscort)} = 0; " + Inc(NpLespia, -3) + Strengthen(1) +
+            S(VarRamiroOutcome, "sentaway"), "CSendAway2");
         d.Say("CSendAway2", Alvarez,
             "\"As you wish. I hope your navy is as proud as its king, Your Majesty. It will need to be.\"", "CEnd");
         d.Opt("CFree", null, "\"Close the strait. For nothing. Call it the apology Lespia will never have to make.\"", null,
@@ -540,7 +549,8 @@ internal static partial class SupplyWar
             "\"An apology. What a quaint idea. My admirals will be in the strait, Your Majesty, and Mr. Ramiro will be " +
             "somewhere very far away.\"", "CEnd");
         d.Opt("CNever", null, "\"I want nothing from you, Prime Minister. Ever.\"", null,
-            done + F(VarLespiaStrait) + T(VarLespiaWithdrawn) + Inc(NpLespia, -3) + S(VarRamiroOutcome, "sentaway"), "CNever2");
+            done + F(VarLespiaStrait) + T(VarLespiaWithdrawn) + $"{V(WorldModifiers.LespiaEscort)} = 0; " + Inc(NpLespia, -3) +
+            S(VarRamiroOutcome, "sentaway"), "CNever2");
         d.Say("CNever2", Alvarez, "\"Never is a long time in Merkopa, Your Majesty. Good afternoon.\"", "CEnd");
         d.Say("CEnd", Esquibel,
             "Laurento took the receiver from me and set it down gently. \"Three people died in Smolak Square, Your Majesty. I keep " +

@@ -29,6 +29,13 @@ internal static class EarlyT7
     private const string VarNewsWehlenNorth = "ZilleWar.E7_News_WehlenNorth";
     private const string VarNewsWarTax = "ZilleWar.E7_News_WarTax";
     private const string VarNewsLespiaBothSides = "ZilleWar.E7_News_LespiaBothSides";
+    // The King's answer on who governs Zille, as bools for the House recompute rows (a divided Zille; a liberated one moves
+    // vanilla's own ZilleOwnership flags, LateState).
+    public const string VarAdminBrenas = "ZilleWar.E7_ZilleAdmin_Brenas";
+    public const string VarAdminImperii = "ZilleWar.E7_ZilleAdmin_Imperii";
+    /// <summary>The war profits tax was signed before any war in Pales: it was a Zille war tax, and the Voice's Pales-worded
+    /// stories about it stay hidden or rewritten even after the Pales war starts.</summary>
+    private const string VarWarTaxForZille = "ZilleWar.E7_WarTaxForZille";
 
     public static readonly string Declared = WarFlags.LDeclared;
     public static readonly string Peace = WarFlags.LPeace;
@@ -67,11 +74,20 @@ internal static class EarlyT7
                  {
                      VarZilleAdmin, VarRumburgPriority, VarRumburgWarned, VarRumburgPromise, VarZilleGold, VarReferendumFloated,
                      VarNewsDerdiaG, VarNewsDerdiaV, VarNewsWehlenNorth, VarNewsWarTax, VarNewsLespiaBothSides,
-                     VarRepBluds, VarRepDerdians,
+                     VarRepBluds, VarRepDerdians, VarAdminBrenas, VarAdminImperii, VarWarTaxForZille,
                  })
         {
             Variables.Register(v);
         }
+
+        // Who governs a divided Zille moves the Houses for good: vanilla recomputes House standing after every fragment, so a
+        // one-off change in the debate's script would be gone by the next scene.
+        Vanilla.Expose(VarAdminBrenas);
+        Vanilla.Expose(VarAdminImperii);
+        WarDecrees.AddRow("HouseOpinions_DialoguesTwelve", $"{VarAdminBrenas} == true && {LateState.VarDivided} == true",
+            "RiziaDLC.Country_HouseSazon += 1;\nRiziaDLC.Country_HouseToras -= 1;");
+        WarDecrees.AddRow("HouseOpinions_DialoguesTwelve", $"{VarAdminImperii} == true && {LateState.VarDivided} == true",
+            "RiziaDLC.Country_HouseSazon -= 1;");
 
         // Wehzek medicine for an army fighting Wehlen: never while or after the war.
         Vanilla.Gate("Turn07_Decision_War_Both_WehlenDrugs", WarFlags.XPeace);
@@ -237,14 +253,14 @@ internal static class EarlyT7
         string notPart = $"not ({Part})";
         t.Choice("AdmBPart", "\"The city of Zille and the land we hold will return to Brenas, as before 1927.\"", new[] { "AdmBR" },
             condition: Part,
-            script: Str(VarZilleAdmin, "brenas") + Inc("RiziaDLC.Country_HouseSazon", 1) + Inc("RiziaDLC.Country_HouseToras", -1));
+            script: Str(VarZilleAdmin, "brenas") + Set(VarAdminBrenas, "true") + Set(VarAdminImperii, "false"));
         t.Choice("AdmIPart", "\"What we hold of Zille will be governed from Porte Drazon until the line is settled.\"", new[] { "AdmIR" },
-            condition: Part, script: Str(VarZilleAdmin, "imperii") + Inc("RiziaDLC.Country_HouseSazon", -1));
+            condition: Part, script: Str(VarZilleAdmin, "imperii") + Set(VarAdminImperii, "true") + Set(VarAdminBrenas, "false"));
         t.Choice("AdmB", "\"Zille will return to Brenas, as it was before 1927.\"", new[] { "AdmBR" }, condition: notPart,
-            script: Str(VarZilleAdmin, "brenas") + Inc("RiziaDLC.Country_HouseSazon", 1) + Inc("RiziaDLC.Country_HouseToras", -1));
+            script: Str(VarZilleAdmin, "brenas") + Set(VarAdminBrenas, "true") + Set(VarAdminImperii, "false"));
         t.Line("AdmBR", Narrator, "The RPP benches broke into applause. Beside me, Hugo closed his eyes.", new[] { "#191" });
         t.Choice("AdmI", "\"Zille will be governed from Porte Drazon until it is secure.\"", new[] { "AdmIR" }, condition: notPart,
-            script: Str(VarZilleAdmin, "imperii") + Inc("RiziaDLC.Country_HouseSazon", -1));
+            script: Str(VarZilleAdmin, "imperii") + Set(VarAdminImperii, "true") + Set(VarAdminBrenas, "false"));
         t.Line("AdmIR", Narrator, "Daria smiled. Manus gripped the edges of his podium until his knuckles went white.", new[] { "#191" });
         t.Choice("AdmW", "\"That can wait until the war is truly behind us.\"", new[] { "AdmWR" }, condition: Act,
             script: Str(VarZilleAdmin, "undecided"));
@@ -282,14 +298,25 @@ internal static class EarlyT7
         SweepEarlyKit.ForDivided((id, cond, ours, theirs, be) =>
         {
             parts.Add("Part" + id);
-            t.Logic("Part" + id, new[] { "PartCfM" + id, "PartCfD" + id, "PartArmM" + id, "PartArmD" + id }, condition: cond);
+            t.Logic("Part" + id, new[] { "PartCfM" + id, "PartCfDT" + id, "PartCfD" + id, "PartArmM" + id, "PartArmD" + id }, condition: cond);
+            // A ceasefire on Turns 4-5 brings the treaty before this debate: the King may already have signed the line as a border.
             t.Line("PartCfM" + id, manus,
                 "\"Your Majesty, Zille's harbor flies our flag again, and Brenas is grateful to the army for it. But the ceasefire has left a " +
                 $"line across the region. {theirs} {be} still Wehzek, and our constituents have cousins on the far side of it.\"",
-                new[] { "PartCfM2" + id }, condition: $"{Rpp} and {KingCf}");
+                new[] { "PartCfM2T" + id, "PartCfM2" + id }, condition: $"{Rpp} and {KingCf}");
+            t.Line("PartCfM2T" + id, daria,
+                "\"The RNC accepted the ceasefire because His Majesty agreed to it, Madame Speaker. Now he has signed that line into a border, " +
+                "and the RNC will not forget it.\"", new[] { "PartRef" + id }, condition: LK.BorderTreaty);
             t.Line("PartCfM2" + id, daria,
                 "\"The RNC accepted the ceasefire because His Majesty agreed to it, Madame Speaker. We will not accept that line as a border, nor " +
                 "one drawn in Konstantium by people who have never set foot in Zille.\"", new[] { "PartRef" + id });
+            t.Line("PartCfDT" + id, daria,
+                "\"Your Majesty, Zille's harbor flies our flag again. The RNC accepted the ceasefire because you agreed to it. But you have " +
+                "since signed that line into a border, and the RNC will not forget it.\"",
+                new[] { "PartCfD2T" + id }, condition: $"{NotRpp} and {KingCf} and {LK.BorderTreaty}");
+            t.Line("PartCfD2T" + id, manus,
+                $"\"A border is a border, Madame Speaker. {theirs} {be} Wehzek by treaty now, and our constituents have cousins on the far " +
+                "side of it.\"", new[] { "PartRef" + id });
             t.Line("PartCfD" + id, daria,
                 "\"Your Majesty, Zille's harbor flies our flag again. The RNC accepted the ceasefire because you agreed to it. But we will not " +
                 "accept that line as a border, nor one drawn in Konstantium by people who have never set foot in Zille.\"",
@@ -350,13 +377,24 @@ internal static class EarlyT7
         t.Line("DefH", hugo, "\"Let them grieve, Romus. Just don't let them choose a culprit.\"", new[] { "Tax" });
 
         // --- lost, after the King's own ceasefire (Zille city never taken)
-        t.Logic("Cf", new[] { "CfM", "CfD" }, condition: $"{Lost} and {KingCf}");
+        // A ceasefire on Turns 4-5 brings the treaty before this debate: the King may already have recognized Wehzek Zille.
+        string recognized = $"{V(ZilleTreaty.VarKind)} == \"recognized\"";
+        t.Logic("Cf", new[] { "CfM", "CfDR", "CfD" }, condition: $"{Lost} and {KingCf}");
         t.Line("CfM", manus,
             "\"Your Majesty, the guns have fallen silent, and my party is grateful for it. But Brenas buried its sons for a city that " +
-            "still flies Smolak's flag. Our constituents want to know what it was for.\"", new[] { "CfM2" }, condition: Rpp);
+            "still flies Smolak's flag. Our constituents want to know what it was for.\"", new[] { "CfM2R", "CfM2" }, condition: Rpp);
+        t.Line("CfM2R", daria,
+            "\"The RNC accepted the ceasefire because His Majesty agreed to it, Madame Speaker. We never agreed to the paper he signed in " +
+            "Wraclawitz.\"", new[] { "DefA1", "CfSigned", "DefA3" }, condition: recognized);
         t.Line("CfM2", daria,
             "\"The RNC accepted the ceasefire because His Majesty agreed to it, Madame Speaker. We did not accept it as the end of the claim.\"",
             new[] { "DefA1", "CfTime", "DefA3" });
+        t.Line("CfDR", daria,
+            "\"Your Majesty, the RNC accepted the ceasefire because you agreed to it. It never agreed to the paper you signed in Wraclawitz.\"",
+            new[] { "CfD2R" }, condition: $"{NotRpp} and {recognized}");
+        t.Line("CfD2R", manus,
+            "\"And Brenas buried its sons for a city the Crown has now signed away, Madame Speaker. Our constituents want to know what " +
+            "it was for.\"", new[] { "DefA1", "CfSigned", "DefA3" });
         t.Line("CfD", daria,
             "\"Your Majesty, the RNC accepted the ceasefire because you agreed to it. We did not accept it as the end of the claim to Zille.\"",
             new[] { "CfD2" }, condition: NotRpp);
@@ -365,6 +403,8 @@ internal static class EarlyT7
             "it was for.\"", new[] { "DefA1", "CfTime", "DefA3" });
         t.Choice("CfTime", "\"The ceasefire buys us time. Smolak will not hold Zille forever.\"", new[] { "CfTimeR" });
         t.Line("CfTimeR", Narrator, "Daria nodded slowly. Manus did not look convinced.", new[] { "DefH" });
+        t.Choice("CfSigned", "\"I signed for peace, and I would sign it again to end the funerals.\"", new[] { "CfSignedR" });
+        t.Line("CfSignedR", Narrator, "Daria looked away. On the RPP benches, a few heads nodded slowly.", new[] { "DefH" });
 
         t.Register();
     }
@@ -411,8 +451,9 @@ internal static class EarlyT7
         Vanilla.HideNews("Turn07_V_DerdianBanLifted", () => IsDeclared);
         // Smolak's northern campaign, written for a Wehlen at peace with Rizia.
         Vanilla.HideNews("G_WehlenDeploysForces", () => IsDeclared);
-        // Voice of Rizia's war profits tax story is about Pales.
-        Vanilla.HideNews("RD_V_WarProfitsTax", () => IsDeclared && !PalesWar);
+        // Voice of Rizia's war profits tax story is about Pales. A tax signed for the Zille war stays a Zille story even after the
+        // Pales war starts (the hide is latched: lifting it would print the Pales story weeks after the decree).
+        Vanilla.HideNews("RD_V_WarProfitsTax", () => IsDeclared && (!PalesWar || Variables.GetBool(VarWarTaxForZille)));
         // "Wehlen slowly appears to lose grip over the security situation" in a Zille (city) that is Rizian again.
         Vanilla.HideNews("Turn07_G_BFFZilleActivitySpike",
             () => Variables.GetBool(WarFlags.Liberated) || Variables.GetBool(WarFlags.ZilleCityHeld));
@@ -463,9 +504,40 @@ internal static class EarlyT7
     {
         EarlyT7Diplomacy.OnStep();
         EarlyT7Home.OnStep();
+        // the Voice's story on the end of the war tax thanks "the Pales conflict" for it: a Zille war tax gets a Zille story
+        if (IsDeclared && Variables.GetBool(VarWarTaxForZille))
+        {
+            WorldText.News("RD_V_RemoveWarProfitsTax", null,
+                "The Crown has lifted the war profits tax, to the relief of profiteers everywhere. The one good thing the war in Zille brought " +
+                "-- an excess of government income that could be spent on the people -- is gone, wasted on shells and on the graves of the " +
+                "boys who fired them.\n\nWe at the Voice of Rizia continue to call for a peaceful and multipolar world, where not a single " +
+                "additional guilder is spent on war and destruction.");
+        }
+        else
+        {
+            WorldText.RestoreNews("RD_V_RemoveWarProfitsTax");
+        }
+
         if (!IsDeclared)
         {
             return;
+        }
+
+        if (!PalesWar && Variables.GetBool("RiziaDLC.Policy_RD_Economy_WarProfitsTax") && !Variables.GetBool(VarWarTaxForZille))
+        {
+            Variables.Set(VarWarTaxForZille, true);
+        }
+
+        // the House rows read bools; saves from before them only have the admin string
+        string admin = Variables.GetString(VarZilleAdmin) ?? string.Empty;
+        if (Variables.GetBool(VarAdminBrenas) != (admin == "brenas"))
+        {
+            Variables.Set(VarAdminBrenas, admin == "brenas");
+        }
+
+        if (Variables.GetBool(VarAdminImperii) != (admin == "imperii"))
+        {
+            Variables.Set(VarAdminImperii, admin == "imperii");
         }
 
         bool active = Variables.GetBool(WarFlags.Active);
@@ -527,7 +599,9 @@ internal static class EarlyT7
 
         // Two wars: Lespia closes the strait for Rizia in the north and sells Pales its warships in the south.
         // EarlyT6 files the same story ("E6_LespiaBothSides") as soon as both wars run; publish this one only if it did not.
+        // destroyers only when Lespia arms Pales fully (support level 2; 0 sends nothing, 1 a token shipment of armor)
         if (Variables.GetBool(WarFlags.TwoWars) && Variables.GetInt(SupplyWar.Count(SupplyWar.Lever.Lespia)) > 0 &&
+            Variables.GetInt("RiziaDLC.War_Pales_LespianSupport") >= 2 &&
             !Variables.GetBool(SupplyWar.VarLespiaWithdrawn) && !Variables.GetBool("ZilleWar.Lespia_StraitThin") &&
             !Variables.GetBool(SupplyWar.VarLespiaGrievance) && !Variables.GetBool(VarNewsLespiaBothSides) && !Variables.GetBool("ZilleWar.E6_News_LespiaBothSides"))
         {

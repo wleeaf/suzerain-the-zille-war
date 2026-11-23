@@ -47,6 +47,7 @@ internal static class WorldPress
 
     public static void Register()
     {
+        Variables.Register(VarIntelHub);
         foreach (string n in PeacetimeNews)
         {
             Vanilla.HideNews(n, Declared);
@@ -98,7 +99,16 @@ internal static class WorldPress
             "By the end of the day, his interruptions were the least of the session's scandals. After King Romus Toras declared war " +
             "on Wehlen from the podium, the Chancellor was among the first to leave the hall, telling reporters that Valgsland " +
             "\"will not forget who spoke for the King tonight.\"");
-        Rewrite("news", "Turn08_G_LespiaEvidenceReleased", declared, null,
+        // The consulate files were already published during the war (SupplyVoices): the Alliance session is a follow-up, and
+        // Alvarez has long since answered them.
+        bool filesPublished = declared && Variables.GetString(SupplyWar.VarRamiro) == "publish";
+        Rewrite("news", "Turn08_G_LespiaEvidenceReleased", declared, null, filesPublished ?
+            "Rizia's Toras government has put before the Alliance of Nations the consulate files it published during the war, which name " +
+            "Héctor Ramiro, a political officer of the Lespian consulate in Zille, as the organizer of the 1950 Friendship Day bombing. " +
+            "It added new evidence that it says links the Alvarez administration to the companies that supplied the bomb.\n\n" +
+            "Prime Minister Alvarez repeated his earlier denial, calling the dossier \"the same conspiracy theory in a thicker binder.\" " +
+            "In Wraclawitz, President Smolak, whose own police first traced the bomb, said only that Wehlen \"has always known who its " +
+            "friends are not.\"" :
             "Rizia's Toras government has leveled serious allegations against Lespia in connection with the 1950 Friendship Day " +
             "bombing in Zille. Newly released evidence hints at links between the Alvarez administration and certain individuals and " +
             "companies proven to be connected to the tragic incident, which claimed the lives of three Wehzeks and which Smolak " +
@@ -121,12 +131,37 @@ internal static class WorldPress
             "In a very vague communique issued by the Palace, plans were unveiled for new funds to be allocated to Rizia's " +
             "intelligence services. Mentions were made of a new base of operations, although the government withheld the exact " +
             "details due to national security considerations.\n\n" +
-            (WorldSystems.Liberated
-                ? "It was highlighted that the most important mission of the administration is now the defence of Zille, and that the "
-                : "It was highlighted that the Zille question remains the most important matter of the administration, and that the ") +
-            "expanded intelligence operations will save the lives of our soldiers at the front.\n\n" +
+            (IntelHubState() switch
+            {
+                "lib" => "It was highlighted that the most important mission of the administration is now the defence of Zille, and that the " +
+                         "expanded intelligence operations will keep watch over the soldiers who guard it.\n\n",
+                "over" => "It was highlighted that the Zille question remains the most important matter of the administration, and that the " +
+                          "expanded intelligence operations will keep watch over the armistice line.\n\n",
+                _ => "It was highlighted that the Zille question remains the most important matter of the administration, and that the " +
+                     "expanded intelligence operations will save the lives of our soldiers at the front.\n\n",
+            }) +
             "We at the Royal Herald are incredibly excited for all the spy thriller stories that surely will be written about the " +
             "exploits of Rizian operatives many years from now.");
+    }
+
+    private const string VarIntelHub = "ZilleWar.WP_L_IntelHub";   // "war" | "lib" | "over": the war's state when the item ran
+
+    /// <summary>The intelligence hub story keeps the war's state of the day it was published (the archive does not change).</summary>
+    private static string IntelHubState()
+    {
+        string s = Variables.GetString(VarIntelHub);
+        if (s is "war" or "lib" or "over")
+        {
+            return s;
+        }
+
+        string now = WorldSystems.Active ? "war" : WorldSystems.Liberated ? "lib" : "over";
+        if (WorldSystems.Declared && Variables.GetBool("RiziaDLCSupport.News_RD_RH_BuildMaveNortusIntelligenceHub"))
+        {
+            Variables.Set(VarIntelHub, now);
+        }
+
+        return now;
     }
 
     private static void Rewrite(string kind, string name, bool when, string title, string text)

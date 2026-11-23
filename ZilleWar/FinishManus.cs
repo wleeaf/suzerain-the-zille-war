@@ -28,6 +28,10 @@ internal static class FinishManus
     private const string SazonDead = "RiziaDLC.Army_Unit_Sazon_Dead";
     public const string VarFate = "ZilleWar.Fin_ManusFate";            // "" | decorated | wounded | killed | missing | line
     public const string VarFateTurn = "ZilleWar.Fin_ManusFateTurn";
+    /// <summary>Manus came back decorated or wounded: House Sazon's +1 (a House row).</summary>
+    private const string VarHonored = "ZilleWar.Fin_ManusHonored";
+    /// <summary>The King promised Vina a medal for Manus, or the royal train to his bedside: House Sazon's +1 (a House row).</summary>
+    private const string VarVinaSazon = "ZilleWar.Fin_ManusVinaSazon";
     private const string VarFateReported = "ZilleWar.Fin_ManusFateReported";
     private const string VarPresumedReported = "ZilleWar.Fin_ManusPresumedReported";
     private const string VarSentNews = "ZilleWar.Fin_ManusSentNews";
@@ -73,7 +77,7 @@ internal static class FinishManus
         foreach (string v in new[]
                  {
                      VarCall, VarZille, VarMissing, VarOps, VarSazonDeadAtSend, VarFate, VarFateTurn, VarFateReported, VarPresumedReported, VarSentNews,
-                     VarVinaDone, VarVinaOffered, VarVinaAnswer,
+                     VarVinaDone, VarVinaOffered, VarVinaAnswer, VarHonored, VarVinaSazon,
                  })
         {
             Variables.Register(v);
@@ -81,6 +85,14 @@ internal static class FinishManus
 
         Vanilla.Expose(VarZille);
         Vanilla.Expose(VarMissing);
+        Vanilla.Expose(VarHonored);
+        Vanilla.Expose(VarVinaSazon);
+        // House Sazon's standing is rebuilt from scratch at every story fragment (Calculation_Relations_Houses), so the House
+        // effects of sending Manus, of his fate and of Vina's answers are rows keyed on saved flags, not one-off script changes.
+        WarDecrees.AddRow("HouseOpinions_DialoguesTwelve", $"{VarZille} == true", "RiziaDLC.Country_HouseSazon += 1;");
+        WarDecrees.AddRow("HouseOpinions_DialoguesTwelve", $"{VarHonored} == true", "RiziaDLC.Country_HouseSazon += 1;");
+        WarDecrees.AddRow("HouseOpinions_DialoguesTwelve", $"{VarMissing} == true", "RiziaDLC.Country_HouseSazon -= 1;");
+        WarDecrees.AddRow("HouseOpinions_DialoguesTwelve", $"{VarVinaSazon} == true", "RiziaDLC.Country_HouseSazon += 1;");
 
         // The Pales war's rules for Manus's death do not apply to a Manus in Zille; "missing" keeps vanilla's Turn 10
         // presumed-dead rule (its Pales_Won test is false in a game without a won Pales war).
@@ -135,7 +147,6 @@ internal static class FinishManus
             $"if {Call} then " + Set(VarZille, "true") +
             $"Variable[\"{VarOps}\"] = Variable[\"{ZilleCampaign.VarOpsDone}\"] or 0; " +
             $"Variable[\"{VarSazonDeadAtSend}\"] = Variable[\"{SazonDead}\"] or 0; " +
-            Add("RiziaDLC.Country_HouseSazon", 1) +
             $"if {Ongoing} then {Talk.Weaken(1)} end " +
             "end");
     }
@@ -198,9 +209,16 @@ internal static class FinishManus
         Swap(s, SazonT10, "Proud", 925, new[] { 927 }, Angelica, new S(
             Ongoing: "\"The war will go on for as long as it has to, Leona. Our family lost Zille once. I'm proud that we are doing our part to win it back.\"",
             Lib: "\"And now it's over, Leona. Our family lost Zille in 1927, and a Sazon helped win it back. I am proud of that.\"",
-            Part: "\"Half of Zille is ours again, Leona, and a Sazon stands guard on the line. I am proud of that.\"",
             Lost: "\"We have lost Zille twice now, Leona. But no one will ever say a Sazon didn't fight for it.\""),
             new[] { "#929" }, when: Alive);
+        // divided: the cities won back, by name; on an armistice line or on the border the Mave Nortus Treaty drew
+        SweepEarlyKit.ForDivided((id, cond, ours, _, _) => Swap(s, SazonT10, "Proud" + id, 925, new[] { 927 }, Angelica, new S(
+            Part: $"\"{ours} {(ours.Contains(" and ") ? "are" : "is")} ours again, Leona, and a Sazon stands guard on the line. I am proud of that.\"",
+            PartBorder: $"\"{ours} {(ours.Contains(" and ") ? "are" : "is")} ours again, Leona, and a Sazon stands guard on the new border. I am proud of that.\""),
+            new[] { "#929" }, when: And(Alive, cond)));
+        Swap(s, SazonT10, "ProudAll", 925, new[] { 927 }, Angelica, new S(PartBorder:
+            "\"All of Zille is ours again, Leona, by arms and by treaty, and a Sazon helped win it back. I am proud of that.\""),
+            new[] { "#929" }, when: And(Alive, ZilleWar.Front.LWehzekExactly(Array.Empty<string>())));
         // Manus fell in Zille and the war is over: no "when the war is over".
         string fellAfter = And(ZM, "Variable[\"RiziaDLC.Manus_DiesInWar\"] == true", $"not ({Ongoing})", "Variable[\"RiziaDLC.Pales_War\"] ~= true");
         s.Variant("Minds", 1394, new[] { 1392 }, fellAfter, R,
@@ -264,7 +282,7 @@ internal static class FinishManus
             new[] { "Dec2" }, condition: Fate("decorated"));
         t.Line("Dec2", Vina, "\"He led a charge, apparently. Manus. Who used to apologize to waiters.\"", new[] { "DecA", "DecB" });
         t.Choice("DecA", "\"He earned it. I will pin the next one on him myself.\"", new[] { "DecAr" },
-            script: Set(VarVinaAnswer, "\"proud\"") + Add("RiziaDLC.Country_HouseSazon", 1));
+            script: Set(VarVinaAnswer, "\"proud\"") + Set(VarVinaSazon, "true"));
         t.Line("DecAr", Vina, "\"Then bring him home to get it. That's all I'm asking.\"", new[] { "Close" });
         t.Choice("DecB", "\"He did his duty. So did thousands of others.\"", new[] { "DecBr" }, script: Set(VarVinaAnswer, "\"duty\""));
         t.Line("DecBr", Vina, "\"Thousands of others aren't the man I love. But I suppose that's never mattered much in this house.\"", new[] { "Close" });
@@ -274,7 +292,7 @@ internal static class FinishManus
             new[] { "Wou2" }, condition: Fate("wounded"));
         t.Line("Wou2", Vina, "\"I want to go to him. I'm not asking for permission, Father. I'm asking for a car.\"", new[] { "WouA", "WouB" });
         t.Choice("WouA", "\"Take the royal train. And take him whatever he needs.\"", new[] { "WouAr" },
-            script: Set(VarVinaAnswer, "\"visit\"") + Add("RiziaDLC.Country_HouseSazon", 1));
+            script: Set(VarVinaAnswer, "\"visit\"") + Set(VarVinaSazon, "true"));
         t.Line("WouAr", Narr, "For a moment she looked as if she might hug me. Then she was gone, and I heard her calling for her coat halfway down the corridor.",
             new[] { "End" });
         t.Choice("WouB", "\"A princess has no place in a field hospital. The surgeons will look after him.\"", new[] { "WouBr" },
@@ -373,15 +391,10 @@ internal static class FinishManus
         Variables.Set(VarFate, fate);
         Variables.Set(VarFateTurn, turn);
         Variables.Set(VarMissing, fate == "missing");
+        // House Sazon's +1 / -1 for these fates are rows keyed on VarHonored and VarMissing (see Register)
+        Variables.Set(VarHonored, fate is "decorated" or "wounded");
         switch (fate)
         {
-            case "decorated":
-            case "wounded":
-                Variables.Set("RiziaDLC.Country_HouseSazon", Variables.GetInt("RiziaDLC.Country_HouseSazon") + 1);
-                break;
-            case "missing":
-                Variables.Set("RiziaDLC.Country_HouseSazon", Variables.GetInt("RiziaDLC.Country_HouseSazon") - 1);
-                break;
             case "killed":
                 Variables.Set("RiziaDLC.Manus_DiesInWar", true);
                 Variables.Set("RiziaDLCSupport.News_Floating_RH_ManusFuneral", true);

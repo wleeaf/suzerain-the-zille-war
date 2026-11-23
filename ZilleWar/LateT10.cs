@@ -109,10 +109,17 @@ internal static class LateT10
         var c = new Talk(CouncilMeeting, "ZilleWar.Late.Council10.");
         Swap(c, CouncilMeeting, "Regret", 55, new[] { 53 }, Laurento, new S(
             Ongoing: "\"Of course, I deeply regret that diplomacy was never given its chance in Zille. I hope the guns fall silent there soon.\"",
-            Part: "\"Half of Zille is ours, and the other half sits behind a line of trenches. That is the hardest kind of peace to keep. I regret I will not be here to help keep it.\"",
-            PartBorder: "\"Half of Zille is ours, and the other half lies beyond a border, with a treaty to keep it. That is still the hardest kind of peace to keep. I regret I will not be here to help keep it.\"",
             Lost: "\"Of course, I deeply regret that diplomacy was never given its chance in Zille. Konstantium will remember what we did there for a long time.\""),
             new[] { "#112" });
+        // divided: the cities on each side, by name
+        SweepEarlyKit.ForDivided((id, cond, ours, theirs, be) => Swap(c, CouncilMeeting, "Regret" + id, 55, new[] { 53 }, Laurento, new S(
+            Part: $"\"{ours} {Are(ours)} ours, and {theirs} {be} still behind a line of trenches. That is the hardest kind of peace to keep. I regret I will not be here to help keep it.\"",
+            PartBorder: $"\"{ours} {Are(ours)} ours, and {theirs} {be} across a border, with a treaty to keep it. That is still the hardest kind of peace to keep. I regret I will not be here to help keep it.\""),
+            new[] { "#112" }, when: cond));
+        // a divided war whose treaty handed over the last Wehzek city (Auremina): all of Zille is ours by treaty
+        Swap(c, CouncilMeeting, "RegretAll", 55, new[] { 53 }, Laurento, new S(PartBorder:
+            "\"All of Zille is ours, and a treaty keeps it so. Smolak signed it, but he will not forget it. I regret I will not be here to help keep that peace.\""),
+            new[] { "#112" }, when: AllHeld);
         Swap(c, CouncilMeeting, "Feat", 111, new[] { 109 }, Laurento, new S(Lib:
             "\"For my part, I would have preferred that Zille come back to us with a signature rather than a rifle. But it has come back, and I will not pretend that I am sorry.\""),
             new[] { "#40" });
@@ -121,7 +128,7 @@ internal static class LateT10
         var a = new Talk(Announcement, "ZilleWar.Late.Announcement.");
         Swap(a, Announcement, "OneJob", 353, new[] { 351 }, "Estela Toras", new S(
             Ongoing: "\"To add insult to injury, my Zille is still a battlefield. If I may say so, dear... you had one job!\"",
-            Part: "\"And Zille cut in half like a cake at a christening. At least my old street is on the right side of the line, no thanks to anyone in this room.\"",
+            Part: "\"And Zille cut up like a cake at a christening. At least my old street is on the right side of the line, no thanks to anyone in this room.\"",
             Lost: "\"To add insult to injury, you started a war for Zille, my Zille, and lost it. You had one job, dear!\""), new[] { "#317" });
         a.Register();
 
@@ -136,15 +143,14 @@ internal static class LateT10
         Swap(f, ForeignAffairs, "UnchangedRecognized", 227, new[] { 203 }, Narr, new S(
                 Lost: "\"Zille is Wehzek by treaty now. The garrison is Smolak's, and the hills above the city are fortified against any return.\""),
             new[] { "#916" }, when: WarFlags.L(LateT9.VarRecognized));
-        // divided: Zille city ours, and the Auremina hills if Phase II took them; the ports of Isor and Nanta Wehzek
-        Swap(f, ForeignAffairs, "UnchangedLine", 227, new[] { 203 }, Narr, new S(
-                Part: "\"The armistice line still runs through Zille. Zille city remains under our administration, while the gold hills and the ports of Isor and Nanta stay in Wehzek hands. The Alliance's observers report violations by both sides.\"",
-                PartBorder: "\"Zille now has a border, with a treaty to keep it. Zille city remains under our administration, while the gold hills and the ports of Isor and Nanta lie across it. The Alliance's observers report few incidents.\""),
-            new[] { "#916" }, when: $"not ({Auremina})");
-        Swap(f, ForeignAffairs, "UnchangedGold", 227, new[] { 203 }, Narr, new S(
-                Part: "\"The armistice line still runs through Zille. Zille city and the Auremina hills remain under our administration, while the ports of Isor and Nanta stay in Wehzek hands. The Alliance's observers report violations by both sides.\"",
-                PartBorder: "\"Zille now has a border, with a treaty to keep it. Zille city and the Auremina hills remain under our administration, while the ports of Isor and Nanta lie across it. The Alliance's observers report few incidents.\""),
-            new[] { "#916" }, when: Auremina);
+        // divided: the cities on each side of the line, by name (Zille city is always ours)
+        SweepEarlyKit.ForDivided((id, cond, ours, theirs, be) => Swap(f, ForeignAffairs, "UnchangedLine" + id, 227, new[] { 203 }, Narr, new S(
+                Part: $"\"The armistice line still runs through Zille. {ours} {Remain(ours)} under our administration, while {theirs} {Stay(theirs)} in Wehzek hands. The Alliance's observers report violations by both sides.\"",
+                PartBorder: $"\"Zille now has a border, with a treaty to keep it. {ours} {Remain(ours)} under our administration, while {theirs} {Lie(theirs)} across it. The Alliance's observers report few incidents.\""),
+            new[] { "#916" }, when: cond));
+        Swap(f, ForeignAffairs, "UnchangedAll", 227, new[] { 203 }, Narr, new S(PartBorder:
+            "\"Zille now has a border at the strait, with a treaty to keep it. All four of its cities are under our administration. The Alliance's observers report few incidents.\""),
+            new[] { "#916" }, when: AllHeld);
         Swap(f, ForeignAffairs, "Crackdown", 205, new[] { 917 }, Narr, new S(
             Lib: "\"Rizian military police are hunting down the Wehzek agents and the collaborators they left behind in Zille. The arrests are quiet, and the lists are long.\"",
             Ongoing: "\"Behind the Wehzek lines, the military police are hunting anyone suspected of helping our army.\"",
@@ -156,15 +162,22 @@ internal static class LateT10
         var s = new Talk(Sazon, "ZilleWar.Late.Sazon.");
         Swap(s, Sazon, "Smolak1275", 1275, new[] { 1268, 1271 }, "Angelica Sazon", new S(
             Ongoing: "\"Yes, I know. A war for Zille, and still no end to it. Brenas sends its sons, and the Crown sends telegrams.\"",
-            Part: "\"Your Majesty took Zille city and left the rest of it to Smolak. Brenas expected more for its sons.\"",
             Lost: "\"Yes, I know. None of us could have anticipated that Your Majesty would start a war for Zille and lose it. Brenas buried its sons for nothing.\""),
             new[] { "#1276" });
+        SweepEarlyKit.ForDivided((id, cond, ours, theirs, be) => Swap(s, Sazon, "Smolak1275" + id, 1275, new[] { 1268, 1271 }, "Angelica Sazon", new S(
+            Part: $"\"Your Majesty took {ours} and left {theirs} to Smolak. Brenas expected more for its sons.\""), new[] { "#1276" }, when: cond));
+        Swap(s, Sazon, "Smolak1275All", 1275, new[] { 1268, 1271 }, "Angelica Sazon", new S(PartBorder:
+            "\"Zille is ours again, though it took a war and a treaty to do it. Brenas paid for both with its sons.\""), new[] { "#1276" }, when: AllHeld);
         Swap(s, Sazon, "Losing1162", 1162, new[] { 1161 }, "Angelica Sazon", new S(
                 Lib: "\"Especially after Zille. Our sons won it back, and the Crown has still not thanked them.\"",
-                Part: "\"Especially after Zille. Our sons won back the city, and the rest of it still sits behind a line of trenches.\"",
-                PartBorder: "\"Especially after Zille. Our sons won back the city, and the rest of it lies beyond a border, with a treaty to keep it.\"",
                 Lost: "\"Especially after the disappointment in Zille.\""),
             new[] { "#1264" });
+        SweepEarlyKit.ForDivided((id, cond, ours, theirs, be) => Swap(s, Sazon, "Losing1162" + id, 1162, new[] { 1161 }, "Angelica Sazon", new S(
+                Part: $"\"Especially after Zille. Our sons won back {ours}, and {theirs} still {Sit(theirs)} behind a line of trenches.\"",
+                PartBorder: $"\"Especially after Zille. Our sons won back {ours}, and {theirs} {Lie(theirs)} beyond a border, with a treaty to keep it.\""),
+            new[] { "#1264" }, when: cond));
+        Swap(s, Sazon, "Losing1162All", 1162, new[] { 1161 }, "Angelica Sazon", new S(PartBorder:
+            "\"Especially after Zille. Our sons won it back, and the Crown has still not thanked them.\""), new[] { "#1264" }, when: AllHeld);
         s.Register();
 
         var n = new Talk(NatDes, "ZilleWar.Late.NatDes.");
@@ -177,6 +190,17 @@ internal static class LateT10
         Swap(n, NatDes, "Wehlen105", 105, new[] { 107 }, Laurento, aid, new[] { "#683" });
         n.Register();
     }
+
+    /// <summary>Divided, and every Zille city Rizian: the Mave Nortus Treaty handed over the last one (Auremina).</summary>
+    private static readonly string AllHeld = And(Part, Front.LWehzekExactly(Array.Empty<string>()));
+
+    // verbs for a list of cities ("Zille city is", "Zille city and Nanta are")
+    private static bool Many(string cities) => cities.Contains(" and ");
+    private static string Are(string cities) => Many(cities) ? "are" : "is";
+    private static string Remain(string cities) => Many(cities) ? "remain" : "remains";
+    private static string Stay(string cities) => Many(cities) ? "stay" : "stays";
+    private static string Lie(string cities) => Many(cities) ? "lie" : "lies";
+    private static string Sit(string cities) => Many(cities) ? "sit" : "sits";
 
     // ------------------------------------------------------------------ the epilogue titles
 
@@ -229,6 +253,7 @@ internal static class LateT10
             Lib: "Your mother, feeling homesick, went back to her old house in the harbor district of Zille, which the Crown had kept in the family. You saw her off, promising to visit as often as you could.\nYour focus turned to...",
             Ongoing: "Your mother, feeling homesick, asked every month whether the war in Zille was over yet. One day she stopped asking.\nYour focus turned to...",
             Part: "Your mother, feeling homesick, went back to her old house in the harbor district of Zille, a few miles from the armistice line. You saw her off, promising to visit as often as you could.\nYour focus turned to...",
+            PartBorder: "Your mother, feeling homesick, went back to her old house in the harbor district of Zille, a few miles from the new border. You saw her off, promising to visit as often as you could.\nYour focus turned to...",
             Lost: "Your mother, feeling homesick, petitioned the Wehzek government to let her spend her remaining years in her old house in the harbor district of Zille. The answer took four months and was one line long. She did not ask again.\nYour focus turned to..."),
             new[] { "#280", "#281", "#282", "#396" }, when: $"not ({homeTaken})");
         // the house Smolak asked for in Wraclawitz (LateT8), and got
@@ -242,6 +267,7 @@ internal static class LateT10
             Lib: "Even when she was surrounded by loving family and friends, you could tell that Estela never truly felt at ease in her new home.\nWith her health beginning to fail, she went back to the harbor district of Zille, where she grew up, and asked for nothing more than a room with a view of the sea. She told you she hoped you'd find peace. You...",
             Ongoing: "Even when she was surrounded by loving family and friends, you could tell that Estela never truly felt at ease in her new home.\nShe followed the war in Zille in the newspapers every morning, and told you, the last time you saw her, that she hoped you'd find peace. You...",
             Part: "Even when she was surrounded by loving family and friends, you could tell that Estela never truly felt at ease in her new home.\nWith her health beginning to fail, she went back to her old house in the harbor district of Zille, on the Rizian side of the armistice line. As she boarded the boat, she told you she hoped you'd find peace. You...",
+            PartBorder: "Even when she was surrounded by loving family and friends, you could tell that Estela never truly felt at ease in her new home.\nWith her health beginning to fail, she went back to her old house in the harbor district of Zille, on the Rizian side of the new border. As she boarded the boat, she told you she hoped you'd find peace. You...",
             Lost: "Even when she was surrounded by loving family and friends, you could tell that Estela never truly felt at ease in her new home.\nWith her health beginning to fail, she petitioned Wehlen to let her live out her last days in the harbor district of Zille, where she grew up. Wehlen refused the mother of the king who had invaded it. She read the refusal twice, and told you she hoped you'd find peace. You..."),
             new[] { "#545", "#546", "#604" });
         ex.Register();

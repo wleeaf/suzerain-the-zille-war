@@ -336,7 +336,7 @@ internal static class EarlyT6
             new[] { "Aside2" }, condition: $"{AuditT6.Over} and {LespiaCold}");
         t.Line("Aside2", Alvarez,
             "\"I don't hold grudges. I hold invoices. Sell Lespia six units of the Aureus share for six billion guilders, between friends?\"",
-            new[] { "Pay", "Caleqabiz", "Refuse" });
+            new[] { "Pay", "Caleqabiz", "PaidMoney", "RamiroFree", "RamiroFile", "Refuse" });
         t.Choice("Pay", "\"Rizia keeps its word, Mr. Prime Minister. Take the gas.\"", new[] { "PayA" }, cost: "-6 Energy, +2 Budget",
             script: Set(VarAlvarezGasPrice, "\"paid\"") + Inc("RiziaDLC.Resources_Energy", -6) + Inc("RiziaDLC.Resources_Budget", 2) +
                     Inc("RiziaDLC.Diplomacy_Lespia_NegotiatingPower", 1));
@@ -346,6 +346,21 @@ internal static class EarlyT6
             script: Set(VarAlvarezGasPrice, "\"caleqabiz\""));
         t.Line("CaleqabizA", Alvarez,
             "\"So it was. You can't blame a man for asking twice.\" He raised his glass to me, entirely unembarrassed.", new[] { "Laurento" });
+        // the strait was paid for in guilders every turn of the war (SupplyAlvarez Money3/Money4)
+        t.Choice("PaidMoney", "\"Lespia was paid in guilders, every month of the war. That was the price, and you agreed to it.\"", new[] { "PaidMoneyA" },
+            condition: $"Variable[\"{SupplyWar.VarLespiaPaid}\"] == true and Variable[\"ZilleWar.Lespia_Caleqabiz\"] ~= true",
+            script: Set(VarAlvarezGasPrice, "\"guilders\""));
+        t.Line("PaidMoneyA", Alvarez,
+            "\"Every month, and on time. Your treasury is a model customer, Your Majesty. You can't blame a man for asking twice.\"", new[] { "Laurento" });
+        // the strait was had for nothing with the Ramiro file, or the file is still in the King's safe
+        t.Choice("RamiroFree", "\"We agreed never to speak of Mr. Ramiro again, Prime Minister. Shall I start?\"", new[] { "RamiroA" },
+            condition: "Variable[\"ZilleWar.Ramiro_ConfrontOutcome\"] == \"free\"", script: Set(VarAlvarezGasPrice, "\"ramiro\""));
+        t.Choice("RamiroFile", "\"Ask me about Héctor Ramiro, Prime Minister. Then ask me again about the gas.\"", new[] { "RamiroA" },
+            condition: "Variable[\"ZilleWar.Ramiro_Choice\"] == \"leverage\" and Variable[\"ZilleWar.Ramiro_Confronted\"] ~= true",
+            script: Set(VarAlvarezGasPrice, "\"ramiro\"") + Set("ZilleWar.Ramiro_Confronted", "true") + Inc("RiziaDLC.Diplomacy_Lespia_NegotiatingPower", -1));
+        t.Line("RamiroA", Alvarez,
+            "Alvarez's smile did not move. \"Let's call the gas a conversation for another year, Your Majesty.\" He went back to the buffet without another word.",
+            new[] { "Laurento" });
         t.Choice("Refuse", "\"Six units of gas for six billion guilders is not friendship, Mr. Prime Minister. It is extortion.\"", new[] { "RefuseA" },
             script: Set(VarAlvarezGasPrice, "\"refused\"") + Inc("RiziaDLC.Diplomacy_Lespia_NegotiatingPower", -2));
         t.Line("RefuseA", Alvarez,
@@ -731,15 +746,16 @@ internal static class EarlyT6
     private static void LespiaBothSides()
     {
         // The Pales war starts on Turn 6, after the Zille war has ended: past tense.
-        if (!Variables.GetBool(WarFlags.PalesWar) || !Once(NewsLespiaBothSides))
+        // Whether Lespia arms Pales at all is decided at entry 48 of the war-eruption briefing (PalesIncidentPress.LespianSupport),
+        // several steps after Pales_War is set: 0 = it stays out (no story), 1 = a token shipment, 2 = it arms Pales fully. Wait
+        // until the level is known before spending the once-flag. EarlyT7 files its own version when this one has not run.
+        if (!Variables.GetBool(WarFlags.PalesWar))
         {
             return;
         }
 
-        // Whether Lespia arms Pales at all is decided at entry 48 of the war-eruption briefing (PalesIncidentPress.LespianSupport):
-        // 0 = it stays out (no story), 1 = a token shipment, 2 = it arms Pales fully. Wait until the level is known.
         int level = Variables.GetInt("RiziaDLC.War_Pales_LespianSupport");
-        if (level <= 0)
+        if (level <= 0 || Variables.GetBool("ZilleWar.E7_News_LespiaBothSides") || !Once(NewsLespiaBothSides))
         {
             return;
         }

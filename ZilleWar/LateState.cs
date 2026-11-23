@@ -25,6 +25,8 @@ internal static class LateState
     public const string VarZilleLost = "ZilleWar.Outcome_ZilleLost";          // the war ended with Zille city Wehzek
     public const string VarDivided = "ZilleWar.Outcome_ZilleDivided";         // the war ended with Zille city Rizian, the rest Wehzek
     public const string VarTitleRestorer = "ZilleWar.Title_Restorer";
+    /// <summary>The Turn 7 answer on who governs a liberated Zille has been written into vanilla's ownership flags.</summary>
+    private const string VarAdminSynced = "ZilleWar.Late_AdminSynced";
 
     private const string Wehlen = "Rizia_Country_Wehlen";
 
@@ -57,7 +59,7 @@ internal static class LateState
 
     public static void Register()
     {
-        foreach (string v in new[] { VarOutcomeApplied, VarByForce, VarZilleLost, VarDivided, VarTitleRestorer }.Concat(SumVars))
+        foreach (string v in new[] { VarOutcomeApplied, VarByForce, VarZilleLost, VarDivided, VarTitleRestorer, VarAdminSynced }.Concat(SumVars))
         {
             Variables.Register(v);
         }
@@ -159,6 +161,20 @@ internal static class LateState
                 "Variable[\"RiziaDLC.Situation_Law_WehlenRights_WorkersOnly\"] = false; " +
                 "EvaluateConditionalInstruction(\"MapChange_Zille\");");
             Core.Log.Msg("Zille liberated: ZilleReturn_Success set, Zille under the Crown, map switched.");
+        }
+
+        // The liberation comes before the Turn 7 House debate, so the debate's answer (EarlyT7) is written into vanilla's
+        // ownership flags when it is given: Brenas (+House Sazon, the +1 Reclaimed Territories line) or the Crown (+2). Once,
+        // and only before the Turn 9 return speech, which decides it again on its own.
+        string admin = Variables.GetString(EarlyT7.VarZilleAdmin) ?? string.Empty;
+        if (Liberated && admin is "brenas" or "imperii" && !Variables.GetBool(VarAdminSynced) && Turn < 9)
+        {
+            Variables.Set(VarAdminSynced, true);
+            bool brenas = admin == "brenas";
+            Lua($"Variable[\"RiziaDLC.ZilleOwnership_Brenas\"] = {(brenas ? "true" : "false")}; " +
+                $"Variable[\"RiziaDLC.ZilleOwnership_RiziaImperii\"] = {(brenas ? "false" : "true")}; " +
+                $"Variable[\"RiziaDLC.Authority_Modifier_TerritorialReclaimation\"] = {(brenas ? 1 : 2)};");
+            Core.Log.Msg($"Zille is governed by {(brenas ? "Brenas" : "the Crown")}, as the King told the House on Turn 7.");
         }
         else if (!ZilleCampaign.Liberated && CityHeld && applied != "partial" && applied != "liberated")
         {
@@ -277,6 +293,24 @@ internal static class LateState
             Vanilla.HideReport(r, war);
         }
 
+        // Vanilla city reports filed from a Rizian town that Wehzek troops still hold: no rally, hub or coast guard works there.
+        foreach ((string town, string[] reports) in new[]
+                 {
+                     ("Mave Nortus", new[]
+                     {
+                         "Turn06_MaveNortus_IntelligenceTrainingOperations", "Turn07_MaveNortus_IntelligenceInsertion",
+                         "Turn08_MaveNortus_IntelligenceServiceSearchesVina", "Turn09_ReformDeclaration_SuOminaGathering",
+                     }),
+                     ("Jales", new[] { "Turn06_Jales_CoastGuardIncreasesPresence", "Turn09_Unrest_WruhecistsAttackReformRally" }),
+                 })
+        {
+            string occupied = WarFlags.Occupied(town);
+            foreach (string r in reports)
+            {
+                Vanilla.HideReport(r, () => Declared && Variables.GetBool(occupied));
+            }
+        }
+
         Vanilla.HideReport("Turn08_Zille_SOOfficialAssassination", cityOurs);
         Vanilla.HideReport("Turn08_Zille_IntelligenceHubActivated", cityOurs);
     }
@@ -391,7 +425,7 @@ internal static class LateState
         return (ours, theirs);
     }
 
-    private static readonly string[] SumVars = Enumerable.Range(1, 7).Select(i => $"ZilleWar.Sum_Row{i}").ToArray();
+    private static readonly string[] SumVars = Enumerable.Range(1, 8).Select(i => $"ZilleWar.Sum_Row{i}").ToArray();
 
     private static string Cities(int n) => n switch { 0 => "none", 1 => "one", 2 => "two", 3 => "three", _ => "all four" };
 
@@ -425,7 +459,11 @@ internal static class LateState
               $"{Cities(everTaken.Count)} of the four cities of the Zille province" +
               (wonBack.Count > 0 ? $", though Wehzek counterattacks won back {Front.Join(wonBack)}." : ".");
 
-        string ceasefire = Variables.GetBool(WarFlags.Ceasefire) ? "The King sought a ceasefire, and the guns fell silent on the line of contact." : null;
+        // the King's own ceasefire, or Smolak's offer accepted on the telephone on Smolak's terms
+        bool smolakCease = Variables.GetString(SupplyWar.VarCeasefireTerms) is "full" or "reduced" or "rights";
+        string ceasefire = !Variables.GetBool(WarFlags.Ceasefire) ? null
+            : smolakCease ? "The King accepted President Smolak's offer of a ceasefire, and the guns fell silent on the line of contact."
+            : "The King sought a ceasefire, and the guns fell silent on the line of contact.";
 
         string kind = Variables.GetString(ZilleTreaty.VarKind) ?? string.Empty;
         bool signed = Variables.GetBool(ZilleTreaty.VarSigned);
@@ -485,7 +523,16 @@ internal static class LateState
             _ => null,
         };
 
-        string[] sums = { casualties, operation, ceasefire, treaty, pow, embargo, square };
+        // Lespia's price for closing the Strait of Kreleck outlasts the war: an island for fifty years, or the Aureus gas for the reign
+        bool lease = Variables.GetBool(SupplyWar.VarLespiaLease);
+        bool gas = Variables.GetBool(SupplyWar.VarLespiaGasDeal) && !Variables.GetBool(SupplyWar.VarLespiaWithdrawn);
+        string strait = lease && gas
+            ? "To close the Strait of Kreleck, the King leased Caleqabiz to Lespia for fifty years and sold it Aureus gas at a discount for the rest of his reign."
+            : lease ? "To close the Strait of Kreleck, the King leased the island of Caleqabiz to Lespia for fifty years."
+            : gas ? "To close the Strait of Kreleck, the King sold Aureus gas to Lespia at a discount for the rest of his reign."
+            : null;
+
+        string[] sums = { casualties, operation, ceasefire, treaty, pow, embargo, square, strait };
         for (int i = 0; i < sums.Length; i++)
         {
             Variables.Set(SumVars[i], over && sums[i] != null);

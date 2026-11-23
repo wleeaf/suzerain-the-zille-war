@@ -32,7 +32,7 @@ internal static class SupplyNews
                  {
                      "Credit1", "Credit2", "Dossier", "RumburgNo", "LespiaGas", "ValgslandLespia", "LespiaMitz", "PalesArms", "PalesArmsStopped",
                      "RamiroPublish", "RamiroRecalled", "RamiroComp", "LespiaGone", "StraitThin", "Gift", "Aureus", "Defector",
-                     "Hegel1", "Hegel2", "SmolakRefused", "SmolakAccepted", "Saltana",
+                     "Hegel1", "Hegel2", "SmolakRefused", "SmolakAccepted", "Saltana", "RumburgCease",
                      "Bluds", "PhotoRaid", "PhotoExpelled", "PhotoCaught", "SaltanaDowned", "LespiaFuel", "LespiaLax",
                  })
         {
@@ -252,6 +252,13 @@ internal static class SupplyNews
                     ? "Her Majesty let it be known that a swift peace would find Thornbourgh \"very generous.\" Our ambassador believes she means it."
                     : "Our ambassador advises patience. The Queen's moods pass. Her ledgers do not.");
         });
+
+        // she asked for an end date, and the ceasefire gave her one (SupplyWar adds Thornbourgh's goodwill)
+        Once("RumburgCease", B(SupplyWar.VarRumburgCeaseThanked), () =>
+            Rep("RumburgCease", SuzerainTokenName.RiziaCountryRumburg, "Thornbourgh Welcomes the Quiet",
+                "Queen Beatrice has sent the King a short note on the ceasefire in Zille, in her own hand. It thanks him for \"giving a " +
+                "tired old Queen the end date she asked for.\"",
+                "Her ministers have since been noticeably warmer to our ambassador. Rumburg, it seems, keeps a ledger of favors as well as debts."));
     }
 
     // ------------------------------------------------------------------ Lespia
@@ -537,22 +544,43 @@ internal static class SupplyNews
             Dictionary<string, bool> owners = ZilleCampaign.CurrentOwners();
             var occupied = ZilleData.Towns.Where(t => t.Side != "zille" && t.Role == "city" && ZilleCampaign.IsEnemy(owners, t.Tile))
                 .Select(t => t.Name).ToList();
-            string terms = Str(SupplyWar.VarCeasefireTerms) switch
+            // only the demands Smolak actually made: each is voiced on the telephone only while it is still open (SupplyVoices)
+            string kind = Str(SupplyWar.VarCeasefireTerms);
+            bool snapped = B(SupplyWar.VarPreSnapped);
+            var asked = new List<string>();
+            if (kind == "full" && snapped && B(SupplyWar.VarPreRico))
             {
-                "full" => "the extradition of Ricardus Toras to Wehlen to answer for the Smolak Square bombing, the closure of Rizia's " +
-                          "border to Bludish migrants, and full civil rights for Wehzeks living in Rizia",
-                "reduced" => "the closure of Rizia's border to Bludish migrants and full civil rights for Wehzeks living in Rizia",
-                _ => "full civil rights for Wehzeks living in Rizia",
-            };
+                asked.Add("the extradition of Ricardus Toras to Wehlen to answer for the Smolak Square bombing");
+            }
+
+            if (kind is "full" or "reduced" && !(snapped && B(SupplyWar.VarPreBan)))
+            {
+                asked.Add("the closure of Rizia's border to Bludish migrants");
+            }
+
+            if (kind == "rights" || !(snapped && B(SupplyWar.VarPreRights)))
+            {
+                asked.Add("full civil rights for Wehzeks living in Rizia");
+            }
+
+            bool nothing = asked.Count == 0;
+            string terms = nothing ? "nothing Rizia had not already conceded"
+                : asked.Count == 1 ? asked[0]
+                : string.Join(", ", asked.Take(asked.Count - 1)) + (asked.Count > 2 ? ", and " : " and ") + asked[^1];
             Paper("SmolakAccepted", "G", "The Price of Quiet in Zille",
                 $"The ceasefire between Rizia and Wehlen was agreed by telephone, both governments confirmed. Each army keeps the ground " +
                 (smolak == "countered"
                     ? $"it holds. Rizia offered {terms} in return, and Wraclawitz agreed, though nothing has been signed."
+                    : nothing
+                    ? "it holds. Wraclawitz asked for nothing Rizia had not already conceded, which diplomats read as a sign of how badly it wanted the quiet."
                     : $"it holds. In return, Wraclawitz has demanded {terms}, and the Royal Army has not confirmed what it agreed to."),
                 "President Smolak called it \"a peace that Wehlen can live with.\" It remains to be seen whether Rizia can.");
             Paper("SmolakAccepted", "V", "What Did the King Give Away?",
-                $"The guns are silent, and the Voice of Rizia is glad of it. But a ceasefire made over the telephone deserves to be read " +
-                $"aloud, so here it is: {terms}. The people of Rizia were not asked about any of it.");
+                nothing
+                    ? "The guns are silent, and the Voice of Rizia is glad of it. A ceasefire made over the telephone deserves to be read aloud, " +
+                      "and for once there is little to read: Smolak asked for nothing the Crown had not already given him."
+                    : $"The guns are silent, and the Voice of Rizia is glad of it. But a ceasefire made over the telephone deserves to be read " +
+                      $"aloud, so here it is: {terms}. The people of Rizia were not asked about any of it.");
             Paper("SmolakAccepted", "RH", "The Guns Fall Silent in Zille",
                 heldTowns.Count == 0
                     ? "At His Majesty's word, the Royal Army has ceased fire in Zille. The offensive took no city, and the Herald asks " +
@@ -561,8 +589,10 @@ internal static class SupplyNews
                       "flags fly over " + (heldTowns.Count == 1 ? heldTowns[0] : string.Join(", ", heldTowns.Take(heldTowns.Count - 1)) +
                       " and " + heldTowns[^1]) + ", which had not seen one in a generation." +
                       (occupied.Count > 0 ? $" Wehzek troops remain in {string.Join(" and ", occupied)}, and the Herald trusts they will not stay long." : string.Empty),
-                (smolak == "countered" ? $"His Majesty named the price for the quiet: {terms}. Wraclawitz agreed. " : $"Wraclawitz asked a price for the quiet: {terms}. ") +
-                "The Royal Herald will not pretend the price was nothing. It was less than the lives it spares.");
+                nothing
+                    ? "Wraclawitz asked no new price for the quiet. The Royal Herald notes that a beaten garrison rarely haggles."
+                    : (smolak == "countered" ? $"His Majesty named the price for the quiet: {terms}. Wraclawitz agreed. " : $"Wraclawitz asked a price for the quiet: {terms}. ") +
+                      "The Royal Herald will not pretend the price was nothing. It was less than the lives it spares.");
         });
 
         Once("Saltana", B(SupplyWar.VarMorellaAircraft), () =>
