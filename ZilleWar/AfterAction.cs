@@ -7,7 +7,7 @@ namespace ZilleWar;
 /// briefing, and the newspaper coverage.</summary>
 internal sealed class AfterAction
 {
-    public int EnemyDead, PlayerDead, TilesGained, TilesLost;
+    public int K, EnemyDead, PlayerDead, TilesGained, TilesLost;
     public List<string> CitiesTaken = new(), CitiesLost = new(), CitiesRetaken = new(), EnemyCitiesLeft = new();
     public string Headline = string.Empty, CitiesTakenSentence = string.Empty, LossesSentence = string.Empty;
 
@@ -17,9 +17,11 @@ internal sealed class AfterAction
     // ---- the phase against its aim (set by Classify): what every report and paper tells
     /// <summary>The aim's towns still Wehzek when the phase began ("Isor" once Nanta is ours), those taken, those missed.</summary>
     public List<string> AimStart = new(), AimTaken = new(), AimMissed = new();
-    /// <summary>Zille cities taken beyond the aim; everything won (Zille cities and Rizian towns); losses split by side.</summary>
-    public List<string> Extra = new(), Gained = new(), BackLost = new(), OwnLost = new();
-    /// <summary>Won: the aim (as it stood) fully taken. Partial: part of a two-city aim. Gain / Loss: any city won / lost.</summary>
+    /// <summary>Zille cities taken beyond the aim; everything won (Zille cities and Rizian towns); losses split by side; the aim's
+    /// cities that were ours when the phase began and were lost in it (Nanta, while the phase went for Isor).</summary>
+    public List<string> Extra = new(), Gained = new(), BackLost = new(), OwnLost = new(), AimLost = new();
+    /// <summary>Won: every city of the aim is Rizian at the end (ZilleCampaign's result). Partial: part of the aim taken, not all
+    /// of it held (ZilleCampaign's partial flag). Gain / Loss: any city won / lost. The same rules as <see cref="Front.Phase"/>.</summary>
     public bool Won, Partial, Gain, Loss;
     /// <summary>The aim's name as it stood when the phase began: "Isor and Nanta", or "Isor" once Nanta is held.</summary>
     public string AimName = string.Empty;
@@ -32,6 +34,7 @@ internal sealed class AfterAction
     {
         var a = new AfterAction
         {
+            K = k,
             EnemyDead = Variables.GetInt(ZilleCampaign.EnemyDeadVar(k)),
             PlayerDead = Variables.GetInt(ZilleCampaign.PlayerDeadVar(k)),
         };
@@ -95,7 +98,10 @@ internal sealed class AfterAction
 
         AimTaken = AimStart.Where(CitiesTaken.Contains).ToList();
         AimMissed = AimStart.Where(t => !CitiesTaken.Contains(t)).ToList();
-        Won = AimMissed.Count == 0;
+        AimLost = info.Towns.Where(CitiesLost.Contains).ToList();
+        // As ZilleCampaign books it: the aim is reached when all of its cities are Rizian at the end (so taking Isor while losing
+        // Nanta is part of the aim, not all of it), and partial when some of it was taken without that.
+        Won = !info.Towns.Any(EnemyCitiesLeft.Contains);
         Partial = !Won && AimTaken.Count > 0;
         Extra = CitiesTaken.Where(c => !info.Towns.Contains(c)).ToList();
         Gained = CitiesTaken.Concat(CitiesRetaken).ToList();
@@ -135,37 +141,19 @@ internal sealed class AfterAction
     }
 
     private static bool Captured(string c) => Variables.GetBool(ZilleOperation.CapturedVar(c));
-    private static bool HasLists(int j) => ZilleCampaign.Str(ZilleCampaign.AimVar(j)).Length > 0;
 
-    /// <summary>The j-th phase won a city (an older save, without the lists: it reached its aim, or holds part of it now).</summary>
-    public static bool PhaseGained(int j)
-    {
-        if (HasLists(j))
-        {
-            return ZilleCampaign.Gained(j).Count > 0;
-        }
+    /// <summary>The j-th phase won a city (Front reads older saves the same way as every other reader).</summary>
+    public static bool PhaseGained(int j) => Front.Of(j) is { } ph && ph.Gained.Count > 0;
 
-        return HistoryEntry(j) is { } h && (h.won || ZilleCampaign.Info(h.obj).Towns.Any(Captured));
-    }
+    /// <summary>The j-th phase took part of a two-city aim.</summary>
+    public static bool PhasePartial(int j) => Front.Of(j) is { } ph && ph.Partial;
 
-    /// <summary>The j-th phase took part of a two-city aim (an older save: missed its aim but holds part of it now).</summary>
-    public static bool PhasePartial(int j)
-    {
-        if (HasLists(j))
-        {
-            return ZilleCampaign.Partial(j);
-        }
-
-        return HistoryEntry(j) is { } h && !h.won && ZilleCampaign.Info(h.obj).Towns.Any(Captured);
-    }
-
-    /// <summary>The city was Rizian at some point before the k-th phase (so taking it now is winning it back).</summary>
+    /// <summary>The city was won by a phase before the k-th (so taking it now is winning it back).</summary>
     public static bool HeldBefore(string city, int k)
     {
         for (int j = 1; j < k; j++)
         {
-            if (HasLists(j) ? ZilleCampaign.Gained(j).Contains(city)
-                : HistoryEntry(j) is { } h && h.won && ZilleCampaign.Info(h.obj).Towns.Contains(city))
+            if (Front.Of(j) is { } ph && ph.Gained.Contains(city))
             {
                 return true;
             }
@@ -223,7 +211,7 @@ internal sealed class AfterAction
         string plan = PlanSentence(orders, Won || Partial, p);
         string cities = CitiesParagraph(liberated);
         string losses = LossesParagraph(p, Won, final, k);
-        List<string> notes = EventNotes();
+        List<string> notes = EventNotes(_retell);
         string landed = LandedSentence(p, orders);
         string closing = Closing(p, final, liberated, zilleHeld, info);
 
@@ -315,7 +303,7 @@ internal sealed class AfterAction
         string has = Has(AimStart), isAre = Is(AimStart);
         string taken = CitiesTaken.Count > 0 ? Join(CitiesTaken) : aim;
         string takenIs = CitiesTaken.Count > 1 || (CitiesTaken.Count == 0 && AimStart.Count > 1) ? "are" : "is";
-        string gained = Join(Gained);
+        string gained = TookWords();
         string struck = Loss ? " Elsewhere on the line, the enemy struck back." : string.Empty;
         if (liberated && p < ZilleCampaign.LastPhase)
         {
@@ -339,22 +327,23 @@ internal sealed class AfterAction
             {
                 if (Won)
                 {
+                    string rest = $"{Cap(Places(EnemyCitiesLeft))} {Is(EnemyCitiesLeft)} still in Wehzek hands.";
                     return wonBack
-                        ? $"{last} has been fought to its end, and it has won back {aim}. The rest of the region is still Wehzek.{struck}"
+                        ? $"{last} has been fought to its end, and it has won back {aim}. {rest}{struck}"
                         : $"{last} has been fought to its end, and its last days gave the army what the earlier phases had not: {aim} " +
-                          $"{isAre} Rizian. The rest of the region is not.{struck}";
+                          $"{isAre} Rizian. {rest}{struck}";
                 }
 
                 if (Partial)
                 {
-                    return $"{last} has been fought to its end. It took {Join(AimTaken)} but not {Join(AimMissed)}, the General Staff has " +
+                    return $"{last} has been fought to its end. It took {Join(AimTaken)} {ButNot()}, the General Staff has " +
                            $"reported to the Crown.{struck}";
                 }
 
                 if (Gain)
                 {
                     return $"{last} has been fought to its end without reaching {aim}, the General Staff has reported to the Crown, though " +
-                           $"it took {gained} on the way.{struck}";
+                           $"it {gained} on the way.{struck}";
                 }
 
                 return $"{last} has been fought to its end without reaching {aim}, the General Staff has reported to the Crown. " +
@@ -365,7 +354,7 @@ internal sealed class AfterAction
 
             return $"{last} has ended with the city of Zille {(BackLost.Contains("Zille") ? "back" : "still")} in Wehzek hands. " +
                    (Gain
-                       ? $"{gained} {Was(Gained)} taken on the way, but the General Staff has informed the Crown that the army has nothing " +
+                       ? $"The army {gained} on the way, but the General Staff has informed the Crown that it has nothing " +
                          "left with which to go for the city again."
                        : "The General Staff has informed the Crown that the army has nothing left with which to try again.");
         }
@@ -380,7 +369,7 @@ internal sealed class AfterAction
             }
 
             return Gain
-                ? $"{name} has ended without taking {aim}, the General Staff has informed the Crown, though the army took {gained} on " +
+                ? $"{name} has ended without taking {aim}, the General Staff has informed the Crown, though the army {gained} on " +
                   $"the way. {aim} {(AimStart.Count > 1 ? "remain" : "remains")} in Wehzek hands, and the next phase will go for it again.{struck}"
                 : $"{name} has ended without taking {aim}, the General Staff has informed the Crown. {aim} {(AimStart.Count > 1 ? "remain" : "remains")} " +
                   "in Wehzek hands, and the next phase will go for it again.";
@@ -398,13 +387,14 @@ internal sealed class AfterAction
 
             if (Partial)
             {
-                return $"At the {Nth(tries)} attempt, {Join(AimTaken)} {Has(AimTaken)} fallen, but {Join(AimMissed)} {Has(AimMissed)} held. " +
+                return $"At the {Nth(tries)} attempt, {Join(AimTaken)} {Has(AimTaken)} fallen, but " +
+                       (AimMissed.Count > 0 ? $"{Join(AimMissed)} {Has(AimMissed)} held. " : $"{Join(AimLost)} {Has(AimLost)} been lost. ") +
                        $"{name} went for the objective {before} had missed, and has carried part of it.{struck}";
             }
 
             if (Gain)
             {
-                return $"{aim} {has} held again, the General Staff reports, but {name} did not come back empty-handed: it took {gained} " +
+                return $"{aim} {has} held again, the General Staff reports, but {name} did not come back empty-handed: it {gained} " +
                        $"instead.{struck}";
             }
 
@@ -423,17 +413,31 @@ internal sealed class AfterAction
 
         if (Partial)
         {
-            return $"{name} has taken {Join(AimTaken)}, but not {Join(AimMissed)}, the General Staff reports. Its dispatch calls the aim " +
+            return $"{name} has taken {Join(AimTaken)}, {ButNot()}, the General Staff reports. Its dispatch calls the aim " +
                    $"of the phase half reached.{struck}";
         }
 
         if (Gain)
         {
-            return $"{name} has been halted short of {aim}, the General Staff reports, but not before taking {gained}.{struck}";
+            return $"{name} has been halted short of {aim}, the General Staff reports, but not before it {gained}.{struck}";
         }
 
         return $"{name} has been halted short of {aim}. The General Staff's dispatch speaks of hard fighting" +
                (TilesGained > 0 ? " and ground taken" : string.Empty) + ", but not of the objective.";
+    }
+
+    /// <summary>"but not Isor", or, when the rest of the aim was ours and fell in the same phase, "but lost Nanta".</summary>
+    private string ButNot() => AimMissed.Count > 0 ? $"but not {Join(AimMissed)}" : $"but lost {Join(AimLost)}";
+
+    /// <summary>What the phase won, as a verb phrase: "took Nanta", "won back Mave Nortus", "took Isor and won back Zille".</summary>
+    public string TookWords(bool places = false)
+    {
+        bool Back(string c) => CitiesRetaken.Contains(c) || HeldBefore(c, K);
+        List<string> fresh = Gained.Where(c => !Back(c)).ToList(), back = Gained.Where(Back).ToList();
+        Func<List<string>, string> names = places ? Places : Join;
+        return fresh.Count == 0 ? $"won back {names(back)}"
+            : back.Count == 0 ? $"took {names(fresh)}"
+            : $"took {names(fresh)} and won back {names(back)}";
     }
 
     private string FrontSentence(int p)
@@ -678,7 +682,7 @@ internal sealed class AfterAction
                 break;
         }
 
-        if (Partial)
+        if (Partial && AimMissed.Count > 0)
         {
             s.Add($"It ran out of strength short of {Join(AimMissed)}.");
         }
@@ -770,7 +774,8 @@ internal sealed class AfterAction
                         ? "At sea, the fleet kept Wehzek reinforcements from crossing the strait while the battle was fought."
                         : "The fleet held the strait, but what the garrison already had in Zille was enough.",
                     2 => o.SubsOut
-                        ? "The fleet stayed on the strait, and the submarines with it. Two Wehzek transports were sunk at night within sight of Nanta."
+                        ? "The fleet stayed on the strait, and the submarines with it. Two Wehzek transports were sunk at night within sight of " +
+                          $"{(!ZilleCampaign.IsEnemy(ZilleCampaign.OwnersAtStart(), ZilleCampaign.TownTile("Nanta")) ? !ZilleCampaign.IsEnemy(ZilleCampaign.OwnersAtStart(), ZilleCampaign.TownTile("Isor")) ? "the Zille coast" : "Isor" : "Nanta")}."
                         : "The fleet stayed on the strait through the phase, and the convoys that tried to cross turned back.",
                     _ => "For the last phase the fleet still held the strait, and the Wehzek garrison fought without hope of relief from across it.",
                 };
@@ -878,12 +883,23 @@ internal sealed class AfterAction
     /// <summary>Event flags already told in an earlier report (the flags stay set for the rest of the war).</summary>
     public const string VarNotesTold = "ZilleWar.State_ReportNotesTold";
 
-    private static List<string> EventNotes()
+    /// <summary>The event notes not yet told (or, when an older dispatch is written again, the notes that dispatch told).</summary>
+    private static List<string> EventNotes(string retell)
     {
         var notes = new List<string>();
         var told = ZilleCampaign.Str(VarNotesTold).Split(',', StringSplitOptions.RemoveEmptyEntries).ToHashSet();
         void Note(string flag, string text)
         {
+            if (retell != null)
+            {
+                if (retell.Contains(text))
+                {
+                    notes.Add(text);
+                }
+
+                return;
+            }
+
             if (!told.Contains(flag) && Variables.GetBool(CityEvents.Flag(flag)))
             {
                 notes.Add(text);
@@ -902,8 +918,44 @@ internal sealed class AfterAction
         Note("Evacuation", "Where Rizian troops had to give ground, civilians were brought out first.");
         Note("Counterattack", "Wherever a position was lost, Rizian commanders went straight back for it, as ordered.");
         Note("Withdrawal", "Where the line could not be held, the army fell back in good order rather than be cut off.");
-        Variables.Set(VarNotesTold, string.Join(",", told));
+        if (retell == null)
+        {
+            Variables.Set(VarNotesTold, string.Join(",", told));
+        }
+
         return notes;
+    }
+
+    /// <summary>The older dispatch being written again (<see cref="Retell"/>), or null.</summary>
+    private string _retell;
+
+    /// <summary>
+    /// An older build wrote the k-th phase's dispatch reading a part of the aim as a miss ("Isor and Nanta has held" after Nanta
+    /// fell). Write it again from the map that phase started from, which is kept until the next phase is set up, with the same
+    /// event notes, and put it back on the phase's report.
+    /// </summary>
+    public static void Retell(int k)
+    {
+        (int ck, Objective objective, int phase) = ZilleCampaign.CurrentOperation();
+        string old = ZilleCampaign.Str(ZilleCampaign.ReportTextVar(k));
+        if (ck != k || old.Length == 0)
+        {
+            return;
+        }
+
+        AfterAction a = Compute(k, ZilleCampaign.OwnersAtStart(), ZilleCampaign.CurrentOwners());
+        a._retell = old;
+        ObjectiveInfo info = ZilleCampaign.Info(objective);
+        string report = a.FullReport(info, Variables.GetBool(ZilleCampaign.ResultVar(k)));
+        Variables.Set(ZilleCampaign.ReportTextVar(k), report);
+        if (ZilleCampaign.Liberated || ZilleCampaign.Defeated)
+        {
+            ZilleReports.SetDescription(ZilleReports.WonName, report);
+            ZilleReports.SetDescription(ZilleReports.LostName, report);
+        }
+
+        ZilleReports.SetDescription($"Operation_Zille_Phase{phase}_Report", report);
+        Core.Log.Msg($"Phase {phase}'s dispatch written again for an older save:\n{report}");
     }
 
     public static string Join(List<string> l) =>

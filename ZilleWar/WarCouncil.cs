@@ -445,8 +445,8 @@ internal static class WarCouncil
 
     /// <summary>
     /// The k-th phase's cities won and lost, its aim as it stood, and the districts won and lost. The cities and the aim come from
-    /// ZilleCampaign's per-phase record; a save from before it had none, so they are worked out from the map the phase started from
-    /// (kept until the next phase is set up) or, failing that, from the result alone. The districts always come from the map.
+    /// ZilleCampaign's per-phase record through <see cref="Front.Of"/>, which also reads older saves; the districts come from the
+    /// map the phase started from, while it is kept (until the next phase is set up).
     /// </summary>
     private static (List<string> gained, List<string> lost, string aim, int tilesGained, int tilesLost) LastPhaseFacts(int k, ObjectiveInfo info, bool won)
     {
@@ -469,28 +469,11 @@ internal static class WarCouncil
             }
         }
 
-        string aim = ZilleCampaign.Str(ZilleCampaign.AimVar(k));
-        if (!string.IsNullOrEmpty(aim))
-        {
-            return (ZilleCampaign.Gained(k), ZilleCampaign.Lost(k), aim, tg, tl);
-        }
-
-        var gained = new List<string>();
-        var lost = new List<string>();
-        if (mapFits)
-        {
-            foreach (TownSpec t in ZilleData.Towns.Where(t => t.Role == "city" && t.Tile != null))
-            {
-                bool was = before.TryGetValue(t.Tile, out bool w) && w, isOurs = now.TryGetValue(t.Tile, out bool n) && n;
-                (isOurs && !was ? gained : !isOurs && was ? lost : null)?.Add(t.Name);
-            }
-        }
-        else if (won && info != null)
-        {
-            gained.AddRange(info.Towns);
-        }
-
-        return (gained, lost, info == null ? string.Empty : mapFits ? ZilleCampaign.AimName(info, before) : info.Target, tg, tl);
+        // The cities and the aim as every other reader sees them (Front reads an older save's phases the same way for all).
+        Front.Phase ph = Front.Of(k);
+        return ph != null
+            ? (ph.Gained, ph.Lost, ph.Aim, tg, tl)
+            : (new List<string>(), new List<string>(), info?.Target ?? string.Empty, tg, tl);
     }
 
     /// <summary>The council has given its order and nothing that belongs before the war is left: open the war table.</summary>
@@ -742,9 +725,9 @@ internal static class WarCouncil
         L("Open2Setback", ourTownLost,
             "The map in the Council Chambers had been redrawn since I last saw it, and not in our favor. A few silver tokens now stood on " +
             "our side of the border.");
-        L("Open2PartNanta", And(Result("partial"), Eq(VarLastPart, "Nanta")),
+        L("Open2PartNanta", And(Result("partial"), AimWas("Isor and Nanta"), Eq(VarLastPart, "Nanta")),
             "On the map in the Council Chambers, a golden flag stood over Nanta at last. Isor, on the west coast, was still ringed with silver.");
-        L("Open2PartIsor", And(Result("partial"), Eq(VarLastPart, "Isor")),
+        L("Open2PartIsor", And(Result("partial"), AimWas("Isor and Nanta"), Eq(VarLastPart, "Isor")),
             "On the map in the Council Chambers, a golden flag stood over Isor at last. Nanta, on the north coast, was still ringed with silver.");
         foreach (string extra in Subsets(ZilleCities).Select(ZilleCampaign.JoinNames))
         {
@@ -982,11 +965,17 @@ internal static class WarCouncil
         }
 
         // Part of the aim.
-        R("ResPartNanta", And(Result("partial"), Eq(VarLastPart, "Nanta")),
+        R("ResPartNanta", And(Result("partial"), AimWas("Isor and Nanta"), Eq(VarLastPart, "Nanta")),
             "\"Nanta is ours, Your Majesty, and with it the harbor where their convoys landed. Isor held out. Its garrison is still dug in on " +
             "the west coast.\"");
-        R("ResPartIsor", And(Result("partial"), Eq(VarLastPart, "Isor")),
+        R("ResPartIsor", And(Result("partial"), AimWas("Isor and Nanta"), Eq(VarLastPart, "Isor")),
             "\"Isor is ours, Your Majesty. Nanta held out, and its coastal guns are still firing. Their convoys still have one port to land at.\"");
+        // The last port taken while the other one, ours already, was lost: the loss is told next.
+        foreach (string port in new[] { "Isor", "Nanta" })
+        {
+            R($"ResPartOnly{port}", And(Result("partial"), Eq(VarLastPart, port)),
+                $"\"{port} is ours, Your Majesty. The garrison gave up the port when our columns reached the quays.\"");
+        }
 
         // The aim missed, but a city won off the plan.
         foreach (string aim in AimNames)

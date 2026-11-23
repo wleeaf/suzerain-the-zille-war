@@ -339,10 +339,14 @@ internal static class WorldCodex
     internal static string PhaseSentence(Front.Phase p)
     {
         string phase = $"Phase {ZilleCampaign.Roman(p.Number)}";
+        // A city an earlier phase took and Wehlen won back is taken back, not taken.
+        bool again = p.AimTaken.Count > 0 && p.AimTaken.All(c => Front.All.Any(q => q.K < p.K && q.Gained.Contains(c)));
+        string verb = again ? "took back" : "took";
         string took = p.Won
-            ? $"took {Front.Join(p.AimTaken.Count > 0 ? p.AimTaken : p.AimTowns)}" + (p.Extra.Count > 0 ? $", and {Front.Join(p.Extra)} with it" : string.Empty)
+            ? $"{verb} {Front.Join(p.AimTaken.Count > 0 ? p.AimTaken : p.AimTowns)}" + (p.Extra.Count > 0 ? $", and {Front.Join(p.Extra)} with it" : string.Empty)
             : p.AimTaken.Count > 0
-                ? $"took {Front.Join(p.AimTaken)} but not {Front.Join(p.AimMissed)}" + (p.Extra.Count > 0 ? $", and {Front.Join(p.Extra)} besides" : string.Empty)
+                ? $"{verb} {Front.Join(p.AimTaken)}" + (p.AimMissed.Count > 0 ? $" but not {Front.Join(p.AimMissed)}" : string.Empty) +
+                  (p.Extra.Count > 0 ? $", and {Front.Join(p.Extra)} besides" : string.Empty)
                 : p.CitiesGained.Count > 0
                     ? $"failed to take {p.Aim} but took {Front.Join(p.CitiesGained)}"
                     : $"failed to take {p.Aim}";

@@ -92,7 +92,8 @@ internal static class SweepEarlyT5Security
         foreach ((string got, string other) in new[] { ("Nanta", "Isor"), ("Isor", "Nanta") })
         {
             Read("FrontPart" + got, $"{Kind(Front.Kind.Partial)} and {Front.LHeld(got)} and not {Front.LHeld(other)}",
-                $"{got} is ours, its port and its stores with it. {other} held, and the Wehzeks are pouring everything they have left into it.");
+                $"{got} is ours, and Smolak's convoys have one port fewer to land at. {other} held, and the Wehzeks are pouring everything they " +
+                "have left into it.");
         }
 
         // The aim missed, another city taken.

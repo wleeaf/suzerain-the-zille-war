@@ -316,31 +316,58 @@ internal static class Front
             Legacy(k, ph);
             Variables.Set(ZilleCampaign.AimVar(k), ph.Aim);
             Variables.Set(ZilleCampaign.GainedVar(k), string.Join(",", ph.Gained));
-            Variables.Set(ZilleCampaign.LostVar(k), string.Empty);
+            Variables.Set(ZilleCampaign.LostVar(k), string.Join(",", ph.Lost));
             Variables.Set(ZilleCampaign.GainsVar(k), ph.Gained.Count);
-            Variables.Set(ZilleCampaign.LossesVar(k), 0);
+            Variables.Set(ZilleCampaign.LossesVar(k), ph.Lost.Count);
             Variables.Set(ZilleCampaign.PartialVar(k), ph.Partial);
-            Core.Log.Msg($"Front: phase {k} backfilled from an older save: aim {ph.Aim}, gained '{string.Join(",", ph.Gained)}', won={ph.Won}.");
+            // The older build moved public opinion by the aim alone (+1 when reached); the phase moves it by its cities now.
+            int delta = (ph.Won || ph.Gained.Count > 0 ? 1 : 0) - (ph.Lost.Count > 0 ? 1 : 0) - (ph.Won ? 1 : 0);
+            if (delta != 0)
+            {
+                Variables.Set("RiziaDLC.Country_PublicOpinion", Variables.GetInt("RiziaDLC.Country_PublicOpinion") + delta);
+            }
+
+            Core.Log.Msg($"Front: phase {k} backfilled from an older save: aim {ph.Aim}, gained '{string.Join(",", ph.Gained)}', " +
+                         $"lost '{string.Join(",", ph.Lost)}', won={ph.Won}, partial={ph.Partial}, opinion {delta:+0;-0;0}.");
+            // The last phase's dispatch was written by the older build, which read a part of the aim as a miss: write it again.
+            if (k == Fought && LastMapFits)
+            {
+                AfterAction.Retell(k);
+            }
         }
     }
 
     private static bool Declared => Variables.GetBool(AnDeclaration.VarDeclared);
 
+    /// <summary>The map the last phase fought started from is still kept (no later phase has been set up yet).</summary>
+    private static bool LastMapFits => Fought >= 1 && ZilleCampaign.CurrentOperation().k == Fought;
+
+    /// <summary>
+    /// An older save's phase k: its aim, the cities it won and lost. The last phase fought is read from the map it started from
+    /// while that map is kept (cities won and lost, Rizian towns included); earlier phases from the history and the cities held
+    /// before it. A city held that no aim accounts for was taken in the last phase before the aims moved past it.
+    /// </summary>
     private static void Legacy(int k, Phase target)
     {
         int n = Fought;
+        bool map = LastMapFits;
+        int upTo = map ? n - 1 : n;     // the phases worked out from the history
+        Dictionary<string, bool> before = map ? ZilleCampaign.OwnersAtStart() : null;
+        bool HeldAtStartOfLast(string c) => ZilleCampaign.IsEnemy(before, ZilleCampaign.TownTile(c)) == false;
+        List<string> held = map ? Cities.Where(HeldAtStartOfLast).ToList() : Held;
         var gained = new List<string>[n + 1];
+        var lost = new List<string>[n + 1];
         var aims = new string[n + 1];
         var objective = new Objective[n + 1];
         var taken = new HashSet<string>();
-        List<string> held = Held;
         for (int j = 1; j <= n; j++)
         {
             objective[j] = ObjectiveOf(j);
-            string[] towns = ZilleCampaign.Info(objective[j]).Towns;
-            var left = towns.Where(t => !taken.Contains(t)).ToList();
-            aims[j] = left.Count == 0 || left.Count == towns.Length ? ZilleCampaign.Info(objective[j]).Target : string.Join(" and ", left);
-            gained[j] = WonOf(j) ? left : left.Where(held.Contains).ToList();
+            lost[j] = new List<string>();
+            ObjectiveInfo info = ZilleCampaign.Info(objective[j]);
+            var left = info.Towns.Where(t => !taken.Contains(t)).ToList();
+            aims[j] = left.Count == 0 || left.Count == info.Towns.Length ? info.Target : string.Join(" and ", left);
+            gained[j] = j > upTo ? new List<string>() : WonOf(j) ? left : left.Where(held.Contains).ToList();
             taken.UnionWith(gained[j]);
         }
 
@@ -348,16 +375,28 @@ internal static class Front
         foreach (string c in held.Where(c => !taken.Contains(c)))
         {
             Objective own = ZilleCampaign.Sequence.First(o => ZilleCampaign.Info(o).Towns.Contains(c));
-            int j = Enumerable.Range(1, n).FirstOrDefault(j => j == n || Index(objective[j + 1]) > Index(own));
+            int j = Enumerable.Range(1, upTo).FirstOrDefault(j => j == upTo || Index(objective[j + 1]) > Index(own));
             if (j >= 1)
             {
                 gained[j].Add(c);
             }
         }
 
+        if (map)
+        {
+            // The last phase against the map it started from: every city that changed hands, Zille cities and Rizian towns.
+            Dictionary<string, bool> now = ZilleCampaign.CurrentOwners();
+            aims[n] = ZilleCampaign.AimName(ZilleCampaign.Info(objective[n]), before);
+            foreach (TownSpec t in ZilleData.Towns.Where(t => t.Role == "city" && t.Tile != null))
+            {
+                bool was = before.TryGetValue(t.Tile, out bool w) && w, isOurs = now.TryGetValue(t.Tile, out bool o) && o;
+                (isOurs && !was ? gained[n] : !isOurs && was ? lost[n] : null)?.Add(t.Name);
+            }
+        }
+
         target.Aim = aims[k];
-        target.Gained = Cities.Where(gained[k].Contains).ToList();
-        target.Lost = new List<string>();
+        target.Gained = Cities.Where(gained[k].Contains).Concat(gained[k].Where(c => !Cities.Contains(c))).ToList();
+        target.Lost = Cities.Where(lost[k].Contains).Concat(lost[k].Where(c => !Cities.Contains(c))).ToList();
     }
 
     // ------------------------------------------------------------------ Lua
