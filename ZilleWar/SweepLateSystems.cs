@@ -51,9 +51,11 @@ internal static class SweepLateSystems
         if (LateState.Step >= 6 && !Variables.GetBool(VarTourismNudged))
         {
             Variables.Set(VarTourismNudged, true);
-            if (Variables.GetBool("RiziaDLC.Policy_RD_Economy_PorteDrazonTourismCampaign"))
+            // a liberation leaves the visitors undeterred; a divided or lost war keeps them away
+            int tDelta = Lib ? 0 : Part ? -1 : -2;
+            if (tDelta != 0 && Variables.GetBool("RiziaDLC.Policy_RD_Economy_PorteDrazonTourismCampaign"))
             {
-                LateState.Lua("Variable[\"RiziaDLC.TourismCampaign_Value\"] = (Variable[\"RiziaDLC.TourismCampaign_Value\"] or 0) - 2");
+                LateState.Lua($"Variable[\"RiziaDLC.TourismCampaign_Value\"] = (Variable[\"RiziaDLC.TourismCampaign_Value\"] or 0) + ({tDelta})");
             }
         }
 

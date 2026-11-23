@@ -167,7 +167,7 @@ internal static partial class WarDecrees
                 "Zille city will be governed more cheaply and more gently, and the Zilleans will see that Rizian rule means more than " +
                 "checkpoints. The generals of House Azaro, who have grown used to the city, will not hand it over gladly.",
                 $"{Over} && ZilleWar.ZilleCity_Held == true && ZilleWar.War_Zille_Liberated == false",
-                $"{Authority} -= 2;\n{Budget} -= 2;\nRiziaDLC.LeaningValue_Democratic += 1;\nRiziaDLC.Country_HouseAzaro -= 1;\n" + Std(),
+                $"{Authority} -= 2;\n{Budget} -= 2;\nRiziaDLC.LeaningValue_Democratic += 1;\n" + Std(),
                 new[] { LowAuthority(1), LowBudget(1) },
                 new[] { 1, 1, 0, 0, -1, -1, -1, 0, 1, 1, 1, 0, 1 },
                 PwCivilAdmin,
@@ -193,7 +193,7 @@ internal static partial class WarDecrees
                 "The province will be run by men whose loyalty is sworn, and Brenas will cheer the measure. Many Wehzeks will choose " +
                 "to leave rather than swear, and the foreign press will report every family that does.",
                 $"{Over} && {PwHolding} && {WarFlags.X(EnactedVar(WehzekSchoolsKey), false)}",
-                $"{Authority} -= 1;\nRiziaDLC.Country_PublicOpinion += 1;\nRiziaDLC.LeaningValue_Democratic -= 1;\nRiziaDLC.Country_HouseSazon += 1;\n" + Std(),
+                $"{Authority} -= 1;\nRiziaDLC.Country_PublicOpinion += 1;\nRiziaDLC.LeaningValue_Democratic -= 1;\n" + Std(),
                 new[] { LowAuthority(0), ("The treaty guarantees the Wehzeks of Zille their homes and their places", rights) },
                 new[] { 1, 1, -1, 0, 1, 1, 1, 0, -1, -1, 0, 0, 1 },
                 PwLoyaltyOath,
@@ -208,7 +208,7 @@ internal static partial class WarDecrees
                 "Zille's Wehzeks will have one reason fewer to look north, and the Crown will be praised abroad for its restraint. In " +
                 "Brenas they will ask what the war was for, if the enemy's language is still taught in Zille.",
                 $"{Over} && {PwHolding} && {WarFlags.X(EnactedVar(LoyaltyOathKey), false)}",
-                $"{Authority} -= 1;\nRiziaDLC.Country_PublicOpinion -= 1;\nRiziaDLC.LeaningValue_Democratic += 1;\nRiziaDLC.Country_HouseSazon -= 1;\n" + Std(),
+                $"{Authority} -= 1;\nRiziaDLC.Country_PublicOpinion -= 1;\nRiziaDLC.LeaningValue_Democratic += 1;\n" + Std(),
                 new[] { LowAuthority(0) },
                 new[] { 0, -1, 1, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1 },
                 PwWehzekSchools,
@@ -237,7 +237,7 @@ internal static partial class WarDecrees
                 "Mothers in Brenas and Montaklar will see their sons before winter, and the army will remember that the Crown did not " +
                 "abandon them. President Smolak will be paid for his victory a second time, and will make sure the world knows it.",
                 $"{Over} && {LateState.VarZilleLost} == true",
-                $"{Authority} -= 1;\n{Budget} -= 3;\nRiziaDLC.Country_PublicOpinion += 2;\nRiziaDLC.Country_HouseAzaro += 1;\n" + Std(),
+                $"{Authority} -= 1;\n{Budget} -= 3;\nRiziaDLC.Country_PublicOpinion += 2;\n" + Std(),
                 new[] { LowAuthority(0), LowBudget(2) },
                 new[] { 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, -1, 0, 0 },
                 PwRansomSoldiers,
@@ -252,7 +252,7 @@ internal static partial class WarDecrees
                 "trial of its officers as an insult it does not forgive, and the army will remember who was blamed for a war the King " +
                 "declared.",
                 $"{Over} && ZilleWar.War_Zille_Liberated == false && {WarFlags.X(EnactedVar(InquiryKey), false)} && RiziaDLCSetup.CurrentTurn <= 9",
-                $"{Authority} += 1;\nRiziaDLC.Country_PublicOpinion += 2;\nRiziaDLC.Country_HouseAzaro -= 2;\n" + Std(),
+                $"{Authority} += 1;\nRiziaDLC.Country_PublicOpinion += 2;\n" + Std(),
                 Array.Empty<(string, string)>(),
                 new[] { 0, 1, 0, 0, -1, -1, 1, 1, 0, 0, 0, 0, 1 },
                 PwCourtMartial,
@@ -267,7 +267,7 @@ internal static partial class WarDecrees
                 "The King accepts his share of the blame before the commission has written a word, and the army is spared a witch " +
                 "hunt. The report will make painful reading, and the lessons it draws will serve the army in the wars still to come.",
                 $"{Over} && ZilleWar.War_Zille_Liberated == false && {WarFlags.X(EnactedVar(CourtMartialKey), false)} && RiziaDLCSetup.CurrentTurn <= 9",
-                $"{Authority} -= 2;\nRiziaDLC.Country_PublicOpinion -= 1;\nRiziaDLC.LeaningValue_Democratic += 1;\nRiziaDLC.Country_HouseAzaro += 1;\n" + Std(),
+                $"{Authority} -= 2;\nRiziaDLC.Country_PublicOpinion -= 1;\nRiziaDLC.LeaningValue_Democratic += 1;\n" + Std(),
                 new[] { LowAuthority(1) },
                 new[] { 0, 0, 1, 1, 1, 0, 0, -1, 1, 1, 1, 0, -1 },
                 PwInquiry,
@@ -285,7 +285,7 @@ internal static partial class WarDecrees
                 "Brenas will cheer and the treasury will breathe again. In Konstantium and Thornbourgh the decree will be read as a " +
                 "broken word, and President Smolak will be glad to remind the world of it at every session of the Alliance.",
                 $"{Over} && {LateState.VarZilleLost} == true && {WorldModifiers.WehlenReparations} <= -1",
-                $"{Authority} -= 1;\nRiziaDLC.Country_PublicOpinion += 1;\nRiziaDLC.Country_HouseSazon += 1;\n" +
+                $"{Authority} -= 1;\nRiziaDLC.Country_PublicOpinion += 1;\n" +
                 "RiziaDLC.Diplomacy_Rumburg_NegotiatingPower -= 1;\nRiziaDLC.Diplomacy_Morella_NegotiatingPower -= 1;\n" + Std(),
                 new[] { LowAuthority(0) },
                 new[] { 1, 1, 0, 0, 1, 1, 1, 1, -1, -1, 0, -1, 1 },
@@ -448,7 +448,7 @@ internal static partial class WarDecrees
     {
         if (Variables.GetString(LateT8.VarPrisoners) == "ransomed")
         {
-            PwAdd("RiziaDLC.Country_HouseAzaro", -1);
+            Variables.Set(PrisonersRansomedVar, true);
         }
 
         Variables.Set(LateT8.VarPrisoners, "released");

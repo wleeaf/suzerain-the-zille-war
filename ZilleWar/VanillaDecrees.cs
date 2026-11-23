@@ -5,7 +5,8 @@ namespace ZilleWar;
 
 /// <summary>
 /// Vanilla royal decrees in a war game: edited (cost, text, condition, effect) or hidden (by their IsEnabled condition) while
-/// war is declared, and restored to their vanilla values when it is not, so a peace game stays vanilla.
+/// war is declared, and restored to their all-games values when it is not. The all-games edits (<see cref="VanillaDecreesAll"/>)
+/// are composed here too, field by field from the remembered vanilla values; a war-only edit wins over an all-games edit.
 /// The edits are applied to the decree entities every step (<see cref="OnStep"/>, from WarDecrees), which also re-applies them
 /// after the game reloads its entity data. Only the fields an edit names are touched: SweepLateKit swaps the title, text and
 /// cost of a few vanilla decrees itself, and those fields are left to it.
@@ -21,7 +22,8 @@ internal static class VanillaDecrees
         public readonly List<(string from, string to)> Replace = new();
     }
 
-    private sealed record Original(string Title, string Description, string Cost, string Enabled, string Enact);
+    private sealed record Original(string Title, string Description, string Cost, string Enabled, string Enact,
+        List<(string message, string condition)> Errors);
 
     private sealed record Watcher(string Flag, string Seen, Action Effect);
 
@@ -36,6 +38,8 @@ internal static class VanillaDecrees
     private const string Active = "ZilleWar.War_Active == true";
     private const string NotActive = "ZilleWar.War_Active == false";
 
+    internal static IReadOnlyList<string> SalesKeys => Sales;
+
     private static readonly string[] Sales =
     {
         "SellBomberPlanesOne", "SellBomberPlanesTwo", "SellBomberPlanesThree", "SellFighterPlanesOne", "SellFighterPlanesTwo",
@@ -49,10 +53,12 @@ internal static class VanillaDecrees
 
     public static void Register()
     {
-        // V1: the war tax can be imposed while the army fights, and the Houses that build its weapons pay for it
+        VanillaDecreesAll.Register();
+
+        // V1: the war tax can be imposed while the army fights, and the Houses that build its weapons pay for it (House Azaro's
+        // -1 is a recompute row, E35 in VanillaDecreesAll: a script change to a House is erased at the next scene)
         const string warTax = "Economy_Taxes_WarProfitsTax";
         EnabledOr(warTax, Active);
-        EnactAppend(warTax, "RiziaDLC.Country_HouseAzaro -= 1;");
         Append(warTax, "The tax will fall hardest on the arms works of House Azaro and the construction firms of the de Ravas, and " +
                        "both will remember it.");
 
@@ -65,9 +71,8 @@ internal static class VanillaDecrees
         // V3: the provincial levies cannot be disbanded while they fight
         EnabledAnd("Order_ConscriptionLevy_RemoveProvincialLevies", NotActive);
 
-        // V4: more levies in a war game cost the Houses their sons
+        // V4: more levies in a war game cost the Houses their sons (the -1 each is a recompute row, E28 in VanillaDecreesAll)
         const string levies = "Order_ConscriptionLevy_IncreaseProvincialLevies";
-        EnactAppend(levies, "RiziaDLC.Country_HouseSazon -= 1;\nRiziaDLC.Country_HouseAzaro -= 1;");
         Append(levies, "With the Kingdom at war, the dukes know their levies will not drill in the provinces but fight in Zille, and " +
                        "House Sazon and House Azaro will count every son they send.");
 
@@ -171,7 +176,9 @@ internal static class VanillaDecrees
     public static void OnStep()
     {
         Run("apply", Apply);
+        Run("approvals", VanillaDecreesAll.ApplyApprovals);
         Run("watchers", Watch);
+        Run("all-games watchers", VanillaDecreesAll.Watch);
     }
 
     private static void Run(string what, Action a)
@@ -200,7 +207,14 @@ internal static class VanillaDecrees
             {
                 DecreeProperties p = d?.DecreeProperties;
                 string name = d?.NameInDatabase;
-                if (p == null || name == null || !Edits.TryGetValue(name, out Edit e))
+                if (p == null || name == null)
+                {
+                    continue;
+                }
+
+                Edits.TryGetValue(name, out Edit e);
+                VanillaDecreesAll.Edits.TryGetValue(name, out VanillaDecreesAll.AEdit a);
+                if (e == null && a == null)
                 {
                     continue;
                 }
@@ -208,79 +222,235 @@ internal static class VanillaDecrees
                 // the vanilla values, remembered the first time the decree is seen (never overwritten)
                 if (!Originals.TryGetValue(name, out Original o))
                 {
-                    Originals[name] = o = new Original(p.Title, p.Description, p.CostText, p.IsEnabled, p.OnDecreeEnact);
+                    var errors = new List<(string message, string condition)>();
+                    if (p.ErrorValidationDatas != null)
+                    {
+                        foreach (DecreeProperties.ErrorValidationData r in p.ErrorValidationDatas)
+                        {
+                            errors.Add((r?.ErrorMessage, r?.ErrorCondition));
+                        }
+                    }
+
+                    Originals[name] = o = new Original(p.Title, p.Description, p.CostText, p.IsEnabled, p.OnDecreeEnact, errors);
                 }
 
-                ApplyFields(p, e, o, war);
-                ApplyErrors(p, e, war);
+                ApplyFields(p, e, a, o, war);
+                if (e != null)
+                {
+                    ApplyErrors(p, e, war);
+                }
+
+                if (a != null)
+                {
+                    ApplyAllErrors(p, a, o);
+                    ApplyApprovalSwaps(p, a);
+                }
             }
         }
     }
 
-    private static void ApplyFields(DecreeProperties p, Edit e, Original o, bool war)
+    private static string AppendScript(string script, string add)
     {
-        if (e.Title != null)
+        if (string.IsNullOrWhiteSpace(add))
         {
-            string want = war ? e.Title : o.Title;
+            return script;
+        }
+
+        string c = (script ?? string.Empty).TrimEnd();
+        return string.IsNullOrEmpty(c) ? add : (c.EndsWith(";") ? c : c + ";") + "\n" + add;
+    }
+
+    /// <summary>Compose the vanilla value, the all-games edit and (in a war game) the war-only edit, field by field. Only the
+    /// fields some edit names are written.</summary>
+    private static void ApplyFields(DecreeProperties p, Edit e, VanillaDecreesAll.AEdit a, Original o, bool war)
+    {
+        if (e?.Title != null || a?.Title != null)
+        {
+            string want = war && e?.Title != null ? e.Title : a?.Title ?? o.Title;
             if (p.Title != want)
             {
                 p.Title = want;
             }
         }
 
-        if (e.Description != null || e.Append != null)
+        if (e?.Description != null || e?.Append != null || a?.Description != null || a?.Append != null)
         {
-            string want = !war ? o.Description
-                : e.Description ?? ((o.Description ?? string.Empty).TrimEnd() + "\n\n" + e.Append);
+            string want;
+            if (war && e?.Description != null)
+            {
+                want = e.Description;
+            }
+            else
+            {
+                want = a?.Description ?? o.Description;
+                if (a?.Append != null)
+                {
+                    want = (want ?? string.Empty).TrimEnd() + "\n\n" + a.Append;
+                }
+
+                if (war && e?.Append != null)
+                {
+                    want = (want ?? string.Empty).TrimEnd() + "\n\n" + e.Append;
+                }
+            }
+
             if (p.Description != want)
             {
                 p.Description = want;
             }
         }
 
-        if (e.Cost != null)
+        if (e?.Cost != null || a?.Cost != null || a?.CostFn != null)
         {
-            string want = war ? e.Cost : o.Cost;
+            string want = war && e?.Cost != null ? e.Cost : a?.CostFn?.Invoke() ?? a?.Cost ?? o.Cost;
             if (p.CostText != want)
             {
                 p.CostText = want;
             }
         }
 
-        if (e.EnabledOr != null || e.EnabledAnd != null)
+        if (e?.EnabledOr != null || e?.EnabledAnd != null || a?.EnabledOr != null || a?.EnabledReplace != null || a?.EnabledAnd.Count > 0)
         {
-            string want = o.Enabled;
-            if (war)
+            string en = a?.EnabledReplace ?? o.Enabled ?? string.Empty;
+            // an empty condition is always true: OR-ing to it changes nothing
+            if (a?.EnabledOr != null && !string.IsNullOrWhiteSpace(en))
             {
-                string orig = o.Enabled ?? string.Empty;
-                // an empty condition is always true: OR-ing to it changes nothing
-                string en = e.EnabledOr != null && !string.IsNullOrWhiteSpace(orig) ? $"({orig}) || ({e.EnabledOr})" : orig;
-                if (e.EnabledAnd != null)
-                {
-                    en = string.IsNullOrWhiteSpace(en) ? $"({e.EnabledAnd})" : $"({en}) && ({e.EnabledAnd})";
-                }
-
-                want = en;
+                en = $"({en}) || ({a.EnabledOr})";
             }
 
+            if (war && e?.EnabledOr != null && !string.IsNullOrWhiteSpace(en))
+            {
+                en = $"({en}) || ({e.EnabledOr})";
+            }
+
+            var ands = new List<string>();
+            if (a != null)
+            {
+                ands.AddRange(a.EnabledAnd);
+            }
+
+            if (war && e?.EnabledAnd != null)
+            {
+                ands.Add(e.EnabledAnd);
+            }
+
+            foreach (string and in ands)
+            {
+                en = string.IsNullOrWhiteSpace(en) ? $"({and})" : $"({en}) && ({and})";
+            }
+
+            // nothing changed the condition: keep vanilla's own string (null stays null)
+            string want = en == (o.Enabled ?? string.Empty) ? o.Enabled : en;
             if (p.IsEnabled != want)
             {
                 p.IsEnabled = want;
             }
         }
 
-        if (e.EnactAppend != null)
+        if (e?.EnactAppend != null || a?.EnactAppend != null || a?.EnactFn != null)
         {
             string want = o.Enact;
-            if (war)
+            if (a != null)
             {
-                string c = (o.Enact ?? string.Empty).TrimEnd();
-                want = string.IsNullOrEmpty(c) ? e.EnactAppend : (c.EndsWith(";") ? c : c + ";") + "\n" + e.EnactAppend;
+                want = AppendScript(want, a.EnactAppend);
+                want = AppendScript(want, a.EnactFn?.Invoke());
+            }
+
+            if (war && e?.EnactAppend != null)
+            {
+                want = AppendScript(want, e.EnactAppend);
             }
 
             if (p.OnDecreeEnact != want)
             {
                 p.OnDecreeEnact = want;
+            }
+        }
+    }
+
+    /// <summary>The all-games error edits: inserted first, replaced statically, or rewritten every step from the vanilla
+    /// condition (found through its message, so a price-indexed row can move both ways).</summary>
+    private static void ApplyAllErrors(DecreeProperties p, VanillaDecreesAll.AEdit a, Original o)
+    {
+        if (a.Errors.Count == 0 && a.Replace.Count == 0 && a.ReplaceFn.Count == 0)
+        {
+            return;
+        }
+
+        var rows = p.ErrorValidationDatas;
+        if (rows == null)
+        {
+            if (a.Errors.Count == 0)
+            {
+                return;
+            }
+
+            rows = new Il2CppSystem.Collections.Generic.List<DecreeProperties.ErrorValidationData>();
+            p.ErrorValidationDatas = rows;
+        }
+
+        foreach ((string message, string condition) in a.Errors)
+        {
+            bool present = false;
+            for (int i = 0; i < rows.Count && !present; i++)
+            {
+                present = rows[i]?.ErrorMessage == message;
+            }
+
+            if (!present)
+            {
+                rows.Insert(0, new DecreeProperties.ErrorValidationData { ErrorMessage = message, ErrorCondition = condition });
+            }
+        }
+
+        foreach ((string from, string to) in a.Replace)
+        {
+            for (int i = 0; i < rows.Count; i++)
+            {
+                if (rows[i] != null && rows[i].ErrorCondition == from)
+                {
+                    rows[i].ErrorCondition = to;
+                }
+            }
+        }
+
+        foreach ((string from, Func<string> to) in a.ReplaceFn)
+        {
+            string want = to();
+            foreach ((string message, string condition) in o.Errors)
+            {
+                if (condition != from || message == null)
+                {
+                    continue;
+                }
+
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    if (rows[i] != null && rows[i].ErrorMessage == message && rows[i].ErrorCondition != want)
+                    {
+                        rows[i].ErrorCondition = want;
+                    }
+                }
+            }
+        }
+    }
+
+    private static void ApplyApprovalSwaps(DecreeProperties p, VanillaDecreesAll.AEdit a)
+    {
+        var list = p.DecreeApprovals;
+        if (a.ApprovalSwaps.Count == 0 || list == null)
+        {
+            return;
+        }
+
+        foreach ((string from, string to) in a.ApprovalSwaps)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] == from)
+                {
+                    list[i] = to;
+                }
             }
         }
     }

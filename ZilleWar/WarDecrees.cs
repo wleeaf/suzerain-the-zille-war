@@ -117,7 +117,7 @@ internal static partial class WarDecrees
             "forget whose province gave its sons first, nor how long the Crown kept them.",
             Active,
             $"{Authority} -= 2;\n{Budget} -= 2;\nRiziaDLC.Resources_Military_Manpower += 750;\nRiziaDLC.Country_PublicOpinion -= 1;\n" +
-            "RiziaDLC.Country_HouseSazon += 1;\nRiziaDLC.RD_RNCDecreesPassed += 1;\n" + Std(MilitaryPassed),
+            "RiziaDLC.RD_RNCDecreesPassed += 1;\n" + Std(MilitaryPassed),
             new[] { LowAuthority(1), LowBudget(1) },
             new[] { 1, 1, -1, 0, 1, 1, 1, 0, 0, -1, -1, -1, 1 },
             OnReserves,
@@ -137,7 +137,7 @@ internal static partial class WarDecrees
             "has been signed, the line will be held by fewer and younger men, and the General Staff will say so.",
             $"{Over} && {WarFlags.X(EnactedVar(Reserves))}",
             $"{Authority} -= 1;\nRiziaDLC.Resources_Military_Manpower -= 500;\nRiziaDLC.Country_PublicOpinion += 1;\n" +
-            "RiziaDLC.Country_HouseSazon += 1;\n" + Std(),
+            Std(),
             new[] { LowAuthority(0), ("Lack of manpower to enact decree", "RiziaDLC.Resources_Military_Manpower <= 499") },
             new[] { 0, 1, 1, 1, -1, -1, 0, 0, 1, 1, 1, 1, 0 },
             OnStandDown),
@@ -201,6 +201,8 @@ internal static partial class WarDecrees
             new[]
             {
                 LowAuthority(1),
+                ("The Energy Conservation Ordinance is in force",
+                    $"{EnactedVar(ROrdinance)} == true && {EnactedVar(RLiftOrdinance)} == false"),
                 ("Energy heating subsidies are still in force", "RiziaDLC.Policy_RD_Economy_GasHeatingSubsidiesForCitizens == true"),
                 ("Industrial energy subsidies are still in force", "RiziaDLC.Policy_RD_Economy_EnergySubsidiesForIndustries == true"),
             },
@@ -252,7 +254,7 @@ internal static partial class WarDecrees
             "friends abroad will remember them long after the war is over.",
             $"{Active} && {WarFlags.X(EnactedVar(Protect), false)}",
             $"{Authority} += 1;\nRiziaDLC.Country_PublicOpinion += 1;\nRiziaDLC.LeaningValue_Democratic -= 2;\n" +
-            "RiziaDLC.Country_HouseSazon -= 1;\nRiziaDLC.Diplomacy_Valgsland_NegotiatingPower -= 1;\n" + Std(),
+            "RiziaDLC.Diplomacy_Valgsland_NegotiatingPower -= 1;\n" + Std(),
             Array.Empty<(string, string)>(),
             new[] { 1, 1, -1, -1, 1, 1, 1, 1, -1, -1, -1, 0, 0 },
             OnIntern,
@@ -271,7 +273,7 @@ internal static partial class WarDecrees
             "came will say the King has forgotten the war before its graves have grassed over.",
             $"{Over} && {WarFlags.X(EnactedVar(Intern))}",
             $"{Authority} -= 1;\nRiziaDLC.Country_PublicOpinion -= 1;\nRiziaDLC.LeaningValue_Democratic += 1;\n" +
-            "RiziaDLC.Country_HouseSazon += 1;\n" + Std(),
+            Std(),
             new[] { LowAuthority(0) },
             new[] { 0, 1, 1, 1, -1, -1, -1, 1, 1, 1, 1, 1, 0 },
             OnReleaseInternees),
@@ -284,7 +286,7 @@ internal static partial class WarDecrees
             "The pensions will weigh on the treasury for years, but the men who fought in Zille, and their families, will know that " +
             "the Crown which sent them there has not forgotten them.",
             Over,
-            $"{Budget} -= 2;\nRiziaDLC.Country_PublicOpinion += 2;\nRiziaDLC.Country_HouseAzaro += 1;\n" + Std(),
+            $"{Budget} -= 2;\nRiziaDLC.Country_PublicOpinion += 2;\n" + Std(),
             new[] { LowBudget(1) },
             new[] { 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, -1, -1, 0 },
             OnPensions),
@@ -297,7 +299,7 @@ internal static partial class WarDecrees
             "silent.\n\n" +
             "The army will not want for pay or shells while the war lasts. The bill will come due in peacetime, when the victory, or " +
             "the defeat, will have to share the treasury with the interest owed to the bankers.",
-            Active,
+            $"{Active} && {EnactedVar(RGoldBonds)} == false",
             $"{Budget} += 4;\nRiziaDLC.LeaningValue_ProBusiness += 1;\n" + Std(),
             Array.Empty<(string, string)>(),
             new[] { 1, 0, 0, 0, 1, 1, 0, -1, 0, 0, -1, 1, 1 },
@@ -496,11 +498,16 @@ internal static partial class WarDecrees
     static partial void RegisterPostWar();
     static partial void PostWarStep();
 
+    // hooks for the royal decrees of every game (RoyalDecrees.cs)
+    static partial void RegisterRoyal();
+    static partial void RoyalStep();
+
     // ------------------------------------------------------------------ registration
 
     public static void Register()
     {
         RegisterPostWar();
+        RegisterRoyal();
         if (!Ticks.Contains(FootingTick))
         {
             Ticks.Add(FootingTick);
@@ -569,6 +576,7 @@ internal static partial class WarDecrees
         Run("rows", AddRows);
         Run("notifications", Notify);
         Run("post-war", () => PostWarStep());
+        Run("royal", () => RoyalStep());
         Run("aftermath", Aftermath);
     }
 
