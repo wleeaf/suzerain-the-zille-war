@@ -44,6 +44,7 @@ internal static class ZilleTreaty
     public const string ModReparations = "ZilleWar.Mod_TreatyReparations";
     public const string ModOil = "ZilleWar.Mod_TreatyOil";
     public const string ModStrait = "ZilleWar.Mod_TreatyStrait";
+    public const string ModTrade = "ZilleWar.Mod_TreatyTrade";
 
     private const string Narr = Narrator;
     private const string Smolak = "Wiktor Smolak (R)";
@@ -113,7 +114,10 @@ internal static class ZilleTreaty
                     new("Gold", "The Auremina gold the garrison shipped north is returned [+3 Budget]", -1),
                     new("Assets", "Wehzek state property in Zille passes to the Crown [+2 Budget]", -1),
                     new("Oil", "Wehzek oil sold to Rizia at a discount [+1 Energy Per Turn]", -2),
-                    new("Demil", "No Wehzek warship in the Strait of Kreleck [+1 Authority]", -2),
+                    new("Demil", "No Wehzek warship in the Strait of Kreleck [+1 Authority, +1 Power Projection]", -2),
+                    new("Army", "Wehlen's army is held to its peacetime strength for ten years [+2 Power Projection]", -3),
+                    new("Market", "Rizian goods enter Wehlen free of tariffs [+1 Budget Per Turn]", -2),
+                    new("Apology", "Wehlen admits the occupation of Zille was unlawful and apologizes to its people [+2 Public Opinion]", -1),
                 }),
                 new("LibPow", "Prisoners of War", "Thousands of Wehzek soldiers are in Rizian camps. Smolak wants them home.", 1, 1, new Opt[]
                 {
@@ -201,7 +205,7 @@ internal static class ZilleTreaty
 
     /// <summary>The order in which the King strikes his own demands when Smolak refuses: dearest first.</summary>
     private static readonly (string Key, int Refund)[] TrimLib =
-        { ("Rep2", 4), ("Demil", 2), ("Oil", 2), ("Rep1", 2), ("PowRansom", 1), ("Gold", 1), ("Assets", 1), ("Renounce", 2) };
+        { ("Rep2", 4), ("Army", 3), ("Demil", 2), ("Market", 2), ("Oil", 2), ("Rep1", 2), ("Apology", 1), ("PowRansom", 1), ("Gold", 1), ("Assets", 1), ("Renounce", 2) };
     private static readonly (string Key, int Refund)[] TrimPart =
         { ("Aure", 4), ("DamThem", 3), ("Passage", 2), ("Oil", 1), ("Families", 1), ("Hold", 1), ("Border", 1), ("MaveBack", 2) };
     private static readonly (string Key, int Refund)[] TrimLost = { ("Mave", 3), ("Pow", 1), ("Leave", 1), ("PayNone", 1) };
@@ -333,7 +337,7 @@ internal static class ZilleTreaty
     public static void Register()
     {
         foreach (string v in new[] { VarLeverage, VarSigned, VarKind, VarPeace, VarThreat, VarTrimmed, VarMapApplied, VarAskedWon, VarAskedFiles,
-                     VarRefused, VarNewsDone, ModReparations, ModOil, ModStrait })
+                     VarRefused, VarNewsDone, ModReparations, ModOil, ModStrait, ModTrade })
         {
             Variables.Register(v);
         }
@@ -453,7 +457,7 @@ internal static class ZilleTreaty
         // Reset every term (the panel sets the chosen ones), then the opening leverage.
         string reset = string.Concat(AllTermVars().Select(v => $"{V(v)} = false; "));
         return reset + $"{V(VarThreat)} = \"\"; {V(VarTrimmed)} = false; {V(VarAskedWon)} = false; {V(VarAskedFiles)} = false; {V(VarRefused)} = false; " +
-               $"if {Lib} then {Lev} = 3 elseif {Part} then {Lev} = 0 else {Lev} = -4 end; " +
+               $"if {Lib} then {Lev} = 6 elseif {Part} then {Lev} = 0 else {Lev} = -4 end; " +
                $"if {Cease} and not ({Lib}) then {AddLev(-1)}end; " +
                "if Variable[\"RiziaDLC.CountryRelation_Rumburg_Friendly\"] == true or Variable[\"RiziaDLC.CountryRelation_Rumburg_Allied\"] == true then " + AddLev(1) + "end; " +
                "if Variable[\"RiziaDLC.CountryRelation_Valgsland_Hostile\"] == true then " + AddLev(-1) + "end; " +
@@ -641,6 +645,9 @@ internal static class ZilleTreaty
             On("Gold") ? "The Auremina gold shipped north by the Wehzek garrison is to be returned." : null,
             On("Oil") ? "Wehzek oil will flow south again, at a price Wraclawitz did not choose." : null,
             On("Demil") ? "No Wehzek warship may enter the Strait of Kreleck." : null,
+            On("Army") ? "Wehlen's army is held to its peacetime strength for ten years." : null,
+            On("Market") ? "Rizian goods will enter Wehlen free of tariffs." : null,
+            On("Apology") ? "Wehlen admits that its occupation of Zille was unlawful and apologizes to the people of the province." : null,
             On("Rico") ? "Ricardus Toras, the King's cousin, is to be handed over to Wehzek justice." : null,
             On("Villa") ? "President Smolak's villa in Zille is returned to him." : null,
             On("Rights") && !LateState.Lost ? "Wehzek families in Zille keep their homes and their citizenship." : null,
@@ -749,7 +756,8 @@ internal static class ZilleTreaty
                // money and goods
                $"if {on("Rep2")} then {V(ModReparations)} = 2 elseif {on("Rep1")} or {on("DamThem")} then {V(ModReparations)} = 1 end; " +
                $"if {on("Gold")} then {Add(Budget, 3)}end; if {on("Assets")} then {Add(Budget, 2)}end; if {on("PowRansom")} then {Add(Budget, 2)}end; " +
-               $"if {on("Oil")} then {V(ModOil)} = 1 end; if {on("Passage")} then {V(ModStrait)} = 1 end; " +
+               $"if {on("Oil")} then {V(ModOil)} = 1 end; if {on("Passage")} then {V(ModStrait)} = 1 end; if {on("Market")} then {V(ModTrade)} = 1 end; " +
+               $"if {on("Apology")} then {Add(Opinion, 2)}end; " +
                $"if {on("DamUs")} then {Add(Budget, -2)}end; if {on("PayNow")} then {Add(Budget, -3)}end; " +
                $"if {on("PayLater")} then {V(WorldModifiers.WehlenReparations)} = -1 end; " +
                $"if {on("Demil")} then {Add(Authority, 1)}end; if {on("Dmz")} then {Add(Authority, -1)}end; " +

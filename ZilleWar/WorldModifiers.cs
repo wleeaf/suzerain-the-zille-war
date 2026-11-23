@@ -33,7 +33,7 @@ internal static class WorldModifiers
 
     private static readonly string[] External =
         { RumburgCredit, RumburgRepayment, RumburgGas, LespiaEscort, LespiaGas, LespiaGasBudget, BffContracts, WehlenReparations, CaleqabizRent,
-          ZilleTreaty.ModReparations, ZilleTreaty.ModOil, ZilleTreaty.ModStrait };
+          ZilleTreaty.ModReparations, ZilleTreaty.ModOil, ZilleTreaty.ModStrait, ZilleTreaty.ModTrade };
 
     // ---- values computed here
     private const string WarExpenditures = "ZilleWar.Mod_WarExpenditures";
@@ -97,6 +97,7 @@ internal static class WorldModifiers
         new("Rizia_Budget_Modifier_BFFContracts", Budget, BffContracts, Neg(BffContracts), "{0} per turn from Bludish Freedom Front Contracts"),
         new("Rizia_Budget_Modifier_WehlenReparations", Budget, WehlenReparations, Neg(WehlenReparations), "{0} per turn from Reparations to Wehlen"),
         new("Rizia_Budget_Modifier_WehzekReparations", Budget, ZilleTreaty.ModReparations, Pos(ZilleTreaty.ModReparations), "{0} per turn from Wehzek War Reparations"),
+        new("Rizia_Budget_Modifier_WehzekMarket", Budget, ZilleTreaty.ModTrade, Pos(ZilleTreaty.ModTrade), "{0} per turn from Tariff-Free Trade with Wehlen"),
         new("Rizia_Budget_Modifier_KreleckPassage", Budget, ZilleTreaty.ModStrait, Pos(ZilleTreaty.ModStrait), "{0} per turn from Free Passage through the Strait of Kreleck"),
         // the vanilla variable Turn 9 MITZ already moves, never shown in vanilla; only in a war playthrough
         new("Rizia_Budget_Modifier_LespiaSanctions", Budget, "RiziaDLC.Budget_Modifier_LespiaSanctions",
@@ -181,7 +182,10 @@ internal static class WorldModifiers
         ("Diplomacy_GlobalPerceptionWar", "ZilleWar.TwoWars == true", "RiziaDLC.Country_GlobalPerception -= 1"),
         ("Diplomacy_GlobalPerceptionWar", "ZilleWar.War_Zille_Defeated == true", "RiziaDLC.Country_GlobalPerception -= 1"),
         ("Diplomacy_GlobalPerceptionWar", "ZilleWar.War_Zille_Liberated == true && ZilleWar.Event_Zille_Restraint == true", "RiziaDLC.Country_GlobalPerception += 1"),
-        ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Liberated == true", "RiziaDLC.Country_Military_PowerProjection += 2;"),
+        // a liberation weighs more than vanilla's Pales victory (+4): a Merkopan army beaten and a province taken back
+        ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Liberated == true", "RiziaDLC.Country_Military_PowerProjection += 5;"),
+        ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Liberated == true && ZilleWar.Treaty_Signed == true && ZilleWar.Treaty_T_Army == true", "RiziaDLC.Country_Military_PowerProjection += 2;"),
+        ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Liberated == true && ZilleWar.Treaty_Signed == true && ZilleWar.Treaty_T_Demil == true", "RiziaDLC.Country_Military_PowerProjection += 1;"),
         ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Defeated == true", "RiziaDLC.Country_Military_PowerProjection -= 4;"),
         ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Ceasefire == true && ZilleWar.ZilleCity_Held == true && ZilleWar.Treaty_Signed == false", "RiziaDLC.Country_Military_PowerProjection += 1;"),
     };
