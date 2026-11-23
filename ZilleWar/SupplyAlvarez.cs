@@ -6,7 +6,8 @@ namespace ZilleWar;
 /// - the Strait of Kreleck: the Lespian navy closes Wehlen's sea road to its Zille garrison. Priced in Aureus gas if Rizia
 ///   bought the field from Pales (Diplomacy_Pales_GasField_Buy, not cancelled): six units to LesPower every turn for the price
 ///   of two once the gas flows (SupplyWar.GasContract). Otherwise a fifty-year lease of Caleqabiz (with a token rent, or
-///   none if Lespia holds a grievance), or an escort fee paid every turn the war lasts (-3 Budget, -4 with a grievance). A broken Turn 5 MITZ promise adds a surcharge to every price, until the King
+///   none if Lespia holds a grievance or Rizian warships still block the Aureus drillship), or an escort fee paid every turn the
+///   war lasts (-3 Budget; -4 with a grievance or the Aureus blockade). A broken Turn 5 MITZ promise adds a surcharge to every price, until the King
 ///   gives him the final vote. The Ramiro file can get the strait for nothing.
 /// - the Meftiem: Rizia's vote with Lespia on the MITZ board (vanilla Diplomacy_Lespia_PromiseITZSupport, or the _Late promise
 ///   for the final vote if the Turn 5 board has already voted). In return Lespia votes against sanctions on Rizia at the
@@ -58,6 +59,10 @@ internal static partial class SupplyWar
         string strait = Is(VarLespiaStrait);
         string grudge = $"({broke} and {Not(MitzPromiseLate)})";
         string friendly = $"(not {grudge})";
+        // Rizian warships still blocking LesPower's partner at Aureus: every price for the strait goes up, as with a grievance.
+        string blockade = Is(BlockDrillship);
+        string dear = $"({grudge} or {blockade})";
+        string fair = $"(not {dear})";
         string mitzOpen = MitzBargainOpen;
         string budget = N(Budget);
         // Lespia's rival Valgsland takes every Lespian favour to Rizia badly.
@@ -172,7 +177,8 @@ internal static partial class SupplyWar
 
         // His jabs about Aureus are made once, not on every call.
         d.Branch("Jab", "JabBlockade", "JabField", "Table");
-        d.SayIfDo("JabBlockade", $"{Is(BlockDrillship)} and {Not(VarAlvJabbed)}", Alvarez,
+        // (while the strait is still for sale, the blockade comes up in his price instead)
+        d.SayIfDo("JabBlockade", $"{Is(BlockDrillship)} and {Not(VarAlvJabbed)} and {Is(VarLespiaStrait)}", Alvarez,
             "\"Though I confess I find it amusing. Your warships are still circling my partner's drillship at Aureus, and you'd like " +
             "mine at Kreleck.\"", T(VarAlvJabbed), "Table");
         d.SayIfDo("JabField", $"{field} and {Not(VarAlvJabbed)}", Alvarez,
@@ -246,10 +252,13 @@ internal static partial class SupplyWar
         d.Say("GasLater2", Alvarez,
             "\"The day your gas flows, LesPower takes its share every turn, at three Liras per thousand cubic meters. That's how " +
             "grown-up countries do business.\"", "GrudgeGas");
-        d.Branch("GrudgeGas", "GrudgeGasSay", "EsqGas");
+        d.Branch("GrudgeGas", "GrudgeGasSay", "BlockadeGasSay", "EsqGas");
         d.SayIf("GrudgeGasSay", grudge, Alvarez,
             "\"Oh, and after the way Rizia treated Lespia at the Meftiem, a little something up front. Six billion " +
             "guilders, in cash. Call it the price of my disappointment.\"", "EsqGas");
+        d.SayIf("BlockadeGasSay", $"{blockade} and not {grudge}", Alvarez,
+            "\"Oh, and while your warships sit on my partner's drillship at Aureus, a little something up front. Six billion " +
+            "guilders, in cash. Call your ships home and we can talk about discounts.\"", "EsqGas");
         d.Say("EsqGas", Esquibel,
             "Laurento covered the mouthpiece. \"Three Liras, when the market pays ten. Most of the field, every quarter, " +
             "forever. It's not a price, Your Majesty. It's a tribute.\"", "EsqGas2");
@@ -278,12 +287,12 @@ internal static partial class SupplyWar
         const string gasNowText = "\"Six for two. LesPower gets its gas.\"";
         const string gasLaterText = "\"Close the strait. LesPower gets its gas when the pipeline opens.\"";
         string gasDeal = dealScript + Talk.Weaken(1) + T(VarLespiaGasDeal);
-        d.Opt("GasNow", $"{now} and {friendly}", gasNowText, "-6 Energy Per Turn, +2 Budget Per Turn", gasDeal, "DealGas");
-        d.Opt("GasNowG", $"{now} and {grudge} and {budget} >= 2", gasNowText, "-2 Budget, -6 Energy Per Turn, +2 Budget Per Turn",
+        d.Opt("GasNow", $"{now} and {fair}", gasNowText, "-6 Energy Per Turn, +2 Budget Per Turn", gasDeal, "DealGas");
+        d.Opt("GasNowG", $"{now} and {dear} and {budget} >= 2", gasNowText, "-2 Budget, -6 Energy Per Turn, +2 Budget Per Turn",
             gasDeal + Inc(Budget, -2), "DealGas");
-        d.Opt("GasLater", $"{pending} and {friendly}", gasLaterText, "-6 Energy Per Turn, +2 Budget Per Turn Once the Aureus Gas Flows",
+        d.Opt("GasLater", $"{pending} and {fair}", gasLaterText, "-6 Energy Per Turn, +2 Budget Per Turn Once the Aureus Gas Flows",
             gasDeal, "DealGas");
-        d.Opt("GasLaterG", $"{pending} and {grudge} and {budget} >= 2", gasLaterText,
+        d.Opt("GasLaterG", $"{pending} and {dear} and {budget} >= 2", gasLaterText,
             "-2 Budget, -6 Energy Per Turn, +2 Budget Per Turn Once the Aureus Gas Flows", gasDeal + Inc(Budget, -2), "DealGas");
         d.Say("DealGas", Alvarez,
             "\"There. That wasn't so painful, was it? My admirals will be in the strait by Sunday.\"", "DealGas2");
@@ -296,10 +305,13 @@ internal static partial class SupplyWar
             "\"A pier, a fuel depot, a few hundred sailors. Fifty years, signed and stamped. Rizia keeps the island, of course. We'd only " +
             "be tenants.\"", "Harbor3");
         d.Say("Harbor3", Alvarez, "\"You understand the concept of tenants, I'm sure. Zille had some.\"", "GrudgeHarbor");
-        d.Branch("GrudgeHarbor", "GrudgeHarborSay", "EsqHarbor");
+        d.Branch("GrudgeHarbor", "GrudgeHarborSay", "BlockadeHarborSay", "EsqHarbor");
         d.SayIf("GrudgeHarborSay", grudge, Alvarez,
             "\"And a word about the Meftiem. After the way Rizia treated Lespia there, whatever we settle on today costs a little more " +
             "than I'd charge a friend.\"", "EsqHarbor");
+        d.SayIf("BlockadeHarborSay", $"{blockade} and not {grudge}", Alvarez,
+            "\"One more thing. Your warships are still circling my partner's drillship at Aureus. Lespia closes your strait while " +
+            "you blockade our friends? That costs extra.\"", "EsqHarbor");
         d.Say("EsqHarbor", Esquibel,
             "Laurento covered the mouthpiece. \"Fifty years, Your Majesty. Zille's lease was only twenty-five. He'd take money instead, " +
             "every month the war lasts.\"", "MenuHarbor");
@@ -307,13 +319,13 @@ internal static partial class SupplyWar
         d.Branch("MenuHarbor", Gate("Free"), Gate("Harbor"), Gate("HarborG"), Gate("Money3"), Gate("Money4"), "Refuse");
         const string harborText = "\"Fifty years of Caleqabiz. Draw up the lease.\"";
         string harborDeal = dealScript + Inc(Authority, -2) + T(VarLespiaCaleqabiz) + T(VarLespiaLease);
-        d.Opt("Harbor", friendly, harborText, "-2 Authority, +1 Budget Per Turn, Caleqabiz Leased to Lespia for 50 Years",
+        d.Opt("Harbor", fair, harborText, "-2 Authority, +1 Budget Per Turn, Caleqabiz Leased to Lespia for 50 Years",
             harborDeal + $"{V(WorldModifiers.CaleqabizRent)} = 1; ", "Deal2");
-        d.Opt("HarborG", grudge, harborText, "-2 Authority, Caleqabiz Leased to Lespia for 50 Years Without Rent", harborDeal, "Deal2");
+        d.Opt("HarborG", dear, harborText, "-2 Authority, Caleqabiz Leased to Lespia for 50 Years Without Rent", harborDeal, "Deal2");
         const string money = "\"Not Caleqabiz. I'll pay for your ships instead.\"";
         string paid = dealScript + T(VarLespiaPaid);
-        d.Opt("Money3", friendly, money, "-3 Budget Per Turn While the War Lasts", paid + $"{V(WorldModifiers.LespiaEscort)} = -3; ", "Money");
-        d.Opt("Money4", grudge, money, "-4 Budget Per Turn While the War Lasts", paid + $"{V(WorldModifiers.LespiaEscort)} = -4; ", "Money");
+        d.Opt("Money3", fair, money, "-3 Budget Per Turn While the War Lasts", paid + $"{V(WorldModifiers.LespiaEscort)} = -3; ", "Money");
+        d.Opt("Money4", dear, money, "-4 Budget Per Turn While the War Lasts", paid + $"{V(WorldModifiers.LespiaEscort)} = -4; ", "Money");
         d.Say("Money", Alvarez,
             "\"Money. How refreshingly direct. Warships are expensive, Your Majesty, and Lespian admirals more so.\"", "Money2b");
         d.Say("Money2b", Alvarez,
