@@ -67,7 +67,8 @@ internal static partial class WarDecrees
          (!Variables.GetBool("RiziaDLC.Policy_RD_Economy_InvestInTimberIndustry") &&
           !Variables.GetBool("RiziaDLC.Policy_RD_Economy_InvestInPharmaceuticals")));
 
-    /// <summary>A per-turn charge for <paramref name="turns"/> turns after the decree's turn.</summary>
+    /// <summary>A per-turn charge for <paramref name="turns"/> turns, starting on the decree's own turn (the HUD line shows at once,
+    /// like vanilla's per-turn costs).</summary>
     private static bool Installment(string key, int turns)
     {
         if (!Enacted(key))
@@ -76,7 +77,7 @@ internal static partial class WarDecrees
         }
 
         int t = WorldSystems.Turn, t0 = EnactTurn(key);
-        return t > t0 && t <= t0 + turns;
+        return t >= t0 && t < t0 + turns;
     }
 
     static partial void RegisterRoyal()
