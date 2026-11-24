@@ -99,7 +99,7 @@ internal static partial class SupplyWar
             "\"Mr. Toras. Your army is in the Auremina hills. The miners of Isor can hear its guns from their pitheads.\"", "Why");
         d.SayIf("FrontZille", Is(WarFlags.ZilleCityHeld), Hegel,
             "\"Mr. Toras. You hold Zille, so you hold its Wehzeks too, and Valgsland is counting every one of them.\"", "Why");
-        d.Branch("Why", "WhyVillage", "WhyCaleqabiz", "WhyLespia", "WhyBff", "WhySubs", "WhyCable", "WhyPlain");
+        d.Branch("Why", "RF_Guar", "WhyVillage", "WhyCaleqabiz", "WhyLespia", "WhyBff", "WhySubs", "WhyCable", "WhyPlain");
         d.SayIf("WhyVillage", Eq(VarBludsIncident, "kept"), Hegel,
             "\"Your Bludish mercenaries shot eleven villagers above Zille, and you kept them at the front. The photographs are pinned " +
             "to the wall of my cabinet room.\"", "Demand");
@@ -225,17 +225,20 @@ internal static partial class SupplyWar
             "\"The same offer, then, at a better price. A ceasefire on the line where our armies stand tonight, and in return...\"", "Terms");
         d.Say("Offer1", Smolak,
             "\"Here is my offer. A ceasefire on the line where our armies stand tonight, and in return...\"", "Terms");
-        // Each demand is voiced only while it is still open: Ricardus while he is held and not yet handed over, the border ban
-        // and the Wehzek rights until the King has already granted them.
-        string rico = $"(Variable[\"RiziaDLC.Rico_Arrested\"] == true and Variable[\"RiziaDLC.Rico_Extradited\"] ~= true and " +
-                      $"Variable[\"{RicoExtradition}\"] ~= true)";
+        // Each demand is voiced only while it is still open: Ricardus until he is handed over or promised (he is still at large
+        // during the war: Smolak wants him the day the Rizian police find him), the border ban and the Wehzek rights until the King
+        // has already granted them.
+        string rico = $"(Variable[\"RiziaDLC.Rico_Extradited\"] ~= true and Variable[\"{RicoExtradition}\"] ~= true)";
+        string ricoHeld = "(Variable[\"RiziaDLC.Rico_Arrested\"] == true)";
         string ban = $"(Variable[\"{BludishBan}\"] ~= true)";
         string rights = $"(Variable[\"{WehzekRights}\"] ~= true)";
-        d.Branch("Terms", "TermsNone", "TRico", "TBan");
+        d.Branch("Terms", "TermsNone", "TRico", "TRicoFree", "TBan");
         d.SayIf("TermsNone", $"not {ban} and not {rights} and ({reduced} or not {rico})", Smolak,
             "\"...nothing, Your Majesty, that you have not already given me. I find I have less appetite than I used to.\"", "Aside");
-        d.SayIf("TRico", $"{full} and {rico}", Smolak,
+        d.SayIf("TRico", $"{full} and {rico} and {ricoHeld}", Smolak,
             "\"...your cousin Ricardus comes to Wraclawitz to answer for Smolak Square.\"", "TBan");
+        d.SayIf("TRicoFree", $"{full} and {rico}", Smolak,
+            "\"...your cousin Ricardus, the day your police find him, comes to Wraclawitz to answer for Smolak Square.\"", "TBan");
         d.Branch("TBan", "TBanSay", "TRights");
         d.SayIf("TBanSay", ban, Smolak,
             "\"Your border closes to the Bludish bandits Thornbourgh keeps arming.\"", "TRights");
@@ -261,7 +264,7 @@ internal static partial class SupplyWar
         // The full price includes Ricardus only when Smolak asked for him (TRico); otherwise it is the reduced one.
         string withRico = $"({full} and {rico})";
         d.Branch("Answer", Gate("AcceptFull"), Gate("AcceptReduced"), Gate("Counter"), "Refuse");
-        d.Opt("AcceptFull", withRico, "\"Rizia accepts. The guns go quiet at midnight.\"", "-2 Authority",
+        d.Opt("AcceptFull", withRico, "\"Rizia accepts. The guns go quiet at midnight.\"", "-2 Authority, Promises Ricardus to Wehlen",
             ceasefire + Inc(Authority, -2) + T(RicoExtradition) + T(BludishBan) + T(WehzekRights) + S(VarSmolakAnswer, "accepted") +
             S(VarCeasefireTerms, "full"), "Accepted");
         d.Opt("AcceptReduced", $"not {withRico}", "\"Rizia accepts. The guns go quiet at midnight.\"", "-1 Authority",
@@ -400,7 +403,7 @@ internal static partial class SupplyWar
             "\"Smolak sat on it. A Lespian bomb was no use to him. A Rizian one kept him in Zille.\"",
             "\"Smolak sat on it, Your Majesty. A Lespian bomb was no use to him. A Rizian one kept him in Zille.\"", "Choose");
 
-        d.Branch("Choose", Gate("Who"), Gate("PublishStrait"), Gate("PublishFree"), "Confront", "Leverage", "Bury");
+        d.Branch("Choose", Gate("Who"), Gate("PublishStrait"), Gate("PublishStraitL"), Gate("PublishFree"), "Confront", "Leverage", "Bury");
         d.Opt("Who", Not(Q(1)), "\"Who else has seen these?\"", null, T(Q(1)), "Who2");
         d.Staff("Who2",
             "\"Whoever in Wraclawitz read them and decided they were inconvenient. And now the three of us.\"",
@@ -410,12 +413,20 @@ internal static partial class SupplyWar
         string publish = found + T(Discovered) + T(Publicized) + S(VarRamiro, "publish") + Inc(NpLespia, -3) +
                          $"{V(WorldModifiers.LespiaEscort)} = 0; ";
         const string publishText = "\"Publish it. The world should know who started this war.\"";
-        d.Opt("PublishStrait", strait, publishText, "Ends the Lespian Blockade",
-            publish + F(VarLespiaStrait) + T(VarLespiaWithdrawn) + Strengthen(1), "Published");
+        string lease = Is(VarLespiaLease);
+        string publishStrait = publish + F(VarLespiaStrait) + T(VarLespiaWithdrawn) + Strengthen(1);
+        d.Opt("PublishStrait", $"{strait} and not {lease}", publishText, "Ends the Lespian Blockade", publishStrait, "Published");
+        // the island was leased for fifty years, not for the war: Lespia keeps it, and its -1 Authority per turn
+        d.Opt("PublishStraitL", $"{strait} and {lease}", publishText, "Ends the Lespian Blockade, the Caleqabiz Lease Stands", publishStrait,
+            "Published");
         d.Opt("PublishFree", $"not {strait}", publishText, null, publish + T(VarLespiaWithdrawn), "Published");
         d.Staff("Published",
             "\"Smolak will say he knew all along. He did. His people will cheer him for a week, and then everyone else will know it too.\"",
-            "\"Smolak will say he knew all along, Your Majesty. He did. His people will cheer him for a week, and then everyone else will know.\"", "Close");
+            "\"Smolak will say he knew all along, Your Majesty. He did. His people will cheer him for a week, and then everyone else will know.\"", "PubAfter");
+        d.Branch("PubAfter", "PubLease", "Close");
+        d.SayIf("PubLease", $"{lease} and {Is(VarLespiaWithdrawn)}", Esquibel,
+            "\"Alvarez will take his ships out of the strait, Your Majesty. Not his sailors out of Caleqabiz. The lease runs fifty years, " +
+            "and he'll keep it to spite us.\"", "Close");
         d.Opt("Confront", null, "\"I'll put it to Alvarez myself. On the telephone, where he can't smile at me.\"", null,
             found + T(Discovered) + S(VarRamiro, "confront"), "Confront2");
         d.Say("Confront2", Esquibel,

@@ -572,7 +572,7 @@ internal static class ZilleTreaty
             new[] { "Lib3" });
         t.Line("Lib3", Smolak, "\"Your Majesty. You took my villa in Zille. I would like my khisha pipes back. They were a present from my son.\"", new[] { "Lib4" });
         t.Line("Lib4", Smolak, "\"I am not here to beg. Wehlen does not beg. I am here because my soldiers are in your camps, eating your bread and learning your songs, and their mothers write to me every day.\"", new[] { "Lib5" });
-        t.Line("Lib5", Smolak, "\"So. You have a treaty. I have a pen. Tell me what you want, and I will tell you what it costs.\"", new[] { "Hub" });
+        t.Line("Lib5", Smolak, "\"So. You have a treaty. I have a pen. Tell me what you want, and I will tell you what it costs.\"", new[] { "RF_Open" });
 
         // ---- armistice: the schoolhouse commission
         const string commission = "under an Alliance of Nations flag that had been ironed for the occasion. An observer from President Nines' office sat between the two delegations with a stopwatch.";
@@ -602,12 +602,12 @@ internal static class ZilleTreaty
             t.Line("Part4" + id, Smolak, $"\"You sit in Zille city, in my gold hills and in {ours}. I sit in {mine}, and my gunboats watch your men on the beach. Either that line becomes a border, or we keep paying for it.\"",
                 new[] { "Part5" }, condition: cond);
         }
-        t.Line("Part5", Smolak, "\"I came with a list. You came with a list. Let us see whose list is longer.\"", new[] { "CeaseL", "CeaseS", "PalesL", "RicoP", "Hub" });
-        t.Line("CeaseL", Smolak, "\"You asked for a ceasefire before the guns were quiet. We remember who asked.\"", new[] { "PalesL", "RicoP", "Hub" }, condition: KingCease);
+        t.Line("Part5", Smolak, "\"I came with a list. You came with a list. Let us see whose list is longer.\"", new[] { "CeaseL", "CeaseS", "PalesL", "RicoP", "RF_Open" });
+        t.Line("CeaseL", Smolak, "\"You asked for a ceasefire before the guns were quiet. We remember who asked.\"", new[] { "PalesL", "RicoP", "RF_Open" }, condition: KingCease);
         // Smolak offered the ceasefire himself, and the King paid his price on the telephone
         t.Line("CeaseS", Smolak, "\"You took my ceasefire on the telephone, and my terms with it. Good. Then we begin as two men who keep their word.\"",
-            new[] { "PalesL", "RicoP", "Hub" }, condition: $"{Cease} and {SmolakCease}");
-        t.Line("PalesL", Smolak, "\"And half your army is in Pales. I read the newspapers too.\"", new[] { "RicoP", "Hub" }, condition: PalesBusy);
+            new[] { "PalesL", "RicoP", "RF_Open" }, condition: $"{Cease} and {SmolakCease}");
+        t.Line("PalesL", Smolak, "\"And half your army is in Pales. I read the newspapers too.\"", new[] { "RicoP", "RF_Open" }, condition: PalesBusy);
 
         // Ricardus was one of Smolak's full ceasefire terms: he collects him before the draft
         t.Line("RicoP", Smolak, "\"One small matter first. On the telephone, the night our guns went quiet, you promised me your cousin Ricardus. My police have been waiting at the station ever since.\"",
@@ -615,17 +615,17 @@ internal static class ZilleTreaty
         t.Choice("RicoGive", "\"A promise is a promise. Ricardus goes to Wraclawitz.\"", new[] { "RicoGive2" },
             script: Set("RiziaDLC.Rico_Extradited", "true") + Add("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower", 1) +
                     "EnableCodexEntry(\"Characters_Family_RicoToras_Extradited\"); ");
-        t.Line("RicoGive2", Smolak, "\"You see? A man of his word. My police will be so relieved. Now, where were we?\"", new[] { "Hub" });
+        t.Line("RicoGive2", Smolak, "\"You see? A man of his word. My police will be so relieved. Now, where were we?\"", new[] { "RF_Open" });
         t.Choice("RicoKeep", "\"Ricardus stays in Rizia. That promise ended with the war.\"", new[] { "RicoKeep2" },
             script: Set(VarRicoKept, "true") + AddLev(-2) + Add("RiziaDLC.Diplomacy_Wehlen_NegotiatingPower", -1));
-        t.Line("RicoKeep2", Smolak, "\"Then this draft begins with a broken promise in it, and you will pay for that one too. I collect grievances, Your Majesty.\"", new[] { "Hub" });
+        t.Line("RicoKeep2", Smolak, "\"Then this draft begins with a broken promise in it, and you will pay for that one too. I collect grievances, Your Majesty.\"", new[] { "RF_Open" });
 
         // ---- defeat: summoned to Wraclawitz
         t.Line("Lost1", Narr, "The message from Wraclawitz had been phrased as an invitation. Laurento advised me to treat it as one, and to go anyway.", new[] { "Lost2" }, condition: Lost);
         t.Line("Lost2", Narr, "Smolak received me in the presidential palace, in a room hung with photographs of his army in Zille. He had chosen the chairs himself. Mine was lower.", new[] { "Lost3" });
         t.Line("Lost3", Smolak, "\"Your Majesty! Welcome to Wehlen. I wanted you to see it for yourself. You were once so eager to visit.\"", new[] { "Lost4" });
         t.Line("Lost4", Smolak, "\"I have written the terms myself. Recognition, reparations, a few small kindnesses. Sign what I need, and perhaps there will be room for what you need. That is how peace works, when one side has won.\"",
-            new[] { "CeaseL", "CeaseS", "PalesL", "RicoP", "Hub" });
+            new[] { "CeaseL", "CeaseS", "PalesL", "RicoP", "RF_Open" });
 
         // ---- the hub: what the King brings to the table before the draft
         t.Logic("Hub", new[] { "AskWon", "AskHeld", "AskFiles", "ThreatMenu", "Draft" });

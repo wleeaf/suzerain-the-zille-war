@@ -350,9 +350,8 @@ internal static partial class WarDecrees
             "RiziaDLC.Relations_Estela += 1;\n" + Std(MilitaryPassed),
             new[] { LowAuthority(0), LowBudget(0) },
             new[] { 0, -1, 0, 0, 1, -1, 0, 1, 0, 1, 0, 0, 0 },
-            OnLegion,
-            // after a lost war, Smolak demands an amnesty for the Legion's families
-            Leverage: () => Lost ? -1 : 0),
+            // the families' amnesty is asked at the treaty table (ReactionsForeign RF_LegAmnesty, -1 Negotiation Leverage)
+            OnLegion),
 
         new(Prices, "Economy", EconomyPath, "Price Controls on Bread and Fuel [RPP Proposal]",
             "-1 Authority\n-1 Budget Per Turn During the War",

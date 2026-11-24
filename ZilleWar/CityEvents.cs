@@ -292,8 +292,9 @@ internal static class CityEvents
                                  "cages outside the town were emptied in the night, and the Wehzek prisoners walked out to meet their own army."),
                      ("Balle", "Balle has fallen. Wehzek patrols are on the shores of Lake Jardim, deep inside Brenas, and the fishermen have " +
                                "pulled their boats up on the beach. Nobody in Porte Drazon thought the war could come this far south."),
-                     ("Jales", "Jales has fallen. Wehzek ships can now unload on our side of the strait, and the General Staff wants an " +
-                               "answer before they do."),
+                     // Jales can only fall overland (Wehlen has no marines on the war table); it lies on the Sudis Sea
+                     ("Jales", "Jales has fallen. Wehzek columns have broken through to the Sudis coast, and its harbor is theirs. The General " +
+                               "Staff wants an answer before Wehlen can put it to use."),
                  })
         {
             string c = city;
@@ -324,8 +325,8 @@ internal static class CityEvents
                                  "the first of them are already clearing the rubble from the bridge approach."),
                      ("Balle", "Our troops have driven the Wehzek patrols away from Lake Jardim and back out of Balle. The fishermen are " +
                                "pushing their boats back into the water, and the sanctuary bell, silent for weeks, rang at noon."),
-                     ("Jales", "Our troops have retaken Jales and its harbor. The Wehzek ships that unloaded there have slipped away across " +
-                               "the Sudis Sea, leaving the quays piled with crates nobody has yet dared to open."),
+                     ("Jales", "Our troops have retaken Jales and its harbor. The Wehzek columns that reached the Sudis coast have fallen back " +
+                               "north, leaving the quays piled with crates nobody has yet dared to open."),
                  })
         {
             string c = city;

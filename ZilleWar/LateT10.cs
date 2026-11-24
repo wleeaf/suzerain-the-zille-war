@@ -78,12 +78,15 @@ internal static class LateT10
         {
             Variables.Set(VarNantaReport, true);
             string nanta = Variables.GetString(LateT9.VarNanta);
-            // no deal and no threat (the King hung up, or never took the call): nothing happened in Nanta worth a report
-            if (nanta == "deal" || nanta == "threat")
-            NewsWire.Report("Late_Nanta", "Rizia_City_Nanta", nanta == "deal" ? "Nanta Quiet" : "Wehzek Leaflets in Nanta",
+            // no deal, no threat and no trust (the King hung up, or never took the call): nothing happened in Nanta worth a report
+            if (nanta is "deal" or "threat" or "trust")
+            NewsWire.Report("Late_Nanta", "Rizia_City_Nanta", nanta == "threat" ? "Wehzek Leaflets in Nanta" : "Nanta Quiet",
                 nanta == "deal"
                     ? "The last Wehzek prisoners of war crossed the strait from Nanta this week. Since then the city has been calm, and the leaflets " +
                       "that used to appear on market days have stopped. Local officials credit the King's understanding with President Smolak."
+                    : nanta == "trust"
+                    ? "The leaflets printed in Wehlen that used to appear in the Wehzek quarter of Nanta on market days have stopped. The garrison " +
+                      "reports a calm month. Local officials credit the Crown's policy towards the city's Wehzeks."
                     : "Leaflets printed in Wehlen have appeared in the Wehzek quarter of Nanta, calling on \"the Wehzeks of Zille\" to refuse Rizian " +
                       "identity papers. The garrison has doubled its patrols. Nobody has claimed responsibility, but the paper is Wehzek army stock.");
         }
@@ -280,11 +283,15 @@ internal static class LateT10
         cw.Line("WehlenLib", Narr,
             "Unwilling to choose sides in the conflict, the majority of the international community refused to intervene on your behalf at this time.\n" +
             "In Nanta, Wehzek irregulars armed from across the strait rose against the Rizian garrison.",
-            new[] { "#23" }, condition: And(Lib, $"Variable[\"{LateT9.VarNanta}\"] ~= \"deal\""), script: Add("RiziaDLC.Epilogue_CivilWar_WinPoints", -1), hooks: Talk.From(585));
+            new[] { "#23" }, condition: And(Lib, $"Variable[\"{LateT9.VarNanta}\"] ~= \"deal\" and Variable[\"{LateT9.VarNanta}\"] ~= \"trust\""), script: Add("RiziaDLC.Epilogue_CivilWar_WinPoints", -1), hooks: Talk.From(585));
         cw.Line("WehlenLibDeal", Narr,
             "Unwilling to choose sides in the conflict, the majority of the international community refused to intervene on your behalf at this time.\n" +
             "In Nanta, the Wehzek quarter kept its word and its shutters closed.",
             new[] { "#23" }, condition: And(Lib, $"Variable[\"{LateT9.VarNanta}\"] == \"deal\""), script: Add("RiziaDLC.Epilogue_CivilWar_WinPoints", -1), hooks: Talk.From(585));
+        cw.Line("WehlenLibTrust", Narr,
+            "Unwilling to choose sides in the conflict, the majority of the international community refused to intervene on your behalf at this time.\n" +
+            "In Nanta, the Wehzek quarter kept its shutters closed.",
+            new[] { "#23" }, condition: And(Lib, $"Variable[\"{LateT9.VarNanta}\"] == \"trust\""), script: Add("RiziaDLC.Epilogue_CivilWar_WinPoints", -1), hooks: Talk.From(585));
         Vanilla.AppendScript(CivilWar, 382,
             $"if {War} then Variable[\"RiziaDLCText.ZilleWarAlly\"] = \"The Zilleans who had cheered your soldiers into Zille city fought by your side as well.\" end");
         cw.Register();

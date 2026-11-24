@@ -10,6 +10,10 @@ internal static class Finish
         ("manus", FinishManus.Register, FinishManus.OnStep),
         ("gold", FinishGold.Register, FinishGold.OnStep),
         ("turn 10", FinishT10.Register, null),
+        // reactions: each registers its own variables; Foreign and Home subscribe their own step handlers in Register
+        ("reactions foreign", ReactionsForeign.Register, null),
+        ("reactions home", ReactionsHome.Register, null),
+        ("press reactions", ReactionsPress.Register, ReactionsPress.OnStep),
     };
 
     public static void Register()

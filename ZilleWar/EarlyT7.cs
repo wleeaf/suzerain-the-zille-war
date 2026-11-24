@@ -473,17 +473,26 @@ internal static class EarlyT7
             Variables.Set(VarRepBluds, true);
             bool lib = Variables.GetBool(WarFlags.Liberated);
             bool held = Variables.GetBool(WarFlags.ZilleCityHeld);
-            NewsWire.Report("E7_BludsLetIn", "Rizia_City_MaveNortus", "Rizia Opens Its Border to Bluds", lib
+            // Mave Nortus can still be in Wehzek hands after the war: the families then cross the armistice line elsewhere, and the
+            // report is filed in Porte Drazon
+            bool maveLost = Variables.GetBool(WarFlags.Occupied("Mave Nortus"));
+            string camps = maveLost ? "Relief camps have been set up well away from Mave Nortus, which is still in Wehzek hands."
+                : "Relief camps have been set up along the road to Mave Nortus.";
+            NewsWire.Report("E7_BludsLetIn", maveLost ? SuzerainModdingKit.VanillaData.SuzerainTokenName.RiziaCityPorteDrazon : "Rizia_City_MaveNortus", "Rizia Opens Its Border to Bluds", lib
                 ? NewsWire.P(
                     "Thousands of Bludish families fleeing the Wehzek civil war have begun crossing into Zille, now that its border posts are " +
-                    "manned by Rizian soldiers instead of Wehzek police. Relief camps have been set up along the road to Mave Nortus.",
+                    "manned by Rizian soldiers instead of Wehzek police. " + camps,
                     "Wraclawitz has accused Porte Drazon of opening a door for terrorists into the region it lost.")
                 : held
                     ? NewsWire.P(
                         "Thousands of Bludish families fleeing the Wehzek civil war have begun crossing the armistice line into Rizian-held " +
-                        "Zille. Wehzek patrols on the far side tried to turn them back, then gave up. Relief camps have been set up along the " +
-                        "road to Mave Nortus.",
+                        "Zille. Wehzek patrols on the far side tried to turn them back, then gave up. " + camps,
                         "Wraclawitz has called it a breach of the armistice. Our officers on the line call it a flood.")
+                    : maveLost
+                    ? NewsWire.P(
+                        "Rizia has opened its side of the armistice line to Bluds fleeing the Wehzek civil war. With Mave Nortus still in Wehzek " +
+                        "hands, the families cross on foot through the hills, and Wehzek patrols have stopped trying to turn them back.",
+                        camps + " Wraclawitz has called it one more provocation from a kingdom that has already gone to war over the region.")
                     : NewsWire.P(
                         "Rizia has opened the Mave Nortus crossing to Bluds fleeing the Wehzek civil war. Wehzek border police on the Zille side " +
                         "of the river tried to stop the thousands who wanted to cross, then had to let them pass.",

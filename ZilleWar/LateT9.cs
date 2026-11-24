@@ -35,7 +35,7 @@ internal static class LateT9
     public const string VarCallOffered = "ZilleWar.Late_SmolakT9Offered";
     public const string VarRecognized = "ZilleWar.Late_RecognizedWehzekZille";
     public const string VarLinePermanent = "ZilleWar.Late_LinePermanent";
-    public const string VarNanta = "ZilleWar.Late_NantaWarning";            // "deal" | "threat"
+    public const string VarNanta = "ZilleWar.Late_NantaWarning";            // "deal" | "threat" | "trust" (ReactionsForeign)
     public const string VarRumburgOwed = "ZilleWar.Late_RumburgOwed";
     public const string VarEmbargoLifted = "ZilleWar.Late_RumburgEmbargoLifted";
     private const string VarVoteNews = "ZilleWar.Late_News_WehzekVote";
@@ -444,10 +444,10 @@ internal static class LateT9
 
         // liberated
         t.Line("Lib1T", Smolak, "\"I signed your treaty, Your Majesty. Every word. It says Wehlen gives up Zille. It says nothing about what the Wehzeks in Nanta think of you, and I have a very good memory for what people think.\"",
-            new[] { "Lib2" }, condition: And(Lib, $"{V(ZilleTreaty.VarSigned)} == true"));
+            new[] { "RF_Regime" }, condition: And(Lib, $"{V(ZilleTreaty.VarSigned)} == true"));
         t.Line("Lib1", Smolak, "\"I lost a province and you gained a headache. Every Wehzek in Nanta is a vote against you, Your Majesty, and I have a very good memory for votes.\"",
-            new[] { "Lib2" }, condition: And(Lib, $"{V(ZilleTreaty.VarSigned)} ~= true"));
-        t.Line("Lib2", Smolak, "\"It would be a shame if those poor people felt abandoned by their motherland. A shame for you, I mean.\"", new[] { "LibDeal", "LibThreat", "LibHang" });
+            new[] { "RF_Regime" }, condition: And(Lib, $"{V(ZilleTreaty.VarSigned)} ~= true"));
+        t.Line("Lib2", Smolak, "\"It would be a shame if those poor people felt abandoned by their motherland. A shame for you, I mean.\"", new[] { "LibDeal", "RF_LibTrust", "RF_LibTrustA", "RF_LibEase", "LibThreat", "LibHang" });
         t.Choice("LibDeal", "\"Keep your agents out of Nanta, and the last of your prisoners go home.\"", new[] { "LibDeal2" },
             condition: $"{V(LateT8.VarPrisoners)} == \"held\"",
             script: Set(VarNanta, "\"deal\"") + Set(LateT8.VarPrisoners, "\"released\""));

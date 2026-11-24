@@ -153,9 +153,10 @@ internal static class EarlyT4
         {
             Variables.Set(VarMartialLaw, true);
             // Phase I is fought at the war table after this step runs, so the report speaks of the whole region, true either way.
-            NewsWire.Report("E4_MartialLaw", SuzerainTokenName.RiziaEventZille, "Martial Law Declared in Zille", P(
-                "The Wehzek military governor of Zille has placed the region under martial law. A curfew from dusk to dawn is in force in " +
-                "every town Wehlen holds, public gatherings are banned outright, and Rizian-language newspapers have been closed " +
+            // The mobilization batch ("Inside Zille: Martial Law") announced it; this is the follow-up, not a second announcement.
+            NewsWire.Report("E4_MartialLaw", SuzerainTokenName.RiziaEventZille, "Zille Under Martial Law", P(
+                "The Wehzek military governor of Zille has tightened the martial law declared on the day of the King's speech. Public " +
+                "gatherings are now banned outright in every town Wehlen holds, and Rizian-language newspapers have been closed " +
                 "\"for the duration of hostilities.\"",
                 "Residents describe armored cars at the harbor gates and long queues outside bakeries before the curfew falls. Wehzek " +
                 "radio has told the population that the measures are temporary and that \"the aggressor will be driven back into the sea.\""));

@@ -351,6 +351,10 @@ internal static class WorldModifiers
         Variables.Set(SitLost, declared && defeated && !cityHeld);
         Variables.Set(SitDivided, declared && defeated && cityHeld && !settled);
         UpdateCardTexts(declared && defeated, cityHeld, ceasefire && !settled);
+        if (refugees < 0)
+        {
+            UpdateRefugeesCard();
+        }
 
         if (declared)
         {
@@ -425,6 +429,23 @@ internal static class WorldModifiers
                   "At home, it is read as the King's.");
         }
     }
+
+    /// <summary>The refugees' card names the border towns they flee to, only those still in Rizian hands.</summary>
+    private static void UpdateRefugeesCard()
+    {
+        List<string> towns = new[] { "Mave Nortus", "Dapalle", "Jales" }.Where(t => !Variables.GetBool(WarFlags.Occupied(t))).ToList();
+        if (towns.Count == 0)
+        {
+            towns = new[] { "Balle" }.Where(t => !Variables.GetBool(WarFlags.Occupied(t))).Append("Iza").ToList();
+        }
+
+        SetCardText(RefugeesCard,
+            $"Families fleeing the fighting in Zille, Rizian and Wehzek alike, crowd the roads into {Front.Join(towns)}. " +
+            "Relief stations run by the army and the sanctuaries struggle to cope. \n\nOld resentments travel with the refugees, and " +
+            "the Wehzek quarters of Brenas feel them first.");
+    }
+
+    private const string RefugeesCard = "ZilleWar_Order_ZilleRefugees";
 
     private static void SetCardText(string name, string text)
     {

@@ -202,7 +202,9 @@ internal static class EarlyBookkeeping
         Vanilla.GateInstruction("NarrativeSupport_Zille_Part2", "Reports_Turn07_Zille_ATAActivityWaning", WarFlags.XPeace);
         // Sabotage behind Wehzek lines still fits while Wehlen holds the region; not once it is ours.
         string notOurs = $"{WarFlags.X(WarFlags.Liberated, false)} && {WarFlags.X(WarFlags.ZilleCityHeld, false)}";
-        Vanilla.GateInstruction("NarrativeSupport_Zille_Part1", "Reports_Turn06_Zille_SORailwayAttack = true", notOurs);
+        // a fertilizer train "from Zille to Nanta": not across the front, once Nanta is Rizian
+        Vanilla.GateInstruction("NarrativeSupport_Zille_Part1", "Reports_Turn06_Zille_SORailwayAttack = true",
+            $"{notOurs} && {WarFlags.X(ZilleOperation.CapturedVar("Nanta"), false)}");
         Vanilla.GateInstruction("NarrativeSupport_Zille_Part2", "Reports_Turn07_Zille_SOHarborExplosion", notOurs);
         Vanilla.GateInstruction("NarrativeSupport_Zille_Part2", "Reports_Turn07_Zille_DerdianMercenaries", WarFlags.X(WarFlags.Liberated, false));
         Vanilla.GateInstruction("NarrativeSupport_Zille_Part2", "Reports_Turn07_MaveNortus_IntelligenceInsertion", notOurs);

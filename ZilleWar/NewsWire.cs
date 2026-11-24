@@ -2021,7 +2021,8 @@ internal static class NewsWire
                     "Lespian warships have begun stopping and searching Wehzek ships in the Strait of Kreleck, citing \"security of " +
                     "navigation.\" In practice, the strait is closed to Wehlen.",
                     Variables.GetBool(SupplyWar.VarLespiaLease)
-                        ? "Diplomats say the price is the Rizian island of Caleqabiz, leased to Lespia for fifty years for a modest rent. Prime " +
+                        ? "Diplomats say the price is the Rizian island of Caleqabiz, leased to Lespia for fifty years" +
+                          (Variables.GetInt(WorldModifiers.CaleqabizRent) > 0 ? " for a modest rent" : ", rent-free") + ". Prime " +
                           "Minister Alvarez, asked whether fifty years was not rather long, said that \"Zille managed twenty-five.\""
                         : Variables.GetBool("ZilleWar.Lespia_Caleqabiz")
                         ? "Diplomats say Lespia has been granted naval rights at the Rizian island of Caleqabiz in return. Prime Minister " +
@@ -2046,11 +2047,14 @@ internal static class NewsWire
                               "like these. Twenty-five years ago, it was Zille."));
                     if (lease)
                     {
+                        bool rent = Variables.GetInt(WorldModifiers.CaleqabizRent) > 0;
                         Publish(k, "RH", "Caleqabiz Lease Seals the Strait", P(
-                            "Under a lease signed this week, the Lespian navy will maintain a pier and fuel depot at Caleqabiz, and Lespia will " +
-                            "pay the Crown a modest rent for the privilege. In return, not a single Wehzek convoy will reach Zille unseen.",
-                            "The Royal Herald notes that the island remains Rizian, that its flag still flies over the governor's house, and " +
-                            "that the rent will be paid in guilders."));
+                            "Under a lease signed this week, the Lespian navy will maintain a pier and fuel depot at Caleqabiz" +
+                            (rent ? ", and Lespia will pay the Crown a modest rent for the privilege" : "") +
+                            ". In return, not a single Wehzek convoy will reach Zille unseen.",
+                            "The Royal Herald notes that the island remains Rizian" +
+                            (rent ? ", that its flag still flies over the governor's house, and that the rent will be paid in guilders."
+                                : ", and that its flag still flies over the governor's house.")));
                     }
                 }
 

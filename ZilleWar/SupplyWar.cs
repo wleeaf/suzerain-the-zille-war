@@ -392,6 +392,7 @@ internal static partial class SupplyWar
         foreach ((string what, Action step) in new (string, Action)[]
                  {
                      ("numbers", EnsureNumbers), ("grudges", Grudges), ("ceasefire terms", CeasefireTerms), ("upkeep", Upkeep), ("gas contract", GasContract), ("modifiers", SupplyModifiers.Install), ("calls", Offer),
+                     ("late calls", LateAlvarez),
                      ("levers", ReportNewLevers), ("news", SupplyNews.OnStep),
                  })
         {
@@ -461,7 +462,8 @@ internal static partial class SupplyWar
                 bool promised = Variables.GetBool(RicoExtradition);
                 Variables.Set(VarPreBan, Variables.GetBool(BludishBan));
                 Variables.Set(VarPreRights, Variables.GetBool(WehzekRights));
-                Variables.Set(VarPreRico, Variables.GetBool("RiziaDLC.Rico_Arrested") && !Variables.GetBool("RiziaDLC.Rico_Extradited") && !promised);
+                // Smolak names Ricardus whenever he is not yet handed over or promised (arrested on Turn 7, or still at large)
+                Variables.Set(VarPreRico, !Variables.GetBool("RiziaDLC.Rico_Extradited") && !promised);
                 Variables.Set(VarPrePromised, promised);
                 Variables.Set(VarPreSnapped, true);
             }
@@ -578,6 +580,7 @@ internal static partial class SupplyWar
 
         if (AlvarezHasSomethingToSay(w))
         {
+            Variables.Set(VarAlvOfferedTurn, turn);
             AddCall(AlvarezConv, "Alvarez", SuzerainTokenName.RiziaCityMonqiz, "Call With Prime Minister Alvarez", "Palas Toras, Monqiz");
         }
 
@@ -701,6 +704,12 @@ internal static partial class SupplyWar
             return true;
         }
 
+        // The strait was sold dear for a reason that has gone away (the Aureus blockade, the Meftiem grudge): he drops the surcharge.
+        if (SurchargeLiftDue())
+        {
+            return true;
+        }
+
         if (Variables.GetInt(Count(Lever.Lespia)) == 0)
         {
             return w >= 1 || Variables.GetString(AnDeclaration.VarLespianNote) == "kept";
@@ -722,6 +731,60 @@ internal static partial class SupplyWar
         return palesTopic || gasTopic || photoTopic || !Variables.GetBool(VarAlvarezGiftDone);
     }
 
+    /// <summary>
+    /// Alvarez calls that the turn's Offer could not foresee:
+    /// - at war, a confrontation over Ramiro chosen at the consulate after this turn's calls were offered (the consulate plays
+    ///   first): Laurento "arranges the call" the same step, before the war table;
+    /// - after the war, once, the call in which he drops a surcharge whose reason went away when no war-time call was left.
+    /// </summary>
+    private static void LateAlvarez()
+    {
+        int turn = Turn;
+        if (turn <= 0)
+        {
+            return;
+        }
+
+        if (WarFlow.AtWar)
+        {
+            if (Str(VarRamiro) == "confront" && !Variables.GetBool(VarRamiroConfronted) && !Variables.GetBool(VarLespiaWithdrawn) &&
+                Variables.GetInt(VarLastOfferTurn) == turn && Variables.GetInt(WarFlow.VarLastOperationTurn) < turn &&
+                Variables.GetInt(VarAlvOfferedTurn) != turn)
+            {
+                Variables.Set(VarAlvOfferedTurn, turn);
+                AddCall(AlvarezConv, "Alvarez", SuzerainTokenName.RiziaCityMonqiz, "Call With Prime Minister Alvarez", "Palas Toras, Monqiz");
+            }
+
+            return;
+        }
+
+        if (!Variables.GetBool(WarFlags.Over) || turn > LastTurn || Variables.GetBool(VarLiftCallOffered) || !SurchargeLiftDue())
+        {
+            return;
+        }
+
+        const string frag = "ZilleWar.Late_AlvarezRent";
+        try
+        {
+            if (GameState.StoryFragmentExistsInCurrentStep(frag))
+            {
+                return;
+            }
+
+            GameState.AddCustomConversation(AlvarezRentConv);
+            if (GameState.AddCustomStoryFragment(new CustomConversationFragment(frag, SuzerainStoryPackInfo.Rizia, SuzerainTokenName.RiziaCityMonqiz,
+                    "Call With Prime Minister Alvarez", "Palas Toras, Monqiz", ConversationData.ConversationType.ForeignPolicyAndTrade, AlvarezRentConv)))
+            {
+                Variables.Set(VarLiftCallOffered, true);
+                Core.Log.Msg("Supply war: Alvarez rings to drop the strait surcharge.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Core.Log.Error($"Adding '{frag}' failed: {ex}");
+        }
+    }
+
     private static bool ConsulateReady(int w) =>
         w >= 1 && Variables.GetBool(WarFlags.ZilleCityHeld) && !Variables.GetBool(VarRamiroFound);
 
@@ -737,7 +800,8 @@ internal static partial class SupplyWar
                turn > Variables.GetInt(VarSmolakTurn);
     }
 
-    private static bool HegelCableReady(int w) => w >= 1 && Variables.GetInt(VarValgslandStage) == 0;
+    // Not on Turn 5: vanilla's own Hegel call (c322, Turn 5 step 6) is Valgsland's word that turn.
+    private static bool HegelCableReady(int w) => w >= 1 && Turn != 5 && Variables.GetInt(VarValgslandStage) == 0;
 
     private static bool HegelCallReady(int turn)
     {
@@ -748,7 +812,8 @@ internal static partial class SupplyWar
 
         string cable = Variables.GetString(VarValgslandCable);
         return cable is "defied" or "stalled" || Variables.GetInt(Count(Lever.BffRaids)) > 0 || Variables.GetBool(VarLespiaCaleqabiz) ||
-               Variables.GetInt(Count(Lever.Submarines)) >= 2 || Str(VarBludsIncident) == "kept";
+               Variables.GetInt(Count(Lever.Submarines)) >= 2 || Str(VarBludsIncident) == "kept" ||
+               ReactionsForeign.GuaranteeBreachDue;
     }
 
     // The vanilla Morella negotiations already bring Saltana to the table in Turn 5.

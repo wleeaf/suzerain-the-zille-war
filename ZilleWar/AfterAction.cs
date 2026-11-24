@@ -687,7 +687,7 @@ internal sealed class AfterAction
             s.Add($"It ran out of strength short of {Join(AimMissed)}.");
         }
 
-        s.Add(NavySentence(o, AimId, AimName, won, p));
+        s.Add(NavySentence(o, AimId, AimStart, won, p));
         if (o.FleetRecalled && p == 1)
         {
             s.Add("The squadron recalled from the Aureus field kept the Wehzek navy out of the gulf.");
@@ -762,9 +762,14 @@ internal sealed class AfterAction
             : "The final assault was fought by tired men against men who were just as tired, and it stalled.",
     };
 
-    /// <summary>The navy's part. Its orders carry over between phases, so each phase tells it in its own words.</summary>
-    private static string NavySentence(WarCouncil.Orders o, Objective aimId, string aim, bool won, int p)
+    /// <summary>
+    /// The navy's part. Its orders carry over between phases, so each phase tells it in its own words. Only Zille and Nanta have
+    /// coastal batteries (ZilleOperation's coastal artillery tiles): an aim of Isor alone gets the fleet off its quays instead.
+    /// </summary>
+    private static string NavySentence(WarCouncil.Orders o, Objective aimId, List<string> aimCities, bool won, int p)
     {
+        string aim = Join(aimCities.Where(c => c is "Zille" or "Nanta").ToList());
+        string port = Join(aimCities);
         switch (o.Navy)
         {
             case "Strait":
@@ -787,11 +792,19 @@ internal sealed class AfterAction
                         : "The fleet shelled the coast for two days; the batteries it could not see did the rest.",
                     2 => aimId == Objective.Wall
                         ? "The fleet's guns were of little use so far from the sea, and the Staff kept the ships offshore to cover the coast road."
+                        : aim.Length == 0
+                        ? won
+                            ? $"The fleet stood in off {port} and kept the Wehzek transports away from its quays while the army went in."
+                            : $"The fleet stood in off {port} and kept the Wehzek transports away from its quays, but the garrison already had what it needed."
                         : won
-                            ? $"The fleet came back inshore and shelled the batteries at {aim} again, and this time the guns stayed silent."
-                            : $"The fleet came back inshore, but the batteries at {aim} had been moved since the first phase, and the ships shelled empty emplacements.",
+                            ? $"The fleet came inshore and shelled the batteries at {aim} until their guns stayed silent."
+                            : $"The fleet came inshore, but the batteries at {aim} had been moved out of sight, and the ships shelled empty emplacements.",
                     _ => aimId == Objective.Wall
                         ? "The fleet's guns could not reach the hills, and for the last phase the ships covered the coast road instead."
+                        : aim.Length == 0
+                        ? won
+                            ? $"For the last phase the fleet stood in off {port} and kept the Wehzek transports away from its quays."
+                            : $"For the last phase the fleet stood in off {port}, but the garrison no longer needed the transports it turned away."
                         : won
                         ? $"The fleet came close inshore for the last phase and shelled the harbor batteries at {aim} until they fell silent."
                         : $"The fleet came close inshore for the last phase, and a destroyer was hit by the batteries at {aim} before it could pull back.",

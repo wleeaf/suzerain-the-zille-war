@@ -129,6 +129,9 @@ internal static class EarlyT7Diplomacy
         string lostCf = $"{Lost} and {KingCf}", lostArm = $"{Lost} and {NoKingCf}";
         // she asked for an end date in her last call and the ceasefire gave it to her (SupplyWar: +1 Rumburg standing, once)
         string thanked = $"Variable[\"{SupplyWar.VarRumburgCeaseThanked}\"] == true";
+        // a lost war (Zille city Wehzek) can still leave Rizia holding other cities, or follow a phase that took the city and lost it
+        string heldSome = "(" + string.Join(" or ", new[] { "Auremina", "Isor", "Nanta" }.Select(c => $"Variable[\"{ZilleOperation.CapturedVar(c)}\"] == true")) + ")";
+        string everCity = $"Variable[\"{VarCityEverTaken}\"] == true";
         string notThanked = $"Variable[\"{SupplyWar.VarRumburgCeaseThanked}\"] ~= true";
         foreach ((string sfx, int entry, int[] parents, string lead) in new[]
                  {
@@ -144,17 +147,29 @@ internal static class EarlyT7Diplomacy
             t.Variant("ZillePartCfT" + sfx, entry, parents, $"{partCf} and {thanked}", Beatrice,
                 $"\"{lead}A ceasefire, with the harbor in your pocket. You gave me my end date, Romus. Rumburg remembers that too.\"",
                 new[] { "RCf1", "RCf2", "RPart2" });
-            t.Variant("ZilleLostCfT" + sfx, entry, parents, $"{lostCf} and {thanked}", Beatrice,
+            t.Variant("ZilleLostCfT" + sfx, entry, parents, $"{lostCf} and {thanked} and not ({everCity})", Beatrice,
                 $"\"{lead}A ceasefire, before your army even reached the city. Still, you gave me my end date, Romus. Rumburg remembers that.\"",
+                new[] { "RCf1", "RCf2", "RDef3" });
+            t.Variant("ZilleLostCfTBack" + sfx, entry, parents, $"{lostCf} and {thanked} and {everCity}", Beatrice,
+                $"\"{lead}A ceasefire, after Smolak took the city back from you. Still, you gave me my end date, Romus. Rumburg remembers that.\"",
                 new[] { "RCf1", "RCf2", "RDef3" });
             t.Variant("ZillePartCf" + sfx, entry, parents, $"{partCf} and {notThanked}", Beatrice,
                 $"\"{lead}A ceasefire, with the harbor in your pocket and the rest still in Smolak's. Very diplomatic of you.\"",
                 new[] { "RCf1", "RCf2", "RPart2" });
-            t.Variant("ZilleLostArm" + sfx, entry, parents, lostArm, Beatrice,
+            t.Variant("ZilleLostArm" + sfx, entry, parents, $"{lostArm} and not {heldSome} and not ({everCity})", Beatrice,
                 $"\"{lead}I told my ministers Smolak would not give it up easily. I did not expect him to keep all of it.\"",
                 new[] { "RDef1", "RDef2", "RDef3" });
-            t.Variant("ZilleLostCf" + sfx, entry, parents, $"{lostCf} and {notThanked}", Beatrice,
+            t.Variant("ZilleLostArmHeld" + sfx, entry, parents, $"{lostArm} and {heldSome}", Beatrice,
+                $"\"{lead}Smolak kept the city and its harbor, I'm told. You kept some of the ground around it, and a very long line to feed.\"",
+                new[] { "RDef1", "RDef2", "RDef3" });
+            t.Variant("ZilleLostArmBack" + sfx, entry, parents, $"{lostArm} and not {heldSome} and {everCity}", Beatrice,
+                $"\"{lead}You had the city, I'm told, and then you didn't. I did not expect Smolak to take every bit of it back.\"",
+                new[] { "RDef1", "RDef2", "RDef3" });
+            t.Variant("ZilleLostCf" + sfx, entry, parents, $"{lostCf} and {notThanked} and not ({everCity})", Beatrice,
                 $"\"{lead}A ceasefire, before your army even reached the city. Smolak keeps what he holds and calls it peace, and you call it prudence.\"",
+                new[] { "RCf1", "RCf2", "RDef3" });
+            t.Variant("ZilleLostCfBack" + sfx, entry, parents, $"{lostCf} and {notThanked} and {everCity}", Beatrice,
+                $"\"{lead}A ceasefire, after Smolak took the city back from you. He keeps what he holds and calls it peace, and you call it prudence.\"",
                 new[] { "RCf1", "RCf2", "RDef3" });
         }
 
@@ -218,41 +233,41 @@ internal static class EarlyT7Diplomacy
             script: Str(VarZilleGold, "rumburg") + Inc("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", 2));
         t.Choice("Gold1P", "\"Montoro has the concession. Rumburg will have first refusal on what his mines dig up.\"", new[] { "Gold1r" },
             condition: pledged, script: Str(VarZilleGold, "rumburg") + Inc("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", 2));
-        t.Line("Gold1r", Beatrice, "\"Now that is the brother-in-law I remember.\"", new[] { "#1370" });
+        t.Line("Gold1r", Beatrice, "\"Now that is the brother-in-law I remember.\"", new[] { "RF_EndDate" });
         t.Choice("Gold2", "\"Zille's gold will go to whoever pays best.\"", new[] { "Gold2r" },
             script: Str(VarZilleGold, "market") + Inc("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", -1));
-        t.Line("Gold2r", Beatrice, "\"Spoken like an Arcasian. I'll pretend I didn't hear it.\"", new[] { "#1370" });
+        t.Line("Gold2r", Beatrice, "\"Spoken like an Arcasian. I'll pretend I didn't hear it.\"", new[] { "RF_EndDate" });
         t.Choice("Gold3", "\"Ask me again once the mines are working.\"", new[] { "Gold3r" }, script: Str(VarZilleGold, "later"));
-        t.Line("Gold3r", Beatrice, "\"I shall. Frequently.\"", new[] { "#1370" });
+        t.Line("Gold3r", Beatrice, "\"I shall. Frequently.\"", new[] { "RF_EndDate" });
 
         // divided
         t.Choice("RPart1", "\"The line will not hold forever. We'll finish what we started.\"", new[] { "RPart1r" });
         t.Line("RPart1r", Beatrice,
             "\"Then do finish it, dear. My ministers have little patience for wars that stop halfway, and even less for paying for them.\"",
-            new[] { "#1370" });
+            new[] { "RF_EndDate" });
         t.Choice("RPart2", "\"Zille's harbor is Rizian again. My father couldn't say as much.\"", new[] { "RPart2r" });
         t.Line("RPart2r", Beatrice,
             "\"No, he was the one who lent it out. Part of it back is something, I suppose. My ministers will want to know when they can " +
-            "expect the rest.\"", new[] { "#1370" });
+            "expect the rest.\"", new[] { "RF_EndDate" });
 
         // lost
         t.Choice("RDef1", "\"We lost a campaign, Beatrice. Not the claim.\"", new[] { "RDef1r" });
         t.Line("RDef1r", Beatrice,
-            "\"Then I hope the next campaign is better planned. Rumburg can't keep backing a horse that falls at every fence.\"", new[] { "#1370" });
+            "\"Then I hope the next campaign is better planned. Rumburg can't keep backing a horse that falls at every fence.\"", new[] { "RF_EndDate" });
         t.Choice("RDef2", "\"Your help came late, and it came expensive.\"", new[] { "RDef2r" },
             script: Inc("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", -1));
         t.Line("RDef2r", Beatrice,
-            "\"And yet it came, which is more than anyone else can say. Do remember that when GRACE next meets.\"", new[] { "#1370" });
+            "\"And yet it came, which is more than anyone else can say. Do remember that when GRACE next meets.\"", new[] { "RF_EndDate" });
         t.Choice("RDef3", "\"I would rather not speak of it.\"", new[] { "RDef3r" });
-        t.Line("RDef3r", Beatrice, "\"No. I don't suppose you would.\"", new[] { "#1370" });
+        t.Line("RDef3r", Beatrice, "\"No. I don't suppose you would.\"", new[] { "RF_EndDate" });
 
         // ceasefire
         t.Choice("RCf1", "\"Time, Beatrice. I've bought time.\"", new[] { "RCf1r" });
         t.Line("RCf1r", Beatrice,
-            "\"Time is the one thing Smolak has more of than you. He has no elections to fear, and no heirs to disappoint.\"", new[] { "#1370" });
+            "\"Time is the one thing Smolak has more of than you. He has no elections to fear, and no heirs to disappoint.\"", new[] { "RF_EndDate" });
         t.Choice("RCf2", "\"Fewer funerals. That's what I bought.\"", new[] { "RCf2r" });
         t.Line("RCf2r", Beatrice,
-            "\"A noble sentiment. My ministers will find it very touching, and entirely useless.\"", new[] { "#1370" });
+            "\"A noble sentiment. My ministers will find it very touching, and entirely useless.\"", new[] { "RF_EndDate" });
 
         // --- two wars: the Pales war path, right after Beatrice promises the KA-74s
         t.Line("Two1", Beatrice,

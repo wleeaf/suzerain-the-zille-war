@@ -517,9 +517,9 @@ internal static class LateT8
         Councilor(t, "LibOcc", "\"The army has governed Zille since the war under emergency decrees. The generals want to keep martial law until the last Wehzek rifle is handed in. Laurento wants an amnesty, so the Wehzek families who stayed can stop sleeping in their clothes.\"",
             new[] { "LibMartial", "LibAmnesty", "LibGenerals" }, condition: Lib);
         t.Choice("LibMartial", "\"Martial law stays, until the last Wehzek rifle is handed in.\"", new[] { "Gold" },
-            script: Set(VarOccupation, "\"martial\"") + Add("RiziaDLC.LeaningValue_Democratic", -1));
+            script: Set(VarOccupation, "\"martial\"") + Add("RiziaDLC.LeaningValue_Democratic", -1), cost: "-1 Global Perception for 3 Turns");
         t.Choice("LibAmnesty", "\"An amnesty for every conscript who lays down his arms. We are not here to punish Zille.\"", new[] { "Gold" },
-            script: Set(VarOccupation, "\"amnesty\"") + Add("RiziaDLC.LeaningValue_Democratic", 1));
+            script: Set(VarOccupation, "\"amnesty\"") + Add("RiziaDLC.LeaningValue_Democratic", 1), cost: "+1 Global Perception for 3 Turns");
         t.Choice("LibGenerals", "\"Leave it to the generals for now.\"", new[] { "Gold" }, script: Set(VarOccupation, "\"generals\""));
 
         Councilor(t, "PartLine", "\"The line holds. The Wehzeks still probe it most nights. With money for concrete and wire, the engineers can make Zille city very expensive to take back.\"",
@@ -689,9 +689,9 @@ internal static class LateT8
         string gasWait = $"{gasAny} and {V(SupplyWar.Extractions)} ~= true";
         string money = $"{V(SupplyWar.VarLespiaPaid)} == true";
         t.Line("War1Lib", Alvarez, "\"The king who took Zille back with tanks. My generals still talk about it, Your Majesty. Mostly about the bill.\"",
-            new[] { "WarPaid" }, condition: And(War, $"not ({PalesWar})", Lib), hooks: Talk.From(63));
+            new[] { "RF_Back", "WarPaid" }, condition: And(War, $"not ({PalesWar})", Lib), hooks: Talk.From(63));
         t.Line("War1", Alvarez, "\"Your war with Wehlen has stopped, if not quite ended. The Strait of Kreleck is quiet again, and my admirals are bored.\"",
-            new[] { "WarPaid" }, condition: And(War, $"not ({PalesWar})", $"not ({Lib})"), hooks: Talk.From(63));
+            new[] { "RF_Back", "WarPaid" }, condition: And(War, $"not ({PalesWar})", $"not ({Lib})"), hooks: Talk.From(63));
         // Lespia keeps books: a broken Meftiem promise or an unanswered Cavette grievance sours every line that praises the deal
         string grievance = $"Variable[\"{SupplyWar.VarLespiaGrievance}\"] == true or Variable[\"RiziaDLC.MITZ_ScrewedOverLespia\"] == true";
         string thin = "Variable[\"ZilleWar.Lespia_StraitThin\"] == true";
@@ -699,7 +699,7 @@ internal static class LateT8
         t.Line("WarGrievance", Alvarez, "\"You gave my board the Meftiem in writing, Your Majesty, and then you gave Lespia nothing at Cavette. I have written that down too. Lespia will not forget it at the next vote.\"",
             new[] { "WarReply" }, condition: And(lever, $"not ({withdrawn})", grievance));
         t.Line("WarOut", Alvarez, "\"My navy left the strait before your war was over. I know you have not forgotten. Neither has my parliament.\"",
-            new[] { "WarReply" }, condition: And(lever, withdrawn));
+            new[] { "RF_IslandV", "WarReply" }, condition: And(lever, withdrawn));
         t.Line("WarLease", Alvarez, "\"Fifty years of Caleqabiz for a few months of my navy. My parliament thinks I robbed you, Your Majesty. I tell them it was a fair price for a king in a hurry.\"",
             new[] { "WarReply" }, condition: And(lever, $"not ({withdrawn})", $"not ({grievance})", lease));
         t.Line("WarNaval", Alvarez, "\"My sailors still refuel at Caleqabiz, you know. The fighting has stopped, and they show no sign of wanting to leave. Neither, to be honest, do I.\"",

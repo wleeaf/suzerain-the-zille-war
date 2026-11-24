@@ -572,7 +572,7 @@ internal static class EarlyT5
             condition: "Variable[\"RiziaDLC.Resources_Budget\"] >= 1", script: Set(VarRefugeePolicy, "\"corridor\"") +
                     "Variable[\"RiziaDLC.Resources_Budget\"] = (Variable[\"RiziaDLC.Resources_Budget\"] or 0) - 1; " +
                     "Variable[\"RiziaDLC.LeaningValue_Democratic\"] = (Variable[\"RiziaDLC.LeaningValue_Democratic\"] or 0) + 1;",
-            cost: "-1 Budget");
+            cost: "-1 Budget, +1 Global Perception for 2 Turns");
         t.Line("B_R1a", Lucita,
             "\"It will cost us, and some of Smolak's people will walk through it with the rest. But it will look very good in " +
             "Konstantium. I'll see to it.\"", new[] { "#186" });
@@ -582,7 +582,7 @@ internal static class EarlyT5
         t.Line("B_R2a", Lucita,
             "\"That I can do. The camps at Sallabes will need more guards, and the Wehzek radio will need no more material.\"", new[] { "#186" });
         t.Choice("B_R3", "\"We have no room for them. The navy has a war to fight.\"", new[] { "B_R3a" },
-            script: Set(VarRefugeePolicy, "\"closed\""));
+            script: Set(VarRefugeePolicy, "\"closed\""), cost: "-1 Global Perception for 2 Turns");
         t.Line("B_R3a", Lucita,
             "\"Then the patrols will turn them back. I'd ask you to remember that you gave the order, Your Majesty, when the first one " +
             "doesn't make it home.\"", new[] { "#186" });
