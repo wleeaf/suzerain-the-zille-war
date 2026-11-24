@@ -184,8 +184,14 @@ internal static class WorldCodex
     /// <summary>The Turn 8 treaty kind (renounced, border, accord, recognized, terms), or empty before or without a signed treaty.</summary>
     private static string TreatyKind => Variables.GetBool(ZilleTreaty.VarSigned) ? Variables.GetString(ZilleTreaty.VarKind) ?? string.Empty : string.Empty;
 
+    /// <summary>No treaty, but the King sent Smolak the papers recognizing Wehzek Zille at the Turn 9 call (LateT9 LostYes).</summary>
+    private static bool RecognizedByPapers => !Variables.GetBool(ZilleTreaty.VarSigned) && Variables.GetBool(LateT9.VarRecognized);
+
+    private const string PapersWords = "in papers sent to Wraclawitz for the release of its frozen accounts in Zille";
+
     private static string Pending => TreatyKind switch
     {
+        _ when RecognizedByPapers => $"which Rizia has since recognized as Wehzek, {PapersWords}.",
         "border" => "the line having been made the border by the Mave Nortus Treaty.",
         "recognized" => "which Rizia has since recognized as Wehzek in the treaty signed at Wraclawitz.",
         "terms" => "pending a final settlement. Rizia signed terms at Wraclawitz but did not give up its claim.",
@@ -196,6 +202,7 @@ internal static class WorldCodex
     /// <summary>What the treaty after a ceasefire or an armistice made of the end of the war (empty without one).</summary>
     private static string TreatyAfter => TreatyKind switch
     {
+        _ when RecognizedByPapers => $" Rizia has since recognized Wehzek sovereignty over Zille, {PapersWords}.",
         "border" => " The Mave Nortus Treaty has since made the line of contact the border.",
         "accord" => " The accord signed at Mave Nortus has since settled prisoners and damages, but left the line an armistice line.",
         "recognized" => " Rizia has since recognized Wehzek sovereignty over Zille in the treaty signed at Wraclawitz.",
@@ -294,11 +301,14 @@ internal static class WorldCodex
             "war at a session of the Alliance of Nations in Konstantium, moments after President Wiktor Smolak announced that Wehlen " +
             "would not return the territory at the end of its lease.";
 
+        // planned in three phases; a liberation or a ceasefire can end it after one or two
+        int fought = Front.All.Count();
         string plan =
-            "The Rizian General Staff fought the war as a single operation, Operation Northern Crown, in three phases a month apart: the " +
+            "The Rizian General Staff planned the war as a single operation, Operation Northern Crown, in three phases a month apart: the " +
             "assault on the city of Zille and its harbor, the advance into the gold-mining hills around Auremina, and the push to the " +
-            "northern ports of Isor and Nanta. The Wehzek garrison depended on supplies shipped across the Strait of Kreleck, which made " +
-            "the strait a decisive theater of the war.";
+            "northern ports of Isor and Nanta. " +
+            (over && fought is 1 or 2 ? $"In the event, it was fought in {(fought == 1 ? "a single phase" : "two phases")}. " : string.Empty) +
+            "The Wehzek garrison depended on supplies shipped across the Strait of Kreleck, which made the strait a decisive theater of the war.";
 
         var allies = new List<string>();
         if (SupplyWar.RumburgEmbargo)
@@ -333,12 +343,14 @@ internal static class WorldCodex
         string end = Outcome(
             held.Count > 0 ? $"{Cap(heldWords)} {Front.Is(held)} under Rizian military administration, and fighting continues in the rest of the region." : null,
             "The war ended with the surrender of the last Wehzek garrisons and the return of the entire region to Rizian sovereignty, " +
-            "ending thirty years of Wehzek administration.",
+            "ending a quarter of a century of Wehzek administration.",
             (held.Count > 0
-                ? $"The war ended in a Rizian defeat. Wehlen kept the city of Zille and continues to administer {Front.WehzekWords}, though {heldWords} " +
+                ? $"The war ended in a Rizian defeat. Wehlen kept {WehzekWithCity("the city of Zille")}, though {heldWords} " +
                   $"remained in Rizian hands behind the armistice line. Wehlen has since declared the Zille Agreement void. "
                 : "The war ended in a Rizian defeat. Wehlen continues to administer the region and has since declared the Zille Agreement void. ") +
-            (TreatyKind == "recognized" ? "Rizia has since accepted that claim in the treaty signed at Wraclawitz." : "Rizia does not recognize that claim."),
+            (TreatyKind == "recognized" ? "Rizia has since accepted that claim in the treaty signed at Wraclawitz."
+                : RecognizedByPapers ? $"Rizia has since accepted that claim, {PapersWords}."
+                : "Rizia does not recognize that claim."),
             (held.Count > 0
                 ? $"The war ended in a ceasefire supervised by the Alliance of Nations, with the region divided along the line of contact and {heldWords} in Rizian hands."
                 : "The war ended in a ceasefire supervised by the Alliance of Nations, along a line close to the old border. Wehlen continues to administer the region.") +
@@ -374,6 +386,10 @@ internal static class WorldCodex
         return $"{phase} {took}{retook}{lost}.";
     }
 
+    /// <summary>The Wehzek cities with Zille city named once, as <paramref name="city"/>: "the city of Zille, Isor and Nanta".</summary>
+    private static string WehzekWithCity(string city) =>
+        Front.Join(new[] { city }.Concat(Front.Wehzek.Where(c => c != "Zille")));
+
     private static string JoinAnd(List<string> l) =>
         l.Count <= 1 ? string.Join("", l) : string.Join(", ", l.Take(l.Count - 1)) + " and " + l[^1];
 
@@ -399,12 +415,17 @@ internal static class WorldCodex
                     "The war ended with the surrender of the last Wehzek garrisons, and the territory returned to Rizian sovereignty for " +
                     "the first time since 1927.",
                     (held.Count > 0
-                        ? $"The Rizian offensive failed to take the city of Zille. Wehlen continues to administer it and {Front.WehzekWords}, while {heldWords} " +
+                        ? (Retaken("Zille") ? "Rizian troops took the city of Zille, but a Wehzek counterattack won it back. "
+                              : "The Rizian offensive failed to take the city of Zille. ") +
+                          $"Wehlen continues to administer {WehzekWithCity("the city")}, while {heldWords} " +
                           $"{Front.Is(held)} held by Rizian troops behind the armistice line. The Wehzek government has since "
-                        : "The Rizian offensive failed, and Wehlen continues to administer the territory. The Wehzek government has since ") +
+                        : (Retaken("Zille") ? "Rizian troops took the city of Zille, but a Wehzek counterattack won it back, and Wehlen " +
+                              "continues to administer the territory. The Wehzek government has since "
+                              : "The Rizian offensive failed, and Wehlen continues to administer the territory. The Wehzek government has since ")) +
                     "declared the Zille Agreement void, arguing that Rizia forfeited its claim by resorting to war. " +
                     (TreatyKind == "recognized"
                         ? "Rizia has since recognized Wehzek sovereignty over Zille in a treaty signed at Wraclawitz."
+                        : RecognizedByPapers ? $"Rizia has since recognized Wehzek sovereignty over Zille, {PapersWords}."
                         : "Rizia does not recognize the claim."),
                     "Fighting ended with a ceasefire supervised by the Alliance of Nations. " + (held.Count > 0
                         ? $"The line of contact now runs through the region, with {heldWords} under Rizian control, and the rest of the territory remains under Wehzek administration, "

@@ -137,7 +137,7 @@ internal static partial class WarDecrees
     {
         Cards.Add(new("ZilleWar_Order_ZilleCivilAdministration", "Order", "ZilleWar.DecPol_CivilAdmin", "Civil Administration in Zille City",
             "Zille city is governed by Rizian civil servants under a royal commissioner. The curfew is lifted and the city council " +
-            "meets again, while the rest of the province stays in Wehzek hands.", () => Enacted(CivilAdminKey) && Part));
+            "meets again.", () => Enacted(CivilAdminKey) && Part));
         Cards.Add(new("ZilleWar_Economy_ZilleHarborWorks", "Economy", "ZilleWar.DecPol_HarborWorks", "Harbor Works in Zille",
             "The quays, cranes and warehouses of Zille wrecked in the fighting are being rebuilt at the Crown's expense, and the " +
             "harbor mouth is being cleared of wrecks.", () => Enacted(RebuildHarborKey) && !PwHarborDone));
@@ -318,7 +318,9 @@ internal static partial class WarDecrees
                 "Lespia's trade, and perhaps its friendship, will return, and Prime Minister Alvarez may think twice before arming " +
                 "Rizia's enemies again. Those who know who planned the bombing in Zille will ask why the Crown is paying Perla, and not " +
                 "the other way round.",
-                $"{Over} && {SupplyWar.VarLespiaGrievance} == true",
+                // the settlement is paid in Aureus gas: only when Rizia has some (the field bought and kept, or the Turn 6 deal flowing)
+                $"{Over} && {SupplyWar.VarLespiaGrievance} == true && ({SupplyWar.Extractions} == true || " +
+                $"({SupplyWar.GasFieldBuy} == true && {SupplyWar.GasFieldBuyCancelled} == false))",
                 $"{Authority} -= 1;\nRiziaDLC.Diplomacy_Lespia_NegotiatingPower += 2;\n" + Std(),
                 new[] { LowAuthority(0), ("Insufficient energy to enact decree", "RiziaDLC.Resources_Energy <= 1") },
                 new[] { 0, 0, -1, 0, -1, -1, 0, -1, 1, 0, -1, 1, 1 },
@@ -394,8 +396,12 @@ internal static partial class WarDecrees
                 News(CivilAdminKey, "V", "The Curfew Lifts", NewsWire.P(
                     "For the first time since the guns fell silent, the cafés of the harbor district stayed open after nine last night, and " +
                     "nobody was asked for his papers on the way home.",
-                    $"Zille remains cut in two by {(BorderSigned ? "the new border" : "the armistice line")}, and the families on the far side of it are as far away as ever. " +
-                    "But a city run by clerks instead of colonels is a better place to wait for them."));
+                    Front.Wehzek.Count == 0
+                        // the treaty's Auremina term handed over the last Wehzek city
+                        ? "Zille is whole again, by arms and by treaty, and the families who fled the fighting are coming home to a city run " +
+                          "by clerks instead of colonels."
+                        : $"Zille remains cut in two by {(BorderSigned ? "the new border" : "the armistice line")}, and the families on the far side of it are as far away as ever. " +
+                          "But a city run by clerks instead of colonels is a better place to wait for them."));
             }
         });
     }

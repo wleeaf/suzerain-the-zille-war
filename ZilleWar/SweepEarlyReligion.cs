@@ -153,7 +153,17 @@ internal static class SweepEarlyReligion
             "\"With our soldiers already fighting in Zille, the last thing we need is increased tension that could spill over into violence.\"",
             new[] { "#1294" });
 
-        // At the Derdia menu ([1586]): vanilla's "Rizia needs help from Derdia regarding Zille" ([978]) is unreachable; at war it is the point.
+        // At the Derdia menu ([1586] -> [648] ... [659]): vanilla's "Rizia needs help from Derdia regarding Zille" ([978]) shows while
+        // the vanilla Su Omina or ATA situation stands, which the war never clears. This briefing (T6 s6) is always after the war:
+        // after a liberation there is nothing left to take; after a treaty that made the line a border or recognized Wehzek Zille,
+        // nothing left to move. Otherwise the King speaks of the line. The menu keeps [905], [1164] and [1165].
+        string settled = $"Variable[\"{ZilleTreaty.VarSigned}\"] == true and (Variable[\"{ZilleTreaty.VarKind}\"] == \"border\" or " +
+                         $"Variable[\"{ZilleTreaty.VarKind}\"] == \"recognized\")";
+        Vanilla.Require(Conv, 978, $"not ({AuditT6.Lib}) and not ({Declared} and {settled})");
+        t.Variant("Help978Over", 978, new[] { 659 }, $"{AuditT6.NotLib} and not ({settled})", Romus,
+            "\"Anyway, the point is the line in Zille is not a border yet, and Rizia may need Derdian help to move it. We just need to " +
+            "ensure it benefits them as well.\"", new[] { "#657" });
+        // (the war is never fought at this briefing, T6 s6: this choice is kept for a war somehow still on)
         t.Choice("Warriors", "\"Anyway, the point is Rizia needs Derdian warriors to finish the war in Zille. We just need to ensure it benefits them as well.\"",
             new[] { "#657" }, condition: Active, script: Set(VarDerdiaForZille, "true"), hooks: From(1586));
     }
@@ -162,14 +172,27 @@ internal static class SweepEarlyReligion
 
     private static void CeasefireBan(Talk t)
     {
-        // Under the war the ban only exists when the King accepted it among Smolak's ceasefire terms (SupplyVoices): the declaration
-        // clears any earlier ban and the Turn 5 Wehlen talks never happen, so a ban in a war game is always the ceasefire's.
-        string banByCeasefire = $"{Declared} and Variable[\"RiziaDLC.Situation_Order_Wehlen_Terrorism_BludishBan\"] == true";
+        // Vanilla [1354] is hidden while a ban stands, so the replacement lines lead to the King's war-aware [1354] (Price1354*).
+        // Under the war the ban exists only when the King granted it to Smolak: among his ceasefire terms (SupplyVoices), or as a
+        // term of the peace treaty (ZilleTreaty "Ban", offered only while there is no ban; it can come before this briefing when the
+        // war ended on Turn 4). The declaration clears any earlier ban and the Turn 5 Wehlen talks never happen.
+        const string ban = "Variable[\"RiziaDLC.Situation_Order_Wehlen_Terrorism_BludishBan\"] == true";
+        string treatyBan = $"{Declared} and {ban} and {WarFlags.L(ZilleTreaty.Term("Ban"))}";
+        string banByCeasefire = $"{Declared} and {ban} and {WarFlags.LNot(ZilleTreaty.Term("Ban"))}";
+        t.Variant("Deal634Treaty", 634, new[] { 632 }, treatyBan, Sal,
+            "\"I can only hope the border ban President Smolak asked for at the treaty table will at least spare us such disruptions in " +
+            "the future. Though it is already being condemned as a 'Golcondist border ban.'\"",
+            new[] { "#472", "Price1354Treaty", "#1356", "#1358" });
+        t.Variant("Plan1042Treaty", 1042, new[] { 1038 }, treatyBan, Sal,
+            "\"As was your agreement, at the peace table, to grant President Smolak his ban on Bludish Golcondists.\"",
+            new[] { "#1230" });
+        t.Variant("Price1354Treaty", 1354, new[] { 634, 729 }, treatyBan, Romus,
+            "\"Not this again. Closing the border was one of the terms of the peace over Zille. I would sign it again.\"", new[] { "#1355" });
 
         t.Variant("Deal634", 634, new[] { 632 }, banByCeasefire, Sal,
             "\"I can only hope the border ban President Smolak demanded for the ceasefire will at least spare us such disruptions in " +
             "the future. Though it is already being condemned as a 'Golcondist border ban.'\"",
-            new[] { "#472", "#1354", "#1356", "#1358" });
+            new[] { "#472", "Price1354", "#1356", "#1358" });
         t.Variant("Plan1042", 1042, new[] { 1038 }, banByCeasefire, Sal,
             "\"As was your acceptance of President Smolak's demand, at the ceasefire, to ban Bludish Golcondists from our lands.\"",
             new[] { "#1230" });

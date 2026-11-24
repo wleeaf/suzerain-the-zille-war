@@ -68,8 +68,9 @@ internal static class SweepEarlyT6Home
 
         // The opening ceremony.
         t.Line("Silence", Narrator,
-            "Before she began, the announcer asked the stadium to stand for a minute's silence for the soldiers who had fallen in Zille. " +
-            "Thousands of people rose as one, and for a full minute the only sound was the flags snapping above the stands.",
+            "Before she began, the announcer had asked the stadium to stand for a minute's silence for the soldiers who had fallen in " +
+            "Zille. Thousands of people had risen as one, and for a full minute the only sound was the flags snapping above the stands. " +
+            "Then she gave her speech.",
             new[] { "#485" }, condition: Declared, hooks: From(85));
 
         // "She spoke of rising polio numbers in Wehlen..."

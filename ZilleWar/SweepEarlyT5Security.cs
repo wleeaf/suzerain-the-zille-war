@@ -192,6 +192,17 @@ internal static class SweepEarlyT5Security
         t.Variant("Hugo1420", 1420, new[] { 468 }, Active, Hugo, hugoActive, new[] { "#1421" });
         t.Variant("Hugo1420Over", 1420, new[] { 468 }, Over, Hugo, hugoOver, new[] { "#1421" });
 
+        // [583] Hugo on the Bludish/Derdian ban: "maintain amicable relations with Wehlen if our ultimate goal is to regain Zille",
+        // then [775] "why we signed the agreement with Wiktor Smolak" and [579] "we must stay the course". Not after a declaration.
+        t.Variant("BanCourse", 583, new[] { 782 }, Declared, Hugo,
+            "\"We should not let these developments derail us. Lift the ban now, with Zille still unsettled, and Wraclawitz will tell the " +
+            "Alliance we opened our borders to its enemies.\"", new[] { "#577", "#578", "BanCourse579", "#580" });
+        t.Choice("BanCourse579", "\"You're right, Uncle. We stay the course until Zille is settled.\"", new[] { "#606" });
+
+        // [199] the resistance topic ("our preparations are well underway", "regain control of Zille from Wehlen's grasp"): after a
+        // liberation every Zille city is ours, and the Turn 5 funding decision is hidden too
+        Vanilla.Require(Security, 199, $"not ({WarFlags.LDeclared} and {WarFlags.L(WarFlags.Liberated)})");
+
         // [1306] Lucita on Reinhart's motive: "Sowing discord between Rizia and Wehlen..."
         t.Variant("Discord", 1306, new[] { 409, 413, 1305, 1308 }, Declared, Lucita,
             "\"Sowing discord between Rizia and Wehlen. If that was the aim, it has cost us a war in the north.\"",

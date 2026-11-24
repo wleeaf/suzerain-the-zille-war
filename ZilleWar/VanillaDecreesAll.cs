@@ -65,6 +65,61 @@ internal static class VanillaDecreesAll
         }
     }
 
+    // ------------------------------------------------------------------ decree news (every game, every step: data reloads reset it)
+
+    private const string NurityNews = "RD_V_NurityStateReligion";
+    private const string NurityVar = "RiziaDLCSupport.News_RD_V_NurityStateReligion";
+    private const string ZpanaVar = "RiziaDLCSupport.News_RD_V_ZpanaHydroelectricDam";
+
+    /// <summary>
+    /// Vanilla news slips. The Voice's Nurity item was switched on by the Zpana dam's variable, so each decree printed the
+    /// other's article: it gets its own variable (EnableNews writes true to the item's variable). The Herald's bomber purchase
+    /// was written about support vehicles; the Voice's Mave Nortus oil field "began production" on the day construction began.
+    /// </summary>
+    private static void FixDecreeNews()
+    {
+        foreach (var list in new[] { EntityDataManager.newsData, EntityDataManager.NewsData })
+        {
+            if (list == null)
+            {
+                continue;
+            }
+
+            foreach (NewsData n in list)
+            {
+                if (n?.NameInDatabase == NurityNews && n.NewsProperties != null && n.NewsProperties.IsEnabledVariable == ZpanaVar)
+                {
+                    n.NewsProperties.IsEnabledVariable = NurityVar;
+                }
+            }
+        }
+
+        RewriteNews("RD_RH_Buy_BomberPlanesOne",
+            ("a fleet of cutting-edge military support vehicles", "a fleet of modern bomber aircraft"),
+            ("aims to fortify", "strengthens"),
+            ("logistics and supply chain capabilities", "air power"));
+        RewriteNews("RD_V_BuildMaveNortusOilField",
+            ("The Mave Nortus Oil Field has officially begun production, promising economic growth and energy security.",
+             "Construction has begun on the Mave Nortus Oil Field, which the government promises will bring economic growth and energy security."));
+    }
+
+    /// <summary>Vanilla text with the given phrases replaced (a phrase not found is left alone).</summary>
+    private static void RewriteNews(string name, params (string from, string to)[] edits)
+    {
+        string text = WorldText.OriginalText("news", name);
+        if (string.IsNullOrEmpty(text))
+        {
+            return;
+        }
+
+        foreach ((string from, string to) in edits)
+        {
+            text = text.Replace(from, to, StringComparison.Ordinal);
+        }
+
+        WorldText.News(name, null, text);
+    }
+
     /// <summary>The world energy price: +1 when High, -1 when Low, 0 at Average.</summary>
     private static int PriceDelta => Variables.GetBool(High) ? 1 : Variables.GetBool(Low) ? -1 : 0;
 
@@ -309,6 +364,12 @@ internal static class VanillaDecreesAll
 
         // E20: workers' rights and the RNC's labor deregulation exclude each other
         EnabledAnd("Welfare_Citizenship_WorkersRightsAllIndustries", "ZilleWar.Decree_LaborDeregulation == false");
+        // ...also at the Turn 4 House vote (c312), whose overrule options enact the safety rules by script: once the RNC's
+        // deregulation is in force they are gone ([138], siding with the majority, stays)
+        foreach (int e in new[] { 139, 140 })
+        {
+            Vanilla.Require("Rizia/Turn 4/A_HouseOfDelegates", e, "Variable[\"ZilleWar.Decree_LaborDeregulation\"] ~= true");
+        }
     }
 
     private static void RegisterState()
@@ -522,6 +583,7 @@ internal static class VanillaDecreesAll
     /// </summary>
     internal static void Watch()
     {
+        FixDecreeNews();
         bool init = Variables.GetBool(VarInit);
         foreach (Watcher w in Watchers)
         {

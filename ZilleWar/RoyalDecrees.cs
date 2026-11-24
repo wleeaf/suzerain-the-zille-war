@@ -275,7 +275,8 @@ internal static partial class WarDecrees
                 "The factory owners and merchant houses of Porte Drazon promise new investment and new jobs within the year, and the " +
                 "Coalition will count the decree among its victories. The miners of Brenas and the dockers of Monqiz will count it " +
                 "differently, and the RPP will remind them every day who signed it.",
-                $"{PartyWindow} && RiziaDLC.Policy_RD_Welfare_WorkersRightsAllIndustries == false && RiziaDLC.MITZ_Concession_Regulations == false",
+                $"{PartyWindow} && RiziaDLC.Policy_RD_Welfare_WorkersRightsAllIndustries == false && " +
+                "RiziaDLC.Policy_RD_Welfare_WorkersRightsAllExceptMining == false && RiziaDLC.MITZ_Concession_Regulations == false",
                 $"{Authority} -= 3;\nRiziaDLC.Country_PublicOpinion -= 2;\nRiziaDLC.LeaningValue_ProBusiness += 3;\n" +
                 "RiziaDLC.PersonalValue_Malenyevist -= 2;\nRiziaDLC.RD_RNCDecreesPassed += 1;\n" + CivilianPassed + Std(),
                 new[] { LowAuthority(2) },

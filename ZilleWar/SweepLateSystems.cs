@@ -387,6 +387,14 @@ internal static class SweepLateSystems
             "observances, potentially inciting internal opposition. \n\nFurthermore, it will strain relations with Rumburg, whose " +
             "substantial Dastnurist population will take it as an affront, and hand Wehlen, our enemy over Zille, another grievance " +
             "to air in Konstantium.");
+        // first match wins: Jales and its Archsanctuary behind Wehzek lines
+        SLK.Decree("Religion_RemoveGolcondistBlasphemyLaw", () => War && Variables.GetBool(WarFlags.Occupied("Jales")), null,
+            "Embarking on a path toward spiritual inclusivity, the kingdom is granting Golcondists unrestricted access to pivotal " +
+            "religious sites such as the Archsanctuaries of Plavo and Benievon. The Archsanctuary of Jales lies behind Wehzek lines, " +
+            "and the decree will reach it only when Jales does. \n\nWhile this shift is likely to be " +
+            "welcomed by Derdians and other Golcondists dwelling in Rizia, it may also raise concerns within the Dastnurist and " +
+            "mainstream Wruhecist communities.\n\nWehlen will no doubt add it to the list of grievances it airs in Konstantium, " +
+            "though relations with Wraclawitz can hardly get any worse after Zille.");
         SLK.Decree("Religion_RemoveGolcondistBlasphemyLaw", () => War, null,
             "Embarking on a path toward spiritual inclusivity, the kingdom is granting Golcondists unrestricted access to pivotal " +
             "religious sites such as the Archsanctuaries of Plavo, Benievon, and Jales. \n\nWhile this shift is likely to be " +

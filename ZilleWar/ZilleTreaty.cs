@@ -602,11 +602,20 @@ internal static class ZilleTreaty
             t.Line("Part4" + id, Smolak, $"\"You sit in Zille city, in my gold hills and in {ours}. I sit in {mine}, and my gunboats watch your men on the beach. Either that line becomes a border, or we keep paying for it.\"",
                 new[] { "Part5" }, condition: cond);
         }
-        t.Line("Part5", Smolak, "\"I came with a list. You came with a list. Let us see whose list is longer.\"", new[] { "CeaseL", "CeaseS", "PalesL", "RicoP", "RF_Open" });
-        t.Line("CeaseL", Smolak, "\"You asked for a ceasefire before the guns were quiet. We remember who asked.\"", new[] { "PalesL", "RicoP", "RF_Open" }, condition: KingCease);
-        // Smolak offered the ceasefire himself, and the King paid his price on the telephone
+        string[] cease = { "CeaseLR", "CeaseL", "CeaseC", "CeaseS", "PalesL", "RicoP", "RF_Open" };
+        t.Line("Part5", Smolak, "\"I came with a list. You came with a list. Let us see whose list is longer.\"", cease);
+        // the King asked for the ceasefire, perhaps after turning down Smolak's own offer on the telephone
+        string refusedSmolak = $"{V(SupplyWar.VarSmolakRefused)} == true";
+        t.Line("CeaseLR", Smolak, "\"I offered you a ceasefire on the telephone, and you told me no. Then you asked for one yourself, before the guns were quiet. We remember who refused, and who asked.\"",
+            new[] { "PalesL", "RicoP", "RF_Open" }, condition: $"{KingCease} and {refusedSmolak}");
+        t.Line("CeaseL", Smolak, "\"You asked for a ceasefire before the guns were quiet. We remember who asked.\"", new[] { "PalesL", "RicoP", "RF_Open" },
+            condition: $"{KingCease} and not ({refusedSmolak})");
+        // Smolak offered the ceasefire himself, and the King paid his price on the telephone, or named his own (the counter)
+        string countered = $"{V(SupplyWar.VarSmolakAnswer)} == \"countered\"";
+        t.Line("CeaseC", Smolak, "\"You took my ceasefire on the telephone, and haggled my terms down to one. Good. Then we begin as two men who keep their word.\"",
+            new[] { "PalesL", "RicoP", "RF_Open" }, condition: $"{Cease} and {SmolakCease} and {countered}");
         t.Line("CeaseS", Smolak, "\"You took my ceasefire on the telephone, and my terms with it. Good. Then we begin as two men who keep their word.\"",
-            new[] { "PalesL", "RicoP", "RF_Open" }, condition: $"{Cease} and {SmolakCease}");
+            new[] { "PalesL", "RicoP", "RF_Open" }, condition: $"{Cease} and {SmolakCease} and not ({countered})");
         t.Line("PalesL", Smolak, "\"And half your army is in Pales. I read the newspapers too.\"", new[] { "RicoP", "RF_Open" }, condition: PalesBusy);
 
         // Ricardus was one of Smolak's full ceasefire terms: he collects him before the draft
@@ -624,8 +633,17 @@ internal static class ZilleTreaty
         t.Line("Lost1", Narr, "The message from Wraclawitz had been phrased as an invitation. Laurento advised me to treat it as one, and to go anyway.", new[] { "Lost2" }, condition: Lost);
         t.Line("Lost2", Narr, "Smolak received me in the presidential palace, in a room hung with photographs of his army in Zille. He had chosen the chairs himself. Mine was lower.", new[] { "Lost3" });
         t.Line("Lost3", Smolak, "\"Your Majesty! Welcome to Wehlen. I wanted you to see it for yourself. You were once so eager to visit.\"", new[] { "Lost4" });
+        var lostHeld = Front.Subsets("Auremina", "Isor", "Nanta").ToList();
+        string[] lostHeldIds = lostHeld.Select(h => "Lost4H" + string.Concat(h.Select(c => c[0]))).ToArray();
         t.Line("Lost4", Smolak, "\"I have written the terms myself. Recognition, reparations, a few small kindnesses. Sign what I need, and perhaps there will be room for what you need. That is how peace works, when one side has won.\"",
-            new[] { "CeaseL", "CeaseS", "PalesL", "RicoP", "RF_Open" });
+            lostHeldIds.Concat(cease).ToArray());
+        // Rizian troops still sit in Zille cities Smolak counts as his: recognition (RecognizeW) sends them home, the claim keeps them
+        for (int i = 0; i < lostHeld.Count; i++)
+        {
+            var wehzek = new[] { "Zille", "Auremina", "Isor", "Nanta" }.Where(c => !lostHeld[i].Contains(c)).ToList();
+            t.Line(lostHeldIds[i], Smolak, $"\"And your soldiers are still sitting in {Front.Join(lostHeld[i])}. Write down my victory, and they come home. Keep your claim, and they stay where my guns can see them.\"",
+                cease, condition: Front.LWehzekExactly(wehzek));
+        }
 
         // ---- the hub: what the King brings to the table before the draft
         t.Logic("Hub", new[] { "AskWon", "AskHeld", "AskFiles", "ThreatMenu", "Draft" });
@@ -634,13 +652,21 @@ internal static class ZilleTreaty
         t.Line("AskWon2", Smolak, "\"No. But I am in a position to be stubborn, and you would be amazed how far that goes. Still. Point taken.\"", new[] { "Hub" });
         t.Choice("AskHeld", "\"My flag flies over Zille city, and it is staying there. Start from that.\"", new[] { "AskHeld2" },
             condition: LK.And(Part, Not(VarAskedWon)), script: Set(VarAskedWon, "true") + AddLev(1));
-        t.Line("AskHeld2", Smolak, "\"Over half a city. I have flown flags over worse. Very well, we start from that.\"", new[] { "Hub" });
-        t.Choice("AskFiles", "\"Before we begin, read this. Smolak Square was not Rizia's doing. It was a Lespian officer's.\"", new[] { "AskFiles2" },
+        t.Line("AskHeld2", Smolak, "\"Over what my guns left of it. I have flown flags over worse. Very well, we start from that.\"", new[] { "Hub" });
+        t.Choice("AskFiles", "\"Before we begin, read this. Smolak Square was not Rizia's doing. It was a Lespian officer's.\"", new[] { "AskFiles1" },
             condition: LK.And(Files, Not(VarAskedFiles)),
             // the file Alvarez paid to bury: showing it breaks that bargain, and Perla will hear of it
             script: Set(VarAskedFiles, "true") + AddLev(1) +
                     $"if {RamiroHushed} then {V(VarRamiroShown)} = true; {Add("RiziaDLC.Diplomacy_Lespia_NegotiatingPower", -2)}end; ");
-        t.Line("AskFiles2", Narr, "Smolak read the file twice. When he looked up, something in his face had shifted, though not very far.", new[] { "AskFiles3" });
+        t.Logic("AskFiles1", new[] { "AskFiles2R", "AskFiles2" });
+        // the consulate files were his own police's work (SupplyVoices): he knows them, and only learns that the King does too
+        string policeFile = $"{V(SupplyWar.VarRamiroFound)} == true and {V(SupplyWar.VarRamiro)} ~= \"bury\"";
+        t.Line("AskFiles2R", Narr, "Smolak glanced at the first page and did not turn it. He knew the letterhead: it was his own police's.", new[] { "AskFiles3R" },
+            condition: policeFile);
+        t.Line("AskFiles3R", Smolak, "\"So that is where my investigators' file went.\" He folded the pages into his coat. \"Alvarez, everybody's friend. I will remember who showed me this. It does not change who sent the tanks.\"",
+            new[] { "AskFilesL", "Hub" });
+        t.Line("AskFiles2", Narr, "Smolak read the file twice. When he looked up, something in his face had shifted, though not very far.", new[] { "AskFiles3" },
+            condition: $"not ({policeFile})");
         t.Line("AskFiles3", Smolak, "\"Alvarez. Of course it was Alvarez. Everybody's friend.\" He folded the pages into his coat. \"I will remember who showed me this. It does not change who sent the tanks.\"", new[] { "AskFilesL", "Hub" });
         t.Line("AskFilesL", Narr, "Laurento said nothing. He did not have to: by morning, someone in Perla would know which file had crossed this table, and what it had cost them.",
             new[] { "Hub" }, condition: RamiroHushed);
@@ -796,7 +822,7 @@ internal static class ZilleTreaty
                             ? "Wehlen renounces every claim to Zille, now and forever, and the province is Rizian by law as well as by arms."
                             : "Wehlen recognizes the strait as the border between the two countries, and Zille is Rizian by law as well as by arms.") + repText,
                         extras.Length > 0 ? extras : "His Majesty's terms were firm, and they were met.",
-                        "Thirty years after a lease that should never have been signed, the last word on Zille was written by a Rizian King."));
+                        "A quarter of a century after a lease that should never have been signed, the last word on Zille was written by a Rizian King."));
                 NewsWire.Publish("Treaty", "G", "Wehlen Signs the Treaty of Kreleck", NewsWire.P(
                     "Wehlen and Rizia have signed a treaty ending the war over Zille. Wraclawitz gives up the province" + (rep > 0 ? " and pays reparations" : string.Empty) +
                     "; prisoners of war are to go home " + (On("PowFree") ? "at once." : On("PowRansom") ? "once Wehlen ransoms its officers." : "as the treaty is honored."),

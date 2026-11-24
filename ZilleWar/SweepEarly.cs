@@ -163,8 +163,8 @@ internal static class SweepEarly
                 "Someone must still ask what it cost, and who will pay the bill. The RNC will not ask. The RPP will.",
                 "The war in Zille is over, and it was not won. Someone must ask how a war declared from a podium in Konstantium ended " +
                 "like this, and who will pay for it. The RNC will not ask. The RPP will.",
-                "The guns in Zille have stopped on a line through the middle of the region. The Palace will call the city of Zille a " +
-                "victory; the families on the wrong side of the wire will call it something else. Someone must ask what half a province " +
+                "The guns in Zille have stopped on a line across the region. The Palace will call the city of Zille a " +
+                "victory; the families on the wrong side of the wire will call it something else. Someone must ask what part of a province " +
                 "cost, and who will pay for it. The RNC will not ask. The RPP will."),
             "If everyone who's reading this votes, we may even win a majority in the House of Delegates for the first time in history.",
             "So please: Vote RPP in '55!"));

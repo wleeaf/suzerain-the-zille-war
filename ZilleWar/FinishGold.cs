@@ -28,6 +28,9 @@ internal static class FinishGold
     private static readonly string NoGold = $"(Variable[\"{LateT8.VarGold}\"] == nil or Variable[\"{LateT8.VarGold}\"] == \"\")";
     private static readonly string Pledged = $"Variable[\"{SweepEarlyT6Home.VarRustyZilleGold}\"] == \"pledged\"";
     private static readonly string LespiaHelped = "((Variable[\"ZilleWar.Lever_Lespia\"] or 0) > 0 or Variable[\"ZilleWar.Lespia_StraitClosed\"] == true)";
+    /// <summary>The strait was closed for nothing, on the strength of the Ramiro file (SupplyAlvarez FreeDeal / CFree): no bill was sent.</summary>
+    private static readonly string LespiaFree = "(Variable[\"ZilleWar.Ramiro_ConfrontOutcome\"] == \"free\" and " +
+        $"Variable[\"{SupplyWar.VarLespiaGasDeal}\"] ~= true and Variable[\"{SupplyWar.VarLespiaLease}\"] ~= true)";
 
     public static void Register()
     {
@@ -68,10 +71,13 @@ internal static class FinishGold
             new[] { "Laurento" });
         t.Line("Laurento", Laurento,
             "\"Arcasia has no love for President Smolak, Your Majesty. If anything, Walker would cheer to see Wehlen humbled. Mr. Montoro's Arcasian friends are bankers, not spies.\"",
-            new[] { "Lespia_L", "Lespia_Ta", "Lespia_Ti", "Quiet_L", "Quiet_Ta", "Quiet_Ti" });
+            Cat(C("Lespia"), C("LespiaFree"), C("Quiet")));
         Councilor(t, "Lespia",
             "\"Lespia closed the Strait of Kreleck for us, and sent us the bill. Everyone knows they're Arcasia's lapdog. I'd rather Montoro's gold sat in our vaults than became the next thing Mr. Alvarez asks for.\"",
-            new[] { "#310" }, condition: LespiaHelped);
+            new[] { "#310" }, condition: And(LespiaHelped, $"not {LespiaFree}"));
+        Councilor(t, "LespiaFree",
+            "\"Lespia closed the Strait of Kreleck for us, but only because we had Mr. Ramiro's file. Everyone knows they're Arcasia's lapdog. I'd rather Montoro's gold sat in our vaults than became the next thing Mr. Alvarez asks for.\"",
+            new[] { "#310" }, condition: And(LespiaHelped, LespiaFree));
         Councilor(t, "Quiet",
             "\"Lespia hasn't lifted a finger for us in Zille, and everyone knows they're Arcasia's lapdog. Montoro has friends in both capitals. I'd rather his gold sat in our vaults.\"",
             new[] { "#310" }, condition: $"not ({LespiaHelped}) and (Variable[\"ZilleWar.Lever_Lespia\"] or 0) == 0");
@@ -118,7 +124,7 @@ internal static class FinishGold
         NewsWire.Publish("Fin_RrgWar", "RH", active ? "Royal Gold Goes to War" : "Royal Gold to Pay the War's Bills", NewsWire.P(
             "The Palace has confirmed that Rizian Royal Gold is now fully under state control, under the emergency powers the Crown took when " +
             "the war in Zille began. " + mines,
-            "\"Gold dug from Rizian soil will pay for Rizian soldiers,\" a Palace spokesman told the Herald. Bankers in Thornborough and in Arcasia " +
+            "\"Gold dug from Rizian soil will pay for Rizian soldiers,\" a Palace spokesman told the Herald. Bankers in Thornbourgh and in Arcasia " +
             "were less enthusiastic, and RRG bonds lost a third of their value by the end of the day."));
     }
 }

@@ -48,6 +48,8 @@ internal static class EarlyT7
     // After the war (always the case from Turn 7 on): liberated / divided (Zille city ours, the rest Wehzek) / lost,
     // each either by the King's own ceasefire or by the armistice when the offensive ran out.
     public static readonly string Part = LK.Part;
+    /// <summary>Part, yet every Zille city Rizian: the Mave Nortus Treaty's Aure term gave back the last one (ZilleTreaty.ApplyMap).</summary>
+    private static readonly string PartAll = $"{LK.Part} and {Front.LWehzekExactly(Array.Empty<string>())}";
     public static readonly string Lost = LK.Lost;
     public static readonly string KingCf = WarFlags.L(WarFlags.Ceasefire);
     public static readonly string NoKingCf = WarFlags.LNot(WarFlags.Ceasefire);
@@ -166,6 +168,8 @@ internal static class EarlyT7
         const string daria = "Daria de Rava";
         const string hugo = "Hugo Toras";
         var t = new Talk(conv, "ZilleWar.E7.Zille.");
+        // Part with a line still through Zille (not PartAll)
+        string partSome = $"({Part}) and not ({PartAll})";
 
         // The treaty, the probation period and the "peaceful transfer" no longer exist: the House debates the war.
         // From Turn 7 the war is over: liberated, divided (Zille city ours, the rest behind an armistice or ceasefire line)
@@ -234,10 +238,10 @@ internal static class EarlyT7
             "Pales Administrative District is. Stability first.\"", new[] { "Adm2" }, condition: Act);
         t.Line("Adm1Lib", daria,
             "\"Which brings us to what comes next. Zille has been through a war. It should be administered from Porte Drazon, the way " +
-            "the Pales Administrative District is, until it is stable.\"", new[] { "Adm2" }, condition: Lib);
+            "the Pales Administrative District is, until it is stable.\"", new[] { "Adm2" }, condition: $"{Lib} or ({PartAll})");
         t.Line("Adm1Part", daria,
             "\"Which brings us to the part of Zille that is ours. A city on an armistice line should be administered from Porte Drazon, " +
-            "the way the Pales Administrative District is, until that line is settled.\"", new[] { "Adm2Part" }, condition: Part);
+            "the way the Pales Administrative District is, until that line is settled.\"", new[] { "Adm2Part" }, condition: partSome);
         t.Line("Adm2", manus,
             "\"Objection. Zille has always been part of the province of Brenas. Brenas paid for this war with its sons. Brenas should " +
             "govern what they won back.\"", new[] { "Adm3" });
@@ -250,12 +254,12 @@ internal static class EarlyT7
         t.Line("Adm4", hugo,
             "\"You have empowered the Sazons enough without handing them a city, Your Majesty. Whatever you decide, decide it " +
             "before the generals decide it for you.\"", new[] { "AdmB", "AdmBPart", "AdmI", "AdmIPart", "AdmW", "AdmWLib", "AdmWPart" });
-        string notPart = $"not ({Part})";
+        string notPart = $"not ({Part}) or ({PartAll})";
         t.Choice("AdmBPart", "\"The city of Zille and the land we hold will return to Brenas, as before 1927.\"", new[] { "AdmBR" },
-            condition: Part,
+            condition: partSome,
             script: Str(VarZilleAdmin, "brenas") + Set(VarAdminBrenas, "true") + Set(VarAdminImperii, "false"));
         t.Choice("AdmIPart", "\"What we hold of Zille will be governed from Porte Drazon until the line is settled.\"", new[] { "AdmIR" },
-            condition: Part, script: Str(VarZilleAdmin, "imperii") + Set(VarAdminImperii, "true") + Set(VarAdminBrenas, "false"));
+            condition: partSome, script: Str(VarZilleAdmin, "imperii") + Set(VarAdminImperii, "true") + Set(VarAdminBrenas, "false"));
         t.Choice("AdmB", "\"Zille will return to Brenas, as it was before 1927.\"", new[] { "AdmBR" }, condition: notPart,
             script: Str(VarZilleAdmin, "brenas") + Set(VarAdminBrenas, "true") + Set(VarAdminImperii, "false"));
         t.Line("AdmBR", Narrator, "The RPP benches broke into applause. Beside me, Hugo closed his eyes.", new[] { "#191" });
@@ -264,9 +268,9 @@ internal static class EarlyT7
         t.Line("AdmIR", Narrator, "Daria smiled. Manus gripped the edges of his podium until his knuckles went white.", new[] { "#191" });
         t.Choice("AdmW", "\"That can wait until the war is truly behind us.\"", new[] { "AdmWR" }, condition: Act,
             script: Str(VarZilleAdmin, "undecided"));
-        t.Choice("AdmWLib", "\"That can wait until Zille is back on its feet.\"", new[] { "AdmWR" }, condition: Lib,
+        t.Choice("AdmWLib", "\"That can wait until Zille is back on its feet.\"", new[] { "AdmWR" }, condition: $"{Lib} or ({PartAll})",
             script: Str(VarZilleAdmin, "undecided"));
-        t.Choice("AdmWPart", "\"That can wait until we know where the line will stay.\"", new[] { "AdmWR" }, condition: Part,
+        t.Choice("AdmWPart", "\"That can wait until we know where the line will stay.\"", new[] { "AdmWR" }, condition: partSome,
             script: Str(VarZilleAdmin, "undecided"));
         t.Line("AdmWR", hugo, "\"Sooner rather than later, one hopes.\"", new[] { "#191" });
 
@@ -275,15 +279,28 @@ internal static class EarlyT7
         t.Line("LibM", manus,
             "\"The first matter on our agenda is a happy one. On behalf of the people of Brenas, this House congratulates His Majesty and " +
             "the Royal Army. After a quarter of a century, Zille is Rizian again.\"", new[] { "LibM2" }, condition: Rpp);
-        t.Line("LibM2", daria, "\"The RNC never doubted it for a moment, Madame Speaker.\"", new[] { "LibQ" });
+        t.Line("LibM2", daria, "\"The RNC never doubted it for a moment, Madame Speaker.\"", new[] { "LibQPick" });
         t.Line("LibD", daria,
             "\"The first matter on our agenda is a happy one. This House congratulates His Majesty and the Royal Army on the liberation " +
             "of Zille. The RNC never doubted it for a moment.\"", new[] { "LibD2" }, condition: NotRpp);
-        t.Line("LibD2", manus, "\"Neither did Brenas, Madame Speaker. Brenas paid for it.\"", new[] { "LibQ" });
+        t.Line("LibD2", manus, "\"Neither did Brenas, Madame Speaker. Brenas paid for it.\"", new[] { "LibQPick" });
+        // the Wehzeks of Zille: a question still open, unless a post-war decree (WarDecreesPostWar) has already answered it
+        const string schools = "Variable[\"ZilleWar.Decree_WehzekSchools\"] == true";
+        const string oath = "Variable[\"ZilleWar.Decree_LoyaltyOath\"] == true";
+        t.Logic("LibQPick", new[] { "LibQSchools", "LibQOath", "LibQ" });
+        t.Line("LibQSchools", manus,
+            "\"But victory brings its own questions. His Majesty has guaranteed the Wehzeks of Zille their schools and their courts, and " +
+            "my party thanks him for it. We ask only that the army and the police in Zille keep the same promise.\"", new[] { "LibQSchools2" }, condition: schools);
+        t.Line("LibQSchools2", daria,
+            "\"The decree was generous, Mr. Sazon. Smolak's police were never generous with our people.\"", new[] { "LibA1", "LibA2" });
+        t.Line("LibQOath", manus,
+            "\"But victory brings its own questions. His Majesty has asked every Wehzek official in Zille to swear or lose his post. My " +
+            "party asks for guarantees for those who will not swear, that they will be treated as subjects of the Crown, not as prisoners.\"",
+            new[] { "LibQ2" }, condition: $"{oath} and not ({schools})");
         t.Line("LibQ", manus,
             "\"But victory brings its own questions. Thousands of Wehzeks live in Zille and Nanta. They did not choose Smolak's war any " +
             "more than our soldiers did. My party asks for guarantees that they will be treated as subjects of the Crown, not as prisoners.\"",
-            new[] { "LibQ2" });
+            new[] { "LibQ2" }, condition: $"not ({schools}) and not ({oath})");
         t.Line("LibQ2", daria,
             "\"Guarantees can wait until the collaborators have been dealt with, Mr. Sazon. Smolak's police never asked our people for " +
             "their opinion.\"", new[] { "LibA1", "LibA2" });
@@ -298,7 +315,8 @@ internal static class EarlyT7
         SweepEarlyKit.ForDivided((id, cond, ours, theirs, be) =>
         {
             parts.Add("Part" + id);
-            t.Logic("Part" + id, new[] { "PartCfM" + id, "PartCfDT" + id, "PartCfD" + id, "PartArmM" + id, "PartArmD" + id }, condition: cond);
+            t.Logic("Part" + id, new[] { "PartCfM" + id, "PartCfDT" + id, "PartCfD" + id, "PartArmMT" + id, "PartArmDT" + id, "PartArmM" + id, "PartArmD" + id },
+                condition: cond);
             // A ceasefire on Turns 4-5 brings the treaty before this debate: the King may already have signed the line as a border.
             t.Line("PartCfM" + id, manus,
                 "\"Your Majesty, Zille's harbor flies our flag again, and Brenas is grateful to the army for it. But the ceasefire has left a " +
@@ -327,13 +345,28 @@ internal static class EarlyT7
             t.Line("PartArmM" + id, manus,
                 "\"Your Majesty, Zille's harbor flies our flag again, and Brenas is grateful to the army for it. But the offensive stopped " +
                 $"short of {theirs}, and the armistice has frozen the line where our soldiers stood when their strength ran out.\"",
-                new[] { "PartArmM2" + id }, condition: $"{Rpp} and {NoKingCf}");
+                new[] { "PartArmM2" + id }, condition: $"{Rpp} and {NoKingCf} and not ({LK.BorderTreaty})");
             t.Line("PartArmM2" + id, daria,
                 "\"The RNC will never accept that line as a border, Madame Speaker. The army took Zille's harbor. Given time, it can finish the work.\"",
                 new[] { "PartRef" + id });
             t.Line("PartArmD" + id, daria,
                 "\"Your Majesty, Zille's harbor flies our flag again, and the RNC salutes the army for it. But we will never accept the " +
-                "armistice line as a border. Given time, the army can finish the work.\"", new[] { "PartArmD2" + id }, condition: $"{NotRpp} and {NoKingCf}");
+                "armistice line as a border. Given time, the army can finish the work.\"", new[] { "PartArmD2" + id },
+                condition: $"{NotRpp} and {NoKingCf} and not ({LK.BorderTreaty})");
+            // no ceasefire, and the treaty (signed before this debate when the war ended on Turn 4 or 5) made the line a border
+            t.Line("PartArmMT" + id, manus,
+                "\"Your Majesty, Zille's harbor flies our flag again, and Brenas is grateful to the army for it. But the offensive stopped " +
+                $"short of {theirs}, and the treaty has since made that line a border.\"",
+                new[] { "PartArmMT2" + id }, condition: $"{Rpp} and {NoKingCf} and {LK.BorderTreaty}");
+            t.Line("PartArmMT2" + id, daria,
+                "\"The RNC never wanted that line as a border, Madame Speaker, and it will not forget who signed it.\"", new[] { "PartRef" + id });
+            t.Line("PartArmDT" + id, daria,
+                "\"Your Majesty, Zille's harbor flies our flag again, and the RNC salutes the army for it. But the RNC never wanted the " +
+                "armistice line as a border, and it will not forget who signed it.\"", new[] { "PartArmDT2" + id },
+                condition: $"{NotRpp} and {NoKingCf} and {LK.BorderTreaty}");
+            t.Line("PartArmDT2" + id, manus,
+                $"\"A border is a border, Madame Speaker. {theirs} {be} Wehzek by treaty now, and our constituents have cousins on the far " +
+                "side of it.\"", new[] { "PartRef" + id });
             t.Line("PartArmD2" + id, manus,
                 $"\"Finish it with whose sons, Madame Speaker? The offensive ran out short of {theirs}, and Brenas has buried enough of " +
                 "them already.\"", new[] { "PartRef" + id });
@@ -341,6 +374,23 @@ internal static class EarlyT7
                 $"\"Then let the people on the other side of the line decide where they belong. A referendum in {theirs}, under " +
                 "international supervision.\"", new[] { "PartH" });
         });
+        // Zille city held, and the Mave Nortus Treaty's Aure term has since given Auremina back: every Zille city is Rizian without a
+        // liberation. No line is left to vote across. A last fallback keeps the debate going should another state slip through.
+        parts.Add("PartAll");
+        t.Logic("PartAll", new[] { "PartAllM", "PartAllD" }, condition: PartAll);
+        t.Line("PartAllM", manus,
+            "\"Your Majesty, every city in Zille flies our flag again, and Brenas is grateful to the army for it. The army took the " +
+            "harbor. The Mave Nortus Treaty gave us Auremina. Brenas would like to know what we gave for it.\"",
+            new[] { "PartAllM2" }, condition: Rpp);
+        t.Line("PartAllM2", daria,
+            "\"Whatever it cost, Madame Speaker, Zille is whole again. The RNC will not quarrel with that.\"", new[] { "Tax" });
+        t.Line("PartAllD", daria,
+            "\"Your Majesty, every city in Zille flies our flag again. The army took the harbor, and the Mave Nortus Treaty brought " +
+            "Auremina home with it. The RNC salutes them both.\"", new[] { "PartAllD2" }, condition: NotRpp);
+        t.Line("PartAllD2", manus,
+            "\"Brenas is grateful, Madame Speaker. It would also like to know what was traded at Mave Nortus for the gold hills.\"",
+            new[] { "Tax" });
+        parts.Add("Tax");
         t.Logic("Part", parts.ToArray(), condition: Part);
 
         t.Line("PartH", hugo,

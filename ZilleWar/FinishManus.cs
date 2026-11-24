@@ -106,6 +106,24 @@ internal static class FinishManus
         RegisterDinner();
         RegisterTurn10();
         RegisterVinaScene();
+        RegisterAdarfo();
+    }
+
+    // ------------------------------------------------------------------ c445 Turn 9: Adarfo on what became of Manus
+
+    private static void RegisterAdarfo()
+    {
+        // Vanilla [276] reads Manus_SendToWar as the Pales war: "You sent him to die in your unjustified war." A Manus sent to the
+        // Zille line after the fighting is alive and standing guard.
+        const string conv = "Rizia/Turn 9/TalkWithAdarfo";
+        var t = new Talk(conv, "ZilleWar.Fin.Adarfo9.");
+        t.Variant("Guard", 279, new[] { 276 }, And(Alive, $"not ({Lost})"), "Adarfo Sotelato",
+            "\"You sent him to Zille to stand guard over what your war left behind, as far from Porte Drazon as you could put him. Because he advocated for people's rights.\"",
+            new[] { "#281" });
+        t.Variant("GuardLost", 279, new[] { 276 }, And(Alive, Lost), "Adarfo Sotelato",
+            "\"You sent him to stand guard on the border for your war, as far from Porte Drazon as you could put him. Because he advocated for people's rights.\"",
+            new[] { "#281" });
+        t.Register();
     }
 
     // ------------------------------------------------------------------ c395 Turn 7: Hugo, then the call
@@ -119,7 +137,7 @@ internal static class FinishManus
         t.Choice("HugoShip", "\"I could always ship him off to the front in Zille.\"", new[] { "HugoZ" }, condition: Front, hooks: Talk.From(1502));
         t.Line("HugoZ", Hugo,
             "\"A most elegant solution. Zille was taken from his family, after all. Let the Sazon heir go and win it back. I doubt he's much " +
-            "of a fighter, but his name will work wonders on the Brenas troops.\"", new[] { "#540", "#541", "#986" });
+            "of a fighter, but his charisma will work wonders on the Brenas troops.\"", new[] { "#540", "#541", "#986" });
 
         // The call.
         t.Choice("Send", "\"The time has come for you to do your patriotic duty. I am sending you to lead your province's battalion in Zille.\"",
@@ -239,12 +257,13 @@ internal static class FinishManus
 
         // The Pales victory parade: Manus is not among the Brenas troops.
         var p = new Talk(Parade, "ZilleWar.Fin.Parade10.");
+        // He is not there: skip the medals, the achievement and his return home (vanilla [372] -> [161] -> [363]...), to the tanks ([39]).
         p.Variant("Absent", 160, new[] { 158 }, And(Alive, $"not ({Lost})"), Narr,
-            "The Brenas levies marched without their commander. Manus Sazon had stayed behind with his battalion in Zille.", new[] { "#372" });
+            "The Brenas levies marched without their commander. Manus Sazon had stayed behind with his battalion in Zille.", new[] { "#39" });
         p.Variant("AbsentLost", 160, new[] { 158 }, And(Alive, Lost), Narr,
-            "The Brenas levies marched without their commander. Manus Sazon had stayed behind with his battalion on the border.", new[] { "#372" });
+            "The Brenas levies marched without their commander. Manus Sazon had stayed behind with his battalion on the border.", new[] { "#39" });
         p.Variant("Saddle", 160, new[] { 158 }, Missing, Narr,
-            "The Brenas levies marched behind a riderless horse. Their commander, Manus Sazon, had been missing since Zille.", new[] { "#372" });
+            "The Brenas levies marched behind a riderless horse. Their commander, Manus Sazon, had been missing since Zille.", new[] { "#39" });
         p.Register();
 
         // Vina freed from Pales asks after Manus.
@@ -257,8 +276,11 @@ internal static class FinishManus
         // Continued Reign: his medals.
         var c = new Talk(Continued, "ZilleWar.Fin.Continued.");
         string[] reign = { "#280", "#281", "#633" };
-        c.Variant("Medals", 278, new[] { 276 }, AliveWhole, Narr,
+        c.Variant("Medals", 278, new[] { 276 }, And(AliveWhole, Fate("decorated")), Narr,
             "You spotted Manus Sazon at the edge of the crowd. His medals from the Zille campaign gleamed on his chest.\n\nYou...", reign);
+        // sent after the fighting (T7 s7): he held the line, and no campaign medal is his
+        c.Variant("MedalsLine", 278, new[] { 276 }, And(AliveWhole, $"not ({Fate("decorated")})"), Narr,
+            "You spotted Manus Sazon at the edge of the crowd, still in the uniform he had worn on the line in Zille.\n\nYou...", reign);
         c.Variant("MedalsArm", 278, new[] { 276 }, Wounded, Narr,
             "You spotted Manus Sazon at the edge of the crowd. His medals from the Zille campaign gleamed on his chest, and he still favored his left arm.\n\nYou...",
             reign);

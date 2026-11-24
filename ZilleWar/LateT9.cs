@@ -205,13 +205,17 @@ internal static class LateT9
         t.Line("LibRefused", Beatrice, "\"I offered you Rumburg's help on the telephone, and you turned down every bit of it. And then you took Zille without me. I'm told that's called independence.\"",
             new[] { "LibGold" }, condition: And(Lib, $"not {RumburgHelped}", BeatriceCalled));
         t.Logic("LibGold", new[] { "LibGoldR", "LibGoldM", "LibMenu" });
-        t.Logic("LibMenu", new[] { "LibPay", "LibOurs" });
+        // a debt only where Rumburg helped; otherwise a promise for next time (LibOurs keeps the menu from ever being empty)
+        t.Logic("LibMenu", new[] { "LibPay", "LibNext", "LibOurs" });
         // what the King promised her in Thornbourgh about Zille's gold (EarlyT7Diplomacy)
         t.Line("LibGoldR", Beatrice, "\"And I have not forgotten that Rumburg has first refusal on the Auremina gold. My bankers have already drawn up the contract. They drew it up in Thornbourgh, the evening you said yes.\"",
             new[] { "LibMenu" }, condition: $"{V(EarlyT7.VarZilleGold)} == \"rumburg\"");
         t.Line("LibGoldM", Beatrice, "\"Zille's gold goes to whoever pays best, you told me in Thornbourgh. Very well. Rumburg will pay best. You'll find it costs you more than you think.\"",
             new[] { "LibMenu" }, condition: $"{V(EarlyT7.VarZilleGold)} == \"market\"");
-        t.Choice("LibPay", "\"Rizia pays its debts, Beatrice.\"", new[] { "LibPay2" }, script: Set(VarRumburgOwed, "true") + Add("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", 1));
+        t.Choice("LibPay", "\"Rizia pays its debts, Beatrice.\"", new[] { "LibPay2" }, condition: RumburgHelped,
+            script: Set(VarRumburgOwed, "true") + Add("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", 1));
+        t.Choice("LibNext", "\"Next time, Beatrice, Thornbourgh will be my first call.\"", new[] { "LibPay2" }, condition: $"not {RumburgHelped}",
+            script: Add("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", 1));
         t.Line("LibPay2", Beatrice, "\"I'll hold you to that when Sordland comes knocking. And it will.\"", new[] { "EmbargoGate" });
         t.Choice("LibOurs", "\"Rizian soldiers paid for Zille. Nobody else.\"", new[] { "LibOurs2" }, script: Add("RiziaDLC.Diplomacy_Rumburg_NegotiatingPower", -1));
         t.Line("LibOurs2", Beatrice, "\"Spoken like a man who has never had to buy his own oil. We'll see how long that lasts.\"", new[] { "EmbargoGate" });
@@ -309,7 +313,9 @@ internal static class LateT9
         string FedoSign = $"{WarFlags.L(CityEvents.Flag("Zille_BannerRaised"))} or {sq} == \"fedo\"";
         t.Line("SignNamed", Narr, "At the corner of the square hung the new sign the city's painters had put up the night of the victory parade. The paint was barely dry, and already someone had left flowers under it.",
             new[] { "MotherNamed" }, condition: Named);
-        t.Line("MotherNamed", Estela, "\"Your parade chose it, darling. Let the city get used to it before somebody tries to put the old one back.\"", new[] { "#83", "#79", "#80" });
+        // vanilla 79 ("before we tackle the task of renaming squares") assumes no renaming yet: the parade already did it
+        t.Line("MotherNamed", Estela, "\"Your parade chose it, darling. Let the city get used to it before somebody tries to put the old one back.\"", new[] { "#83", "NamedKeep", "#80" });
+        t.Choice("NamedKeep", "\"The name stays. Zille has had its fill of men changing the signs on it.\"", new[] { "#87" });
         t.Line("SignFedo", Narr, "At the corner of the square hung the old enamel sign our soldiers had screwed back in the first days of the war, a little crooked: Fedo Square. Someone had left flowers under it.",
             new[] { "MotherFedo" }, condition: FedoSign);
         t.Line("MotherFedo", Estela, "\"Fedo Square. Papa would have wept, darling. He never once called it by the other name, not even in front of the Wehzek governor.\"", new[] { "#256" });
@@ -399,7 +405,7 @@ internal static class LateT9
         t.Line("TreatyLost", Smolak, "\"I'm calling to be magnanimous. It's a new hobby. Our treaty is barely dry and you have not broken it yet. In Wraclawitz they are calling it a miracle.\"",
             new[] { "TreatyLost2" }, condition: And(Lost, $"{signed}\"recognized\""));
         t.Line("TreatyLost2", Smolak, "\"No, I want nothing. That is the beauty of winning. Good night, Your Majesty. Give my regards to the house in Zille. Oh, wait.\"", new[] { "Bye" });
-        t.Line("TreatyTerms", Smolak, "\"I'm calling to be magnanimous. Your terms in Wraclawitz were generous to me, Your Majesty, and I never asked you to give up your claim. Keep it. It amuses my cabinet.\"",
+        t.Line("TreatyTerms", Smolak, "\"I'm calling to be magnanimous. You signed in Wraclawitz, Your Majesty, and kept your claim to Zille when I asked for it. Keep it. It amuses my cabinet.\"",
             new[] { "Bye" }, condition: And(Lost, $"{signed}\"terms\""));
         foreach (var d in divided)
         {
@@ -440,7 +446,7 @@ internal static class LateT9
         t.Line("LostYes2", Smolak, "\"Wonderful. History will call it wisdom. Your mother will call it something else, I imagine.\"", new[] { "Bye" });
         t.Choice("LostNo", "\"Rizia will never sign Zille away again.\"", new[] { "LostNo2", "LostNo3" });
         t.Line("LostNo2", Smolak, "\"Then good luck in Pales. My boys will be watching from across the river with popcorn.\"", new[] { "Bye" }, condition: PalesWar);
-        t.Line("LostNo3", Smolak, "\"Then we will talk again next year. I am a patient man. I had Zille for thirty years.\"", new[] { "Bye" }, condition: $"not ({PalesWar})");
+        t.Line("LostNo3", Smolak, "\"Then we will talk again next year. I am a patient man. Wehlen has held Zille for twenty-five years. I can wait twenty-five more.\"", new[] { "Bye" }, condition: $"not ({PalesWar})");
 
         // liberated
         t.Line("Lib1T", Smolak, "\"I signed your treaty, Your Majesty. Every word. It says Wehlen gives up Zille. It says nothing about what the Wehzeks in Nanta think of you, and I have a very good memory for what people think.\"",

@@ -87,41 +87,60 @@ internal static class FinishT10
         // The Prime Minister's election brief: vanilla's "losing Zille" is a lost negotiation; after a war it is a ceasefire line
         // or a lost war. "also" versions follow the Pales update.
         var e = new Talk(Elections, "ZilleWar.Fin.Election10.");
-        foreach ((string name, int entry, int parent, string speaker, bool also, string part, string lost, string lib) in new[]
+        // Part may hold Zille city alone or with any of Auremina, Isor and Nanta, so no share of the province is named; after a
+        // signed border treaty it is a border, not an armistice line (and the Aure term can leave nothing on the far side of it).
+        const string manusPart = "The armistice in Zille has {0}become a rallying point for voters. Part of a province won and the rest left behind the line, and many ask whether that was worth the price.";
+        const string manusBorder = "The border treaty in Zille has {0}become a rallying point for voters, and many ask whether it was worth the price.";
+        const string manusLost = "The lost war for Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change.";
+        const string manusLib = "Zille's return has {0}become a rallying point for voters, and many ask why the Crown never asked them what they wanted.";
+        const string dariaPart = "The unfinished war in Zille has {0}become a rallying point for voters. They wanted a victory or a peace, and got a line of trenches.";
+        const string dariaBorder = "The border in Zille has {0}become a rallying point for voters. They wanted a victory or a peace, and got a border, with a treaty to keep it.";
+        const string dariaLost = "The defeat in Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change.";
+        const string dariaLib = "The return of Zille has {0}become a rallying point for voters, and their pride in the victory is tangled with anger at what it cost.";
+        const string adarfoPart = "The armistice in Zille has {0}become a rallying point for voters. Their sons died for part of a province, and they want to know who decided that was enough.";
+        const string adarfoBorder = "The border treaty in Zille has {0}become a rallying point for voters. Their sons died for that border, and they want to know who decided where it ran.";
+        // lost: Zille city is Wehzek, but the army may still hold Auremina, Isor or Nanta
+        const string adarfoLostAll = "The lost war in Zille has {0}become a rallying point for voters. Their sons died for nothing, and they know exactly whose war it was.";
+        const string adarfoLostSome = "The lost war in Zille has {0}become a rallying point for voters. Their sons died, Zille city still flies the Wehzek flag, and they know exactly whose war it was.";
+        const string adarfoLib = "Zille's return has {0}become a rallying point for voters. Their sons won it back, and they want to know whether the Crown will ever thank them.";
+        string noneHeld = And($"not ({WarFlags.L(ZilleOperation.CapturedVar("Auremina"))})", $"not ({WarFlags.L(ZilleOperation.CapturedVar("Isor"))})",
+            $"not ({WarFlags.L(ZilleOperation.CapturedVar("Nanta"))})");
+        string Q(string text, string a) => "\"" + string.Format(text, a) + "\"";
+
+        // the loss branch ([157], ZilleReturn_Success false): a divided or lost war
+        foreach ((string name, int entry, int parent, string speaker, bool also, string part, string border, string lost) in new[]
                  {
-                     ("Manus", 156, 171, "Manus Sazon", false,
-                         "The armistice in Zille has {0}become a rallying point for voters. Half a province won and half left behind the line, and many ask whether that was worth the price.",
-                         "The lost war for Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change.",
-                         "Zille's return has {0}become a rallying point for voters, and many ask why the Crown never asked them what they wanted."),
-                     ("ManusAlso", 172, 170, "Manus Sazon", true,
-                         "The armistice in Zille has {0}become a rallying point for voters. Half a province won and half left behind the line, and many ask whether that was worth the price.",
-                         "The lost war for Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change.",
-                         "Zille's return has {0}become a rallying point for voters, and many ask why the Crown never asked them what they wanted."),
-                     ("Daria", 163, 175, "Daria de Rava", false,
-                         "The unfinished war in Zille has {0}become a rallying point for voters. They wanted a victory or a peace, and got a line of trenches.",
-                         "The defeat in Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change.",
-                         "The return of Zille has {0}become a rallying point for voters, and their pride in the victory is tangled with anger at what it cost."),
-                     ("DariaAlso", 176, 174, "Daria de Rava", true,
-                         "The unfinished war in Zille has {0}become a rallying point for voters. They wanted a victory or a peace, and got a line of trenches.",
-                         "The defeat in Zille has {0}become a rallying point for voters, whose anger and deepening frustrations with the current leadership fuel their desire for change.",
-                         "The return of Zille has {0}become a rallying point for voters, and their pride in the victory is tangled with anger at what it cost."),
-                     ("Adarfo", 164, 167, "Adarfo Sotelato", false,
-                         "The armistice in Zille has {0}become a rallying point for voters. Their sons died for half a province, and they want to know who decided that was enough.",
-                         "The lost war in Zille has {0}become a rallying point for voters. Their sons died for nothing, and they know exactly whose war it was.",
-                         "Zille's return has {0}become a rallying point for voters. Their sons won it back, and they want to know whether the Crown will ever thank them."),
-                     ("AdarfoAlso", 168, 166, "Adarfo Sotelato", true,
-                         "The armistice in Zille has {0}become a rallying point for voters. Their sons died for half a province, and they want to know who decided that was enough.",
-                         "The lost war in Zille has {0}become a rallying point for voters. Their sons died for nothing, and they know exactly whose war it was.",
-                         "Zille's return has {0}become a rallying point for voters. Their sons won it back, and they want to know whether the Crown will ever thank them."),
+                     ("Manus", 156, 171, "Manus Sazon", false, manusPart, manusBorder, manusLost),
+                     ("ManusAlso", 172, 170, "Manus Sazon", true, manusPart, manusBorder, manusLost),
+                     ("Daria", 163, 175, "Daria de Rava", false, dariaPart, dariaBorder, dariaLost),
+                     ("DariaAlso", 176, 174, "Daria de Rava", true, dariaPart, dariaBorder, dariaLost),
+                     ("Adarfo", 164, 167, "Adarfo Sotelato", false, adarfoPart, adarfoBorder, null),
+                     ("AdarfoAlso", 168, 166, "Adarfo Sotelato", true, adarfoPart, adarfoBorder, null),
                  })
         {
             string a = also ? "also " : string.Empty;
             Swap(e, Elections, name, entry, new[] { parent }, speaker,
-                new S(Lib: "\"" + string.Format(lib, a) + "\"", Part: "\"" + string.Format(part, a) + "\"", Lost: "\"" + string.Format(lost, a) + "\"",
-                    PartBorder: name.StartsWith("Daria", StringComparison.Ordinal)
-                        ? "\"" + string.Format("The border in Zille has {0}become a rallying point for voters. They wanted a victory or a peace, and got a border, with a treaty to keep it.", a) + "\""
-                        : null),
-                new[] { "#177" });
+                new S(Part: Q(part, a), PartBorder: Q(border, a), Lost: lost == null ? null : Q(lost, a)), new[] { "#177" });
+            if (lost == null)
+            {
+                Swap(e, Elections, name + "N", entry, new[] { parent }, speaker, new S(Lost: Q(adarfoLostAll, a)), new[] { "#177" }, when: noneHeld);
+                Swap(e, Elections, name + "S", entry, new[] { parent }, speaker, new S(Lost: Q(adarfoLostSome, a)), new[] { "#177" },
+                    when: $"not ({noneHeld})");
+            }
+        }
+
+        // the return branch ([142], ZilleReturn_Success true, set by a liberation): Zille came back by force
+        foreach ((string name, int entry, int parent, string speaker, bool also, string lib) in new[]
+                 {
+                     ("Manus_Ret", 81, 146, "Manus Sazon", false, manusLib),
+                     ("ManusAlso_Ret", 147, 145, "Manus Sazon", true, manusLib),
+                     ("Daria_Ret", 88, 150, "Daria de Rava", false, dariaLib),
+                     ("DariaAlso_Ret", 151, 149, "Daria de Rava", true, dariaLib),
+                     ("Adarfo_Ret", 89, 154, "Adarfo Sotelato", false, adarfoLib),
+                     ("AdarfoAlso_Ret", 155, 153, "Adarfo Sotelato", true, adarfoLib),
+                 })
+        {
+            Swap(e, Elections, name, entry, new[] { parent }, speaker, new S(Lib: Q(lib, also ? "also " : string.Empty)), new[] { "#177" });
         }
 
         e.Register();

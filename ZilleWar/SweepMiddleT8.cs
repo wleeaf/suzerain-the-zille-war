@@ -21,6 +21,8 @@ internal static class SweepMiddleT8
 
     private static string ZilleOnly => EarlyT7.ZilleOnly;
     private static string NoPales => EarlyT7.NoPales;
+    /// <summary>A divided end with every Zille city Rizian (only after the treaty's Auremina term).</summary>
+    private static readonly string AllHeld = And(Part, Front.LWehzekExactly(Array.Empty<string>()));
     private const string LivingBad = "Variable[\"RiziaDLC.Situation_Welfare_LivingStandards_Bad\"] == true";
 
     /// <summary>Rumburg actually helped (oil deal, levers or credits), not merely rang.</summary>
@@ -88,12 +90,22 @@ internal static class SweepMiddleT8
         // After it: the bill.
         foreach ((string sfx, string state, string text) in new[]
                  {
+                     ("PartAll", AllHeld, "\"The treaty stopped the shelling, Your Majesty, but not the spending. We are paying to garrison all of Zille now, and the war pensions are a permanent line in my budget.\""),
                      ("Lib", Lib, "\"Zille has come home, Your Majesty, and the bill came with it. We are still paying for the shells and the fuel, and the pensions for the widows will be with us for a generation. The Auremina mines may pay some of it back, in a few years.\""),
-                     ("Part", Part, "\"The armistice stopped the shelling, Your Majesty, but not the spending. We are paying to garrison our side of the line in Zille, and the war pensions are now a permanent line in my budget.\""),
-                     ("Lost", Lost, "\"I won't dress it up, Your Majesty. The Zille campaign emptied the war chest, and all we have to show for it are the pensions for the widows.\""),
+                     ("Part", And(Part, $"not ({AllHeld})"), "\"The armistice stopped the shelling, Your Majesty, but not the spending. We are paying to garrison our side of the line in Zille, and the war pensions are now a permanent line in my budget.\""),
+                     ("Lost", And(Lost, Front.LWehzekExactly(Front.Cities)), "\"I won't dress it up, Your Majesty. The Zille campaign emptied the war chest, and all we have to show for it are the pensions for the widows.\""),
                  })
         {
             t.Line("Bill" + sfx, Elena, text, new[] { "#68" }, condition: And(state, NoPales), hooks: Talk.From(56));
+        }
+
+        // Lost only means Zille city is Wehzek: Auremina, Isor or Nanta can still be Rizian (no recognized treaty handed them back)
+        foreach (List<string> held in Front.Subsets("Auremina", "Isor", "Nanta"))
+        {
+            var wehzek = Front.Cities.Where(c => !held.Contains(c)).ToList();
+            t.Line("BillLostH" + string.Concat(held.Select(c => c[0])), Elena,
+                $"\"I won't dress it up, Your Majesty. The Zille campaign emptied the war chest. We still hold {Front.Join(held)}, and we pay to garrison {(held.Count > 1 ? "them" : "it")}, and the pensions for the widows will be with us for a generation.\"",
+                new[] { "#68" }, condition: And(Lost, Front.LWehzekExactly(wehzek), NoPales), hooks: Talk.From(56));
         }
 
         t.Register();
@@ -135,9 +147,17 @@ internal static class SweepMiddleT8
         Swap(t, conv, "Congrats107", 107, new[] { 105 }, Hugo, new S(Lib: "\"I must... congratulate you on the liberation of Zille.\""), new[] { "#108" });
         Swap(t, conv, "Sorry109", 109, new[] { 106 }, Hugo, new S(
             Ongoing: "\"I was... sorry to hear that the fighting in Zille drags on.\"",
-            Lib: "\"I was... glad to hear the guns have finally stopped in Zille.\"",
-            Part: "\"I was... sorry to hear that Zille remains cut in two.\"",
-            Lost: "\"I was... sorry to hear of our defeat in Zille.\""), new[] { "#110" });
+            Lib: "\"I was... glad to hear the guns have finally stopped in Zille.\""), new[] { "#110" });
+        Swap(t, conv, "Sorry109P", 109, new[] { 106 }, Hugo, new S(Part: "\"I was... sorry to hear that Zille remains cut in two.\""), new[] { "#110" },
+            when: $"not ({AllHeld})");
+        // every city of Zille is Rizian, the last one by treaty
+        Swap(t, conv, "Sorry109A", 109, new[] { 106 }, Hugo, new S(Part: "\"I was... glad to hear that all of Zille is ours again, at last.\""), new[] { "#110" },
+            when: AllHeld);
+        // a ceasefire without Zille city is no defeat on paper (War_Zille_Defeated stays false)
+        Swap(t, conv, "Sorry109L", 109, new[] { 106 }, Hugo, new S(Lost: "\"I was... sorry to hear of our defeat in Zille.\""), new[] { "#110" },
+            when: $"not ({Ceasefire})");
+        Swap(t, conv, "Sorry109C", 109, new[] { 106 }, Hugo, new S(Lost: "\"I was... sorry to hear that the guns stopped with Zille city still in Wehzek hands.\""),
+            new[] { "#110" }, when: Ceasefire);
         // The King's answers assumed Rico was traded for Zille.
         Swap(t, conv, "Sacrifice15", 15, new[] { 113 }, R, new S(
             Lib: "\"Our soldiers brought Zille home without him, Uncle. Rico stays where he is until I am sure of him.\""), new[] { "#116" },
@@ -145,13 +165,19 @@ internal static class SweepMiddleT8
         Swap(t, conv, "Word115", 115, new[] { 114 }, R, new S(
             Ongoing: "\"Not while this war is being fought, Uncle. Rico stays where he is until it is over.\"",
             Lib: "\"Our soldiers brought Zille home without him, Uncle. Rico stays where he is until I am sure of him.\"",
-            Part: "\"I did what I thought was right. With Wehzek soldiers still in Zille, I cannot afford to be wrong about Rico.\"",
+            Part: "\"I did what I thought was right. With Wehlen still on our border, I cannot afford to be wrong about Rico.\"",
             Lost: "\"I did what I thought was right. After Zille, I cannot afford to be wrong about anyone.\""), new[] { "#116" },
             when: "Variable[\"RiziaDLC.Rico_Extradited\"] ~= true");
-        // Rico was handed to Wehlen at the Turn 8 meeting, under the ceasefire terms the King accepted during the war (LateT8)
+        // Rico was handed to Wehlen under the full ceasefire terms the King accepted during the war (the treaty table or LateT8)
         const string gaveWord = "\"I gave Smolak my word to end the war, Uncle. I could not take it back the moment the guns went quiet.\"";
-        Swap(t, conv, "Word115X", 115, new[] { 114 }, R, new S(Lib: gaveWord, Part: gaveWord, Lost: gaveWord), new[] { "#116" },
-            when: "Variable[\"RiziaDLC.Rico_Extradited\"] == true");
+        const string promised = "Variable[\"RiziaDLC.Diplomacy_Wehlen_PromiseRicoExtradition\"] == true";
+        Swap(t, conv, "Word115X", 115, new[] { 114 }, R, new S(Part: gaveWord, Lost: gaveWord), new[] { "#116" },
+            when: $"Variable[\"RiziaDLC.Rico_Extradited\"] == true and {promised}");
+        // or the King granted Smolak's request for him at the treaty table, weeks after the guns went quiet
+        Swap(t, conv, "Word115T", 115, new[] { 114 }, R, new S(
+            Part: "\"Smolak asked for him at the table, Uncle, and I needed that treaty more than I needed my cousin.\"",
+            Lost: "\"Wehlen held the stronger hand at the table, Uncle. Rico was part of the price of the treaty.\""), new[] { "#116" },
+            when: $"Variable[\"RiziaDLC.Rico_Extradited\"] == true and not ({promised})");
         t.Register();
     }
 

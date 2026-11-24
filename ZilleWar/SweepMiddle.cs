@@ -143,9 +143,14 @@ internal static class SweepMiddle
             "With the defeat in Zille still fresh, a celebration on the water would not go unnoticed, least of all by the families of " +
             "the fallen.", true));
         // divided: Zille city is ours, the rest of the province behind an armistice line
-        Text("Turn07_Decision_RoyalYachtRestorationFinal", () => Over && !Liberated && !Lost && !YachtHospital, original => Append(
-            $"With {Front.WehzekWords} still behind the armistice line and the casualty lists still fresh in every parish, a celebration " +
-            "on the water would not go unnoticed, least of all by the families of the fallen.", true)(original));
+        // (a treaty may have turned the line into a border, or handed over the last Wehzek city: Auremina by the Aure term)
+        Text("Turn07_Decision_RoyalYachtRestorationFinal", () => Over && !Liberated && !Lost && !YachtHospital, original =>
+        {
+            string line = Variables.GetString(ZilleTreaty.VarKind) == "border" ? "the new border" : "the armistice line";
+            string lead = Front.Wehzek.Count == 0 ? "With the war in Zille only just settled" : $"With {Front.WehzekWords} still behind {line}";
+            return Append($"{lead} and the casualty lists still fresh in every parish, a celebration " +
+                "on the water would not go unnoticed, least of all by the families of the fallen.", true)(original);
+        });
 
         // the Rizania went to the Monqiz yards as a hospital ship at Turn 5: nobody is celebrating on her deck
         Text("Turn07_Decision_RoyalYachtRestorationFinal", () => Declared && YachtHospital, Append(

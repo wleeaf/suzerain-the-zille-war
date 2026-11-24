@@ -62,7 +62,7 @@ internal static class PalesIncidentPress
         AppendNews("Turn06_V_SailorsLeftToDie", s => By(s,
             "A kingdom already at war in Zille now lets foreign sailors drown off Aureus. How many wars does the Palace think it can fight before someone stops counting the dead?",
             "Victory in Zille has done nothing for the Palace's conscience. Drowning sailors are drowning sailors, whatever flag they serve.",
-            "The men who died in Zille this year died for half a province. The Palesian sailors left in the water off Aureus died for nothing at all.",
+            "The men who died in Zille this year died for part of a province. The Palesian sailors left in the water off Aureus died for nothing at all.",
             "We lost Zille this year. Must we lose our decency in the Antacean as well?"));
         AppendNews("Turn06_G_NavalIncident", s => By(s,
             "The Rizian navy is already stretched between Zille and the Antacean; analysts doubt it can hold both the strait and the blockade for long.",

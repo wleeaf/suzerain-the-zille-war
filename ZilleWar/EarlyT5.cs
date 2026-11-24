@@ -71,6 +71,7 @@ internal static class EarlyT5
 
         // Smolak's visit to Porte Drazon to sign a trade, migration and counter-terror pact.
         Vanilla.Gate("Turn05_FPnT_WehlenNegotiations", WarFlags.XPeace);
+        RegisterWehlenArms();
         // Saltana's communique "urging the speedy return of Zille" (c327 [1040]): replaced by a wartime one.
         Vanilla.HideReport("Turn05_Morella_DemandsZilleReturn", () => Variables.GetBool(WarFlags.Declared));
         // The flag that starts the wartime communique is set only on vanilla's ATA branch ([1040]); the Su Omina-only supply branch
@@ -86,6 +87,30 @@ internal static class EarlyT5
         RegisterSecurity();
         RegisterYacht();
         RegisterFlight();
+    }
+
+    // ------------------------------------------------------------------ Smolak's visit (c326, peace games) under the export controls
+
+    /// <summary>
+    /// A peace game where the Royal Arms Export Controls were signed (T2-T4): Elena cannot offer Wehlen Dator rifles, and an
+    /// arms promise cannot reach the treaty ([1449]/[1465] lead to the arms-export script only when the promise is set).
+    /// </summary>
+    private static void RegisterWehlenArms()
+    {
+        const string conv = "Rizia/Turn 5/FPnT_WehlenNegotiations";
+        const string controls = "Variable[\"ZilleWar.Decree_ArmsExportControls\"] == true";
+        var t = new Talk(conv, "ZilleWar.E5.WehlenArms.");
+        t.Variant("Regs", 161, new[] { 159 }, controls, Elena,
+            "\"Arms are off the table, of course. Your export controls forbid any sale abroad.\"", new[] { "#154" });
+        t.Variant("NoRegs", 162, new[] { 160 }, controls, Elena,
+            "\"Arms are off the table, of course. Your export controls forbid any sale abroad.\"", new[] { "#154" });
+        foreach (int e in new[] { 1449, 1465 })
+        {
+            Vanilla.AppendScript(conv, e,
+                $"if {controls} then Variable[\"RiziaDLCIsolated.Turn05_WehlenTreaty_PromiseArmsExport\"] = false end;");
+        }
+
+        t.Register();
     }
 
     // ------------------------------------------------------------------ the council after Konstantium (replaces c326's slot)
@@ -157,13 +182,18 @@ internal static class EarlyT5
         // the Alliance
         t.Line("AN1", Esquibel,
             "\"The Security Committee sat until three in the morning after Konstantium, Your Majesty. It could not agree on Smolak's " +
-            "protocol, and it has not agreed on our declaration since.\"", new[] { "AN2Backs", "AN2" }, conversant: true);
+            "protocol, and it has not agreed on our declaration since.\"", new[] { "AN2Backs", "AN2Deal", "AN2" }, conversant: true);
         t.Line("AN2Backs", Esquibel,
             "\"Lespia blocked a censure. Prime Minister Alvarez reminded the room that he had already called Wehlen's presence in Zille " +
             "an illegal occupation. Valgsland wanted us condemned. Rumburg and Derdia stood by us.\"", new[] { "AN3" }, condition: alvarezBacks);
+        // Alvarez already sold us the strait on the evening of the declaration: he is not waiting for an offer.
+        string lespiaDeal = $"(Variable[\"{SupplyWar.Count(SupplyWar.Lever.Lespia)}\"] or 0) > 0 and Variable[\"{SupplyWar.VarLespiaWithdrawn}\"] ~= true";
+        t.Line("AN2Deal", Esquibel,
+            "\"Lespia abstained. Mr. Alvarez sold us the strait, Your Majesty, not his vote in committee. Valgsland wanted us condemned. " +
+            "Rumburg and Derdia stood by us.\"", new[] { "AN3" }, condition: $"not ({alvarezBacks}) and {lespiaDeal}");
         t.Line("AN2", Esquibel,
             "\"Lespia abstained, which with Mr. Alvarez means he is waiting for an offer. Valgsland wanted us condemned. Rumburg and " +
-            "Derdia stood by us.\"", new[] { "AN3" }, condition: $"not ({alvarezBacks})");
+            "Derdia stood by us.\"", new[] { "AN3" }, condition: $"not ({alvarezBacks}) and not ({lespiaDeal})");
         t.Line("AN3", Esquibel,
             "\"So there will be no resolution. For now.\"", new[] { "AN_R1", "AN_R2", "AN_R3" });
         t.Choice("AN_R1", "\"For now is all I need.\"", new[] { "AN_R1a" });
@@ -230,13 +260,15 @@ internal static class EarlyT5
             "week. They should not be.\"", new[] { "Sal_R1", "Sal_R2" });
         t.Choice("Sal_R1", "\"They are my subjects, Grand Wiseman, and God has put them in my care. Anyone who touches them answers to me.\"", new[] { "Sal_R1a" },
             script: "Variable[\"RiziaDLC.PersonalValue_Religious\"] = (Variable[\"RiziaDLC.PersonalValue_Religious\"] or 0) + 1;");
-        t.Line("Sal_R1a", Sal, "\"Halaita. Thank you, Your Majesty.\"", new[] { "Vina1" });
+        t.Line("Sal_R1a", Sal, "\"Halaita. Thank you, Your Majesty.\"", new[] { "VinaQ" });
         t.Choice("Sal_R2", "\"This is a war about land, not faith. Smolak can say what he likes.\"", new[] { "Sal_R2a" });
-        t.Line("Sal_R2a", Sal, "\"Men rarely die for land alone, Your Majesty. Someone always tells them God wants it too.\"", new[] { "Vina1" });
+        t.Line("Sal_R2a", Sal, "\"Men rarely die for land alone, Your Majesty. Someone always tells them God wants it too.\"", new[] { "VinaQ" });
 
-        // Vina's question
+        // Vina's question, only when she sits on the council (the T1 breakfast); otherwise the council adjourns.
+        t.Logic("VinaQ", new[] { "Vina1", "Adjourn" });
         t.Line("Vina1", Vina,
-            "\"What of the people living in Zille? Has anyone asked them?\"", new[] { "V_R1", "V_R2", "V_R3" }, conversant: true);
+            "\"What of the people living in Zille? Has anyone asked them?\"", new[] { "V_R1", "V_R2", "V_R3" }, conversant: true,
+            condition: "Variable[\"RiziaDLC.Vina_OnCouncil\"] == true");
         t.Choice("V_R1", "\"They will be Rizian again, Vina. That is the answer.\"", new[] { "Vina2R" }, script: Set(VarVinaAnswer, "\"rizian\""));
         t.Choice("V_R2", "\"We will protect them. Rizians and Wehzeks alike.\"", new[] { "Vina2P" },
             script: Set(VarVinaAnswer, "\"protect\"") + "Variable[\"RiziaDLC.PersonalValue_Pacifist\"] = (Variable[\"RiziaDLC.PersonalValue_Pacifist\"] or 0) + 1;");
@@ -355,12 +387,16 @@ internal static class EarlyT5
         const string stick =
             "\"But a war can be made cheaper or dearer. Make sure Lespia walks away from the Meftiem with nothing, and Valgsland " +
             "will keep its name off the motion against you at the Alliance. Refuse, and I will draft it myself.\"";
-        void Stick(string k, string intro, string introStopped, string introNoEmbargo, int vanilla, int[] parents, string ask)
+        void Stick(string k, string intro, string introStopped, string introNoEmbargo, string introNoEmbargoStopped, int vanilla, int[] parents,
+            string ask)
         {
             t.Variant(k, vanilla, parents, $"{War} and {SupplyWar.EmbargoOn} and {Active}", Hegel, intro, new[] { k + "S" });
             // "V", not "Q": the kit's 32-bit Articy ids made StickAQ collide with StickB2.
             t.Variant(k + "V", vanilla, parents, $"{War} and {SupplyWar.EmbargoOn} and not ({Active})", Hegel, introStopped, new[] { k + "S" });
-            t.Variant(k + "N", vanilla, parents, $"{War} and not {SupplyWar.EmbargoOn}", Hegel, introNoEmbargo, new[] { k + "S" });
+            t.Variant(k + "N", vanilla, parents, $"{War} and not {SupplyWar.EmbargoOn} and {Active}", Hegel, introNoEmbargo, new[] { k + "S" });
+            // the embargo follows the city: after a ceasefire or a lost end without it there is none, and the war has stopped
+            t.Variant(k + "NS", vanilla, parents, $"{War} and not {SupplyWar.EmbargoOn} and not ({Active})", Hegel, introNoEmbargoStopped,
+                new[] { k + "S" });
             t.Line(k + "S", Hegel, stick, new[] { k + "1", k + "2", k + "3" });
             t.Choice(k + "1", "\"You are threatening a king in the middle of the night, Mr. Hegel?\"", new[] { k + "1a" });
             t.Line(k + "1a", Hegel, "\"I am describing the weather, Mr. Toras. You chose the season when your army crossed the border.\"",
@@ -378,11 +414,14 @@ internal static class EarlyT5
 
         Stick("StickA", embargo, embargoStopped,
             "\"Valgsland does not reward a kingdom that makes war on a friend of Contana, Mr. Toras. Do not mistake this call for " +
+            "friendship.\"",
+            "\"Valgsland does not reward a kingdom that made war on a friend of Contana, Mr. Toras. Do not mistake this call for " +
             "friendship.\"", 282, new[] { 276, 277, 278, 279, 281 }, "#412");
         Stick("StickB",
             "\"Valgsland cannot sell anything to a kingdom at war with a friend of Contana, Mr. Toras. Our embargo stands until your soldiers come home.\"",
             "\"Valgsland cannot sell anything to a kingdom that made war on a friend of Contana, Mr. Toras. Our embargo stands until the line is settled.\"",
-            "\"Valgsland does not reward a kingdom at war with a friend of Contana, Mr. Toras.\"", 517, new[] { 515, 587 }, "#550");
+            "\"Valgsland does not reward a kingdom at war with a friend of Contana, Mr. Toras.\"",
+            "\"Valgsland does not reward a kingdom that made war on a friend of Contana, Mr. Toras.\"", 517, new[] { 515, 587 }, "#550");
 
         // Agreeing: the promise without the aid (vanilla 386 sets PromiseITZTakeover and its journal entry).
         string promise = Set("RiziaDLC.Diplomacy_Valgsland_PromiseITZTakeover", "true") +
@@ -422,6 +461,11 @@ internal static class EarlyT5
     {
         var t = new Talk(Morella, "ZilleWar.E5.Morella.");
 
+        // After a liberation no Zille city is Wehzek: Rizia does not ask Morella's help to take Zille back ([983] -> [225], the
+        // only way to [243]/[234]), nor to extricate it from Wehzek hands ([863]). The rest of both menus stays.
+        string notLib = $"{WarFlags.LNot(WarFlags.Liberated)}";
+        Vanilla.Require(Morella, 983, notLib);
+        Vanilla.Require(Morella, 863, notLib);
         t.Variant("Ask", 225, new[] { 983 }, Active, Romus,
             "\"You know we are at war with Wehlen over Zille. We would ask for your aid in finishing it.\"", new[] { "#985" });
         t.Variant("Peaceful", 240, new[] { 234 }, War, Romus,
@@ -485,7 +529,8 @@ internal static class EarlyT5
     {
         var t = new Talk(Security, "ZilleWar.E5.Security.");
 
-        // The consulate files from Zille (SupplyVoices: Héctor Ramiro, a Lespian officer, behind the Friendship Day bombing) were
+        // The files from the Wehzek police headquarters in Zille (SupplyVoices: Smolak's own investigators traced the parts through
+        // CircuitRise Systems to Héctor Ramiro, a Lespian officer at the consulate, behind the Friendship Day bombing) were
         // read before this meeting: the Palesian parts are a footnote, not a lead. Skip the "investigate Pales" debate.
         string found = $"{War} and Variable[\"{SupplyWar.VarRamiroFound}\"] == true";
         string lucitaLeads = "Variable[\"RiziaDLC.Turn03_Security_LucitaLeadsInvestigation\"] == true";
@@ -496,15 +541,16 @@ internal static class EarlyT5
             new[] { "FilesL2" }, condition: lucitaLeads);
         t.Line("FilesL2", Lucita,
             "\"My team traced parts of the device to a Palesian electronics firm, Your Majesty. Before Zille, I would have asked you to turn the " +
-            "whole investigation on Pales. Then our soldiers opened the Lespian consulate.\"", new[] { "FilesL3" });
+            "whole investigation on Pales. Then our soldiers carried Smolak's own file on it out of the Wehzek police headquarters in Zille.\"",
+            new[] { "FilesL3" });
         t.Line("FilesL3", Lucita,
-            "\"Héctor Ramiro bought those parts through a trading house in Remaz, with Lespian money. Pales sold the wire. Lespia lit the fuse.\"",
+            "\"CircuitRise Systems sold the parts, and they were handed to Héctor Ramiro of the Lespian consulate. Pales sold the wire. Lespia lit the fuse.\"",
             new[] { "FilesHugo" });
-        t.Line("FilesT", Narrator, "Titus had the bombing file under his arm. He set it down beside the papers our soldiers had brought back from the Lespian consulate in Zille.",
+        t.Line("FilesT", Narrator, "Titus had the bombing file under his arm. He set it down beside the half-burned papers from the Wehzek police headquarters in Zille.",
             new[] { "FilesT2" }, condition: $"not ({lucitaLeads})");
         t.Line("FilesT2", "Titus Gordion",
-            "\"The Palesian parts we found came through a trading house in Remaz, sir, paid for by Héctor Ramiro with Lespian money. There is " +
-            "no Palesian connection worth your evening. The consulate papers name the man who planned it, and he answers to Perla.\"", new[] { "FilesHugo" });
+            "\"The Palesian parts came from CircuitRise Systems, sir, and went to Héctor Ramiro of the Lespian consulate. There is " +
+            "no Palesian connection worth your evening. The man who planned it answers to Perla.\"", new[] { "FilesHugo" });
         t.Line("FilesHugo", Hugo,
             "\"So Wehlen was wrong about Su Omina. I suppose that makes it a good evening for nobody.\"",
             new[] { "FilesC1", "FilesC2" });
@@ -515,14 +561,14 @@ internal static class EarlyT5
         t.Line("FilesC1L", Lucita, "\"Closed. The Ramiro file stays open in my drawer, Your Majesty. Lespia has a long reach, and I'd like to know where it ends.\"",
             new[] { "#96" }, condition: lucitaLeads);
         t.Line("FilesC1T", "Titus Gordion", "\"Closed, sir. Ramiro's file stays on my desk.\"", new[] { "#96" }, condition: $"not ({lucitaLeads})");
-        t.Choice("FilesC2", "\"Keep one man on the Palesian supplier. Someone in Remaz sold a bomb to a stranger.\"", new[] { "FilesC2L", "FilesC2T" });
+        t.Choice("FilesC2", "\"Keep one man on the Palesian supplier. Someone at CircuitRise sold the parts of a bomb to a stranger.\"", new[] { "FilesC2L", "FilesC2T" });
         t.Line("FilesC2L", Lucita, "\"One man, then. Quietly. Pales has enough reasons to dislike us this year.\"", new[] { "#96" }, condition: lucitaLeads);
         t.Line("FilesC2T", "Titus Gordion", "\"One man, sir. Quietly.\"", new[] { "#96" }, condition: $"not ({lucitaLeads})");
 
         // Closing the inquiry after the files were published: the Herald cannot say the Crown keeps silent about the perpetrators.
         const string closedText =
             "The Crown has closed the part of the kingdom's investigation into the Zille Friendship Day bombing that looked at Pales. " +
-            "A Palace spokesman said that the consulate files recovered in Zille, which name Héctor Ramiro of the Lespian consulate as the " +
+            "A Palace spokesman said that the files recovered from the Wehzek police in Zille, which name Héctor Ramiro of the Lespian consulate as the " +
             "man who planned the attack, \"leave no question worth a policeman's evening\" about who was responsible.\n\n" +
             "The bombing claimed the lives of three Wehzek civilians, and Wehlen cited it when it refused to return Zille. The Herald " +
             "notes that Wraclawitz, which held the same files for months, has yet to explain why it never published them.";
@@ -538,7 +584,7 @@ internal static class EarlyT5
         // The royal yacht (c320): the King asks Vina, bound for Pales, about the bombing. With the files read, he knows who planned it.
         var y = new Talk(Yacht, "ZilleWar.E5.YachtFiles.");
         y.Variant("Ask", 180, new[] { 182 }, found, Romus,
-            "\"A Lespian officer planned the Friendship Day bombing, but the parts for the bomb came from a Palesian factory. If you hear who in Remaz sold them, I want to know.\"",
+            "\"A Lespian officer planned the Friendship Day bombing, but the parts for the bomb came from a Palesian factory. If you hear who at CircuitRise sold them, I want to know.\"",
             new[] { "#186" });
         y.Register();
 
@@ -641,6 +687,11 @@ internal static class EarlyT5
 
     public static void OnStep()
     {
+        if (GameState.CurrentTurnNum == 5)
+        {
+            GateArmsExportOption();
+        }
+
         if (GameState.CurrentTurnNum != 5 || !Variables.GetBool(WarFlags.Declared))
         {
             return;
@@ -742,6 +793,19 @@ internal static class EarlyT5
             Variables.Set(VarSaltanaReport, true);
             // The King may already have sought the ceasefire at this turn's War Council.
             bool stopped = !WarFlow.AtWar || Variables.GetBool(WarFlags.Ceasefire);
+            // A liberation: every Zille city is Rizian, so there is no line of contact and nothing left for Wehlen to annex.
+            bool liberated = ZilleCampaign.Liberated;
+            if (liberated)
+            {
+                NewsWire.Report("E5_SaltanaCommunique", SuzerainTokenName.RiziaCountryMorella, "Morella Welcomes the End of Fighting in Zille", P(
+                    "In a diplomatic communique sent to both Porte Drazon and Wraclawitz, Prime Minister Alma Saltana has welcomed the end " +
+                    "of the fighting in Zille and called on both governments to keep the peace under the auspices of the Alliance of " +
+                    "Nations. The note places the blame for the war squarely on Wehlen's refusal to honor the 1927 lease.",
+                    "Morella's Prime Minister also warned that her government \"will not accept the transformation of the Gulf of Moridia " +
+                    "into a battlefield,\" and that any Wehzek attempt to retake the region by force would be met with heavy sanctions."));
+                return;
+            }
+
             NewsWire.Report("E5_SaltanaCommunique", SuzerainTokenName.RiziaCountryMorella,
                 stopped ? "Morella Calls for Talks Over Zille" : "Morella Calls for Ceasefire Talks Over Zille", P(
                 stopped
@@ -754,6 +818,36 @@ internal static class EarlyT5
                       "squarely on Wehlen's refusal to honor the 1927 lease.",
                 "Morella's Prime Minister also warned that her government \"will not accept the transformation of the Gulf of Moridia " +
                 "into a battlefield,\" and that any Wehzek attempt to annex the region outright would be met with heavy sanctions."));
+        }
+    }
+
+    /// <summary>
+    /// The Royal Arms Export Controls (a decree, so also in peace games): Smolak's visit (c326) cannot promise Wehlen small arms.
+    /// The "Small Arms" option of the Wehlen promises panel is hidden while the decree is in force. Entity data is reloaded with
+    /// the game's data, so the gate is put back on every Turn 5 step.
+    /// </summary>
+    private static void GateArmsExportOption()
+    {
+        const string gate = "ZilleWar.Decree_ArmsExportControls == false";
+        var options = EntityDataManager.MultipleChoiceOptionData;
+        if (options == null)
+        {
+            return;
+        }
+
+        foreach (MultipleChoiceOptionData o in options)
+        {
+            if (o?.NameInDatabase != "ExportOption_Arms" || o.MultipleChoiceOptionProperties == null ||
+                o.Path == null || !o.Path.Contains("Wehlen Negotiations Promises Panel"))
+            {
+                continue;
+            }
+
+            string c = o.MultipleChoiceOptionProperties.Condition;
+            if (c == null || !c.Contains(gate))
+            {
+                o.MultipleChoiceOptionProperties.Condition = string.IsNullOrWhiteSpace(c) ? gate : $"({c}) && {gate}";
+            }
         }
     }
 

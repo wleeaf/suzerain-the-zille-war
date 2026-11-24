@@ -140,9 +140,21 @@ internal static class LateT10
             Lib: "\"Zille has been under Rizian administration since the liberation. The Wehzek garrison is gone from the harbor, and Wraclawitz protests the loss every week.\"",
             Ongoing: "\"The war in Zille goes on. Neither army has moved the line in months, and both are losing men to it every week.\""),
             new[] { "#916" });
+        // lost, not recognized: Rizia may still hold Auremina, Isor or Nanta behind the armistice line
+        string notRecognized = $"not ({WarFlags.L(LateT9.VarRecognized)})";
         Swap(f, ForeignAffairs, "UnchangedLost", 227, new[] { 203 }, Narr, new S(
                 Lost: "\"Zille remains under Wehzek occupation. Since the war, President Smolak has doubled the garrison and fortified the hills above the city.\""),
-            new[] { "#916" }, when: $"not ({WarFlags.L(LateT9.VarRecognized)})");
+            new[] { "#916" }, when: And(notRecognized, Front.LWehzekExactly(Front.Cities)));
+        foreach (List<string> heldLost in Front.Subsets("Auremina", "Isor", "Nanta"))
+        {
+            string held = Front.Join(heldLost);
+            var wehzekLost = Front.Cities.Where(c => !heldLost.Contains(c)).ToList();
+            Swap(f, ForeignAffairs, "UnchangedLost" + string.Concat(heldLost), 227, new[] { 203 }, Narr, new S(
+                    Lost: $"\"Zille city remains under Wehzek occupation, and President Smolak has doubled the garrison there since the war. The " +
+                          $"armistice line still runs through the province: {held} {Remain(held)} under our administration.\""),
+                new[] { "#916" }, when: And(notRecognized, Front.LWehzekExactly(wehzekLost)));
+        }
+
         Swap(f, ForeignAffairs, "UnchangedRecognized", 227, new[] { 203 }, Narr, new S(
                 Lost: "\"Zille is Wehzek by treaty now. The garrison is Smolak's, and the hills above the city are fortified against any return.\""),
             new[] { "#916" }, when: WarFlags.L(LateT9.VarRecognized));
@@ -160,6 +172,17 @@ internal static class LateT10
             Part: "\"On the Wehzek side of the line, the military police are hunting down those who cheered our columns when they first crossed the river.\"",
             Lost: "\"Wehzek military police are detaining the Zilleans who flew our colors during the war. We estimate several hundred arrests.\""),
             new[] { "#920" });
+        // [923] "Wehlen has pledged to respect the terms of the amended Zille Agreement": the 1927 agreement is void in a war game,
+        // and Wehlen stays Hostile until a peace treaty. Reached when the Wehzeks in Rizia hold full rights (Smolak's ceasefire,
+        // the Lost treaty's Rights term, or a peacetime law).
+        string peace = $"Variable[\"{ZilleTreaty.VarPeace}\"] == true";
+        const string noPledge = "\"The Wehzeks living among us keep the rights we granted them, but Wraclawitz has pledged nothing in return. " +
+                                "There will be no normal relations without a peace treaty.\"";
+        const string pledge = "\"However, Wehlen has pledged to respect the treaty that ended the war. Relations remain cold, but they may yet thaw.\"";
+        Swap(f, ForeignAffairs, "Pledge", 923, new[] { 921 }, Narr, new S(Lib: noPledge, Part: noPledge, Lost: noPledge), new[] { "#924" },
+            when: $"not ({peace})");
+        Swap(f, ForeignAffairs, "PledgePeace", 923, new[] { 921 }, Narr, new S(Lib: pledge, Part: pledge, Lost: pledge), new[] { "#924" },
+            when: peace);
         f.Register();
 
         var s = new Talk(Sazon, "ZilleWar.Late.Sazon.");

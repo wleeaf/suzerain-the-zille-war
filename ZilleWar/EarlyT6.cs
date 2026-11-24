@@ -77,6 +77,12 @@ internal static class EarlyT6
 
     private static string NotSet(string v) => $"Variable[\"{v}\"] ~= true";
 
+    /// <summary>Lespia closed the strait for nothing, its price paid with the Ramiro file (SupplyAlvarez Free / CFree).</summary>
+    private const string HushedFree = "Variable[\"ZilleWar.Ramiro_ConfrontOutcome\"] == \"free\"";
+
+    /// <summary>The cold part of Lespia's mood comes from the Meftiem (the MITZ vote), not only a grievance or thin patrols.</summary>
+    private const string Meftiem = "(Variable[\"RiziaDLC.MITZ_ScrewedOverLespia\"] == true or Variable[\"ZilleWar.E5_LespiaBetrayed\"] == true)";
+
     /// <summary>Nil-safe increment of a vanilla number.</summary>
     private static string Inc(string v, int d) => $"Variable[\"{v}\"] = (Variable[\"{v}\"] or 0) + ({d}); ";
 
@@ -167,11 +173,19 @@ internal static class EarlyT6
         t.Line("LespiaBothWaysOver", Laurento,
             "\"I note that Prime Minister Alvarez voted with Pales all the same. He sold us the strait while our army was in Zille, and " +
             "now backs Reinhart in the south. I expected nothing less.\"",
-            new[] { "#29", "#30" }, condition: $"{AuditT6.Over} and {LespiaDeal} and not {LespiaCold}", hooks: From(28));
+            new[] { "#29", "#30" }, condition: $"{AuditT6.Over} and {LespiaDeal} and not {LespiaCold} and not ({HushedFree})", hooks: From(28));
+        t.Line("LespiaBothWaysFree", Laurento,
+            "\"I note that Prime Minister Alvarez voted with Pales all the same. He gave us the strait for nothing while our army was in " +
+            "Zille, to keep Mr. Ramiro out of the papers, and now backs Reinhart in the south. I expected nothing less.\"",
+            new[] { "#29", "#30" }, condition: $"{AuditT6.Over} and {LespiaDeal} and {HushedFree}", hooks: From(28));
         t.Line("LespiaBothWaysCold", Laurento,
             "\"I note that Prime Minister Alvarez voted with Pales all the same. He promised us the strait, " +
             "kept it with a sour face after the Meftiem, and now backs Reinhart in the south. I expected nothing less.\"",
-            new[] { "#29", "#30" }, condition: $"{AuditT6.Over} and {LespiaDeal} and {LespiaCold}", hooks: From(28));
+            new[] { "#29", "#30" }, condition: $"{AuditT6.Over} and {LespiaDeal} and {LespiaCold} and {Meftiem} and not ({HushedFree})", hooks: From(28));
+        t.Line("LespiaBothWaysSour", Laurento,
+            "\"I note that Prime Minister Alvarez voted with Pales all the same. He promised us the strait, " +
+            "kept it with a sour face, and now backs Reinhart in the south. I expected nothing less.\"",
+            new[] { "#29", "#30" }, condition: $"{AuditT6.Over} and {LespiaDeal} and {LespiaCold} and not {Meftiem} and not ({HushedFree})", hooks: From(28));
         t.Register();
     }
 
@@ -216,8 +230,13 @@ internal static class EarlyT6
         t.Variant("StandLiberated", 257, new[] { 239 }, Liberated, Axel,
             "\"I watched what your army did in Zille, Your Majesty. Believe me, I watched. But I am not Smolak, and Pales is not a lease.\"",
             after257);
-        t.Variant("StandLost", 257, new[] { 239 }, AuditT6.Lost, Axel,
+        // A lost war can still hold Auremina, Isor or Nanta: then the army has not come home from the province.
+        string heldRest = "(" + string.Join(" or ", new[] { "Auremina", "Isor", "Nanta" }.Select(c => $"Variable[\"ZilleWar.War_Objective_Captured_{c}\"] == true")) + ")";
+        t.Variant("StandLost", 257, new[] { 239 }, $"{AuditT6.Lost} and not {heldRest}", Axel,
             "\"Your army has only just come home from Zille without it, Your Majesty. I would not be in a hurry to start another war, in your place.\"", after257);
+        t.Variant("StandLostHeld", 257, new[] { 239 }, $"{AuditT6.Lost} and {heldRest}", Axel,
+            "\"Smolak kept the city of Zille, Your Majesty, and your army still sits on what it took of the province, behind an armistice " +
+            "line. I would not be in a hurry to start another war, in your place.\"", after257);
         t.Variant("StandPart", 257, new[] { 239 }, AuditT6.Part, Axel,
             "\"Part of Zille is still behind Smolak's line, Your Majesty. Your army has a long border to watch already. I would think twice before adding the Alca to it.\"",
             after257);
@@ -239,11 +258,20 @@ internal static class EarlyT6
             "\"My people have found no trace of Wehzek agents on the Alca, Your Majesty. If you have proof, I will look at it gladly. Without it, I cannot act on a suspicion.\"",
             new[] { "#779" });
 
-        // Lespia, with proof: the consulate files from Zille named a Lespian officer behind the Friendship Day bombing.
+        // Lespia, with proof: the Wehzek police files from Zille named a Lespian officer behind the Friendship Day bombing.
+        // The files came out of the Wehzek police headquarters in Zille (SupplyVoices). Once published, they are no secret to offer.
         string files = "((Variable[\"ZilleWar.Ramiro_Found\"] == true and Variable[\"ZilleWar.Ramiro_Choice\"] ~= \"bury\") or " +
                        "Variable[\"RiziaDLC.Zille_Discovered_LespianInvolvement\"] == true or Variable[\"RiziaDLC.Zille_Publicized_LespianInvolvement\"] == true)";
-        t.Choice("LespiaProof", "\"He has done it before. The files from the Lespian consulate in Zille name a Lespian officer behind the Friendship Day bombing. I can have copies on your desk tonight.\"",
-            new[] { "LespiaProof2" }, condition: $"{Declared} and {files}", hooks: From(793));
+        string pub = "(Variable[\"RiziaDLC.Zille_Publicized_LespianInvolvement\"] == true or Variable[\"ZilleWar.Ramiro_Choice\"] == \"publish\")";
+        t.Choice("LespiaProof", "\"He has done it before. The Wehzek police files we took in Zille name a Lespian officer behind the Friendship Day bombing. I can have copies on your desk tonight.\"",
+            new[] { "LespiaProof2" }, condition: $"{Declared} and {files} and not {pub}", hooks: From(793));
+        t.Choice("LespiaProofPub", "\"He has done it before. You have read what we published from Zille: a Lespian officer planned the Friendship Day bombing.\"",
+            new[] { "LespiaProofPub2" }, condition: $"{Declared} and {pub}", hooks: From(793));
+        t.Line("LespiaProofPub2", Narrator, "Reinhart was silent for a long moment. When he spoke again, the irony had gone out of his voice.", new[] { "LespiaProofPub3" });
+        t.Line("LespiaProofPub3", Axel,
+            "\"I have read it, Your Majesty, like everyone else on the continent. Alvarez calls it a conspiracy theory. I took it for a war " +
+            "story when it ran in your papers. Perhaps I was wrong to.\"",
+            new[] { "#798" }, script: "Variable[\"RiziaDLC.Diplomacy_Pales_NegotiatingPower\"] = (Variable[\"RiziaDLC.Diplomacy_Pales_NegotiatingPower\"] or 0) + 1; ");
         t.Line("LespiaProof2", Narrator, "Reinhart was silent for a long moment. When he spoke again, the irony had gone out of his voice.", new[] { "LespiaProof3" });
         t.Line("LespiaProof3", Axel,
             "\"The bombing in Zille. I had heard rumors, but I took them for Smolak's. If your files are what you say, Your Majesty, send them. Quietly. I would rather Perla did not know I have read them.\"",
@@ -257,11 +285,11 @@ internal static class EarlyT6
     {
         var t = new Talk("Rizia/Turn 6/A_BorderInvestigationResults", "ZilleWar.E6.Arrest.");
         t.Line("Hugo", Hugo,
-            "\"Arrest her now, Romus, and you arrest the woman running the Zille campaign. Half the officers on that front are Azaros.\"",
-            new[] { "Laurento" }, condition: Active, hooks: From(70));
+            "\"Arrest her now, Romus, and you arrest the woman who ran the Zille campaign. Half the officers who fought in Zille are Azaros.\"",
+            new[] { "Laurento" }, condition: Declared, hooks: From(70));
         t.Line("Laurento", Laurento,
-            "\"And refuse, and Pales and the whole Alliance will say that Rizia stages incidents to start its wars. While we are already " +
-            "fighting one, Your Majesty, that is a reputation we cannot afford.\"",
+            "\"And refuse, and Pales and the whole Alliance will say that Rizia stages incidents to start its wars. After Zille, Your " +
+            "Majesty, that is a reputation we cannot afford.\"",
             new[] { "#71" });
         t.Register();
     }
@@ -322,7 +350,7 @@ internal static class EarlyT6
             "away from the photographers.", new[] { "Aside1" },
             condition: $"{Declared} and {LespiaDeal} and {alvarezHere} and {NotSet(AlvarezAsideDone)}",
             script: Set(AlvarezAsideDone, "true") + $"AddConversant(\"{Alvarez}\"); AddConversant(\"{Laurento}\");", hooks: From(374));
-        t.Logic("Aside1", new[] { "Aside1On", "Aside1Over", "Aside1Cold" });
+        t.Logic("Aside1", new[] { "Aside1On", "Aside1Over", "Aside1Cold", "Aside1Sour" });
         t.Line("Aside1On", Alvarez,
             "\"My admirals have been holding the Strait of Kreleck shut for you, Your Majesty. Wehzek tankers are rusting at anchor in " +
             "Wraclawitz because of it. And today, the Aureus gas starts flowing.\"", new[] { "Aside2" }, condition: $"{Active} and not {LespiaCold}");
@@ -333,7 +361,11 @@ internal static class EarlyT6
         t.Line("Aside1Cold", Alvarez,
             "\"My admirals watched the Strait of Kreleck while your army was in Zille, Your Majesty, though not with the warmth I " +
             "promised you. You will remember the Meftiem. So do I. And today, the Aureus gas starts flowing.\"",
-            new[] { "Aside2" }, condition: $"{AuditT6.Over} and {LespiaCold}");
+            new[] { "Aside2" }, condition: $"{AuditT6.Over} and {LespiaCold} and {Meftiem}");
+        t.Line("Aside1Sour", Alvarez,
+            "\"My admirals watched the Strait of Kreleck while your army was in Zille, Your Majesty, though not with the warmth I " +
+            "once promised you. And today, the Aureus gas starts flowing.\"",
+            new[] { "Aside2" }, condition: $"{AuditT6.Over} and {LespiaCold} and not {Meftiem}");
         t.Line("Aside2", Alvarez,
             "\"I don't hold grudges. I hold invoices. Sell Lespia six units of the Aureus share for six billion guilders, between friends?\"",
             new[] { "Pay", "Caleqabiz", "PaidMoney", "RamiroFree", "RamiroFile", "Refuse" });
@@ -473,11 +505,17 @@ internal static class EarlyT6
             "Reinhart destroyers in the south.\"", new[] { "Customers2" }, condition: $"{Active} and {LespiaDeal}", hooks: From(167, 189));
         t.Line("Customers1Over", Lucita,
             "\"And yes, Your Majesty, those are the same Lespian shipyards. Alvarez sold us the strait while we fought for Zille, and " +
-            "sold Reinhart destroyers all the while.\"", new[] { "Customers2" }, condition: $"{AuditT6.Over} and {LespiaDeal} and not {LespiaCold}", hooks: From(167, 189));
+            "sold Reinhart destroyers all the while.\"", new[] { "Customers2" },
+            condition: $"{AuditT6.Over} and {LespiaDeal} and not {LespiaCold} and not ({HushedFree})", hooks: From(167, 189));
         t.Line("Customers1Cold", Lucita,
             "\"And yes, Your Majesty, those are the same Lespian shipyards. Alvarez promised us the strait while we fought for Zille, " +
-            "kept it with a sour face after the Meftiem, and sold Reinhart destroyers all the while.\"", new[] { "Customers2" },
-            condition: $"{AuditT6.Over} and {LespiaDeal} and {LespiaCold}", hooks: From(167, 189));
+            "kept it with a sour face, and sold Reinhart destroyers all the while.\"", new[] { "Customers2" },
+            condition: $"{AuditT6.Over} and {LespiaDeal} and {LespiaCold} and not ({HushedFree})", hooks: From(167, 189));
+        // the strait was had for nothing, with the Ramiro file (SupplyAlvarez Free / CFree): nothing was sold
+        t.Line("Customers1Free", Lucita,
+            "\"And yes, Your Majesty, those are the same Lespian shipyards. Alvarez gave us the strait for nothing while we fought for " +
+            "Zille, with Ramiro's file in our hands, and sold Reinhart destroyers all the while.\"", new[] { "Customers2" },
+            condition: $"{AuditT6.Over} and {LespiaDeal} and {HushedFree}", hooks: From(167, 189));
         t.Line("Customers2", Taddeus, "\"Lespia does not have allies, Lieutenant. It has customers.\"", new[] { "#177" });
         t.Register();
     }

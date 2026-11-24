@@ -170,10 +170,12 @@ internal static class AnDeclaration
             "\"Valgsland has heard enough to know what it thinks of this, Your Majesty. It will say so when the time comes.\"", Next("Azmal1"), conversant: true));
         inj.AddNode(Line("Azmal1", Azmal,
             "\"Derdia has long said that the occupation of Zille was a wound that would not close on its own.\"", Next("ReinhartBlockade", "ReinhartFriendly", "Reinhart1"), conversant: true));
-        // Reinhart's tone follows Rizia's dealings with Pales: a gas deal or good relations soften him.
+        // Reinhart's tone follows Rizia's dealings with Pales: a gas deal or good relations soften him. Lespia's 25 percent deal
+        // (vanilla c314) comes only when Rizia let Pales sell the field to Lespia, and it clears the Cede flag on one path.
         const string palesFriendly =
             "(Variable[\"RiziaDLC.Diplomacy_Pales_GasField_Buy\"] == true and Variable[\"RiziaDLC.Diplomacy_Pales_GasField_BuyCancelled\"] ~= true) or " +
             "(Variable[\"RiziaDLC.Diplomacy_Pales_GasField_Cede\"] == true and Variable[\"RiziaDLC.Diplomacy_Pales_GasField_CedeCancelled\"] ~= true) or " +
+            "Variable[\"RiziaDLC.Diplomacy_Lespia_GasField_25PercentDeal\"] == true or " +
             "Variable[\"RiziaDLC.CountryRelation_Pales_Friendly\"] == true or Variable[\"RiziaDLC.CountryRelation_Pales_Allied\"] == true";
         const string blockade = "Variable[\"RiziaDLC.Diplomacy_Pales_Military_BlockDrillship\"] == true";
         inj.AddNode(Line("ReinhartBlockade", Reinhart,

@@ -110,8 +110,8 @@ internal static partial class WarDecrees
         new(Reserves, "Order", OrderPath, "Call Up the Brenas Reserve Divisions [RNC Proposal]",
             "-2 Authority\n-2 Budget\n+750 Military Manpower\n-1 Budget Per Turn While Under Arms",
             "The reserve divisions of Brenas, men who served their conscription years and went home to the mines and farms of the " +
-            "province, are recalled to the colors for the duration of the campaign in Zille. Mustered in Sallabes and Mave Nortus, a " +
-            "day's march from the front, they will refill the ranks that the first battles have thinned.\n\n" +
+            "province, are recalled to the colors for the duration of the campaign in Zille. Mustered in Sallabes and Iza, a " +
+            "day's march from the front, they will refill the ranks as the fighting thins them.\n\n" +
             "The call-up will put thousands of men under arms within weeks, but the Crown must pay and feed them until it sends them " +
             "home, and the pits and fields of Brenas will be worked by their wives and fathers in the meantime. House Sazon will not " +
             "forget whose province gave its sons first, nor how long the Crown kept them.",
@@ -281,7 +281,7 @@ internal static partial class WarDecrees
         new(Pensions, "Welfare", WelfarePath, "Pensions for the Veterans of Zille",
             "-2 Budget\n-1 Budget Per Turn\n+1 Authority Per Turn",
             "Every soldier who served in the Zille campaign will receive a royal pension and a medal struck at the Porte Drazon mint, " +
-            "and the widows and orphans of the fallen will be pensioned by the Crown for life. The military hospitals of Mave Nortus " +
+            "and the widows and orphans of the fallen will be pensioned by the Crown for life. The military hospitals of Iza " +
             "and Porte Drazon will treat the wounded of the campaign free of charge.\n\n" +
             "The pensions will weigh on the treasury for years, but the men who fought in Zille, and their families, will know that " +
             "the Crown which sent them there has not forgotten them.",
@@ -1203,7 +1203,7 @@ internal static partial class WarDecrees
     {
         News(Reserves, "RH", "The Reserves of Brenas Answer the Call", NewsWire.P(
             "By royal decree, the reserve divisions of Brenas have been recalled to the colors for the duration of the campaign in " +
-            "Zille. By noon yesterday the depots in Sallabes and Mave Nortus were turning men away for want of uniforms.",
+            "Zille. By noon yesterday the depots in Sallabes and Iza were turning men away for want of uniforms.",
             "\"They gave Zille away while my father was still working the pits,\" one miner told the Royal Herald outside the Sallabes " +
             "depot. \"I would like to see it Rizian before I go back down.\""));
         News(Reserves, "V", "Brenas Sends Its Miners to the Front", NewsWire.P(
@@ -1225,13 +1225,13 @@ internal static partial class WarDecrees
             News(Censorship, "V", "White Columns", NewsWire.P(
                 "Readers of this morning's Voice of Rizia will find white columns where our reporting from Zille should have been. The " +
                 "censors of the General Staff removed the casualty figures, the names of two regiments and a photograph of a field " +
-                "hospital outside Mave Nortus.",
+                "hospital outside Iza.",
                 "We have left the spaces empty, so that our readers can see how much of the war they are no longer allowed to see."));
         }
 
         News(Censorship, "G", "Rizia Imposes Military Censorship", NewsWire.P(
             "PORTE DRAZON, RIZIA - The Rizian government has placed all reporting on its war with Wehlen under military censorship. " +
-            "Foreign correspondents in Mave Nortus have been told that their dispatches must be cleared by army officers before they " +
+            "Foreign correspondents in Iza have been told that their dispatches must be cleared by army officers before they " +
             "are cabled abroad.",
             "The Valgish foreign ministry called the decree \"the act of a government with something to hide.\""));
     });
@@ -1282,7 +1282,8 @@ internal static partial class WarDecrees
                 "Officers at the front report that the first men came over before dawn, cold, hungry and glad to be done with " +
                 "Smolak's war."));
             News(Deserters, "G", "Wehzek Soldiers Cross the Lines in Zille", NewsWire.P(
-                "MAVE NORTUS, RIZIA - Rizia's offer of safe conduct to Wehzek deserters appears to be bearing fruit. Small groups of " +
+                // the dateline is a Rizian town on the line: Mave Nortus unless Wehzek troops hold it
+                (Variables.GetBool(WarFlags.Occupied("Mave Nortus")) ? "IZA" : "MAVE NORTUS") + ", RIZIA - Rizia's offer of safe conduct to Wehzek deserters appears to be bearing fruit. Small groups of " +
                 "soldiers from the Zille garrison have been seen crossing to Rizian positions under white flags.",
                 "Wraclawitz radio called the offer \"bribery\" and announced that the families of deserters would lose their state pensions."));
         });
@@ -1384,7 +1385,7 @@ internal static partial class WarDecrees
                 News(LiftCensor, "V", "The White Columns Are Filled", NewsWire.P(
                     "For the first time since the war began, this newspaper goes to print without an officer of the General Staff reading " +
                     "over our shoulder. Today we publish what the censors held back: the casualty lists, the names of the regiments, " +
-                    "and the photograph from the field hospital outside Mave Nortus.",
+                    "and the photograph from the field hospital outside Iza.",
                     Lib
                         ? "The victory in Zille was real, and so was its price. Our readers may now see both."
                         : Lost

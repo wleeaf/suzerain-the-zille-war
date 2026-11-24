@@ -42,6 +42,10 @@ internal static class SweepLateTalk
 
     private const string RumburgHelped = LateT9.LuaRumburgHelped;
 
+    /// <summary>A divided end with every Zille city Rizian (only after the treaty's Auremina term).</summary>
+    private static readonly string AllHeld = And(Part, Front.LWehzekExactly(Array.Empty<string>()));
+    private static readonly string BorderKind = $"Variable[\"{ZilleTreaty.VarKind}\"] == \"border\"";
+
     public static void Register()
     {
         RegisterTurn9();
@@ -59,9 +63,15 @@ internal static class SweepLateTalk
         Swap(h, Hegel, "Boot65", 65, new[] { 63 }, "Emmerich Hegel (R)", new S(
             Ongoing: "\"And with your war of conquest in Zille, Rizia is wearing the biggest boot of all.\"",
             Lib: "\"And with your war of conquest in Zille, Rizia is wearing the biggest boot of all.\"",
-            Part: "\"And with your war of conquest in Zille, Rizia is wearing the biggest boot of all. Half a province is still a conquest.\"",
             Lost: "\"And with your failed war of conquest in Zille, Rizia has shown everyone the boot it would like to wear.\""),
             new[] { "#86", "#81", "#82", "#94" });
+        // A divided end holds one to four of the Zille cities (all four after the treaty's Auremina term): no fraction.
+        Swap(h, Hegel, "Boot65Some", 65, new[] { 63 }, "Emmerich Hegel (R)", new S(
+            Part: "\"And with your war of conquest in Zille, Rizia is wearing the biggest boot of all. Part of a province is still a conquest.\""),
+            new[] { "#86", "#81", "#82", "#94" }, when: $"not ({AllHeld})");
+        Swap(h, Hegel, "Boot65All", 65, new[] { 63 }, "Emmerich Hegel (R)", new S(
+            Part: "\"And with your war of conquest in Zille, Rizia is wearing the biggest boot of all. A province taken by war and kept by treaty is still a conquest.\""),
+            new[] { "#86", "#81", "#82", "#94" }, when: AllHeld);
         Swap(h, Hegel, "Boot64", 64, new[] { 62 }, "Emmerich Hegel (R)",
             new S(
                 Ongoing: "\"And with two wars of conquest, one in Pales and one in Zille, Rizia is wearing the biggest boot of all.\"",
@@ -90,7 +100,7 @@ internal static class SweepLateTalk
         var m = new Talk(Mitz, "ZilleWar.SL.T9.Mitz.");
         Swap(m, Mitz, "Waste", 285, new[] { 284 }, R, new S(
             Lib: "\"I'm ready for Morella to stop wasting my time. I have a province to rebuild.\"",
-            Part: "\"I'm ready for Morella to stop wasting my time. I have an armistice line to hold.\"",
+            Part: "\"I'm ready for Morella to stop wasting my time. I have a garrison in Zille to answer for.\"",
             Lost: "\"I'm ready for Morella to stop wasting my time. I have enough to answer for at home.\""),
             new[] { "#290" });
         m.Register();
@@ -107,15 +117,22 @@ internal static class SweepLateTalk
             new[] { "#37" }, condition: And(Ongoing, NoPalesWar), hooks: Talk.From(46));
         a.Register();
 
-        // Taddeus's birthday toast to the Queen Mother, who was born in Zille (vanilla 510 "men and women in uniform").
+        // Taddeus's birthday toast to the Queen Mother, who was born in Zille (vanilla 510 "men and women in uniform"). Vanilla
+        // reaches 510 only in a Pales war (Rumburg asked for a ceasefire), and it leads on to Taddeus "out of Pales" (41) and
+        // Carlos "handling operations in Pales" (828): the toasts replace it only there. Without a Pales war Carlos gives the
+        // toast (vanilla 514, "Camp Domus").
         var g = new Talk(Gather, "ZilleWar.SL.T10.Gather.");
-        string noPalesVictory = "Variable[\"RiziaDLC.War_Objective_Captured_Pales\"] ~= true and Variable[\"RiziaDLC.War_WehlenJoined\"] ~= true";
-        g.Line("ToastOn", "Taddeus Azaro", "“Happy birthday, Your Royal Highness. Your strength is an inspiration to our men and women at the Zille front.\"",
+        string noPalesVictory = "Variable[\"RiziaDLC.Pales_War\"] == true and Variable[\"RiziaDLC.War_Objective_Captured_Pales\"] ~= true and Variable[\"RiziaDLC.War_WehlenJoined\"] ~= true";
+        g.Line("ToastOn", "Taddeus Azaro", "\"Happy birthday, Your Royal Highness. Your strength is an inspiration to our men and women at the Zille front.\"",
             new[] { "#41", "#39", "#533" }, condition: And(Ongoing, noPalesVictory), hooks: Talk.From(506));
-        g.Line("ToastLib", "Taddeus Azaro", "“Happy birthday, Your Royal Highness. Your strength carried our troops all the way home to Zille.\"",
+        g.Line("ToastLib", "Taddeus Azaro", "\"Happy birthday, Your Royal Highness. Your strength carried our troops all the way home to Zille.\"",
             new[] { "#41", "#39", "#533" }, condition: And(Lib, noPalesVictory), hooks: Talk.From(506));
-        g.Line("ToastPart", "Taddeus Azaro", "“Happy birthday, Your Royal Highness. Your strength is an inspiration to our men and women holding the line in Zille.\"",
+        g.Line("ToastPart", "Taddeus Azaro", "\"Happy birthday, Your Royal Highness. Your strength is an inspiration to our men and women serving in Zille.\"",
             new[] { "#41", "#39", "#533" }, condition: And(Part, noPalesVictory), hooks: Talk.From(506));
+        Swap(g, Gather, "Carlos514", 514, new[] { 513 }, "Carlos Robles Azaro", new S(
+                Lib: "\"Happy birthday, Your Royal Highness. Your strength is an inspiration to the men and women who brought Zille home.\"",
+                Part: "\"Happy birthday, Your Royal Highness. Your strength is an inspiration to our men and women serving in Zille.\""),
+            new[] { "#38", "#530", "#515" }, when: NoPalesWar);
         g.Register();
 
         // The Hearing of Petitions: the Zille war is part of every soldier's case.
@@ -135,19 +152,22 @@ internal static class SweepLateTalk
         Swap(az, Azaro, "Unit", 273, new[] { 134 }, "Taddeus Azaro", new S(
             Ongoing: "\"We can offer a unit from our provincial army. The rest of our men are in Zille, but these have been begging for something to do.\"",
             Lib: "\"We can offer a unit from our provincial army. They came home from Zille with their blood still up, and they've been looking for a fight.\"",
-            Part: "\"We can offer a unit from our provincial army. Half our regiments are still watching the armistice line in Zille, but I can spare one.\"",
+            Part: "\"We can offer a unit from our provincial army. Many of our regiments are still garrisoned in Zille, but I can spare one.\"",
             Lost: "\"We can offer a unit from our provincial army. They came back from Zille with something to prove.\""),
             new[] { "#117", "#268", "#213" });
         az.Register();
 
-        // Lucita's case for the new military headquarters (vanilla: "Losing the war", true only after a lost Pales war).
+        // Lucita's case for the new military headquarters. Vanilla 1145 ("Losing the war") needs a lost Pales war; without any
+        // Pales war, a weak army hears 1144 and a strong one 1140, neither of which knows about Zille.
         var hod = new Talk(Hod, "ZilleWar.SL.T10.Hod.");
-        Swap(hod, Hod, "Setback", 1145, new[] { 1143 }, "Lucita Azaro", new S(
-            Ongoing: "\"The war in Zille is bleeding us. But with the establishment of this headquarters, we could rebuild our military strength and set us on that path.\"",
+        Swap(hod, Hod, "Setback", 1144, new[] { 1142 }, "Lucita Azaro", new S(
             Lib: "\"Zille cost us more men and machines than we admit in public. But with the establishment of this headquarters, we could rebuild our military strength and set us on that path.\"",
             Part: "\"Zille cost us more men and machines than we admit in public. But with the establishment of this headquarters, we could rebuild our military strength and set us on that path.\"",
             Lost: "\"Losing Zille set us back considerably. But with the establishment of this headquarters, we could rebuild our military strength and set us on that path.\""),
             new[] { "#1151" }, when: NoPalesWarEver);
+        Swap(hod, Hod, "Strong", 1140, new[] { 1138 }, "Lucita Azaro", new S(
+            Lost: "\"Zille did not go our way, but the Rizian Armed Forces are still strong, and the Delegates are out of our way... we could make it happen tomorrow.\""),
+            new[] { "#1132" });
         hod.Register();
 
         // Daria on giving Zille to Brenas, months after the army took it.
@@ -157,9 +177,9 @@ internal static class SweepLateTalk
             new[] { "#876" });
         rf.Register();
 
-        // The reform mural in the Prime Minister's office.
+        // The reform mural on the motorcade route: someone added a soldier to its Zille.
         var pm = new Talk(PrimeMinister, "ZilleWar.SL.T10.PM.");
-        pm.Line("Soldier", Narr, "Someone had painted a single Rizian soldier on the harbor wall of Zille city. Someone else had already painted over his rifle.",
+        pm.Line("Soldier", Narr, "Over the painted harbor of Zille, someone had added a single Rizian soldier. Someone else had already painted over his rifle.",
             new[] { "#272" }, condition: Lib, hooks: Talk.From(271));
         pm.Register();
 
@@ -258,20 +278,28 @@ internal static class SweepLateTalk
             new[] { "#203" }, condition: Lost, hooks: Talk.From(163));
         s.Choice("LostOwn", "\"We tried to bring Zille home, and we failed. That failure is mine, not our soldiers'.\"",
             new[] { "#203" }, condition: Lost, hooks: Talk.From(163));
-        s.Choice("PartCity", "\"Zille city is Rizian again. The rest of Zille will follow, in time.\"",
-            new[] { "#203" }, condition: Part, hooks: Talk.From(163));
-        s.Choice("PartLine", "\"Our soldiers brought Zille city home. The armistice line will not last forever.\"",
-            new[] { "#203" }, condition: Part, hooks: Talk.From(163));
+        // Part: an armistice line, or a border signed at the treaty; every city Rizian after the treaty's Auremina term.
+        string partSome = And(Part, $"not ({AllHeld})");
+        string partLine = And(partSome, $"not ({BorderKind})");
+        string partBorder = And(Part, BorderKind);
+        const string cityText = "\"Zille city is Rizian again. The rest of Zille will follow, in time.\"";
+        const string lineText = "\"Our soldiers brought Zille city home. The armistice line will not last forever.\"";
+        const string borderText = "\"Our soldiers brought Zille city home, and I signed the border that keeps it ours.\"";
+        const string allText = "\"Every city of Zille is Rizian again, won by our soldiers and kept at the table.\"";
+        s.Choice("PartCity", cityText, new[] { "#203" }, condition: partSome, hooks: Talk.From(163));
+        s.Choice("PartLine", lineText, new[] { "#203" }, condition: partLine, hooks: Talk.From(163));
+        s.Choice("PartBorder", borderText, new[] { "#203" }, condition: partBorder, hooks: Talk.From(163));
+        s.Choice("AllHeld", allText, new[] { "#203" }, condition: AllHeld, hooks: Talk.From(163));
         foreach ((string sfx, int from) in new[] { ("B", 177), ("C", 668) })
         {
             s.Choice("LostHonest" + sfx, "\"I will not pretend that Zille was won. But I will never pretend that it was not worth fighting for.\"",
                 new[] { "#178" }, condition: Lost, hooks: Talk.From(from));
             s.Choice("LostOwn" + sfx, "\"We tried to bring Zille home, and we failed. That failure is mine, not our soldiers'.\"",
                 new[] { "#178" }, condition: Lost, hooks: Talk.From(from));
-            s.Choice("PartCity" + sfx, "\"Zille city is Rizian again. The rest of Zille will follow, in time.\"",
-                new[] { "#178" }, condition: Part, hooks: Talk.From(from));
-            s.Choice("PartLine" + sfx, "\"Our soldiers brought Zille city home. The armistice line will not last forever.\"",
-                new[] { "#178" }, condition: Part, hooks: Talk.From(from));
+            s.Choice("PartCity" + sfx, cityText, new[] { "#178" }, condition: partSome, hooks: Talk.From(from));
+            s.Choice("PartLine" + sfx, lineText, new[] { "#178" }, condition: partLine, hooks: Talk.From(from));
+            s.Choice("PartBorder" + sfx, borderText, new[] { "#178" }, condition: partBorder, hooks: Talk.From(from));
+            s.Choice("AllHeld" + sfx, allText, new[] { "#178" }, condition: AllHeld, hooks: Talk.From(from));
         }
 
         s.Register();

@@ -34,6 +34,12 @@ internal static class AuditT6
     /// <summary>Over without liberation: divided or lost.</summary>
     public static readonly string NotLib = $"{Over} and {WarFlags.LNot(WarFlags.Liberated)}";
     private static readonly string AureminaHeld = WarFlags.L(ZilleOperation.CapturedVar("Auremina"));
+    /// <summary>Lost, and Rizian troops still hold Auremina, Isor or Nanta behind the armistice line (no treaty has handed them back).</summary>
+    public static readonly string LostSome = $"{Lost} and ({WarFlags.L(ZilleOperation.CapturedVar("Auremina"))} or " +
+        $"{WarFlags.L(ZilleOperation.CapturedVar("Isor"))} or {WarFlags.L(ZilleOperation.CapturedVar("Nanta"))})";
+    /// <summary>Lost, and no city of the province is in Rizian hands.</summary>
+    public static readonly string LostNone = $"{Lost} and {WarFlags.LNot(ZilleOperation.CapturedVar("Auremina"))} and " +
+        $"{WarFlags.LNot(ZilleOperation.CapturedVar("Isor"))} and {WarFlags.LNot(ZilleOperation.CapturedVar("Nanta"))}";
 
     // ------------------------------------------------------------------ C# state
 
@@ -115,8 +121,11 @@ internal static class AuditT6
             "\"Most of the northern army stays on the armistice line, Your Majesty. Smolak's divisions are still across it, and I will not " +
             "leave Zille city to their good manners.\"", after747, condition: Part, hooks: From(747));
         t.Line("NorthLost", Lucita,
-            "\"Though our army has only just come out of Zille, Your Majesty. The northern divisions are still rebuilding. I will need " +
-            "time, or I will need money.\"", after747, condition: Lost, hooks: From(747));
+            "\"Though our army has only just come back from the Zille front, Your Majesty. The northern divisions are still rebuilding. " +
+            "I will need time, or I will need money.\"", after747, condition: LostNone, hooks: From(747));
+        t.Line("NorthLostHeld", Lucita,
+            "\"Though most of the northern army is still on the armistice line in Zille, Your Majesty, and the divisions that came back " +
+            "are rebuilding. I will need time, or I will need money.\"", after747, condition: LostSome, hooks: From(747));
         t.Register();
     }
 
@@ -176,7 +185,7 @@ internal static class AuditT6
 
         // [152] Reinhart: "We defended ourselves against Rizia once. We are ready to do so again." -> [153]
         t.Line("ReinhartLib", Axel, "\"You took Zille from Smolak, I know. We are not Smolak.\"", new[] { "#153" }, condition: Lib, hooks: From(152));
-        t.Line("ReinhartPart", Axel, "\"Your army came back from Zille with only part of it, Your Majesty. Do not ask me to believe it is ready for more.\"",
+        t.Line("ReinhartPart", Axel, "\"Your army took only part of Zille, Your Majesty, and it is still sitting on the line there. Do not ask me to believe it is ready for more.\"",
             new[] { "#153" }, condition: Part, hooks: From(152));
         t.Line("ReinhartLost", Axel, "\"You had the army for Zille, Your Majesty, and it was not enough. Do not ask me to believe the army is ready for more.\"",
             new[] { "#153" }, condition: Lost, hooks: From(152));
@@ -198,8 +207,13 @@ internal static class AuditT6
             "\"Says the man who has just fought a war over Zille. Still, what's love without a little frisson?\"", new[] { "#284" });
 
         // [674] "Peace between Rizia and Pales, and not a single drop of blood shed. Who would have thought."
-        t.Variant("PeaceOver", 674, new[] { 541 }, Over, Lucita,
-            "\"Peace with Pales, and not a single drop of blood shed in the south. After Zille, I'll take it.\"",
+        // Six Rizian soldiers died at the fort in the border incident (c359), so "no blood" is said only without it.
+        const string fort = "Variable[\"RiziaDLC.War_Incident_Border\"] == true";
+        t.Variant("PeaceOver", 674, new[] { 541 }, $"{Over} and not ({fort})", Lucita,
+            "\"Peace with Pales, and no war in the south. After Zille, I'll take it.\"",
+            new[] { "#690", "#696", "#693", "#682" });
+        t.Variant("PeaceOverFort", 674, new[] { 541 }, $"{Over} and {fort}", Lucita,
+            "\"Peace with Pales, after six of our boys died at that fort. After Zille, I'll take it.\"",
             new[] { "#690", "#696", "#693", "#682" });
 
         // [808] the toast menu.
@@ -308,6 +322,12 @@ internal static class AuditT6
         t.Variant("Lost270", 270, new[] { 268 }, Lost, Romus,
             "\"Surrendering Zille was one of Rizia's greatest tragedies. I went to war to take it back. I will find another way.\"",
             new[] { "#274" });
+
+        // After a liberation the reclaiming is done: Estela's [321] and the King's [324]/[325] answers in the past tense.
+        t.Variant("Lib321", 321, new[] { 503 }, Lib, Estela, "\"However, I'm proud that you were the one who saw it returned.\"", new[] { "#405" });
+        t.Variant("Lib324", 324, new[] { 260 }, Lib, Romus,
+            "\"We can dwell on the loss until the end of time. What mattered was having the resilience to take back what was ours.\"", new[] { "#328" });
+        t.Variant("Lib325", 325, new[] { 260 }, Lib, Romus, "\"Maybe. But it didn't make taking it back any easier.\"", new[] { "#327" });
         t.Register();
     }
 

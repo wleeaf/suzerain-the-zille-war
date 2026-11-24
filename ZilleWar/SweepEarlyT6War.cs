@@ -101,8 +101,13 @@ internal static class SweepEarlyT6War
         var t = new Talk(conv, "ZilleWar.SE.War.Duke.");
 
         // EarlyT6 has the Active version of [78].
-        t.Variant("BegunWon", 78, new[] { 88 }, Liberated, Narrator,
+        // "barely fallen silent" only when the liberation came at Phase III (Turn 6); a Turn 4 or 5 liberation is a season old
+        string endT = $"(Variable[\"{VictoryParade.VarEndTurn}\"] or 0)";
+        string earlyEnd = $"({endT} == 4 or {endT} == 5)";
+        t.Variant("BegunWon", 78, new[] { 88 }, $"{Liberated} and not {earlyEnd}", Narrator,
             "And just like that, the Second Pales War had begun. The guns in Zille had barely fallen silent.", new[] { "#90" });
+        t.Variant("BegunWonEarly", 78, new[] { 88 }, $"{Liberated} and {earlyEnd}", Narrator,
+            "And just like that, the Second Pales War had begun. Zille had been ours again for barely a season.", new[] { "#90" });
         t.Variant("BegunLost", 78, new[] { 88 }, $"{AuditT6.Lost} and {WarFlags.LNot(WarFlags.Ceasefire)}", Narrator,
             "And just like that, the Second Pales War had begun. I had already lost one war this year. I did not intend to lose another.",
             new[] { "#90" });
@@ -194,11 +199,22 @@ internal static class SweepEarlyT6War
                 "The war in Zille is won, but it emptied the army's depots. The kingdom's modern military factories offer a solid " +
                 "foundation to replace what was lost and scale up production of Land and Air Units, either to keep the army ready " +
                 "for the next conflict or to sell what Rizia has shown it can build on the international arms market.");
-            Decision(name, _ => !AuditT6.CityHeldNow || WarFlow.AtWar ? null :
-                $"The war in Zille ended in an armistice, with {Front.HeldWords} won back and {Front.WehzekWords} still in Wehzek hands, and " +
-                "the army must replace the tanks, aircraft and equipment it spent in the north. The kingdom's modern military factories " +
-                "offer a solid foundation to rebuild, and the General Staff wants the armistice line held by an army that is never short " +
-                "of anything.");
+            Decision(name, _ =>
+            {
+                if (!AuditT6.CityHeldNow || WarFlow.AtWar)
+                {
+                    return null;
+                }
+
+                // a signed border treaty replaces the armistice line; its Auremina term can hand over the last Wehzek city
+                string line = Variables.GetString(ZilleTreaty.VarKind) == "border" ? "the new border" : "the armistice line";
+                string ended = Front.Wehzek.Count == 0
+                    ? "The war in Zille ended with every city of the province back in Rizian hands, the last of them by treaty, and"
+                    : $"The war in Zille ended in an armistice, with {Front.HeldWords} won back and {Front.WehzekWords} still in Wehzek hands, and";
+                return ended + " the army must replace the tanks, aircraft and equipment it spent in the north. The kingdom's modern " +
+                       $"military factories offer a solid foundation to rebuild, and the General Staff wants {line} held by an army that is " +
+                       "never short of anything.";
+            });
             Decision(name, _ =>
                 "The war in Zille ended without the victory the kingdom was promised, and the army must replace the tanks, aircraft " +
                 "and equipment it left behind in the north. The kingdom's modern military factories offer a solid foundation to " +

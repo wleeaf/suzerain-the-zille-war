@@ -113,6 +113,79 @@ internal static class VanillaDecrees
                 "negotiation, Romus' answer to every problem is still a bigger army."),
             "Critics warn that this unchecked militarization risks dragging the nation into yet another costly conflict, endangering both " +
             "lives and the economy."));
+
+        // Free press while the General Staff's wartime censorship still reads every line about Zille (WarDecrees)
+        Func<string, bool> censored = _ => Latched(LatchCensored, () =>
+            Variables.GetBool("ZilleWar.Decree_WarCensorship") && !Variables.GetBool("ZilleWar.Decree_LiftCensorship"));
+        SweepEarlyKit.AppendNews("RD_RH_AllowFreePress", _ =>
+            "Reporting on Zille remains under the review of the General Staff until His Majesty lifts the wartime censorship.", censored);
+        SweepEarlyKit.AppendNews("RD_V_AllowFreePress", _ =>
+            "Not every censor has left our newsroom. The officers of the General Staff still read every line we print about Zille, and the " +
+            "white columns will stay until His Majesty lifts his wartime censorship too.", censored);
+
+        // Permanent permits for Wehzek workers, during or just after a war with Wehlen
+        SweepEarlyKit.AppendNews("RD_RH_LaborHandsLegalized", s => When(s,
+            "That the permits extend to Wehzek miners while our soldiers face their countrymen in Zille has raised eyebrows in Brenas, but " +
+            "His Majesty has judged that the pits must keep running.",
+            "That the permits extend to Wehzek workers so soon after the war in Zille has raised eyebrows in Brenas, but His Majesty has " +
+            "judged that the pits must keep running."));
+        SweepEarlyKit.AppendNews("RD_V_LaborHandsLegalized", s => When(s,
+            "And yes, that includes Wehzeks. The war in Zille is Smolak's, not that of the miners who have dug Brenas coal for twenty years.",
+            "And yes, that includes Wehzeks. The war in Zille was Smolak's, not that of the miners who have dug Brenas coal for twenty years."));
+
+        // The oil field begun before the war, completed with Mave Nortus behind the Wehzek line (its energy is withheld meanwhile)
+        SweepEarlyKit.News("RD_RH_BuildMaveNortusOilField_Completed", (_, _) => SweepEarlyKit.P(
+                "His Majesty's engineers have completed the Mave Nortus Oil Field, a project begun before Wehzek soldiers reached the town. " +
+                "Today it stands behind the Wehzek line. The derricks are idle, and not a barrel will reach Rizia until Mave Nortus is ours again.",
+                "The Royal Herald is confident that day will come, and that the field will then repay every guilder the Crown has put into it."),
+            _ => "Mave Nortus Oil Field Completed Behind the Line",
+            _ => Latched(LatchMaveOil, () => Variables.GetBool(WarFlags.Occupied("Mave Nortus"))));
+    }
+
+    private const string LatchCensored = "ZilleWar.VDec_L_FreePressCensored";
+    private const string LatchMaveOil = "ZilleWar.VDec_L_MaveOilOccupied";
+
+    /// <summary>A yes/no fixed the first time it is asked (the step a news item is latched), so the printed item does not change
+    /// when the state does later.</summary>
+    private static bool Latched(string variable, Func<bool> now)
+    {
+        string v = Variables.GetString(variable);
+        if (string.IsNullOrEmpty(v) || v == "nil")
+        {
+            v = now() ? "yes" : "no";
+            Variables.Set(variable, v);
+        }
+
+        return v == "yes";
+    }
+
+    /// <summary>
+    /// The Mave Nortus oil field yields nothing while the town is Wehzek-occupied: its vanilla energy line gets the occupation as a
+    /// condition (nil-safe Expresso, so peace games, where the town is never occupied, are unchanged).
+    /// </summary>
+    private const string MaveOilLine = "Rizia_Energy_Modifier_MaveNortusOilfield";
+    private const string MaveFree = "ZilleWar.MaveNortus_Occupied == false";
+
+    private static void PatchMaveOilLine()
+    {
+        foreach (var list in new[] { EntityDataManager.hudPeriodicStatModifierData, EntityDataManager.HUDPeriodicStatModifierData })
+        {
+            if (list == null)
+            {
+                continue;
+            }
+
+            foreach (HUDPeriodicStatModifierData m in list)
+            {
+                HUDPeriodicStatModifierProperties p = m?.HUDPeriodicStatModifierProperties;
+                if (p == null || m.NameInDatabase != MaveOilLine || (p.Condition ?? string.Empty).Contains(MaveFree, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                p.Condition = string.IsNullOrWhiteSpace(p.Condition) ? MaveFree : $"({p.Condition}) && {MaveFree}";
+            }
+        }
     }
 
     public static void Register()
@@ -160,7 +233,8 @@ internal static class VanillaDecrees
         // V7: the military intelligence hub in Mave Nortus serves the war, and the armistice line after it
         Watchers.Add(new(IntelHubFlag, "ZilleWar.VDec_IntelHub_Seen", OnIntelHub));
         WarDecrees.AddRow("PowerProjection_War_Outcome",
-            "ZilleWar.War_Over == true && ZilleWar.War_Zille_Liberated == false && RiziaDLC.Policy_RD_Order_BuildMaveNortusIntelHub_Completed == true",
+            "ZilleWar.War_Over == true && ZilleWar.War_Zille_Liberated == false && RiziaDLC.Policy_RD_Order_BuildMaveNortusIntelHub_Completed == true && " +
+            MaveFree,
             "RiziaDLC.Country_Military_PowerProjection += 1;");
 
         // V8, V9, V10: the Wehzek market is closed by the war, so these no longer win Wraclawitz's favor
@@ -191,6 +265,8 @@ internal static class VanillaDecrees
         Watchers.Add(new(WarTaxFlag, "ZilleWar.VDec_WarTax_Seen", OnWarTax));
 
         Variables.Register(VarInit);
+        Variables.Register(LatchCensored);
+        Variables.Register(LatchMaveOil);
         foreach (Watcher w in Watchers)
         {
             Variables.Register(w.Seen);
@@ -242,6 +318,7 @@ internal static class VanillaDecrees
     public static void OnStep()
     {
         Run("apply", Apply);
+        Run("Mave Nortus oil line", PatchMaveOilLine);
         Run("approvals", VanillaDecreesAll.ApplyApprovals);
         Run("watchers", Watch);
         Run("all-games watchers", VanillaDecreesAll.Watch);
@@ -645,7 +722,8 @@ internal static class VanillaDecrees
     /// <summary>V7: the hub completed while the army fights in Zille: its agents find the garrison's weak points.</summary>
     private static void OnIntelHub()
     {
-        if (!Variables.GetBool(WarFlags.Active))
+        // a hub finished in a town the Wehzeks have since taken serves no one
+        if (!Variables.GetBool(WarFlags.Active) || Variables.GetBool(WarFlags.Occupied("Mave Nortus")))
         {
             return;
         }

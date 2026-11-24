@@ -102,9 +102,15 @@ internal static class WorldEmbargo
                 return;
             }
 
+            // a lost war may still hold Auremina, Isor or Nanta: Kyow counts the city, not the hills
+            string lead = Front.Held.Count == 0
+                ? (terms ? "With the Wraclawitz treaty signed and no Rizian soldier left in Zille," : "With no Rizian soldier left in Zille,") +
+                  " Valgsland and its partners in the Contanan Security Pact have let the embargo on trade with Rizia lapse."
+                : (terms ? "With the Wraclawitz treaty signed and Zille city in Wehzek hands," : "With Zille city still in Wehzek hands,") +
+                  " Valgsland and its partners in the Contanan Security Pact have let the embargo on trade with Rizia lapse, though Rizian " +
+                  $"troops still hold {Front.HeldWords}. Kyow, it seems, has decided that the city is what counts.";
             NewsWire.Publish("EmbargoLifted", "G", "Contana Lifts the Embargo on Rizia", NewsWire.P(
-                (terms ? "With the Wraclawitz treaty signed and no Rizian soldier left in Zille," : "With no Rizian soldier left in Zille,") + " Valgsland and its partners in the Contanan Security Pact have let the embargo on " +
-                "trade with Rizia lapse. Contanan freighters are expected back in Rizian ports within the week.",
+                lead + " Contanan freighters are expected back in Rizian ports within the week.",
                 "Chancellor Hegel's office called the decision \"a recognition of facts on the ground.\" Bankers in Konstantium were less " +
                 "formal, and said credit to Rizian firms would return slowly, if it returned at all."));
         }

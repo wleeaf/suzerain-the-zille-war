@@ -54,8 +54,13 @@ internal static class EarlyT7Home
         t.Variant("Plea133", 133, new[] { 132 }, Declared, Hugo,
             "\"Let him live, even if in exile or imprisonment. And whatever Smolak demands, do not hand my son to the Wehzeks.\"",
             new[] { "#135" });
-        t.Variant("Price138", 138, new[] { 134 }, $"{Declared} and {WarFlags.LNot(WarFlags.Liberated)}", Romus,
+        string signed = $"Variable[\"{ZilleTreaty.VarSigned}\"] == true";
+        t.Variant("Price138", 138, new[] { 134 }, $"{Declared} and {WarFlags.LNot(WarFlags.Liberated)} and not ({signed})", Romus,
             "\"I cannot promise that, Uncle. Smolak wants his head as the price of any peace.\"", new[] { "#140" });
+        // a war that ended on Turn 5 had its treaty signed on Turn 6, without Rico (he could not be handed over before his arrest)
+        t.Variant("Price138Signed", 138, new[] { 134 }, $"{Declared} and {WarFlags.LNot(WarFlags.Liberated)} and {signed}", Romus,
+            "\"I cannot promise that, Uncle. The treaty is signed, but Smolak still wants his head for the bombing, and one day I may need something from Wehlen.\"",
+            new[] { "#140" });
         // Liberated: Wehlen conceded Zille, there is no peace left to buy with Rico.
         t.Variant("Price138Lib", 138, new[] { 134 }, Lib, Romus,
             "\"I cannot promise that, Uncle. Smolak has lost Zille, and he still wants Rico's head for the bombing. One day I may need something from Wehlen.\"",
@@ -89,6 +94,21 @@ internal static class EarlyT7Home
             "\"I urge you to put aside your grievances with myself and my cousin and focus on the real enemy: the Wehzek army sitting in Zille.\"",
             new[] { "#710" });
         t.Register();
+
+        // The Crown already published the consulate files naming Héctor Ramiro as the bomb's organiser (SupplyVoices): the Royal
+        // Herald cannot then call the arrested Duke the man "behind" the bombing.
+        foreach (string news in new[]
+                 {
+                     "Turn07_RH_IzaUniversity_RicoArrested_BrenasCouncil", "Turn07_RH_IzaUniversity_RicoArrested_PoliceState",
+                     "Turn07_RH_IzaUniversity_RicoArrested_RiziaImperii",
+                 })
+        {
+            SweepEarlyKit.News(news, (_, o) => (o ?? string.Empty)
+                    .Replace("was behind the notorious Friendship Day bombing in Zille",
+                        "had a hand in the notorious Friendship Day bombing in Zille, the attack the consulate files show was planned by Héctor Ramiro of the Lespian consulate")
+                    .Replace("has finally seen a perpetrator brought to light", "has now seen a Rizian accomplice brought to light"),
+                null, _ => Variables.GetString(SupplyWar.VarRamiro) == "publish");
+        }
     }
 
     // ------------------------------------------------------------------ c395 Hugo and Manus

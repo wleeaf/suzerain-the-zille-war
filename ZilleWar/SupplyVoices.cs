@@ -20,9 +20,13 @@ internal static partial class SupplyWar
     private const string Discovered = "RiziaDLC.Zille_Discovered_LespianInvolvement";
     private const string Publicized = "RiziaDLC.Zille_Publicized_LespianInvolvement";
 
-    /// <summary>The Valgslandian and CSP embargo of WorldEmbargo is in force (same exclusions as its HUD line).</summary>
+    /// <summary>
+    /// The Valgslandian and CSP embargo of WorldEmbargo is in force: the same rule as its HUD line (Rizian troops hold some of
+    /// Zille, no peace treaty yet) and the same exclusions.
+    /// </summary>
     internal static readonly string EmbargoOn =
-        $"({Is(AnDeclaration.VarDeclared)} and {Not("RiziaDLC.Policy_Diplomacy_Caleqabiz_ValgslandCSP")} and {Not("RiziaDLC.Trait_CommieKing")})";
+        $"({Is(AnDeclaration.VarDeclared)} and ({Is(WarFlags.Active)} or {Is(WarFlags.ZilleCityHeld)} or {Is(WarFlags.Liberated)}) and " +
+        $"{Not(ZilleTreaty.VarPeace)} and {Not("RiziaDLC.Policy_Diplomacy_Caleqabiz_ValgslandCSP")} and {Not("RiziaDLC.Trait_CommieKing")})";
 
     // ------------------------------------------------------------------ Valgsland
 
@@ -250,7 +254,11 @@ internal static partial class SupplyWar
             "\"The very terms my ministers drafted before you decided to shoot instead.\"", "Aside");
         d.Say("TEndReduced", Smolak,
             "\"Keep your cousin. I find I have less appetite than I used to.\"", "Aside");
-        d.Branch("Aside", "AsideBeatrice", "AsideAgain", "AsidePlain");
+        d.Branch("Aside", "AsideFiles", "AsideBeatrice", "AsideAgain", "AsidePlain");
+        // the King has published the consulate files (Smolak's own investigators traced the bomb to Lespia, and he sat on it)
+        d.SayIf("AsideFiles", $"{Eq(VarRamiro, "publish")} and {full} and {rico}", Esquibel,
+            "Laurento leaned in. \"He still wants Ricardus for Smolak Square, Your Majesty, after we showed the world whose bomb it was. " +
+            "He knew, and he is asking anyway.\"", "Answer");
         d.SayIf("AsideAgain", $"{calls} >= 2", Esquibel,
             "Laurento leaned in. \"He is asking for less than last month, Your Majesty. That is what a garrison on half rations " +
             "sounds like.\"", "Answer");

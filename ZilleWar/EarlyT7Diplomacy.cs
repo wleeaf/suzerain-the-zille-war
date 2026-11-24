@@ -15,10 +15,13 @@ internal static class EarlyT7Diplomacy
 
     /// <summary>Some phase of the war took Zille city, even if Wehlen took it back (set every step from the phase history).</summary>
     private const string VarCityEverTaken = "ZilleWar.E7_ZilleCityEverTaken";
+    /// <summary>Some phase of the war took any Zille city (Zille, Auremina, Isor or Nanta), even if Wehlen took it back.</summary>
+    internal const string VarAnyCityEverTaken = "ZilleWar.E7_AnyCityEverTaken";
 
     public static void Register()
     {
         Variables.Register(VarCityEverTaken);
+        Variables.Register(VarAnyCityEverTaken);
         RegisterRumburg();
         RegisterDuke();
         RegisterDerdia();
@@ -33,6 +36,12 @@ internal static class EarlyT7Diplomacy
             if (Variables.GetBool(VarCityEverTaken) != taken)
             {
                 Variables.Set(VarCityEverTaken, taken);
+            }
+
+            bool any = Front.Cities.Any(Front.EverTaken);
+            if (Variables.GetBool(VarAnyCityEverTaken) != any)
+            {
+                Variables.Set(VarAnyCityEverTaken, any);
             }
         }
     }
@@ -94,9 +103,16 @@ internal static class EarlyT7Diplomacy
         const string busy = "\"I have never liked paying for violence, Your Majesty. But a Smolak busy with the Bluds is a Smolak who leaves Zille alone.\"";
         t.Variant("Laurento1081Lib", 1081, new[] { 1079 }, Lib, Laurento, busy, new[] { "#1098", "#1099", "#1100", "#1351" });
         t.Variant("Laurento1082Lib", 1082, new[] { 1084 }, Lib, Laurento, busy, new[] { "#1098", "#1094", "#1100", "#1351" });
-        t.Variant("Laurento1082Over", 1082, new[] { 1084 }, $"{Over} and {WarFlags.LNot(WarFlags.Liberated)}", Laurento,
+        // a treaty signed before this meeting (the war ended on T4 or T5) may already have won back Auremina or Mave Nortus at a table
+        string gave = $"Variable[\"{ZilleTreaty.VarSigned}\"] == true and (Variable[\"{ZilleTreaty.Term("Aure")}\"] == true or " +
+                      $"Variable[\"{ZilleTreaty.Term("MaveBack")}\"] == true or Variable[\"{ZilleTreaty.Term("Mave")}\"] == true)";
+        t.Variant("Laurento1082Over", 1082, new[] { 1084 }, $"{Over} and {WarFlags.LNot(WarFlags.Liberated)} and not ({gave})", Laurento,
             "\"I am still loath to suggest violence as a solution to the Zille conundrum. But the army has done what it could, and Smolak " +
             "will never give back a single village at a table. An internal resistance may be our last hope.\"",
+            new[] { "#1098", "#1094", "#1100", "#1351" });
+        t.Variant("Laurento1082Gave", 1082, new[] { 1084 }, $"{Over} and {WarFlags.LNot(WarFlags.Liberated)} and ({gave})", Laurento,
+            "\"I am still loath to suggest violence for the Zille conundrum. But the army has done what it could, and the treaty took back " +
+            "all Smolak would give. An internal resistance may be our last hope.\"",
             new[] { "#1098", "#1094", "#1100", "#1351" });
         t.Variant("Bff1076Lib", 1076, new[] { 1069 }, Lib, Romus, "\"Hmm. Is that how you help us keep Zille, then?\"", new[] { "#1077" });
         t.Variant("Bff1088Lib", 1088, new[] { 1075 }, Lib, Beatrice,
@@ -395,7 +411,8 @@ internal static class EarlyT7Diplomacy
         S7 ask = new(
             "\"Zille is ours again, Supreme Wiseman, but Smolak will not forget it. I would humbly call upon your great warrior culture to help us hold it.\"",
             "\"Smolak still holds part of Zille behind an armistice line, Supreme Wiseman. I would humbly call upon your great warrior culture for assistance.\"",
-            "\"Our army could not take Zille from Smolak, Supreme Wiseman. I would humbly call upon your great warrior culture for assistance.\"");
+            "\"Our army could not take Zille from Smolak, Supreme Wiseman. I would humbly call upon your great warrior culture for assistance.\"",
+            "\"Our army took Zille and could not hold it against Smolak, Supreme Wiseman. I would humbly call upon your great warrior culture for assistance.\"");
         ask.Apply(f, "Ask7", 7, new[] { 178 }, Romus, new[] { "#103" });
         f.Variant("Prayed77Lib", 77, new[] { 76 }, Lib, Azmal,
             "\"Normally, Derdia would charge you for their services. But my Disciples are eager to help Rizia hold its land against the anti-Golcondist Wehzeks.\"",
@@ -461,13 +478,22 @@ internal static class EarlyT7Diplomacy
     }
 
     /// <summary>One line in three post-war versions (liberated, divided, lost) replacing a vanilla line or choice.</summary>
-    private sealed record S7(string Lib, string Part, string Lost)
+    /// <summary>LostBack, when given, is the lost version for a Zille city taken and then lost again.</summary>
+    private sealed record S7(string Lib, string Part, string Lost, string LostBack = null)
     {
         public void Apply(Talk t, string name, int entry, int[] parents, string speaker, string[] next)
         {
             t.Variant(name + "Lib", entry, parents, EarlyT7.Lib, speaker, Lib, next);
             t.Variant(name + "Part", entry, parents, EarlyT7.Part, speaker, Part, next);
-            t.Variant(name + "Lost", entry, parents, EarlyT7.Lost, speaker, Lost, next);
+            if (LostBack == null)
+            {
+                t.Variant(name + "Lost", entry, parents, EarlyT7.Lost, speaker, Lost, next);
+                return;
+            }
+
+            string everTaken = $"Variable[\"{VarCityEverTaken}\"] == true";
+            t.Variant(name + "Lost", entry, parents, $"({EarlyT7.Lost}) and not ({everTaken})", speaker, Lost, next);
+            t.Variant(name + "LostBack", entry, parents, $"({EarlyT7.Lost}) and ({everTaken})", speaker, LostBack, next);
         }
     }
 

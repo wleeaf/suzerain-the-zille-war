@@ -155,9 +155,9 @@ internal static partial class SupplyWar
             "\"As you wish, Your Majesty. I'll make sure they photograph the right ones.\"", exit);
 
         Say("WRDefectorTwo", $"{s} <= 5 and {meetings} >= 2 and {Not(VarDefector)} and {Is(WorldVoices.VarDefector)}",
-            "\"Good news, for a change. Another deserter, after the major at Mave Nortus. A Wehzek transport captain sailed into Sallabes " +
+            "\"Good news, for a change. Another deserter, after the artillery major and his maps. A Wehzek transport captain sailed into Sallabes " +
             "last night with his lights on and his flag down.\"",
-            "\"Good news, Your Majesty, for once. Another one, after the major at Mave Nortus. A Wehzek transport captain sailed into " +
+            "\"Good news, Your Majesty, for once. Another one, after the artillery major and his maps. A Wehzek transport captain sailed into " +
             "Sallabes last night with his flag down.\"", "WRDefector2");
         Say("WRDefector", $"{s} <= 5 and {meetings} >= 2 and {Not(VarDefector)}",
             "\"Good news, for a change. A Wehzek transport captain sailed into Sallabes last night with his lights on and his flag down.\"",
@@ -227,8 +227,10 @@ internal static partial class SupplyWar
         }
 
         Say("WRGone", $"{open} and not {inStrait} and {Is(VarLespiaWithdrawn)} and {N(Count(Lever.Lespia))} > 0",
-            "\"Now the strait. The Lespian ships are gone, and the convoys came back the same week. As if someone had sent them a telegram.\"",
-            "\"Now the strait, Your Majesty. The Lespian ships have left, and the convoys came back within the week.\"", "WROpen2");
+            // the withdrawal may be hours old (files published, or Alvarez's call, earlier in this step): no "within the week"
+            "\"Now the strait. Lespia has pulled its ships out of it, and nothing stands between the Wehzek convoys and Zille now. Smolak " +
+            "will have had a telegram about it before we did.\"",
+            "\"Now the strait, Your Majesty. Lespia has pulled its ships out, and nothing stands between the Wehzek convoys and Zille now.\"", "WROpen2");
         Say("WRThin", $"{closed} and {Is(VarStraitThin)}",
             "\"Now the strait. The Lespians are still out there, but fewer of them since Perla took offense. More gets through every week.\"",
             "\"Now the strait, Your Majesty. The Lespian patrols have thinned out, and more gets through every week.\"", "WRState");

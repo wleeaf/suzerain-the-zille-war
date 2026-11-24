@@ -194,16 +194,13 @@ internal static class SweepEarlyT6Personal
     {
         var t = new Talk(Investigation, "ZilleWar.SE.Pers.Investigation.");
 
-        // [152] Reinhart: "We defended ourselves against Rizia once. We are ready to do so again."
-        t.Line("Reinhart", Axel,
-            "\"And half your army is already in Zille, Your Majesty. Do you truly have the other half to spare?\"",
-            new[] { "#153" }, condition: Active, hooks: From(152));
+        // [152] Reinhart's taunt is covered by AuditT6 (ReinhartLib/Part/Lost); the war is over by T6 s8.
 
         // [172] after the call that ends in the arrest: who now runs the war in the north?
         t.Line("Carlos", Laurento,
-            "\"Someone will also have to tell General Robles Azaro that from this morning he is running the war in Zille without a war " +
-            "councilor. Better he hears it from the palace than from the wireless.\"",
-            new[] { "#173" }, condition: Active, hooks: From(172));
+            "\"Someone will also have to tell General Robles Azaro that he has lost his war councilor. Better he hears it from the palace " +
+            "than from the wireless.\"",
+            new[] { "#173" }, condition: WarFlags.LDeclared, hooks: From(172));
         t.Register();
     }
 

@@ -1611,7 +1611,11 @@ internal static class WarCouncil
             (And(closed, Is("ZilleWar.Lespia_StraitThin")),
                 "\"The strait first. Lespia still patrols it on our account, but thinly since Perla took offense, and more gets through every week.\""),
             (closed, "\"The strait first. Since Perla's deal with us, Lespian ships stop and search most of what crosses, and only the night runners get through.\""),
-            (Is(SupplyWar.VarLespiaWithdrawn), "\"The strait first. The Lespian ships left, and the convoys came back within the week.\""),
+            // the withdrawal can come hours before this meeting, in the same step: no tense that dates it
+            (And(Is(SupplyWar.VarLespiaWithdrawn), $"({Lever(SupplyWar.Lever.RoyalNavy)} or {Lever(SupplyWar.Lever.Submarines)})"),
+                "\"The strait first. Lespia has pulled its ships out of it. Our own navy still hunts the Wehzek convoys, but more of them get through.\""),
+            (Is(SupplyWar.VarLespiaWithdrawn),
+                "\"The strait first. Lespia has pulled its ships out of it, and nothing stands between the Wehzek convoys and Zille now.\""),
             (And(Lever(SupplyWar.Lever.RoyalNavy), Lever(SupplyWar.Lever.Submarines)),
                 "\"The strait first. Our destroyers and submarines have sunk enough transports that their convoys cross only at night, and not all of them arrive.\""),
             (Lever(SupplyWar.Lever.RoyalNavy), "\"The strait first. Our destroyers have sunk enough of their transports that the convoys cross only at night now.\""),

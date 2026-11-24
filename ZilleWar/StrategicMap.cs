@@ -406,11 +406,13 @@ internal static class StrategicMap
 
         Variables.Set(VarBadges, string.Join(";", want));
 
-        // Zille city's own token, under military administration, once it is Rizian and the region isn't fully returned.
+        // Zille city's own token, once it is Rizian and the region isn't fully returned: under military administration until the
+        // post-war Civil Administration decree (WarDecreesPostWar) hands it to civil servants.
         bool cityHeld = Variables.GetBool(WarFlags.ZilleCityHeld);
         if (!liberated)
         {
-            Lua(cityHeld ? "EnableToken(\"Rizia_City_Zille\"); UpdateCitySubtitle(\"Rizia_City_Zille\", \"Military Administration\")"
+            string admin = Variables.GetBool("ZilleWar.Decree_CivilAdmin") ? "Civil Administration" : "Military Administration";
+            Lua(cityHeld ? $"EnableToken(\"Rizia_City_Zille\"); UpdateCitySubtitle(\"Rizia_City_Zille\", \"{admin}\")"
                          : "DisableToken(\"Rizia_City_Zille\")");
         }
     }

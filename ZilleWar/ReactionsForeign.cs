@@ -166,8 +166,9 @@ internal static class ReactionsForeign
         var t = new Talk(AlvarezConv, "ZilleWar.Alvarez.");
 
         // ---- CaleqabizAfterWithdrawal on the telephone: after CSendAwayL2 (he says his sailors stay) or OutLease (the files)
-        const string covered = "Laurento covered the mouthpiece. \"The lease paid for ships in the strait, Your Majesty. There are no " +
-                               "ships in the strait.\"";
+        // spoken right after Alvarez says his ships leave the strait (tonight): they are still there as Laurento speaks
+        const string covered = "Laurento covered the mouthpiece. \"The lease paid for ships in the strait, Your Majesty. From tonight, " +
+                               "there will be none.\"";
         Island(t, "RF_IslandC", Laurento, covered, "CEnd");
         Island(t, "RF_IslandO", Laurento, covered, "OutEnd");
         // the owner's link: CSendAwayL2 -> RF_IslandCGo, OutLease -> RF_IslandOGo (each falls through when already settled)
@@ -234,7 +235,7 @@ internal static class ReactionsForeign
         string release = T(Dec("ReleaseInternees")) + $"{V(DecTurn("ReleaseInternees"))} = {SupplyWar.TurnLua}; " + Inc(Authority, -1) +
                          Inc(Opinion, -1) + Inc(Democratic, 1) + AddLev(1) + S(VarInterneesAtTable, "released");
         t.Choice("RF_InFree", "\"They go home this week. The camps close.\"", new[] { "RF_Freed" }, script: release,
-            cost: "-1 Authority, +1 Negotiation Leverage, Ends the Internment Camps");
+            cost: "-1 Authority, -1 Public Opinion, +1 Negotiation Leverage, Ends the Internment Camps");
         const string keepText = "\"They stay. Wehlen started this war, and Wehlen does not decide whom Rizia trusts.\"";
         string keep = Inc(SupplyWar.NpWehlen, -1) + S(VarInterneesAtTable, "kept");
         t.Choice("RF_InKeep", keepText, new[] { "RF_Kept" }, condition: $"not ({LK.Lost})", script: keep + AddLev(-1),
@@ -303,7 +304,8 @@ internal static class ReactionsForeign
                 Variables.Set(VarInternAtGuarantee, before);
             }
 
-            if (Variables.GetBool(VarBarrageIsor) && Variables.GetInt(VarBarrageIsorTurn) > stageTurn)
+            // the cable plays before that turn's War Council, so a barrage booked in the guarantee's own turn came after it
+            if (Variables.GetBool(VarBarrageIsor) && Variables.GetInt(VarBarrageIsorTurn) >= stageTurn)
             {
                 breach = "barrage";
             }
@@ -477,7 +479,8 @@ internal static class ReactionsForeign
 
         Variables.Set(VarBarrageChecked, k);
         string aim = Variables.GetString(ZilleCampaign.AimVar(k)) ?? string.Empty;
-        if (Variables.GetBool(WarCouncil.VarBombard) && aim.Contains("Isor", StringComparison.Ordinal) && !Variables.GetBool(VarBarrageIsor))
+        // every barrage on Isor is booked, the latest turn kept: Breach() compares it with the guarantee's turn
+        if (Variables.GetBool(WarCouncil.VarBombard) && aim.Contains("Isor", StringComparison.Ordinal))
         {
             Variables.Set(VarBarrageIsor, true);
             Variables.Set(VarBarrageIsorTurn, turn);

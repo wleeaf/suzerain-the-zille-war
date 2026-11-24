@@ -32,7 +32,7 @@ internal static class SweepEarlyT5Family
 
     private const string Transport = "Turn04_Decision_PublicTransportationWeak_PenaltyWarning";
     private const string YachtDecision = "Turn05_Decision_RoyalYachtRestoration";
-    private const string HospitalOption = "Hand the Rizania to the navy as a hospital ship (-1 Budget)";
+    private const string HospitalOption = "Hand the Rizania to the navy as a hospital ship (-1 Budget, +1 Public Opinion)";
 
     /// <summary>The royal yacht Rizania was handed to the navy as a hospital ship for the Zille front (instead of restored or scrapped).</summary>
     public const string VarYachtHospital = "ZilleWar.SE_Fam_YachtHospital";

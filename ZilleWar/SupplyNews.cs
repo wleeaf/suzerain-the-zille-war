@@ -79,17 +79,22 @@ internal static class SupplyNews
         string bluds = Str(SupplyWar.VarBludsIncident);
         Once("Bluds", bluds.Length > 0, () =>
         {
+            // the incident can come at the last council, so the papers may print after the war has ended
+            bool war = WarFlow.AtWar;
             Paper("Bluds", "G", "Villagers Killed Near Zille; Bludish Fighters in Rizian Service Accused",
                 "Eleven Wehzek villagers, among them two women and a boy of fourteen, were killed in a night raid on a hamlet in the hills " +
                 "above Zille, according to a correspondent for this newspaper who reached the village the following morning. Survivors " +
                 "named the attackers as Bludish fighters serving with the Royal Army of Rizia.",
                 bluds switch
                 {
-                    "trial" => "Porte Drazon has announced that the men responsible will be tried by court-martial in Zille, in public. Wehzek " +
+                    "trial" => "The palace has announced that the men responsible will be tried by court-martial in Porte Drazon, in public. Wehzek " +
                                "radio calls the trial \"theater.\" Foreign correspondents have nonetheless been promised seats.",
                     "home" => "The Bludish companies have since been withdrawn from the front. The Rizian General Staff says only that their " +
                               "contracts have ended, and declined to answer questions about the village.",
-                    _ => "The Rizian General Staff says the incident is under investigation. The Bludish companies remain at the front.",
+                    _ => war
+                        ? "The Rizian General Staff says the incident is under investigation. The Bludish companies remain at the front."
+                        : "The Rizian General Staff says the incident is under investigation. The Bludish companies have stayed with the army " +
+                          "since the fighting stopped.",
                 });
             Paper("Bluds", "V", bluds == "trial" ? "A Trial, at Least" : "Whose War Is This?",
                 bluds == "trial"
@@ -111,7 +116,7 @@ internal static class SupplyNews
                     "home" => "The Bludish companies hired for the campaign in Zille have been released from royal service. The Royal " +
                               "Army will hold its lines with Rizian soldiers, as it always preferred to.",
                     _ => "The General Staff is examining Wehzek reports of a night raid on a village above Zille. The Bludish companies " +
-                         "who have fought alongside our soldiers in the hills remain at their posts.",
+                         "who have fought alongside our soldiers in the hills " + (war ? "remain at their posts." : "remain in royal service."),
                 },
                 bluds == "trial"
                     ? "No Rizian soldier stands accused. The Royal Herald trusts that justice will be swift, and notes that Wraclawitz has " +
@@ -306,6 +311,11 @@ internal static class SupplyNews
         Once("LespiaFuel", B(SupplyWar.VarLespiaFuel), () =>
         {
             bool betrayed = B("RiziaDLC.MITZ_ScrewedOverLespia") || B(EarlyT5.VarLespiaBetrayed);
+            // The fuel is promised on a call before a council, so this prints after that council: the war may have ended.
+            bool war = WarFlow.AtWar;
+            // the Wehzek landing port the convoys still run to (Nanta first, as the war room's landings do)
+            string port = new[] { "Nanta", "Isor", "Zille" }.FirstOrDefault(c => !Variables.GetBool(ZilleOperation.CapturedVar(c)));
+            string toPort = port != null ? $"to {port}" : "across the strait";
             Paper("LespiaFuel", "G", "Wehzek Tankers Refuel in Perla",
                 "Wehzek tankers bound for the Strait of Kreleck have begun taking on fuel in Perla, port records show, and Lespian " +
                 "harbor officials have stopped asking where they are headed. Prime Minister Alvarez's office calls it \"ordinary " +
@@ -316,14 +326,23 @@ internal static class SupplyNews
                     : "Diplomats in Konstantium say Lespia offered Rizia its navy more than once this war and was turned down every " +
                       "time. \"Lespia sells to whoever buys,\" one said. \"Rizia declined to be a customer.\"");
             Paper("LespiaFuel", "V", "Our Enemies Fill Up in Perla",
-                "The fuel that carries Wehzek reinforcements to Nanta now comes, in part, from Lespian depots. This paper has never " +
-                "trusted Patricio Alvarez, but it is fair to ask what the palace did to turn a merchant into a supplier of our enemy.",
-                "Somewhere in Zille, a Rizian soldier will face a Wehzek battalion that crossed the strait on Lespian fuel. He will not " +
-                "be told why.");
+                war
+                    ? $"The fuel that carries Wehzek reinforcements {toPort} now comes, in part, from Lespian depots. This paper has never " +
+                      "trusted Patricio Alvarez, but it is fair to ask what the palace did to turn a merchant into a supplier of our enemy."
+                    : "Wehzek tankers are taking on fuel at Lespian depots in Perla. This paper has never trusted Patricio Alvarez, but it " +
+                      "is fair to ask what the palace did to turn a merchant into a supplier of our enemy.",
+                war
+                    ? "Somewhere in Zille, a Rizian soldier will face a Wehzek battalion that crossed the strait on Lespian fuel. He will not " +
+                      "be told why."
+                    : "The guns in Zille are silent now, and the fuel may have come too late to cost a Rizian life. The palace still owes " +
+                      "the country an answer.");
             Rep("LespiaFuel", SuzerainTokenName.RiziaCountryLespia, "Lespian Ports Serve Wehzek Convoys",
                 "Our naval attaché in Perla reports Wehzek tankers loading fuel at the commercial docks, unhindered and in daylight.",
-                "Admiralty staff estimate the convoys to Nanta will run more often for it, and the garrison in Zille will feel the " +
-                "difference before the month is out.");
+                war
+                    ? $"Admiralty staff estimate the convoys {toPort} will run more often for it, and the garrison in Zille will feel the " +
+                      "difference before the month is out."
+                    : "The fighting in Zille is over. Admiralty staff note for the record that Perla chose its customer while it was still " +
+                      "going on" + (ZilleCampaign.Liberated ? ", and that no Wehzek tanker now has anywhere in Zille to go." : "."));
         });
         Once("LespiaLax", WarFlow.AtWar && B(SupplyWar.VarLespiaGrievance) && B("ZilleWar.Call_Alvarez_GrievanceSaid") && B(SupplyWar.VarLespiaStrait), () =>
             Rep("LespiaLax", SuzerainTokenName.RiziaCountryLespia, "Lespian Patrols Grow Lax",
@@ -348,7 +367,7 @@ internal static class SupplyNews
             {
                 Rep("LespiaMitzShip", SuzerainTokenName.RiziaCitySallabes, "A Lespian Destroyer at Sallabes",
                     "The destroyer promised by Prime Minister Alvarez has reached Sallabes. Her Lespian crew handed her over at the " +
-                    "quayside and took the evening train home.",
+                    "quayside and went home on the next boat to Perla.",
                     "The Admiralty reports that she is fast, well armed and a little short of spare parts, which can only be bought " +
                     "in Perla.");
             }
@@ -533,9 +552,17 @@ internal static class SupplyNews
             Paper("SmolakRefused", "G", "Smolak's Ceasefire Offer Rejected",
                 "President Smolak of Wehlen offered the Kingdom of Rizia a ceasefire on the present front line, Wehzek radio announced, " +
                 "and was refused. \"The King of Rizia prefers funerals,\" Mr. Smolak told a crowd in Wraclawitz.",
-                ZilleCampaign.Strength >= 6
-                    ? "Wehlen has since called up reservists from its eastern provinces. Military observers expect them in Zille within weeks."
-                    : "Observers note that Wehlen's garrison in Zille is short of food and ammunition, and that the offer may not be repeated on the same terms."));
+                // printed the step after the call: the war may have ended at the council that followed it
+                WarFlow.AtWar
+                    ? ZilleCampaign.Strength >= 6
+                        ? "Wehlen has since called up reservists from its eastern provinces. Military observers expect them in Zille within weeks."
+                        : "Observers note that Wehlen's garrison in Zille is short of food and ammunition, and that the offer may not be repeated on the same terms."
+                    : ZilleCampaign.Liberated
+                    ? "Within days the question was moot. Wehlen's garrison in Zille has since surrendered, and the offer with it."
+                    : B(WarFlow.VarCeasefire)
+                    ? "Hours later Porte Drazon called a ceasefire of its own, on the same line. Diplomats in Konstantium are still trying to " +
+                      "work out what changed."
+                    : "The Rizian offensive that followed has failed, and the front has since gone quiet without the ceasefire Rizia turned down."));
 
         Once("SmolakAccepted", smolak is "accepted" or "countered", () =>
         {
@@ -590,7 +617,9 @@ internal static class SupplyNews
                       " and " + heldTowns[^1]) + ", which had not seen one in a generation." +
                       (occupied.Count > 0 ? $" Wehzek troops remain in {string.Join(" and ", occupied)}, and the Herald trusts they will not stay long." : string.Empty),
                 nothing
-                    ? "Wraclawitz asked no new price for the quiet. The Royal Herald notes that a beaten garrison rarely haggles."
+                    ? heldTowns.Count > 0
+                        ? "Wraclawitz asked no new price for the quiet. The Royal Herald notes that a beaten garrison rarely haggles."
+                        : "Wraclawitz asked no new price for the quiet. The Royal Herald notes that Wraclawitz wanted it at least as badly as we did."
                     : (smolak == "countered" ? $"His Majesty named the price for the quiet: {terms}. Wraclawitz agreed. " : $"Wraclawitz asked a price for the quiet: {terms}. ") +
                       "The Royal Herald will not pretend the price was nothing. It was less than the lives it spares.");
         });

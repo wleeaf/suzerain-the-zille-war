@@ -217,6 +217,9 @@ internal static class EarlyBookkeeping
         // Funding the resistance makes no sense once Zille is ours.
         Vanilla.Gate(Funding5, WarFlags.X(WarFlags.Liberated, false));
         Vanilla.Gate(Funding7, WarFlags.X(WarFlags.Liberated, false));
+        // nor once the treaty's Auremina term has made every Zille city Rizian (a divided end, but no resistance left to fund)
+        Vanilla.Gate(Funding7, WarFlags.XPeace + " || " + string.Join(" || ",
+            Front.Cities.Select(c => WarFlags.X(ZilleOperation.CapturedVar(c), false))));
         Events.OnDecisionFinished += (_, e) => OnFundingChosen(e.SelectedOptionInfo);
     }
 

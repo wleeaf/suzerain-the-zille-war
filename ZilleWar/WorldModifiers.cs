@@ -53,11 +53,13 @@ internal static class WorldModifiers
     private const string Victory = "ZilleWar.Mod_Victory";
     private const string Tutelage = "ZilleWar.Mod_RumburgTutelage";
     private const string LeaseShame = "ZilleWar.Mod_CaleqabizLeaseAuthority";   // authority, negative: a Lespian flag over Caleqabiz
+    /// <summary>The T5 answer to the refugee boats (EarlyT5 B_R1/B_R3), for the two turns its label promises: +1 corridor, -1 closed.</summary>
+    private const string RefugeeStance = "ZilleWar.Mod_RefugeeStance";
 
     private static readonly string[] Computed =
     {
         WarExpenditures, Occupation, Reconstruction, ZilleGold, ZillePort, ZilleEnergy, Refugees, Shipping, WarBonds, WarFuel,
-        Fervor, Weariness, TwoFronts, Humiliation, Victory, Tutelage, LeaseShame,
+        Fervor, Weariness, TwoFronts, Humiliation, Victory, Tutelage, LeaseShame, RefugeeStance,
     };
 
     // ---- situation / policy switches
@@ -131,8 +133,8 @@ internal static class WorldModifiers
     private static readonly Card[] Situations =
     {
         new("ZilleWar_Diplomacy_Wehlen_War", "Diplomacy", "High", WarState.VarActive, "State of War with the Republic of Wehlen",
-            "The declaration of war against the Republic of Wehlen, made before the Alliance of Nations in Konstantium, ended thirty " +
-            "years of uneasy lease and began a campaign to restore the territory of Zille to the Crown. \n\nThe conflict turns the " +
+            "The declaration of war against the Republic of Wehlen, made before the Alliance of Nations in Konstantium, ended a quarter " +
+            "century of uneasy lease and began a campaign to restore the territory of Zille to the Crown. \n\nThe conflict turns the " +
             "border at Mave Nortus into a front line and puts Rizian shipping within reach of Wehzek raiders in the Strait of Kreleck. " +
             "Success depends on swift operations in Zille and on keeping the friends who lend their navies, their credit and their oil."),
         new("ZilleWar_Military_TwoFronts", "Military", "High", WarFlags.TwoWars, "War on Two Fronts",
@@ -189,6 +191,9 @@ internal static class WorldModifiers
         // the consulate files published during the war: the world learned who planned the Friendship Day bombing
         // (vanilla recomputes perception every step, so the effect is a row, not a script change)
         ("Diplomacy_GlobalPerceptionMisc", "ZilleWar.War_Declared == true && RiziaDLC.Zille_Publicized_LespianInvolvement == true", "RiziaDLC.Country_GlobalPerception += 1"),
+        // the T5 refugee boats: a corridor for the families (+1) or the boats turned back (-1), for two turns (Turns 5 and 6)
+        ("Diplomacy_GlobalPerceptionMisc", "ZilleWar.Mod_RefugeeStance >= 1", "RiziaDLC.Country_GlobalPerception += 1"),
+        ("Diplomacy_GlobalPerceptionMisc", "ZilleWar.Mod_RefugeeStance <= -1", "RiziaDLC.Country_GlobalPerception -= 1"),
         // a liberation weighs more than vanilla's Pales victory (+4): a Merkopan army beaten and a province taken back
         ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Liberated == true", "RiziaDLC.Country_Military_PowerProjection += 5;"),
         ("PowerProjection_War_Outcome", "ZilleWar.War_Zille_Liberated == true && ZilleWar.Treaty_Signed == true && ZilleWar.Treaty_T_Army == true", "RiziaDLC.Country_Military_PowerProjection += 2;"),
@@ -335,6 +340,8 @@ internal static class WorldModifiers
         Set(Victory, liberated && since is >= 0 and <= 1 ? 1 : 0);
         Set(Tutelage, suzerain ? -1 : 0);
         Set(LeaseShame, Variables.GetBool(SupplyWar.VarLespiaLease) ? -1 : 0);
+        string refugeePolicy = Variables.GetString(EarlyT5.VarRefugeePolicy);
+        Set(RefugeeStance, declared && WorldSystems.Turn is 5 or 6 ? refugeePolicy switch { "corridor" => 1, "closed" => -1, _ => 0 } : 0);
         // decrees may have changed some of these (WarDecrees.Adjust): the Overview cards follow the adjusted values
         occupation = Variables.GetInt(Occupation);
         refugees = Variables.GetInt(Refugees);

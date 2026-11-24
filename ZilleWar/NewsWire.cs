@@ -570,6 +570,7 @@ internal static class NewsWire
         bool palesFriendly =
             (Variables.GetBool("RiziaDLC.Diplomacy_Pales_GasField_Buy") && !Variables.GetBool("RiziaDLC.Diplomacy_Pales_GasField_BuyCancelled")) ||
             (Variables.GetBool("RiziaDLC.Diplomacy_Pales_GasField_Cede") && !Variables.GetBool("RiziaDLC.Diplomacy_Pales_GasField_CedeCancelled")) ||
+            Variables.GetBool("RiziaDLC.Diplomacy_Lespia_GasField_25PercentDeal") ||
             Variables.GetBool("RiziaDLC.CountryRelation_Pales_Friendly") || Variables.GetBool("RiziaDLC.CountryRelation_Pales_Allied");
         Report("Declaration_Pales", SuzerainTokenName.RiziaCountryPales, palesFriendly ? "Pales Stays Calm" : "Pales Mans Its Border", palesFriendly
             ? P("Grand Duke Axel Reinhart has told the Palesian parliament that Pales will stay out of the war in Zille. \"Pales has an " +
@@ -783,6 +784,9 @@ internal static class NewsWire
     }
 
     private static string Words(int n) => n switch { <= 1 => "one", 2 => "two", 3 => "three", 4 => "four", _ => n.ToString() };
+
+    /// <summary>"a month", "two months", "three months": the war's length by the last phase fought (a destroyed army can end it early).</summary>
+    private static string MonthsOfWar(int phase) => phase <= 1 ? "a month" : $"{Words(Math.Min(phase, ZilleCampaign.LastPhase))} months";
     private static string Times(int n) => n switch { <= 1 => "once", 2 => "twice", 3 => "three times", _ => $"{n} times" };
     private static string Nth(int n) => AfterAction.Nth(n);
     private static string Places(List<string> l) => AfterAction.Places(l);
@@ -793,8 +797,8 @@ internal static class NewsWire
     private static string WasWere(List<string> l) => l.Count > 1 ? "were" : "was";
     private static string ItThem(List<string> l) => l.Count > 1 ? "them" : "it";
 
-    /// <summary>A soldier's home town for the Voice's letters: Dapalle, unless the Wehzeks hold it.</summary>
-    private static string HomeTown(PhaseNews x) => x.OwnLost.Contains("Dapalle") || RizianOccupied().Contains("Dapalle") ? "Balle" : "Dapalle";
+    /// <summary>A soldier's home town for the Voice's letters: Dapalle, else Balle, else Iza, skipping towns the Wehzeks hold.</summary>
+    private static string HomeTown(PhaseNews x) => AfterAction.RearTown(x.OwnLost.Concat(RizianOccupied()).ToList());
 
     public static void PublishOperationResult(int k, ObjectiveInfo info, bool won, AfterAction a)
     {
@@ -815,14 +819,19 @@ internal static class NewsWire
     private static (string, string) HeraldPiece(PhaseNews x)
     {
         AfterAction a = x.A;
-        string own = x.OwnLost.Count > 0
-            ? $" On our side of the old border, {Join(x.OwnLost)} {Was(x.OwnLost)} fallen to a Wehzek counterattack, and the reserves are " +
-              $"already moving up to take {ItThem(x.OwnLost)} back."
-            : string.Empty;
-        string back = x.BackLost.Count > 0
-            ? $" {Cap(Places(x.BackLost))} {Was(x.BackLost)} been lost to a Wehzek counterattack, and our soldiers mean to have " +
-              $"{ItThem(x.BackLost)} back."
-            : string.Empty;
+        // After the last phase (or an early end) nothing more is fought: the losses stand.
+        bool ended = x.Final && !x.Liberated;
+        string own = x.OwnLost.Count == 0 ? string.Empty
+            : ended
+            ? $" On our side of the old border, {Join(x.OwnLost)} {Was(x.OwnLost)} fallen to a Wehzek counterattack in the last days of " +
+              $"fighting, and {(x.OwnLost.Count > 1 ? "remain" : "remains")} in Wehzek hands as the guns fall silent."
+            : $" On our side of the old border, {Join(x.OwnLost)} {Was(x.OwnLost)} fallen to a Wehzek counterattack, and the reserves are " +
+              $"already moving up to take {ItThem(x.OwnLost)} back.";
+        string back = x.BackLost.Count == 0 ? string.Empty
+            : ended
+            ? $" {Cap(Places(x.BackLost))} {Was(x.BackLost)} been lost to a Wehzek counterattack before the end."
+            : $" {Cap(Places(x.BackLost))} {Was(x.BackLost)} been lost to a Wehzek counterattack, and our soldiers mean to have " +
+              $"{ItThem(x.BackLost)} back.";
         string lost = back + own;
         string retaken = a.CitiesRetaken.Count > 0 ? $" {Join(a.CitiesRetaken)} {IsAre(a.CitiesRetaken)} free again." : string.Empty;
         string extra = x.Extra.Count > 0 ? $" Our soldiers took {Places(x.Extra)} besides." : string.Empty;
@@ -1052,7 +1061,8 @@ internal static class NewsWire
                 "pockets. \"I told you they had forgotten how to be afraid,\" he said. \"They have remembered.\""));
         }
 
-        if (x.P == 1)
+        // An early end (the army destroyed) makes Phase I or II the last: it goes to the final-phase texts below.
+        if (x.P == 1 && !x.Final)
         {
             return x.Won
                 ? (By + "The Harbor at Dawn", P(
@@ -1074,7 +1084,7 @@ internal static class NewsWire
                     "Nobody here talks of going home. They talk of the next time."));
         }
 
-        if (x.P == 2)
+        if (x.P == 2 && !x.Final)
         {
             if (x.Carried && x.ZilleAim)
             {
@@ -1137,7 +1147,8 @@ internal static class NewsWire
                 "the closest thing to a promise this column has to offer."));
         }
 
-        // the final phase
+        // the final phase (Phase III, or an earlier phase after which the army could fight no more)
+        bool lastPhase = x.P >= ZilleCampaign.LastPhase;
         string lull = x.Held
             ? "The front was quiet for a month while His Majesty held the army back, and Bastos spent it writing letters home. "
             : string.Empty;
@@ -1168,8 +1179,10 @@ internal static class NewsWire
                     lull + (x.WonBack
                         ? "We took the city of Zille once and lost it. The last attack went in at night to take it back, and by dawn there " +
                           "were Rizian flags on the harbor cranes again."
-                        : $"There were {Words(Math.Max(2, x.HarborTries))} attacks on the city of Zille, and I watched all of them. The last " +
-                          "went in at night, and by dawn there were Rizian flags on the harbor cranes.") +
+                        : x.HarborTries > 1 || lastPhase
+                        ? $"There were {Words(Math.Max(2, x.HarborTries))} attacks on the city of Zille, and I watched all of them. The last " +
+                          "went in at night, and by dawn there were Rizian flags on the harbor cranes."
+                        : "The attack on the city of Zille went in at night, and by dawn there were Rizian flags on the harbor cranes.") +
                     " The men were too tired to celebrate. Most of them slept where they sat.",
                     fate,
                     $"{Cap(Places(a.EnemyCitiesLeft))} {IsAre(a.EnemyCitiesLeft)} still on the other side of the line. That is a story for another " +
@@ -1180,7 +1193,9 @@ internal static class NewsWire
             {
                 List<string> took = x.Won ? a.AimStart : a.AimTaken;
                 return (By + "The Last Push", P(
-                    lull + $"Zille was ours before the last phase began. The last phase took {Places(took)}, and I watched it from the road " +
+                    lull + (lastPhase
+                        ? $"Zille was ours before the last phase began. The last phase took {Places(took)}"
+                        : $"Zille was ours before {ZilleCampaign.PhaseWords(x.P)} began. It took {Places(took)}") + ", and I watched it from the road " +
                     "behind the lines. The men were too tired to celebrate. Most of them slept where they sat." + lostLine,
                     fate,
                     $"{Cap(Places(a.EnemyCitiesLeft))} {IsAre(a.EnemyCitiesLeft)} still on the other side of the line. That is a story for another " +
@@ -1188,7 +1203,7 @@ internal static class NewsWire
             }
 
             return (By + "Where the Line Runs", P(
-                lull + $"The last phase is over. {bastos} showed me where it ended: a stone wall across a field outside " +
+                lull + $"{(lastPhase ? "The last phase is over" : "The fighting is over")}. {bastos} showed me where it ended: a stone wall across a field outside " +
                 $"{a.EnemyCitiesLeft.FirstOrDefault(x.Info.Towns.Contains) ?? a.EnemyCitiesLeft.FirstOrDefault() ?? x.Info.Towns[0]}, " +
                 "with our men on one side of it and theirs on the other, close enough to hear each other's cooking pots." + elsewhere,
                 fate + lostLine,
@@ -1197,11 +1212,15 @@ internal static class NewsWire
                 "about the first and do not talk about the second."));
         }
 
-        return (By + "The River Again", P(
-            lull + "I am back on the hill above the river, where I watched the first attack on Zille. The cranes of the harbor are still " +
-            "there, and still Wehzek. " + (x.HarborEverWon
+        return (By + (x.HarborTries > 1 ? "The River Again" : "Above the River"), P(
+            lull + (x.HarborTries > 1
+                ? "I am back on the hill above the river, where I watched the first attack on Zille. "
+                : "I am on the hill above the river, where I watched our attack on Zille. ") +
+            "The cranes of the harbor are still there, and still Wehzek. " + (x.HarborEverWon
                 ? "Our men walked under them once. They could not stay."
-                : $"The {Nth(x.HarborTries)} attempt failed in the same streets as the {(x.HarborTries >= 3 ? "first two" : "first")}.") +
+                : x.HarborTries > 1
+                ? $"The {Nth(x.HarborTries)} attempt failed in the same streets as the {(x.HarborTries >= 3 ? "first two" : "first")}."
+                : "The attack failed in the streets below them.") +
             elsewhere,
             fate,
             "I promised to tell the truth of this war from the men who fight it. The truth is that they could not have fought harder, " +
@@ -1283,7 +1302,7 @@ internal static class NewsWire
                 }
 
                 return ($"Rizian Offensive Ends Short of {x.Target}", P(
-                    $"Rizia's three-month offensive in Zille has ended short of {x.AimPlaces}" +
+                    $"Rizia's {(x.P <= 1 ? "month-long" : $"{Words(Math.Min(x.P, ZilleCampaign.LastPhase))}-month")} offensive in Zille has ended short of {x.AimPlaces}" +
                     (x.Gain ? $", though its forces {a.TookWords(true)} in the last phase" : string.Empty) +
                     $". Wehzek forces still hold {HeldByWehlen()}, while Rizia keeps {HeldByRizia()}.{losses}" + censor,
                     portsLeft.Count > 0
@@ -1635,7 +1654,8 @@ internal static class NewsWire
                 "Mave Nortus has fallen to the Wehzek army. Those who could not flee are sheltering in cellars. Refugees on the roads " +
                 "to Dapalle report Wehzek patrols searching houses for Rizian soldiers."));
         }
-        else if (!x.OwnLost.Contains("Mave Nortus") && !x.Final)
+        // a town Wehzek troops took in an earlier phase and still hold: no hospital trains, no wall coming down
+        else if (!x.OwnLost.Contains("Mave Nortus") && !x.Final && !Variables.GetBool(WarFlags.Occupied("Mave Nortus")))
         {
             if (x.P == 1)
             {
@@ -1795,8 +1815,7 @@ internal static class NewsWire
                           "discussion between the two crowns.\""));
     }
 
-    private static string CageTown(PhaseNews x) =>
-        x.OwnLost.Contains("Dapalle") || Variables.GetBool(WarFlags.Occupied("Dapalle")) ? "Balle" : "Dapalle";
+    private static string CageTown(PhaseNews x) => AfterAction.RearTown(x.OwnLost);
 
     private static void ValgslandReport(PhaseNews x, string key)
     {
@@ -2174,12 +2193,12 @@ internal static class NewsWire
                 // The last phase of Northern Crown is over with Zille city Rizian and part of the region still Wehzek: the front
                 // stops where the armies stand, and Alliance observers watch the line.
                 Publish("End", "RH", "The Golden Banner Stays Over Zille", P(
-                    $"Operation Northern Crown is over. After three months of fighting, the Royal Army holds {HeldByRizia()}, " +
+                    $"Operation Northern Crown is over. After {MonthsOfWar(ZilleCampaign.Phase)} of fighting, the Royal Army holds {HeldByRizia()}, " +
                     "and the guns have fallen silent on the line where our soldiers stand. Alliance observers have arrived, and peace talks with Wraclawitz are expected.",
                     "\"What was taken back will not be given back,\" the palace said in a statement. The Royal Herald adds that it has not " +
                     $"forgotten {HeldByWehlen()}, nor the men who fell in Zille."));
                 Publish("End", "G", "Armistice Divides Zille", P(
-                    "The fighting in Zille has stopped along the line of contact, after three months of war. Rizian " +
+                    $"The fighting in Zille has stopped along the line of contact, after {MonthsOfWar(ZilleCampaign.Phase)} of war. Rizian " +
                     $"troops keep {HeldByRizia()}; Wehlen keeps {HeldByWehlen()}.{OccupiedLine()} " +
                     "Alliance observers will patrol the line until the two governments meet to negotiate a treaty.",
                     "Both capitals claim the outcome. President Smolak calls the city \"occupied, not lost,\" and the Security Committee is " +
@@ -2190,7 +2209,9 @@ internal static class NewsWire
                     "The palace will call this a victory, and in the harbor it may look like one. In the villages on the wrong side of " +
                     "the line, it looks like a border that moved a few miles and stayed."));
                 Report("End_Divided", SuzerainTokenName.RiziaCityPorteDrazon, "Armistice in Zille", P(
-                    "With the last phase of Operation Northern Crown fought, the General Staff has advised that the army has reached the " +
+                    (ZilleCampaign.Phase >= ZilleCampaign.LastPhase
+                        ? "With the last phase of Operation Northern Crown fought, the General Staff has advised that the army has reached the "
+                        : "With the army too worn down to fight another phase of Operation Northern Crown, the General Staff has advised that it has reached the ") +
                     "limit of what it can take. The army holds the line of contact under Alliance supervision until a treaty is negotiated.",
                     $"Our troops hold {HeldByRizia()} and are digging in. Military administration continues in Zille city, and the " +
                     "engineers are already fortifying the new line."));

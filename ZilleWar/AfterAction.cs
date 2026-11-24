@@ -531,13 +531,17 @@ internal sealed class AfterAction
 
     private string LossesParagraph(int p, bool won, bool final, int k)
     {
+        // "the heaviest", "the costliest", "the lightest" only when they hold against the phases fought before this one
+        var earlier = Enumerable.Range(1, Math.Max(0, k - 1)).Select(i => Variables.GetInt(ZilleCampaign.PlayerDeadVar(i))).ToList();
+        bool heaviest = earlier.Count == 0 || PlayerDead > earlier.Max();
+        bool lightest = earlier.Count == 0 || PlayerDead < earlier.Min();
         string ours = Cost switch
         {
             0 => p switch
             {
                 1 => $"Rizian losses were light. {General}, Commander of the Armed Forces, credited \"the men who planned this as much as " +
                      "the men who fought it.\"",
-                2 => $"Our losses this month were the lightest of the war. \"I will not call it cheap,\" {General} told the Royal Council. " +
+                2 => $"Our losses this month were {(lightest ? "the lightest of the war" : "light")}. \"I will not call it cheap,\" {General} told the Royal Council. " +
                      "\"I will call it well done, and leave it there.\"",
                 _ => $"The last phase cost us few men. \"Of all the things I will report to His Majesty, that is the one I am proudest of,\" " +
                      $"{General} said.",
@@ -555,10 +559,10 @@ internal sealed class AfterAction
             {
                 1 => $"Rizian losses are severe: {PlayerDeadMen} men killed, wounded or missing. \"We paid for every yard,\" {General} told " +
                      "the Royal Council. \"I will not pretend to His Majesty that we can pay at this rate for long.\"",
-                2 => $"The losses are the heaviest of the war so far, {PlayerDeadMen} men killed, wounded or missing. Several battalions " +
+                2 => $"The losses are {(heaviest ? "the heaviest of the war so far" : "severe again")}, {PlayerDeadMen} men killed, wounded or missing. Several battalions " +
                      $"have been merged with their neighbors because there were not enough men left to call them battalions. \"I have " +
                      $"broken good units this month,\" {General} said. \"I will have to answer for that, and I will.\"",
-                _ => $"The last phase was the costliest: {PlayerDeadMen} men killed, wounded or missing. \"Nobody who was there will call " +
+                _ => $"{(heaviest ? "The last phase was the costliest:" : "The last phase cost")} {PlayerDeadMen} men killed, wounded or missing. \"Nobody who was there will call " +
                      $"it anything but a slaughter,\" {General} said, \"and I will not ask them to.\"",
             },
         };
@@ -575,7 +579,7 @@ internal sealed class AfterAction
         string theirs = EnemyDead > 0
             ? p switch
             {
-                1 => $" Wehzek losses are estimated at {EnemyDeadMen} men, and the prisoner cages at {(CitiesLost.Contains("Dapalle") || Variables.GetBool(WarFlags.Occupied("Dapalle")) ? "Balle" : "Dapalle")} are filling.",
+                1 => $" Wehzek losses are estimated at {EnemyDeadMen} men, and the prisoner cages at {RearTown(CitiesLost)} are filling.",
                 2 => $" The enemy lost an estimated {EnemyDeadMen} men. A column of prisoners was marched south through the Rizian lines, " +
                      "and the townspeople of the border villages came out to watch it pass in silence.",
                 _ => $" The Wehzek garrison lost an estimated {EnemyDeadMen} men in the last phase alone.",
@@ -588,6 +592,13 @@ internal sealed class AfterAction
             };
         return ours + theirs;
     }
+
+    /// <summary>
+    /// The first Rizian town behind the line still in Rizian hands, for prisoner cages and field hospitals: Dapalle, else Balle,
+    /// else Iza (which Wehlen never reaches). <paramref name="lost"/> adds towns lost this phase but not yet flagged.
+    /// </summary>
+    internal static string RearTown(ICollection<string> lost = null) =>
+        new[] { "Dapalle", "Balle" }.FirstOrDefault(t => (lost == null || !lost.Contains(t)) && !Variables.GetBool(WarFlags.Occupied(t))) ?? "Iza";
 
     private static string LandedSentence(int p, WarCouncil.Orders o)
     {
@@ -678,7 +689,7 @@ internal sealed class AfterAction
                       (won ? ", which the enemy had not expected from us any more." : ", which is what the enemy had been waiting for."));
                 break;
             default:
-                s.Add(p == 1 ? FirstPlan(o.Approach, chosen, target, won) : p == 2 ? SecondPlan(o.Approach, target, won, plural) : LastPlan(o.Approach, target, won, plural));
+                s.Add(p == 1 ? FirstPlan(o.Approach, chosen, target, won) : p == 2 ? SecondPlan(o.Approach, target, won, plural, Partial) : LastPlan(o.Approach, target, won, plural, Partial));
                 break;
         }
 
@@ -718,7 +729,8 @@ internal sealed class AfterAction
             : $"{Cap(chosen)} ran straight into prepared Wehzek positions.",
     };
 
-    private static string SecondPlan(WarCouncil.Approach a, string target, bool won, bool plural) => a switch
+    // partial: part of the Ports aim taken (target names it); the next sentence says where the push ran out of strength
+    private static string SecondPlan(WarCouncil.Approach a, string target, bool won, bool plural, bool partial) => a switch
     {
         WarCouncil.Approach.Feint => won
             ? $"The Wehzeks had learned to expect a feint, so the Staff made the feint the real attack, and {target} fell to the blow they had been told to ignore."
@@ -735,20 +747,26 @@ internal sealed class AfterAction
         WarCouncil.Approach.Mountain => won
             ? "The mountaineers took the ridges again, and the Wehzeks, who had expected them in the valleys this time, were outflanked once more."
             : "The Wehzeks had put their own men on the ridges this time, and the mountaineers fought them for the high ground for a week without taking it.",
-        _ => won
+        _ => partial
+            ? $"The assault went in on a broad front and broke through in front of {target}, but nowhere else."
+            : won
             ? "The assault went in on a broad front and kept going, and the Wehzek line gave way in three places at once."
             : "The assault went in on a broad front, and the Wehzek line bent everywhere and broke nowhere.",
     };
 
-    private static string LastPlan(WarCouncil.Approach a, string target, bool won, bool plural) => a switch
+    private static string LastPlan(WarCouncil.Approach a, string target, bool won, bool plural, bool partial) => a switch
     {
-        WarCouncil.Approach.Feint => won
+        WarCouncil.Approach.Feint => partial
+            ? $"The last feint of the war drew enough of the garrison away to take {target}."
+            : won
             ? "The last feint of the war worked as well as the first."
             : "By the last phase the Wehzeks no longer believed anything the army showed them, and the feint drew nobody away.",
         WarCouncil.Approach.Landing => won
             ? $"The marines made their last landing of the war on the beaches below {target}, and walked into {(plural ? "both towns" : "the town")} by the harbor road."
             : $"The last landing went in under the guns of {target}, and the boats that came back were carrying wounded.",
-        WarCouncil.Approach.Armor => won
+        WarCouncil.Approach.Armor => partial
+            ? $"What was left of the tanks led the final push, and it was enough for {target}."
+            : won
             ? "What was left of the tanks led the final push, and it was enough."
             : "What was left of the tanks led the final push, and there was not enough left of them.",
         WarCouncil.Approach.Airborne => won
@@ -757,7 +775,9 @@ internal sealed class AfterAction
         WarCouncil.Approach.Mountain => won
             ? "The mountaineers came down off the ridges for the last time, onto the coast road behind the Wehzek positions."
             : "The mountaineers held the ridges to the end, but the coast road below them stayed Wehzek.",
-        _ => won
+        _ => partial
+            ? $"The final assault was fought by tired men, and it carried {target}."
+            : won
             ? "The final assault was fought by tired men, and it carried."
             : "The final assault was fought by tired men against men who were just as tired, and it stalled.",
     };

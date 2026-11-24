@@ -27,6 +27,8 @@ internal static class LateState
     public const string VarTitleRestorer = "ZilleWar.Title_Restorer";
     /// <summary>The Turn 7 answer on who governs a liberated Zille has been written into vanilla's ownership flags.</summary>
     private const string VarAdminSynced = "ZilleWar.Late_AdminSynced";
+    /// <summary>The Royal Herald's "Zille Incorporated Into Rizia Imperii" was published after the Turn 9 speech.</summary>
+    private const string VarImperiiNews = "ZilleWar.Late_ImperiiNews";
 
     private const string Wehlen = "Rizia_Country_Wehlen";
 
@@ -59,7 +61,7 @@ internal static class LateState
 
     public static void Register()
     {
-        foreach (string v in new[] { VarOutcomeApplied, VarByForce, VarZilleLost, VarDivided, VarTitleRestorer, VarAdminSynced }.Concat(SumVars))
+        foreach (string v in new[] { VarOutcomeApplied, VarByForce, VarZilleLost, VarDivided, VarTitleRestorer, VarAdminSynced, VarImperiiNews }.Concat(SumVars))
         {
             Variables.Register(v);
         }
@@ -129,8 +131,25 @@ internal static class LateState
             ApplyOutcome();
         }
 
+        PublishImperii();
         UpdateSummary();
         AddWarTitle();
+    }
+
+    /// <summary>The Turn 9 speech's Crown choice (c440) sets a flag no vanilla item reads; the Royal Herald story is published from it.</summary>
+    private static void PublishImperii()
+    {
+        if (!Liberated || Variables.GetBool(VarImperiiNews) || !Variables.GetBool("RiziaDLCSupport.News_Turn09_RH_ZilleReturn_GiveToRiziaImperii"))
+        {
+            return;
+        }
+
+        Variables.Set(VarImperiiNews, true);
+        NewsWire.Publish("L9_ZilleImperii", "RH", "Zille Incorporated Into Rizia Imperii",
+            "The Palace has announced that now that Zille is returned to Rizia, the area will not be reincorporated into Brenas, of which " +
+            "it was a part historically. Instead, Rizia Imperii will assume control over the region.\n\nTying it to Rizia's central region " +
+            "is politically clever by King Romus, essentially securing Zille as part of Rizia proper, tying it administratively to the " +
+            "capital region to ensure no one can ever doubt its status again.");
     }
 
     private static void ApplyOutcome()
@@ -265,7 +284,6 @@ internal static class LateState
     {
         Func<bool> war = () => Declared;
         Func<bool> cityOurs = () => Declared && (ZilleCampaign.Liberated || CityHeld);
-        Func<bool> notReturned = () => Declared && !ZilleCampaign.Liberated;
 
         // peacetime Zille-under-Wehlen flavor that a war makes false
         foreach (string n in new[]
@@ -279,7 +297,9 @@ internal static class LateState
         }
 
         Vanilla.HideNews("Turn08_G_ZilleTensionsRise", cityOurs);
-        Vanilla.HideNews("Turn09_RH_ZilleReturn_GiveToRiziaImperii", notReturned);
+        // Vanilla wires this item to the Pales unification refusal, not to the Turn 9 speech's Crown choice: hidden in every war
+        // game, and the speech's own flag publishes it (PublishImperii) after a liberation.
+        Vanilla.HideNews("Turn09_RH_ZilleReturn_GiveToRiziaImperii", war);
 
         foreach (string r in new[]
                  {
@@ -300,8 +320,16 @@ internal static class LateState
                      {
                          "Turn06_MaveNortus_IntelligenceTrainingOperations", "Turn07_MaveNortus_IntelligenceInsertion",
                          "Turn08_MaveNortus_IntelligenceServiceSearchesVina", "Turn09_ReformDeclaration_SuOminaGathering",
+                         // works ordered before the town fell that finish while it is Wehzek
+                         "Survey_MaveNortus_Mining", "Construction_MaveNortus_IntelligenceHubCompleted",
                      }),
-                     ("Jales", new[] { "Turn06_Jales_CoastGuardIncreasesPresence", "Turn09_Unrest_WruhecistsAttackReformRally" }),
+                     ("Jales", new[]
+                     {
+                         "Turn06_Jales_CoastGuardIncreasesPresence", "Turn09_Unrest_WruhecistsAttackReformRally",
+                         "Construction_Jales_BomberPlaneFactoryCompleted", "Construction_Jales_FighterPlaneFactoryCompleted",
+                         "Construction_Jales_BorderPostUpgraded", "RD_Jales_JalesGolcondistSanctuary_Completed",
+                         "RD_Jales_JalesWruhecistSanctuary_Completed", "Survey_Jales_Mining",
+                     }),
                  })
         {
             string occupied = WarFlags.Occupied(town);
@@ -321,7 +349,7 @@ internal static class LateState
     {
         // Turn08_G_LespiaEvidenceReleased is rewritten by WorldPress (one owner, so the text never flips).
         new(true, "Turn09_RH_ZilleReturnSpeech_Negociations", () => Liberated, "Zille Reunites with Rizia: A Triumph of Arms",
-            "After thirty years under a foreign flag, Zille has formally rejoined the Kingdom. The ceremony in the city's main " +
+            "After a quarter of a century under a foreign flag, Zille has formally rejoined the Kingdom. The ceremony in the city's main " +
             "square, its Wehzek name already gone from the street signs, sealed what the Royal Army won in the field.\n\nHis Majesty " +
             "honored the soldiers who fell between the river and the sea, and thousands of Zilleans cheered the King who would not " +
             "wait for Wehlen's permission to bring them home."),
@@ -333,6 +361,15 @@ internal static class LateState
             "The decision to remove dozens of Smolak's statues and sink them in the Gulf of Moridia as artificial reefs has met wide " +
             "approval from the Zillean public, though the Wehzek minority in Nanta called it a victor's vandalism. Fishermen in Zille " +
             "have already started calling the spot Wiktor's Rest."),
+        // Turn 10 Foreign Affairs epic choice (Part or Lost games): no Rizian camp in a town Wehzek troops hold
+        new(false, "Turn10_Report_NewGov_Epic_OperationSanctuary", () => Declared && Variables.GetBool(WarFlags.Occupied("Mave Nortus")),
+            "Operation Sanctuary",
+            "Rizia's campaign to support Zillean refugees and resistance members has led thousands of families to cross the border, " +
+            "with temporary camps now established in Sallabes and Elle Nors, since Mave Nortus remains under Wehzek occupation."),
+        new(false, "Turn10_Report_NewGov_Epic_OperationSanctuary", () => Declared && !Variables.GetBool(WarFlags.Occupied("Mave Nortus")),
+            "Operation Sanctuary",
+            "Rizia's campaign to support Zillean refugees and resistance members has led thousands of families to cross the border, " +
+            "with temporary camps now established in Sallabes and Mave Nortus."),
     };
 
     private static readonly Dictionary<string, (string title, string text)> Originals = new(StringComparer.Ordinal);
@@ -448,14 +485,17 @@ internal static class LateState
             casualties = $"During the Zille War, {o} Rizian soldiers were killed, wounded or went missing.";
         }
 
-        int phases = Variables.GetInt(ZilleCampaign.VarPhase);
+        // offensives actually fought (a T5 hold leaves two offensives under a Phase III number)
+        int phases = ZilleCampaign.OperationsDone;
+        bool paused = phases == 2 && Variables.GetInt(WarCouncil.VarHeldTurn) > 0;
         // Cities the phases took (a city handed over by a treaty was not taken by Rizian forces), and those Wehzek
         // counterattacks won back and kept.
         var fought = Front.All.ToList();
         var everTaken = Front.Cities.Where(c => fought.Any(p => p.Gained.Contains(c))).ToList();
         var wonBack = everTaken.Where(c => !Variables.GetBool(ZilleOperation.CapturedVar(c)) && fought.Any(p => p.Lost.Contains(c))).ToList();
         string operation = phases <= 0 ? null
-            : $"Operation Northern Crown was fought in {(phases == 1 ? "one phase" : phases == 2 ? "two phases" : "three phases")}, and Rizian forces took " +
+            : $"Operation Northern Crown was fought in {(phases == 1 ? "one offensive" : phases == 2 ? "two offensives" : "three offensives")}" +
+              (paused ? ", with a month's pause between them" : string.Empty) + ", and Rizian forces took " +
               $"{Cities(everTaken.Count)} of the four cities of the Zille province" +
               (wonBack.Count > 0 ? $", though Wehzek counterattacks won back {Front.Join(wonBack)}." : ".");
 
@@ -540,8 +580,12 @@ internal static class LateState
 
         var lines = new List<(string cond, string text)>
         {
-            (SummaryLib, "Zille was taken by force of arms after thirty years of Wehzek rule."),
-            (SummaryPart, $"The Zille War ended along the armistice line, with {Front.HeldWords} in Rizian hands and {Front.WehzekWords} still Wehzek."),
+            (SummaryLib, "Zille was taken by force of arms after a quarter of a century of Wehzek rule."),
+            // the treaty's Auremina term can leave no city Wehzek; a border treaty replaces the armistice line
+            (SummaryPart, Front.Wehzek.Count == 0
+                ? "The Zille War ended with every city of the province in Rizian hands, the last of them returned by the Mave Nortus Treaty."
+                : $"The Zille War ended along {(Variables.GetString(ZilleTreaty.VarKind) == "border" ? "a new border" : "the armistice line")}, " +
+                  $"with {Front.HeldWords} in Rizian hands and {Front.WehzekWords} still Wehzek."),
             (SummaryLost, Front.Held.Count > 0
                 ? $"The war for Zille was lost: Zille city stayed Wehzek, though {Front.HeldWords} remained behind Rizian lines."
                 : "The war for Zille was lost, and Wehlen tightened its hold on the region."),
