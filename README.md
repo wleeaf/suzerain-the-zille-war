@@ -6,16 +6,35 @@ Peace games stay vanilla. A fan mod, not affiliated with Torpor Games.
 
 ## Playing it
 
-Download the zip from the Releases page, extract it into the game folder, and on Linux or
-Steam Deck add the launch option below. The full player instructions are in
-`tools/release/README.txt`, which ships inside the zip.
+Download the zip for your platform from the Releases page and extract it into the game folder;
+on Linux or Steam Deck add the launch option below. The full player instructions are in
+`tools/release/README.txt` (and `README-macOS.txt`), which ship inside the zips. Each zip
+carries a one-click uninstaller that removes the mod, the kit and MelonLoader and leaves saves alone.
+
+| Platform | Package | Status |
+| --- | --- | --- |
+| Windows x64 | Windows-Linux-SteamDeck | same binaries as the tested Proton setup |
+| Windows on Arm | Windows-Linux-SteamDeck | runs through Windows' x64 emulation; untested |
+| Linux / Steam Deck (Proton) | Windows-Linux-SteamDeck | tested end to end: install, self-test, uninstall |
+| macOS (Intel, Apple Silicon via Rosetta) | macOS-experimental | untested; see below |
+| Consoles, iOS, Android | none | no mod loader exists |
+
+On macOS the Suzerain Modding Kit's save path is a hard-coded Windows path
+(`%userprofile%\AppData\LocalLow\...`). The macOS launcher points it at
+`~/Library/Application Support/Torpor Games/Suzerain` through a link whose name is that path, and
+starts the game under Rosetta on Apple Silicon, since MelonLoader's macOS bootstrap is x86_64 only.
 
 ## Releasing
 
-`tools/release/package.sh <version>` builds the mod and writes
-`dist/Suzerain-The-Zille-War-Wleeaf-Edition-<version>.zip` with MelonLoader 0.7.3,
-Suzerain Modding Kit 2.4 (checksum-pinned), the mod, its map assets (`assets/UserData`) and
-the licenses.
+`tools/release/package.sh <version>` builds the mod and writes two zips to `dist/`:
+`...-Windows-Linux-SteamDeck.zip` (MelonLoader 0.7.3 x64, its portable .NET 6.0.36 runtime in
+`MelonLoader/Dependencies/dotnet` so nothing is installed system-wide, the checksum-pinned Suzerain
+Modding Kit 2.4, the mod, its map assets, the licenses, `Uninstall The Zille War.bat` and
+`uninstall-the-zille-war.sh`) and `...-macOS-experimental.zip` (MelonLoader 0.7.3 macOS with
+`tools/release/macos/launch-addon.sh` appended to its launcher, a setup and an uninstall `.command`).
+
+`tools/carousel/make_carousel.py` turns the screenshots in `~/Pictures/ZilleWar-reddit` into the
+1080x1350 carousel slides in `~/Pictures/ZilleWar-reddit/carousel`.
 
 Built on [Suzerain Modding Kit](https://github.com/suzerain-modding/suzerain-modding-kit)
 (SMK) and MelonLoader.
