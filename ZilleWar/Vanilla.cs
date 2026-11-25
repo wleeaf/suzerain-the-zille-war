@@ -688,13 +688,158 @@ internal static class Patch_VanillaDialogue
         try
         {
             DialogueConversation conv = DialogueManager.MasterDatabase?.GetConversation(conversationData?.ConversationProperties?.Dialogue);
-            Vanilla.PatchDialogue(conv);
-            Vanilla.RaiseChoicesOverLines(conv);
+            LinkedPatch.PatchWithLinked(conv);
         }
         catch (Exception ex)
         {
             Core.Log.Warning($"Vanilla dialogue patch failed: {ex.Message}");
         }
+    }
+}
+
+/// <summary>
+/// Many vanilla scenes run on through other conversations by link: the balcony speech plays most of itself in "Turn 6/Intro
+/// Section", the House of Delegates II debate in "Pales War Update And Tax" and "Zille Treaty Discussion". The modding kit
+/// injects our nodes only into the conversation a panel opens, and remembers each title it has patched for the whole session,
+/// even when the game's dialogue data is reloaded and our nodes are gone. A vanilla line our variant replaces is hidden by a
+/// Require; if that hide reached a conversation whose variants were missing, the scene hit a dead end and closed. So when a
+/// panel opens, this patches the opened conversation and every conversation reachable from it by links: our nodes first
+/// (re-injected when they are missing), then the vanilla hides and the choice priorities. Every step is idempotent.
+/// </summary>
+internal static class LinkedPatch
+{
+    private static readonly System.Reflection.MethodInfo SmkPatch;
+    private static readonly System.Collections.Generic.HashSet<string> SmkPatched;
+
+    static LinkedPatch()
+    {
+        try
+        {
+            Type injector = typeof(SuzerainModdingKit.StoryFragments.Conversation.ConversationInjection).Assembly
+                .GetType("SuzerainModdingKit.StoryFragments.Conversation.ConversationInjector");
+            SmkPatch = injector?.GetMethod("PatchConversation",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+            SmkPatched = injector?.GetField("_conversationsPatched",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)?.GetValue(null) as HashSet<string>;
+        }
+        catch (Exception ex)
+        {
+            Core.Log.Warning($"Linked conversation patching unavailable: {ex.Message}");
+        }
+
+        if (SmkPatch == null || SmkPatched == null)
+        {
+            Core.Log.Warning("Linked conversation patching: the modding kit's injector was not found.");
+        }
+    }
+
+    public static void PatchWithLinked(DialogueConversation root)
+    {
+        DialogueDatabase db = DialogueManager.MasterDatabase;
+        if (root == null || db == null)
+        {
+            return;
+        }
+
+        var seen = new HashSet<int>();
+        var queue = new Queue<DialogueConversation>();
+        queue.Enqueue(root);
+        seen.Add(root.id);
+        while (queue.Count > 0)
+        {
+            DialogueConversation conv = queue.Dequeue();
+            if (EnsureInjected(conv))
+            {
+                Vanilla.PatchDialogue(conv);
+                Vanilla.RaiseChoicesOverLines(conv);
+            }
+            else
+            {
+                // Hiding vanilla lines without our variants in place could leave a scene with nowhere to go: keep it vanilla.
+                Core.Log.Warning($"'{conv.Title}': the mod's lines could not be injected; the conversation stays vanilla.");
+            }
+
+            foreach (DialogueEntry e in conv.dialogueEntries)
+            {
+                foreach (Link l in e.outgoingLinks)
+                {
+                    if (l.destinationConversationID != conv.id && seen.Add(l.destinationConversationID))
+                    {
+                        DialogueConversation next = db.GetConversation(l.destinationConversationID);
+                        if (next != null)
+                        {
+                            queue.Enqueue(next);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>Injects our nodes into the conversation through the kit, again if the kit believes it did but they are gone.
+    /// True when the conversation has no injections or has them in place.</summary>
+    private static bool EnsureInjected(DialogueConversation conv)
+    {
+        if (SmkPatch == null || SmkPatched == null)
+        {
+            return true;
+        }
+
+        var expected = new HashSet<string>(StringComparer.Ordinal);
+        foreach (SuzerainModdingKit.StoryFragments.Conversation.ConversationInjection inj in
+                 SuzerainModdingKit.StoryFragments.Conversation.ConversationRegistry.Injections)
+        {
+            if (string.Equals(inj.ConversationTitle, conv.Title, StringComparison.Ordinal))
+            {
+                foreach (var n in inj.Nodes)
+                {
+                    if (!n.IsOverride)
+                    {
+                        expected.Add(n.Name);
+                    }
+                }
+            }
+        }
+
+        if (expected.Count == 0)
+        {
+            return true;
+        }
+
+        if (Present(conv, expected))
+        {
+            return true;
+        }
+
+        if (SmkPatched.Remove(conv.Title))
+        {
+            Core.Log.Msg($"'{conv.Title}' had lost the mod's lines (dialogue data reloaded); injecting them again.");
+        }
+
+        try
+        {
+            SmkPatch.Invoke(null, new object[] { conv });
+        }
+        catch (Exception ex)
+        {
+            Core.Log.Warning($"Injecting into '{conv.Title}' failed: {ex.InnerException?.Message ?? ex.Message}");
+        }
+
+        return Present(conv, expected);
+    }
+
+    private static bool Present(DialogueConversation conv, HashSet<string> expected)
+    {
+        foreach (DialogueEntry e in conv.dialogueEntries)
+        {
+            string n = Field.LookupValue(e.fields, "SuzerainModdingKit.NodeName");
+            if (!string.IsNullOrEmpty(n) && expected.Contains(n))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
