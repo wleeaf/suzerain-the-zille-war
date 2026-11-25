@@ -9,3 +9,4 @@ sweep-partial/
 *.user
 .vs/
 .vscode/
+dist/

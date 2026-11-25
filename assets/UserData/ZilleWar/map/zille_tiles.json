@@ -1,0 +1,3209 @@
+{
+ "version": 2,
+ "map_size_px": [
+  12288,
+  8192
+ ],
+ "towns": [
+  {
+   "name": "Zille",
+   "x": 674,
+   "y": 1286,
+   "side": "zille",
+   "role": "city",
+   "capital": true,
+   "tile": "1",
+   "uv": [
+    0.29043626573350695,
+    0.7167044104926406
+   ]
+  },
+  {
+   "name": "Nanta",
+   "x": 934,
+   "y": 642,
+   "side": "zille",
+   "role": "city",
+   "tile": "2",
+   "uv": [
+    0.39412346733940967,
+    0.33144406819804484
+   ]
+  },
+  {
+   "name": "Isor",
+   "x": 476,
+   "y": 746,
+   "side": "zille",
+   "role": "city",
+   "tile": "3",
+   "uv": [
+    0.21147447374131945,
+    0.393660024096551
+   ]
+  },
+  {
+   "name": "Auremina",
+   "x": 739,
+   "y": 1013,
+   "side": "zille",
+   "role": "city",
+   "invented": true,
+   "note": "gold-mining town",
+   "tile": "4",
+   "uv": [
+    0.31635806613498263,
+    0.553387526259062
+   ]
+  },
+  {
+   "name": "Lusande",
+   "x": 688,
+   "y": 494,
+   "side": "zille",
+   "role": "town",
+   "invented": true,
+   "note": "beach resort",
+   "tile": "5",
+   "uv": [
+    0.29601942274305554,
+    0.24290597711170914
+   ]
+  },
+  {
+   "name": "Mave Nortus",
+   "x": 1230,
+   "y": 880,
+   "side": "rizia",
+   "role": "city",
+   "tile": "32",
+   "uv": [
+    0.5121673583984375,
+    0.47382289035039543
+   ]
+  },
+  {
+   "name": "Dapalle",
+   "x": 1036,
+   "y": 1186,
+   "side": "rizia",
+   "role": "city",
+   "tile": "33",
+   "uv": [
+    0.43480075412326386,
+    0.6568813759748462
+   ]
+  },
+  {
+   "name": "Balle",
+   "x": 1402,
+   "y": 1400,
+   "side": "rizia",
+   "role": "city",
+   "tile": "34",
+   "uv": [
+    0.5807604302300347,
+    0.7849026698429262
+   ]
+  },
+  {
+   "name": "Jales",
+   "x": 2010,
+   "y": 1470,
+   "side": "rizia",
+   "role": "city",
+   "tile": "35",
+   "uv": [
+    0.8232289632161458,
+    0.8267787940053822
+   ]
+  },
+  {
+   "name": "Sudiseri Maraton",
+   "x": 1676,
+   "y": 1070,
+   "side": "rizia",
+   "role": "town",
+   "tile": "36",
+   "uv": [
+    0.6900307888454861,
+    0.5874866559342047
+   ]
+  },
+  {
+   "name": "Jardim",
+   "x": 1246,
+   "y": 1427,
+   "side": "rizia",
+   "role": "town",
+   "note": "named after Lake Jardim",
+   "tile": "37",
+   "uv": [
+    0.5185481092664931,
+    0.8010548891627307
+   ]
+  },
+  {
+   "name": "Fort Moridia",
+   "x": 482.0,
+   "y": 1464.0,
+   "side": "rizia",
+   "role": "fort",
+   "invented": true,
+   "tile": "42",
+   "uv": [
+    0.21386725531684028,
+    0.8231894119343146
+   ]
+  }
+ ],
+ "tiles": [
+  {
+   "name": "1",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "7",
+    "15",
+    "17",
+    "22",
+    "28",
+    "29",
+    "S36"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "town": "Zille",
+   "defence": "City",
+   "quad_center_uv": [
+    0.29043626573350695,
+    0.7167044104926406
+   ],
+   "quad_size_uv": [
+    0.12702679189046226,
+    0.19055132069780456
+   ],
+   "centroid_uv": [
+    0.28769376293215815,
+    0.7091096108261566
+   ]
+  },
+  {
+   "name": "2",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "8",
+    "10",
+    "16",
+    "25",
+    "27",
+    "S18"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "town": "Nanta",
+   "defence": "City",
+   "quad_center_uv": [
+    0.39412346733940967,
+    0.33144406819804484
+   ],
+   "quad_size_uv": [
+    0.11157341088189021,
+    0.16736989482215925
+   ],
+   "centroid_uv": [
+    0.38951418031509943,
+    0.3373577373437693
+   ]
+  },
+  {
+   "name": "3",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "9",
+    "20",
+    "31",
+    "S7",
+    "S12",
+    "S13"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "town": "Isor",
+   "defence": "City",
+   "quad_center_uv": [
+    0.21147447374131945,
+    0.393660024096551
+   ],
+   "quad_size_uv": [
+    0.12702679189046226,
+    0.19055132069780456
+   ],
+   "centroid_uv": [
+    0.22604052224768253,
+    0.39004079969827365
+   ]
+  },
+  {
+   "name": "4",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "6",
+    "17",
+    "18",
+    "28",
+    "30"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "town": "Auremina",
+   "defence": "City",
+   "quad_center_uv": [
+    0.31635806613498263,
+    0.553387526259062
+   ],
+   "quad_size_uv": [
+    0.14062576717800565,
+    0.21095097546837244
+   ],
+   "centroid_uv": [
+    0.31781548127237064,
+    0.5531711966611603
+   ]
+  },
+  {
+   "name": "5",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "9",
+    "14",
+    "21",
+    "27",
+    "S2",
+    "S28"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "town": "Lusande",
+   "defence": "KeyLocation",
+   "quad_center_uv": [
+    0.29601942274305554,
+    0.24290597711170914
+   ],
+   "quad_size_uv": [
+    0.11466408708360462,
+    0.1720061799972883
+   ],
+   "centroid_uv": [
+    0.2935669750410835,
+    0.2564484611389146
+   ]
+  },
+  {
+   "name": "6",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "4",
+    "11",
+    "17",
+    "24",
+    "30"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.36072422451443137,
+    0.5912255955915668
+   ],
+   "quad_size_uv": [
+    0.12053637186686199,
+    0.18081512183003348
+   ],
+   "centroid_uv": [
+    0.3607036349642872,
+    0.5845253124827281
+   ]
+  },
+  {
+   "name": "7",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "1",
+    "12",
+    "28",
+    "S30",
+    "S36",
+    "S39"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.24307913038465712,
+    0.6833530687489703
+   ],
+   "quad_size_uv": [
+    0.17925921969943576,
+    0.2689045401574857
+   ],
+   "centroid_uv": [
+    0.22775564036250442,
+    0.6935765333873286
+   ]
+  },
+  {
+   "name": "8",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "2",
+    "10",
+    "25",
+    "26",
+    "30"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.3790688832600911,
+    0.4156449892818404
+   ],
+   "quad_size_uv": [
+    0.15515194532606336,
+    0.23274151579147903
+   ],
+   "centroid_uv": [
+    0.3782283143062241,
+    0.4235046124440436
+   ]
+  },
+  {
+   "name": "9",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "3",
+    "5",
+    "14",
+    "31",
+    "S2",
+    "S13"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.2630189768473307,
+    0.31843255819042454
+   ],
+   "quad_size_uv": [
+    0.14835245768229166,
+    0.22254168840619507
+   ],
+   "centroid_uv": [
+    0.256456735242162,
+    0.3182904915938796
+   ]
+  },
+  {
+   "name": "10",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "2",
+    "8",
+    "14",
+    "18",
+    "20",
+    "27",
+    "30",
+    "31"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.32423430548773874,
+    0.40876534031229406
+   ],
+   "quad_size_uv": [
+    0.1576244862874349,
+    0.23645054393158227
+   ],
+   "centroid_uv": [
+    0.3281154984227665,
+    0.41232337475186814
+   ]
+  },
+  {
+   "name": "11",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "6",
+    "13",
+    "24",
+    "26",
+    "30"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.40778226216634117,
+    0.5511441624646447
+   ],
+   "quad_size_uv": [
+    0.13104467095269098,
+    0.19657849142547235
+   ],
+   "centroid_uv": [
+    0.40251470573841047,
+    0.5449339137080738
+   ]
+  },
+  {
+   "name": "12",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "7",
+    "18",
+    "28",
+    "S23",
+    "S39"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.2462695058186849,
+    0.6085742756017272
+   ],
+   "quad_size_uv": [
+    0.11868196614583335,
+    0.17803335072495607
+   ],
+   "centroid_uv": [
+    0.24352737017349946,
+    0.6101764360923436
+   ]
+  },
+  {
+   "name": "13",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "11",
+    "16",
+    "24",
+    "25",
+    "26",
+    "32",
+    "40",
+    "S1",
+    "S24"
+   ],
+   "shore": true,
+   "border": true,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.4807621002197266,
+    0.45333350102805087
+   ],
+   "quad_size_uv": [
+    0.28805102199978305,
+    0.4321017783220288
+   ],
+   "centroid_uv": [
+    0.47491697362681146,
+    0.4529022287175099
+   ]
+  },
+  {
+   "name": "14",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "5",
+    "9",
+    "10",
+    "27",
+    "31"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.3104758114284939,
+    0.3390715050990636
+   ],
+   "quad_size_uv": [
+    0.11311874898274742,
+    0.16968803740972377
+   ],
+   "centroid_uv": [
+    0.3095692105825893,
+    0.33396075170106665
+   ]
+  },
+  {
+   "name": "15",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "1",
+    "17",
+    "19",
+    "29",
+    "38",
+    "54"
+   ],
+   "shore": false,
+   "border": true,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.3379927995469835,
+    0.7464663701652433
+   ],
+   "quad_size_uv": [
+    0.10013790893554687,
+    0.15021563967418167
+   ],
+   "centroid_uv": [
+    0.3379820008150692,
+    0.7422615270244322
+   ]
+  },
+  {
+   "name": "16",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "2",
+    "13",
+    "25",
+    "S18",
+    "S24"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.44207879808213973,
+    0.33099539543916134
+   ],
+   "quad_size_uv": [
+    0.13351721191406252,
+    0.20028751956557558
+   ],
+   "centroid_uv": [
+    0.44962693076444876,
+    0.32908079975761617
+   ]
+  },
+  {
+   "name": "17",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "1",
+    "4",
+    "6",
+    "15",
+    "19",
+    "24",
+    "28"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.3365970102945963,
+    0.6534415514900731
+   ],
+   "quad_size_uv": [
+    0.1063192613389757,
+    0.1594882100244398
+   ],
+   "centroid_uv": [
+    0.3347718561778161,
+    0.6560598217879525
+   ]
+  },
+  {
+   "name": "18",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "4",
+    "10",
+    "12",
+    "20",
+    "28",
+    "S7",
+    "S23"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.28634859720865885,
+    0.5140538810636122
+   ],
+   "quad_size_uv": [
+    0.1403166995578342,
+    0.21048734695085952
+   ],
+   "centroid_uv": [
+    0.2874222922064434,
+    0.5264253673651507
+   ]
+  },
+  {
+   "name": "19",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "15",
+    "17",
+    "24",
+    "33",
+    "38",
+    "51"
+   ],
+   "shore": false,
+   "border": true,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.3736851247151693,
+    0.7051884763479652
+   ],
+   "quad_size_uv": [
+    0.16318770345052083,
+    0.24479585724681457
+   ],
+   "centroid_uv": [
+    0.37579716442890004,
+    0.6995496328378508
+   ]
+  },
+  {
+   "name": "20",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "3",
+    "10",
+    "18",
+    "31",
+    "S7"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.28136363559299044,
+    0.4509405796473391
+   ],
+   "quad_size_uv": [
+    0.12362704806857641,
+    0.18545140700516255
+   ],
+   "centroid_uv": [
+    0.2837680422152811,
+    0.4525175182121331
+   ]
+  },
+  {
+   "name": "21",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "5",
+    "27",
+    "S21",
+    "S28"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.3314126502143012,
+    0.22331393330713148
+   ],
+   "quad_size_uv": [
+    0.09704723273383248,
+    0.14557935449905263
+   ],
+   "centroid_uv": [
+    0.3317056378568519,
+    0.22522401981288315
+   ]
+  },
+  {
+   "name": "22",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "1",
+    "29",
+    "42",
+    "S36"
+   ],
+   "shore": true,
+   "border": true,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.2528496551513672,
+    0.7644132805205817
+   ],
+   "quad_size_uv": [
+    0.11435501946343316,
+    0.17154255147977537
+   ],
+   "centroid_uv": [
+    0.24804206619485583,
+    0.7654469819912706
+   ]
+  },
+  {
+   "name": "23",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "S14",
+    "S18",
+    "S21"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.3946219635009766,
+    0.21493870847464025
+   ],
+   "quad_size_uv": [
+    0.08344825744628907,
+    0.12517969972848472
+   ],
+   "centroid_uv": [
+    0.39294089329471166,
+    0.2131698632167313
+   ]
+  },
+  {
+   "name": "24",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "6",
+    "11",
+    "13",
+    "17",
+    "19",
+    "33",
+    "40"
+   ],
+   "shore": false,
+   "border": true,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.4027973005506728,
+    0.6298114528555443
+   ],
+   "quad_size_uv": [
+    0.1947126007080078,
+    0.2920859660331311
+   ],
+   "centroid_uv": [
+    0.40118454067991766,
+    0.6286806121316744
+   ]
+  },
+  {
+   "name": "25",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "2",
+    "8",
+    "13",
+    "16",
+    "26"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.43071308559841576,
+    0.398595424444269
+   ],
+   "quad_size_uv": [
+    0.1273358595106337,
+    0.19101494921531748
+   ],
+   "centroid_uv": [
+    0.43289234395602777,
+    0.3959291504173237
+   ]
+  },
+  {
+   "name": "26",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "8",
+    "11",
+    "13",
+    "25",
+    "30"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.4233353424072266,
+    0.4751689086270458
+   ],
+   "quad_size_uv": [
+    0.1273358595106337,
+    0.19101494921531748
+   ],
+   "centroid_uv": [
+    0.42422131895759185,
+    0.47750382679459424
+   ]
+  },
+  {
+   "name": "27",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "2",
+    "5",
+    "10",
+    "14",
+    "21",
+    "S18",
+    "S21"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.35075430128309465,
+    0.2954006899010737
+   ],
+   "quad_size_uv": [
+    0.1403166995578342,
+    0.21048734695085952
+   ],
+   "centroid_uv": [
+    0.3496129409371818,
+    0.30076969679292587
+   ]
+  },
+  {
+   "name": "28",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "1",
+    "4",
+    "7",
+    "12",
+    "17",
+    "18"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.29033656650119355,
+    0.6351955259621458
+   ],
+   "quad_size_uv": [
+    0.11930010138617624,
+    0.17896060775998188
+   ],
+   "centroid_uv": [
+    0.28825761840625336,
+    0.6305174646625309
+   ]
+  },
+  {
+   "name": "29",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "1",
+    "15",
+    "22",
+    "42",
+    "54"
+   ],
+   "shore": false,
+   "border": true,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.29292874654134116,
+    0.770993814317539
+   ],
+   "quad_size_uv": [
+    0.11064620802137587,
+    0.1659790092696205
+   ],
+   "centroid_uv": [
+    0.2903108418888887,
+    0.7707400288801193
+   ]
+  },
+  {
+   "name": "30",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "4",
+    "6",
+    "8",
+    "10",
+    "11",
+    "26"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.34656693352593315,
+    0.48503970932248186
+   ],
+   "quad_size_uv": [
+    0.14402551099989153,
+    0.2160508891610144
+   ],
+   "centroid_uv": [
+    0.35331707870123763,
+    0.49536286519534195
+   ]
+  },
+  {
+   "name": "31",
+   "type": "Land",
+   "region": "zille",
+   "neighbors": [
+    "3",
+    "9",
+    "10",
+    "14",
+    "20"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.2654117584228516,
+    0.3869299327132991
+   ],
+   "quad_size_uv": [
+    0.11682756042480469,
+    0.1752515796198786
+   ],
+   "centroid_uv": [
+    0.2675061308508126,
+    0.3877243318191512
+   ]
+  },
+  {
+   "name": "32",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "13",
+    "40",
+    "46",
+    "55",
+    "63",
+    "S1"
+   ],
+   "shore": true,
+   "border": true,
+   "mountain": false,
+   "fort": false,
+   "town": "Mave Nortus",
+   "defence": "City",
+   "quad_center_uv": [
+    0.5121673583984375,
+    0.47382289035039543
+   ],
+   "quad_size_uv": [
+    0.12393611568874785,
+    0.1859150355226755
+   ],
+   "centroid_uv": [
+    0.5145325230458572,
+    0.4890310844097456
+   ]
+  },
+  {
+   "name": "33",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "19",
+    "24",
+    "40",
+    "49",
+    "51",
+    "62"
+   ],
+   "shore": false,
+   "border": true,
+   "mountain": true,
+   "fort": false,
+   "town": "Dapalle",
+   "defence": "City",
+   "quad_center_uv": [
+    0.43480075412326386,
+    0.6568813759748462
+   ],
+   "quad_size_uv": [
+    0.12269984520806207,
+    0.18406052145262386
+   ],
+   "centroid_uv": [
+    0.4465375925313926,
+    0.64070905345799
+   ]
+  },
+  {
+   "name": "34",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "37",
+    "47",
+    "56",
+    "57"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "town": "Balle",
+   "defence": "City",
+   "quad_center_uv": [
+    0.5807604302300347,
+    0.7849026698429262
+   ],
+   "quad_size_uv": [
+    0.13568068525526258,
+    0.2035329191881659
+   ],
+   "centroid_uv": [
+    0.577774223368133,
+    0.7931822446559429
+   ]
+  },
+  {
+   "name": "35",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "45",
+    "60",
+    "S32"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "town": "Jales",
+   "defence": "City",
+   "quad_center_uv": [
+    0.8232289632161458,
+    0.8267787940053822
+   ],
+   "quad_size_uv": [
+    0.1591698243882921,
+    0.2387686865191468
+   ],
+   "centroid_uv": [
+    0.8283378493260519,
+    0.8264573639320968
+   ]
+  },
+  {
+   "name": "36",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "43",
+    "53",
+    "58",
+    "64",
+    "S19",
+    "S27"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "town": "Sudiseri Maraton",
+   "defence": "KeyLocation",
+   "quad_center_uv": [
+    0.6900307888454861,
+    0.5874866559342047
+   ],
+   "quad_size_uv": [
+    0.13320814429389108,
+    0.19982389104806267
+   ],
+   "centroid_uv": [
+    0.6940904509892171,
+    0.5879376789770694
+   ]
+  },
+  {
+   "name": "37",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "34",
+    "47",
+    "50",
+    "62"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "town": "Jardim",
+   "defence": "KeyLocation",
+   "quad_center_uv": [
+    0.5185481092664931,
+    0.8010548891627307
+   ],
+   "quad_size_uv": [
+    0.13073560333251952,
+    0.1961148629079594
+   ],
+   "centroid_uv": [
+    0.5208751292035888,
+    0.8008109206810768
+   ]
+  },
+  {
+   "name": "38",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "15",
+    "19",
+    "51",
+    "54",
+    "59"
+   ],
+   "shore": false,
+   "border": true,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.3543434736463758,
+    0.813468168825173
+   ],
+   "quad_size_uv": [
+    0.12919026523166233,
+    0.19379672032039488
+   ],
+   "centroid_uv": [
+    0.3550969917737055,
+    0.806377242614396
+   ]
+  },
+  {
+   "name": "39",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "43",
+    "47",
+    "49",
+    "52",
+    "55",
+    "57",
+    "63"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.5653070492214626,
+    0.6196415369875192
+   ],
+   "quad_size_uv": [
+    0.12486331854926216,
+    0.18730592107521418
+   ],
+   "centroid_uv": [
+    0.5630941944689355,
+    0.6206447194143505
+   ]
+  },
+  {
+   "name": "40",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "13",
+    "24",
+    "32",
+    "33",
+    "49",
+    "55"
+   ],
+   "shore": false,
+   "border": true,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.460024659898546,
+    0.5490503562565219
+   ],
+   "quad_size_uv": [
+    0.13660788811577693,
+    0.20492380474070465
+   ],
+   "centroid_uv": [
+    0.46082477655026405,
+    0.5544837539715732
+   ]
+  },
+  {
+   "name": "41",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "45",
+    "53",
+    "60",
+    "61",
+    "S35"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.7740772416856553,
+    0.707880512901266
+   ],
+   "quad_size_uv": [
+    0.13351721191406252,
+    0.20028751956557558
+   ],
+   "centroid_uv": [
+    0.7752407678292038,
+    0.7075956190808906
+   ]
+  },
+  {
+   "name": "42",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "22",
+    "29",
+    "54",
+    "S9",
+    "S36"
+   ],
+   "shore": true,
+   "border": true,
+   "mountain": false,
+   "fort": true,
+   "town": "Fort Moridia",
+   "defence": "Fort",
+   "fort_xy": [
+    482.0,
+    1464.0
+   ],
+   "quad_center_uv": [
+    0.24766529507107204,
+    0.8185531267591856
+   ],
+   "quad_size_uv": [
+    0.14155297003851997,
+    0.21234186102091113
+   ],
+   "centroid_uv": [
+    0.2406480207122423,
+    0.8179529523336939
+   ]
+  },
+  {
+   "name": "43",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "36",
+    "39",
+    "48",
+    "52",
+    "57",
+    "58",
+    "64"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.620939220852322,
+    0.6354946411347346
+   ],
+   "quad_size_uv": [
+    0.13537161763509115,
+    0.203069290670653
+   ],
+   "centroid_uv": [
+    0.6269996946385342,
+    0.6391108125476794
+   ]
+  },
+  {
+   "name": "44",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "45",
+    "48",
+    "56",
+    "61"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.6951154496934678,
+    0.8116734777896392
+   ],
+   "quad_size_uv": [
+    0.13166280619303386,
+    0.19750574846049818
+   ],
+   "centroid_uv": [
+    0.6973182653635998,
+    0.8153519791770919
+   ]
+  },
+  {
+   "name": "45",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "35",
+    "41",
+    "44",
+    "60",
+    "61"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.7649049123128256,
+    0.8065885198556266
+   ],
+   "quad_size_uv": [
+    0.10940993754069012,
+    0.1641244951995689
+   ],
+   "centroid_uv": [
+    0.7628719168192583,
+    0.8081174504615418
+   ]
+  },
+  {
+   "name": "46",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "32",
+    "52",
+    "63",
+    "S1",
+    "S15",
+    "S40"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.5621166737874349,
+    0.46679368379455455
+   ],
+   "quad_size_uv": [
+    0.13660788811577693,
+    0.20492380474070465
+   ],
+   "centroid_uv": [
+    0.5646849001539112,
+    0.46623904735325633
+   ]
+  },
+  {
+   "name": "47",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "34",
+    "37",
+    "39",
+    "49",
+    "57",
+    "62"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.5499533674452041,
+    0.7027955549672534
+   ],
+   "quad_size_uv": [
+    0.1539156748453776,
+    0.2308870017214274
+   ],
+   "centroid_uv": [
+    0.5449261638117445,
+    0.7058808685600321
+   ]
+  },
+  {
+   "name": "48",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "43",
+    "44",
+    "56",
+    "57",
+    "58",
+    "61"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.6582267337375217,
+    0.7455690246474764
+   ],
+   "quad_size_uv": [
+    0.12300891282823351,
+    0.18452414997013672
+   ],
+   "centroid_uv": [
+    0.660438434571117,
+    0.7438566204073507
+   ]
+  },
+  {
+   "name": "49",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "33",
+    "39",
+    "40",
+    "47",
+    "55",
+    "62"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.49511878967285156,
+    0.653142436317484
+   ],
+   "quad_size_uv": [
+    0.15267940436469185,
+    0.2290324876513758
+   ],
+   "centroid_uv": [
+    0.4954357998257417,
+    0.6592868623157666
+   ]
+  },
+  {
+   "name": "50",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "37",
+    "51",
+    "59",
+    "62"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.4592270660400391,
+    0.8098787867541053
+   ],
+   "quad_size_uv": [
+    0.11126434326171876,
+    0.1669062663046463
+   ],
+   "centroid_uv": [
+    0.460714435864539,
+    0.8114966266182685
+   ]
+  },
+  {
+   "name": "51",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "19",
+    "33",
+    "38",
+    "50",
+    "59",
+    "62"
+   ],
+   "shore": false,
+   "border": true,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.4183503807915581,
+    0.73868937567793
+   ],
+   "quad_size_uv": [
+    0.1644239739312066,
+    0.2466503713168662
+   ],
+   "centroid_uv": [
+    0.4181934355952485,
+    0.7279557086349573
+   ]
+  },
+  {
+   "name": "52",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "39",
+    "43",
+    "46",
+    "63",
+    "64",
+    "S15"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.6011987728542751,
+    0.5337954824544844
+   ],
+   "quad_size_uv": [
+    0.1298084004720052,
+    0.1947239773554207
+   ],
+   "centroid_uv": [
+    0.6015500301687615,
+    0.5390389567502569
+   ]
+  },
+  {
+   "name": "53",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "36",
+    "41",
+    "58",
+    "61",
+    "S19",
+    "S35"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.7429710812038847,
+    0.6459636721753488
+   ],
+   "quad_size_uv": [
+    0.14897059292263456,
+    0.22346894544122092
+   ],
+   "centroid_uv": [
+    0.7429223724294993,
+    0.6378988658042171
+   ]
+  },
+  {
+   "name": "54",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "15",
+    "29",
+    "38",
+    "42"
+   ],
+   "shore": false,
+   "border": true,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.3092794206407335,
+    0.8218433936576642
+   ],
+   "quad_size_uv": [
+    0.12609958902994792,
+    0.18916043514526582
+   ],
+   "centroid_uv": [
+    0.3011328612872796,
+    0.8220673264527399
+   ]
+  },
+  {
+   "name": "55",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "32",
+    "39",
+    "40",
+    "49",
+    "63"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": true,
+   "fort": false,
+   "quad_center_uv": [
+    0.503892322116428,
+    0.5732786852362286
+   ],
+   "quad_size_uv": [
+    0.11311874898274742,
+    0.16968803740972377
+   ],
+   "centroid_uv": [
+    0.5053295505913257,
+    0.5737095557745827
+   ]
+  },
+  {
+   "name": "56",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "34",
+    "44",
+    "48",
+    "57"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.6311085425482855,
+    0.8110752474444612
+   ],
+   "quad_size_uv": [
+    0.12919026523166233,
+    0.19379672032039488
+   ],
+   "centroid_uv": [
+    0.6308137482666636,
+    0.8144200024839475
+   ]
+  },
+  {
+   "name": "57",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "34",
+    "39",
+    "43",
+    "47",
+    "48",
+    "56"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.6037909528944227,
+    0.7081796280738549
+   ],
+   "quad_size_uv": [
+    0.13104467095269098,
+    0.19657849142547235
+   ],
+   "centroid_uv": [
+    0.6069982243705254,
+    0.7113428320859791
+   ]
+  },
+  {
+   "name": "58",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "36",
+    "43",
+    "48",
+    "53",
+    "61"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.6885353003607856,
+    0.6743796135713012
+   ],
+   "quad_size_uv": [
+    0.12115450710720486,
+    0.1817423788650593
+   ],
+   "centroid_uv": [
+    0.6885752142944672,
+    0.6743796593064901
+   ]
+  },
+  {
+   "name": "59",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "38",
+    "50",
+    "51"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.40359489440917967,
+    0.8146646295155289
+   ],
+   "quad_size_uv": [
+    0.10508299085828993,
+    0.15763369595438817
+   ],
+   "centroid_uv": [
+    0.40414523325343815,
+    0.8158310547363634
+   ]
+  },
+  {
+   "name": "60",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "35",
+    "41",
+    "45",
+    "S10",
+    "S32",
+    "S35"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.8095701683892145,
+    0.7656097412109375
+   ],
+   "quad_size_uv": [
+    0.19285819498697918,
+    0.2893041949280536
+   ],
+   "centroid_uv": [
+    0.8213607800749761,
+    0.7668085136424931
+   ]
+  },
+  {
+   "name": "61",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "41",
+    "44",
+    "45",
+    "48",
+    "53",
+    "58"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.7262216101752387,
+    0.7434752184393536
+   ],
+   "quad_size_uv": [
+    0.11126434326171876,
+    0.1669062663046463
+   ],
+   "centroid_uv": [
+    0.724026916216349,
+    0.7427353214554405
+   ]
+  },
+  {
+   "name": "62",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "33",
+    "37",
+    "47",
+    "49",
+    "50",
+    "51"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.46859879387749565,
+    0.7371937998149851
+   ],
+   "quad_size_uv": [
+    0.14897059292263456,
+    0.22346894544122092
+   ],
+   "centroid_uv": [
+    0.47284520240615385,
+    0.7335564418912308
+   ]
+  },
+  {
+   "name": "63",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "32",
+    "39",
+    "46",
+    "52",
+    "55"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.5495545705159505,
+    0.5421707072869755
+   ],
+   "quad_size_uv": [
+    0.1063192613389757,
+    0.1594882100244398
+   ],
+   "centroid_uv": [
+    0.5488272986655122,
+    0.5393280568758134
+   ]
+  },
+  {
+   "name": "64",
+   "type": "Land",
+   "region": "rizia",
+   "neighbors": [
+    "36",
+    "43",
+    "52",
+    "S15",
+    "S27"
+   ],
+   "shore": true,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.6452658335367839,
+    0.5711848790281058
+   ],
+   "quad_size_uv": [
+    0.11188247850206164,
+    0.16783352333967214
+   ],
+   "centroid_uv": [
+    0.6469228924609134,
+    0.5666995245438422
+   ]
+  },
+  {
+   "name": "S1",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "13",
+    "32",
+    "46",
+    "S24",
+    "S40",
+    "S41"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.5222369808620877,
+    0.3941086968554344
+   ],
+   "quad_size_uv": [
+    0.14464364624023437,
+    0.2169781461960402
+   ],
+   "centroid_uv": [
+    0.5237607126476914,
+    0.39941326593682713
+   ]
+  },
+  {
+   "name": "S2",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "5",
+    "9",
+    "S13",
+    "S26",
+    "S28"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.2412845442030165,
+    0.22869800641373297
+   ],
+   "quad_size_uv": [
+    0.12115450710720486,
+    0.1817423788650593
+   ],
+   "centroid_uv": [
+    0.23903090028683183,
+    0.21949973183509147
+   ]
+  },
+  {
+   "name": "S3",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S24",
+    "S29",
+    "S41"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.514460440741645,
+    0.25172987470308383
+   ],
+   "quad_size_uv": [
+    0.12300891282823351,
+    0.18452414997013672
+   ],
+   "centroid_uv": [
+    0.5173376773361892,
+    0.25336403662266055
+   ]
+  },
+  {
+   "name": "S4",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S10",
+    "S16",
+    "S32",
+    "S34",
+    "S42"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.9118615807427299,
+    0.7189477742870579
+   ],
+   "quad_size_uv": [
+    0.1304265357123481,
+    0.19565123439044652
+   ],
+   "centroid_uv": [
+    0.9132314179172916,
+    0.7171543203253112
+   ]
+  },
+  {
+   "name": "S5",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S33",
+    "S40",
+    "S41"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.5950174204508464,
+    0.3435582326878982
+   ],
+   "quad_size_uv": [
+    0.1304265357123481,
+    0.19565123439044652
+   ],
+   "centroid_uv": [
+    0.597797064641523,
+    0.3440656487292547
+   ]
+  },
+  {
+   "name": "S6",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S19",
+    "S35",
+    "S38",
+    "S42"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.8328997887505426,
+    0.5852432921397874
+   ],
+   "quad_size_uv": [
+    0.12053637186686199,
+    0.18081512183003348
+   ],
+   "centroid_uv": [
+    0.8315317252714945,
+    0.5835660985883693
+   ]
+  },
+  {
+   "name": "S7",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "3",
+    "18",
+    "20",
+    "S11",
+    "S12",
+    "S23"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.23051702711317276,
+    0.4745706782818679
+   ],
+   "quad_size_uv": [
+    0.14340737575954862,
+    0.2151236321259886
+   ],
+   "centroid_uv": [
+    0.23719050118112792,
+    0.48119843333429896
+   ]
+  },
+  {
+   "name": "S8",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S15",
+    "S27",
+    "S31",
+    "S33"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.7086745452880859,
+    0.4485476582666273
+   ],
+   "quad_size_uv": [
+    0.12177264234754775,
+    0.18266963590008514
+   ],
+   "centroid_uv": [
+    0.7041308233328419,
+    0.4468569571933232
+   ]
+  },
+  {
+   "name": "S9",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "42",
+    "S25",
+    "S30",
+    "S36"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.18525357564290365,
+    0.8003071012312583
+   ],
+   "quad_size_uv": [
+    0.14278924051920575,
+    0.21419637509096276
+   ],
+   "centroid_uv": [
+    0.1877518884481982,
+    0.8147525334770568
+   ]
+  },
+  {
+   "name": "S10",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "60",
+    "S4",
+    "S32",
+    "S35",
+    "S42"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.8512444474962023,
+    0.7189477742870579
+   ],
+   "quad_size_uv": [
+    0.11002807278103299,
+    0.1650517522345947
+   ],
+   "centroid_uv": [
+    0.8522422098459757,
+    0.7192161906402388
+   ]
+  },
+  {
+   "name": "S11",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S7",
+    "S12",
+    "S22",
+    "S23",
+    "S43"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.17827462938096786,
+    0.49401316450015104
+   ],
+   "quad_size_uv": [
+    0.1298084004720052,
+    0.1947239773554207
+   ],
+   "centroid_uv": [
+    0.17305388235218078,
+    0.49787078010288205
+   ]
+  },
+  {
+   "name": "S12",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "3",
+    "S7",
+    "S11",
+    "S13",
+    "S20",
+    "S43"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.19522349887424048,
+    0.43089986308387795
+   ],
+   "quad_size_uv": [
+    0.15947889200846357,
+    0.23923231503665973
+   ],
+   "centroid_uv": [
+    0.19610046606244902,
+    0.40820828577109025
+   ]
+  },
+  {
+   "name": "S13",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "3",
+    "9",
+    "S2",
+    "S12",
+    "S20",
+    "S26"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.2115741729736328,
+    0.29809272645437446
+   ],
+   "quad_size_uv": [
+    0.1304265357123481,
+    0.19565123439044652
+   ],
+   "centroid_uv": [
+    0.20999613366390765,
+    0.305285654936699
+   ]
+  },
+  {
+   "name": "S14",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "23",
+    "S18",
+    "S21",
+    "S29"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.4241329362657335,
+    0.1978891436370689
+   ],
+   "quad_size_uv": [
+    0.10261044989691841,
+    0.15392466781428493
+   ],
+   "centroid_uv": [
+    0.4218780638131448,
+    0.1950983861639244
+   ]
+  },
+  {
+   "name": "S15",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "46",
+    "52",
+    "64",
+    "S8",
+    "S27",
+    "S33",
+    "S40"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.6430724504258898,
+    0.47756183000775754
+   ],
+   "quad_size_uv": [
+    0.13166280619303386,
+    0.19750574846049818
+   ],
+   "centroid_uv": [
+    0.639934044021481,
+    0.47655862313693764
+   ]
+  },
+  {
+   "name": "S16",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S4",
+    "S32",
+    "S34"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.9018916575113932,
+    0.8221425088302532
+   ],
+   "quad_size_uv": [
+    0.1403166995578342,
+    0.21048734695085952
+   ],
+   "centroid_uv": [
+    0.9017781662514631,
+    0.8059477805386336
+   ]
+  },
+  {
+   "name": "S17",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S25",
+    "S30",
+    "S37"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.13061839633517797,
+    0.7132645860078675
+   ],
+   "quad_size_uv": [
+    0.1063192613389757,
+    0.1594882100244398
+   ],
+   "centroid_uv": [
+    0.13100160600670996,
+    0.7110252768480639
+   ]
+  },
+  {
+   "name": "S18",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "2",
+    "16",
+    "23",
+    "27",
+    "S14",
+    "S21",
+    "S24",
+    "S29"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.4069846683078342,
+    0.2639935967792316
+   ],
+   "quad_size_uv": [
+    0.1508249986436632,
+    0.22625071654629833
+   ],
+   "centroid_uv": [
+    0.4113605536676412,
+    0.2699871730381851
+   ]
+  },
+  {
+   "name": "S19",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "36",
+    "53",
+    "S6",
+    "S27",
+    "S31",
+    "S35",
+    "S38"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.7611163414849176,
+    0.5619123086778477
+   ],
+   "quad_size_uv": [
+    0.12548145378960507,
+    0.18823317811024
+   ],
+   "centroid_uv": [
+    0.7623911478430362,
+    0.5720810537807192
+   ]
+  },
+  {
+   "name": "S20",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S12",
+    "S13",
+    "S26",
+    "S43"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.15654019673665365,
+    0.335183007855407
+   ],
+   "quad_size_uv": [
+    0.14093483479817712,
+    0.21141460398588535
+   ],
+   "centroid_uv": [
+    0.1567649404247887,
+    0.3311011658605386
+   ]
+  },
+  {
+   "name": "S21",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "21",
+    "23",
+    "27",
+    "S14",
+    "S18",
+    "S28"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.3667061784532335,
+    0.23288561882997857
+   ],
+   "quad_size_uv": [
+    0.1298084004720052,
+    0.1947239773554207
+   ],
+   "centroid_uv": [
+    0.3676373615268089,
+    0.2125999137142283
+   ]
+  },
+  {
+   "name": "S22",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S11",
+    "S23",
+    "S37",
+    "S39"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.16830470614963108,
+    0.5804574493783639
+   ],
+   "quad_size_uv": [
+    0.1199182366265191,
+    0.17988786479500768
+   ],
+   "centroid_uv": [
+    0.16545079720706982,
+    0.5785108869736963
+   ]
+  },
+  {
+   "name": "S23",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "12",
+    "18",
+    "S7",
+    "S11",
+    "S22",
+    "S39"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.2169579315185547,
+    0.5466574348758101
+   ],
+   "quad_size_uv": [
+    0.1508249986436632,
+    0.22625071654629833
+   ],
+   "centroid_uv": [
+    0.22406367355712395,
+    0.5473894259600844
+   ]
+  },
+  {
+   "name": "S24",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "13",
+    "16",
+    "S1",
+    "S3",
+    "S18",
+    "S29",
+    "S41"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.49870796203613277,
+    0.31843255819042454
+   ],
+   "quad_size_uv": [
+    0.13846229383680556,
+    0.20770557584578206
+   ],
+   "centroid_uv": [
+    0.4915981594872752,
+    0.3206314023423887
+   ]
+  },
+  {
+   "name": "S25",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S9",
+    "S17",
+    "S30"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.14158531188964843,
+    0.8068876350282156
+   ],
+   "quad_size_uv": [
+    0.11250061374240453,
+    0.16876078037469797
+   ],
+   "centroid_uv": [
+    0.1413410948922714,
+    0.8019357779718679
+   ]
+  },
+  {
+   "name": "S26",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S2",
+    "S13",
+    "S20"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.19203312344021264,
+    0.24036349814470287
+   ],
+   "quad_size_uv": [
+    0.14526178148057725,
+    0.217905403231066
+   ],
+   "centroid_uv": [
+    0.18893068593208015,
+    0.23547938694295578
+   ]
+  },
+  {
+   "name": "S27",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "36",
+    "64",
+    "S8",
+    "S15",
+    "S19",
+    "S31"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.6839491356743707,
+    0.505678656231121
+   ],
+   "quad_size_uv": [
+    0.13846229383680556,
+    0.20770557584578206
+   ],
+   "centroid_uv": [
+    0.6939641572291423,
+    0.5131524663376292
+   ]
+  },
+  {
+   "name": "S28",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "5",
+    "21",
+    "S2",
+    "S21"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.2845540110270182,
+    0.19938471950001374
+   ],
+   "quad_size_uv": [
+    0.1508249986436632,
+    0.22625071654629833
+   ],
+   "centroid_uv": [
+    0.2918774348402689,
+    0.19441441737632792
+   ]
+  },
+  {
+   "name": "S29",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S3",
+    "S14",
+    "S18",
+    "S24"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.46481022304958763,
+    0.22690331537819913
+   ],
+   "quad_size_uv": [
+    0.14093483479817712,
+    0.21141460398588535
+   ],
+   "centroid_uv": [
+    0.47136538438627934,
+    0.21915345025659935
+   ]
+  },
+  {
+   "name": "S30",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "7",
+    "S9",
+    "S17",
+    "S25",
+    "S36",
+    "S37",
+    "S39"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.17807523091634114,
+    0.7374929149875742
+   ],
+   "quad_size_uv": [
+    0.16256956821017796,
+    0.2438686002117888
+   ],
+   "centroid_uv": [
+    0.18170050360508708,
+    0.7254870181805108
+   ]
+  },
+  {
+   "name": "S31",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S8",
+    "S19",
+    "S27",
+    "S38"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.7533398013644749,
+    0.48862909139354954
+   ],
+   "quad_size_uv": [
+    0.11497315470377606,
+    0.1724698085148012
+   ],
+   "centroid_uv": [
+    0.752006752644154,
+    0.4884608550139353
+   ]
+  },
+  {
+   "name": "S32",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "35",
+    "60",
+    "S4",
+    "S10",
+    "S16"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.8721812862820095,
+    0.8021017922667921
+   ],
+   "quad_size_uv": [
+    0.11311874898274742,
+    0.16968803740972377
+   ],
+   "centroid_uv": [
+    0.8673646861526056,
+    0.7999138423887807
+   ]
+  },
+  {
+   "name": "S33",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S5",
+    "S8",
+    "S15",
+    "S40"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.641277864244249,
+    0.40338126720569256
+   ],
+   "quad_size_uv": [
+    0.12548145378960507,
+    0.18823317811024
+   ],
+   "centroid_uv": [
+    0.6449117684333714,
+    0.4030577730200786
+   ]
+  },
+  {
+   "name": "S34",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S4",
+    "S16"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.9391791703965929,
+    0.8182540115865965
+   ],
+   "quad_size_uv": [
+    0.1539156748453776,
+    0.2308870017214274
+   ],
+   "centroid_uv": [
+    0.9389028359141026,
+    0.8026584775716139
+   ]
+  },
+  {
+   "name": "S35",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "41",
+    "53",
+    "60",
+    "S6",
+    "S10",
+    "S19",
+    "S42"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.8179449039035375,
+    0.6609194308047974
+   ],
+   "quad_size_uv": [
+    0.14773432244194878,
+    0.22161443137116923
+   ],
+   "centroid_uv": [
+    0.8117483798777999,
+    0.6547455629007302
+   ]
+  },
+  {
+   "name": "S36",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "1",
+    "7",
+    "22",
+    "42",
+    "S9",
+    "S30"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.2137675560845269,
+    0.7623194743124587
+   ],
+   "quad_size_uv": [
+    0.17307786729600697,
+    0.2596319698072276
+   ],
+   "centroid_uv": [
+    0.2230293709384635,
+    0.7543214832242433
+   ]
+  },
+  {
+   "name": "S37",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S17",
+    "S22",
+    "S30",
+    "S39"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.1342075686984592,
+    0.6360928714799127
+   ],
+   "quad_size_uv": [
+    0.11682756042480469,
+    0.1752515796198786
+   ],
+   "centroid_uv": [
+    0.13580299248768313,
+    0.6372916285773738
+   ]
+  },
+  {
+   "name": "S38",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S6",
+    "S19",
+    "S31"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.8005972374810112,
+    0.5317016762463616
+   ],
+   "quad_size_uv": [
+    0.11682756042480469,
+    0.1752515796198786
+   ],
+   "centroid_uv": [
+    0.8005231471046158,
+    0.528357080845711
+   ]
+  },
+  {
+   "name": "S39",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "7",
+    "12",
+    "S22",
+    "S23",
+    "S30",
+    "S37"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.1926313188340929,
+    0.6328026045814339
+   ],
+   "quad_size_uv": [
+    0.17925921969943576,
+    0.2689045401574857
+   ],
+   "centroid_uv": [
+    0.19940201085401796,
+    0.6400078930791379
+   ]
+  },
+  {
+   "name": "S40",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "46",
+    "S1",
+    "S5",
+    "S15",
+    "S33",
+    "S41"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.5942198265923394,
+    0.41175649203818376
+   ],
+   "quad_size_uv": [
+    0.12177264234754775,
+    0.18266963590008514
+   ],
+   "centroid_uv": [
+    0.5900483492363415,
+    0.4135245532893774
+   ]
+  },
+  {
+   "name": "S41",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S1",
+    "S3",
+    "S5",
+    "S24",
+    "S40"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.5403822411431206,
+    0.32920070440362753
+   ],
+   "quad_size_uv": [
+    0.12857212999131948,
+    0.1928694632853691
+   ],
+   "centroid_uv": [
+    0.5489754737611318,
+    0.3227374625462292
+   ]
+  },
+  {
+   "name": "S42",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S4",
+    "S6",
+    "S10",
+    "S35"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.8614137691921658,
+    0.6483565935560605
+   ],
+   "quad_size_uv": [
+    0.14526178148057725,
+    0.217905403231066
+   ],
+   "centroid_uv": [
+    0.868045511230347,
+    0.6468338654550019
+   ]
+  },
+  {
+   "name": "S43",
+   "type": "Sea",
+   "region": "sea",
+   "neighbors": [
+    "S11",
+    "S12",
+    "S20"
+   ],
+   "shore": false,
+   "border": false,
+   "mountain": false,
+   "fort": false,
+   "quad_center_uv": [
+    0.1601293690999349,
+    0.43209632377423385
+   ],
+   "quad_size_uv": [
+    0.13351721191406252,
+    0.20028751956557558
+   ],
+   "centroid_uv": [
+    0.15036740144017388,
+    0.4176068065006625
+   ]
+  }
+ ]
+}

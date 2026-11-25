@@ -1,7 +1,21 @@
-# Zille War
+# Suzerain: The Zille War (Wleeaf Edition)
 
-A Suzerain: Kingdom of Rizia mod that adds a military option for reclaiming Zille
-from Wehlen, alongside the existing Pales war.
+A story mod for Suzerain: Kingdom of Rizia. King Romus can declare war on Wehlen at the
+Turn 4 Alliance session and take Zille back by force, alongside the existing Pales war.
+Peace games stay vanilla. A fan mod, not affiliated with Torpor Games.
+
+## Playing it
+
+Download the zip from the Releases page, extract it into the game folder, and on Linux or
+Steam Deck add the launch option below. The full player instructions are in
+`tools/release/README.txt`, which ships inside the zip.
+
+## Releasing
+
+`tools/release/package.sh <version>` builds the mod and writes
+`dist/Suzerain-The-Zille-War-Wleeaf-Edition-<version>.zip` with MelonLoader 0.7.3,
+Suzerain Modding Kit 2.4 (checksum-pinned), the mod, its map assets (`assets/UserData`) and
+the licenses.
 
 Built on [Suzerain Modding Kit](https://github.com/suzerain-modding/suzerain-modding-kit)
 (SMK) and MelonLoader.

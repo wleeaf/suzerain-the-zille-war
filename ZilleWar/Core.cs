@@ -3,7 +3,7 @@ using SuzerainModdingKit;
 using SuzerainModdingKit.VanillaData;
 using UnityEngine.InputSystem;
 
-[assembly: MelonInfo(typeof(ZilleWar.Core), "Zille War", "0.1.0", "wleeaf", null)]
+[assembly: MelonInfo(typeof(ZilleWar.Core), "Suzerain: The Zille War (Wleeaf Edition)", "1.0.0", "Wleeaf", null)]
 [assembly: MelonGame("Torpor Games", "Suzerain")]
 
 namespace ZilleWar;
@@ -48,7 +48,7 @@ internal sealed class Core : MelonMod
         Step("trace hooks", () => Trace.Install(HarmonyInstance));
         Step("self-test", SelfTest.Init);
         DevKeys = File.Exists(Path.Combine(MelonLoader.Utils.MelonEnvironment.UserDataDirectory, "ZilleWar", "devkeys.flag"));
-        LoggerInstance.Msg(DevKeys ? "Zille War initialized. Dev keys ON (UserData/ZilleWar/devkeys.flag): F6 take the objective, F7 last round, F8 dump, F9 load war map, F10 Pales war, F11 direct setup, F12 next Zille operation (Shift: cycle objective, Ctrl: reset), Shift+F11 Wehlen strength." : "Zille War initialized.");
+        LoggerInstance.Msg(DevKeys ? "The Zille War (Wleeaf Edition) initialized. Dev keys ON (UserData/ZilleWar/devkeys.flag): F6 take the objective, F7 last round, F8 dump, F9 load war map, F10 Pales war, F11 direct setup, F12 next Zille operation (Shift: cycle objective, Ctrl: reset), Shift+F11 Wehlen strength." : "The Zille War (Wleeaf Edition) initialized.");
     }
 
     /// <summary>The testing shortcuts (F6-F12) only work when UserData/ZilleWar/devkeys.flag exists, so a stray key press in a
