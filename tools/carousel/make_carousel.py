@@ -197,8 +197,8 @@ def closing(mapshot, total):
         "Every capital, paper and councilor reacts",
         "Ceasefires, a treaty clause by clause",
         "Zille liberated, divided or lost",
+        "47 new Royal Decrees, 19 of them in every game",
         "Over 130,000 words in the game's own voice",
-        "Peace games stay vanilla",
     ]
     f = font("Playfair.ttf", 34)
     y = 404
