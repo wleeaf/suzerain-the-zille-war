@@ -25,6 +25,7 @@
     <Reference Include="UnityEngine.UI"><HintPath>$(GamePath)/MelonLoader/Il2CppAssemblies/UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.UIModule"><HintPath>$(GamePath)/MelonLoader/Il2CppAssemblies/UnityEngine.UIModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.ScreenCaptureModule"><HintPath>$(GamePath)/MelonLoader/Il2CppAssemblies/UnityEngine.ScreenCaptureModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Unity.TextMeshPro"><HintPath>$(GamePath)/MelonLoader/Il2CppAssemblies/Unity.TextMeshPro.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Unity.InputSystem"><HintPath>$(GamePath)/MelonLoader/Il2CppAssemblies/Unity.InputSystem.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Il2CppInterop.Runtime"><HintPath>$(GamePath)/MelonLoader/net6/Il2CppInterop.Runtime.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="0Harmony"><HintPath>$(GamePath)/MelonLoader/net6/0Harmony.dll</HintPath><Private>false</Private></Reference>
